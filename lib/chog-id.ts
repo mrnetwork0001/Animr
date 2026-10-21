@@ -95,7 +95,7 @@ export function parseChogQuery(raw: string, nameNumbers: readonly number[], supp
     const token = asToken(nameNumber);
     return { kind: "ok", via: "name", ...hit, ...(token && token.tokenId !== hit.tokenId && { other: { ...token, via: "token" } }) };
   }
-  return { kind: "invalid", message: "Type a token id (1–1,969) or a Chog's name, like CHOG #1462." };
+  return { kind: "invalid", message: `Enter a token ID (1–${supply.toLocaleString("en-US")}) or a marketplace name like CHOG #1462.` };
 }
 
 /** The text that looks a hit up again the way it was found: "CHOG #1462" for a name, "1" for a token id. */

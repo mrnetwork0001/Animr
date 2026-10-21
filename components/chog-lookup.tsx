@@ -100,7 +100,9 @@ function parseTokenId(raw: string): ParsedId {
   if (!/^\d+$/.test(value)) {
     return {
       kind: "invalid",
-      message: `Token IDs are whole numbers, like ${MIN_ID} or 420.`,
+      message: BOUNDED
+        ? `Enter a token ID (${MIN_ID.toString()}–${MAX_ID.toString()}) or a marketplace name like CHOG #1462.`
+        : `Enter a token ID: a whole number, like ${MIN_ID} or 420.`,
     };
   }
   const id = BigInt(value);
