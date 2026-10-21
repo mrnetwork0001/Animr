@@ -1,55 +1,22 @@
 import { cacheLife } from "next/cache";
 import { ImageResponse } from "next/og";
 import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, parseChogId, signedPct } from "@/components/dna/shared";
-import { chogThumbUrl } from "@/components/dna/thumb-url";
-import { isFlaggedTokenId } from "@/lib/brand-safety";
 import { nameNumberOf } from "@/lib/chog-id";
 import { getChog } from "@/lib/dna/chogs";
 import { chogGenome, chogName, getPopulation, getReplay } from "@/lib/dna/population";
 import type { PopulationResponse, ReplayResult } from "@/lib/dna/types";
+import { artExpected, chogArt } from "@/lib/og/art";
+import { C, LOGO_SRC, ogOptions } from "@/lib/og/theme";
 import { isHiddenChog } from "@/lib/visibility";
+
+// The share card of /replay/[tokenId]: the Chog's art, its edge vs just holding and the curve of that edge over the
+// default window. Rendered on request from cached data (loadCard follows the hourly candles); the CDN keeps each card
+// five minutes, like the other cards (lib/og/theme.ts ogOptions). The art comes through lib/og/art.ts, capped at a
+// few seconds, so a slow IPFS gateway costs the art (the tile shows the Chog's number) and never the card.
 
 export const alt = "A Chog's trading DNA replayed on real $CHOG candles, against just holding";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-
-const C = {
-  bg: "#0E0B1E",
-  surface2: "#1C1737",
-  lineStrong: "#3A3170",
-  fg: "#F3F1FF",
-  muted: "#A59FC9",
-  subtle: "#8A83B3",
-  accentStrong: "#9D8CFF",
-  success: "#3DDC97",
-  danger: "#FF6B81",
-};
-
-/** The Animr mark (components/site-header.tsx), for cards without a Chog. */
-const LOGO = `data:image/svg+xml;base64,${Buffer.from(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A493FF"/><stop offset="1" stop-color="#6A50F0"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#g)"/><path d="M9.5 23 16 8.5 22.5 23" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="18.6" r="2.3" fill="#fff"/></svg>`,
-).toString("base64")}`;
-
-// Geist (the app's font) at 400 and 600; Satori needs TTF. Falls back to the built-in font offline.
-const FONTS = [
-  { weight: 400, url: "https://fonts.gstatic.com/s/geist/v5/gyBhhwUxId8gMGYQMKR3pzfaWI_RnOM4nQ.ttf" },
-  { weight: 600, url: "https://fonts.gstatic.com/s/geist/v5/gyBhhwUxId8gMGYQMKR3pzfaWI_RQuQ4nQ.ttf" },
-] as const;
-let fontsPromise: Promise<{ name: string; data: ArrayBuffer; weight: 400 | 600; style: "normal" }[]> | undefined;
-
-function loadFonts() {
-  fontsPromise ??= Promise.all(
-    FONTS.map(async ({ weight, url }) => {
-      const res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
-      if (!res.ok) throw new Error(`font ${res.status}`);
-      return { name: "Geist", data: await res.arrayBuffer(), weight, style: "normal" as const };
-    }),
-  ).catch(() => {
-    fontsPromise = undefined;
-    return [];
-  });
-  return fontsPromise;
-}
 
 /** The promise's value, or null if it fails or takes longer than `ms`. */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
@@ -58,20 +25,9 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([promise.catch(() => null), timeout]).finally(() => clearTimeout(timer));
 }
 
-/** The Chog's face as a PNG data URI (Satori can't decode the WebP originals), or null. */
-async function loadFace(image: string): Promise<string | null> {
-  try {
-    const res = await fetch(chogThumbUrl(image, 480, "png"), { signal: AbortSignal.timeout(6_000) });
-    if (!res.ok || !res.headers.get("content-type")?.includes("png")) return null;
-    return `data:image/png;base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
-  } catch {
-    return null;
-  }
-}
-
 type Card = {
   tokenId: number;
-  /** "CHOG #1312 · token 1820": both numbers (lib/chog-id.ts). */
+  /** "CHOG #1312": its marketplace name (lib/chog-id.ts). */
   label: string;
   name: string;
   archetype: string;
@@ -82,7 +38,7 @@ type Card = {
   windowLabel: string | null;
   /** Edge vs holding over time, oldest first, ~100 points. */
   curve: number[];
-  face: string | null;
+  art: string | null;
 };
 
 async function loadCard(tokenId: number): Promise<Card | null> {
@@ -94,11 +50,11 @@ async function loadCard(tokenId: number): Promise<Card | null> {
   }
   // The same genome the API serves (Legendaries also read their metadata name).
   const genome = chogGenome(chog);
-  const [replay, population, face]: [ReplayResult | null, PopulationResponse | null, string | null] = await Promise.all([
+  const [replay, population, art]: [ReplayResult | null, PopulationResponse | null, string | null] = await Promise.all([
     withTimeout(getReplay(tokenId, DEFAULT_WINDOW), 8_000),
     withTimeout(getPopulation(DEFAULT_WINDOW), 8_000),
-    // Flagged Chogs' art still shows the flagged words (lib/brand-safety.ts): never on a share card.
-    isFlaggedTokenId(tokenId) ? null : loadFace(chog.image),
+    // Flagged Chogs' art is left out by chogArt (lib/brand-safety.ts): never on a share card.
+    chogArt(tokenId),
   ]);
   const row = population?.rows.find((r) => r.tokenId === tokenId);
   const step = Math.max(1, Math.ceil((replay?.points.length ?? 0) / 100));
@@ -106,7 +62,7 @@ async function loadCard(tokenId: number): Promise<Card | null> {
     .filter((_, i, all) => i % step === 0 || i === all.length - 1)
     .map((p) => (p.value / replay!.startChog - 1) * 100);
   // A card missing a piece is retried soon; a complete one is good until the candles move on.
-  if (replay && population && (face || isFlaggedTokenId(tokenId))) cacheLife("hours");
+  if (replay && population && (art || !artExpected(tokenId))) cacheLife("hours");
   else cacheLife("minutes");
   return {
     tokenId,
@@ -121,7 +77,7 @@ async function loadCard(tokenId: number): Promise<Card | null> {
     total: population?.rows.length ?? CHOG_COUNT,
     windowLabel: replay?.window.label ?? null,
     curve,
-    face,
+    art,
   };
 }
 
@@ -145,7 +101,7 @@ export default async function Image({ params }: { params: Promise<{ tokenId: str
   const id = parseChogId((await params).tokenId);
   // A Chog its holder hid ("Hide my Chog") never goes on a card: the generic one instead.
   const tokenId = id && !(await isHiddenChog(id)) ? id : null;
-  const [card, fonts] = await Promise.all([tokenId ? loadCard(tokenId) : null, loadFonts()]);
+  const card = tokenId ? await loadCard(tokenId) : null;
   const edge = card?.edgePct ?? null;
   const tone = edge === null ? C.muted : edge > 0 ? C.success : C.danger;
 
@@ -182,12 +138,12 @@ export default async function Image({ params }: { params: Promise<{ tokenId: str
             color: C.subtle,
           }}
         >
-          {card?.face ? (
-            <img src={card.face} width={460} height={460} alt="" style={{ objectFit: "cover" }} />
+          {card?.art ? (
+            <img src={card.art} width={460} height={460} alt="" style={{ objectFit: "cover" }} />
           ) : card ? (
             card.label
           ) : (
-            <img src={LOGO} width={200} height={200} alt="" />
+            <img src={LOGO_SRC} width={200} height={200} alt="" />
           )}
         </div>
 
@@ -230,6 +186,7 @@ export default async function Image({ params }: { params: Promise<{ tokenId: str
         </div>
       </div>
     ),
-    { ...size, fonts: fonts.length ? fonts : undefined },
+    // A complete card is good for a while on the CDN; one still missing its replay or art is retried sooner.
+    ogOptions(card && edge !== null && (card.art || !tokenId || !artExpected(tokenId)) ? 300 : 60),
   );
 }

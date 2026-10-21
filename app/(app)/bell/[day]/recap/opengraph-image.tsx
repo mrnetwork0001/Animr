@@ -1,15 +1,16 @@
 import { ImageResponse } from "next/og";
 import { connection } from "next/server";
 import { signedPct } from "@/components/bell/format";
-import { type BellRecap, getRecap, type RecapChog } from "@/lib/bell/recap";
+import { type BellRecap, type RecapChog, storedRecap } from "@/lib/bell/recap";
 import { parseDay } from "@/lib/bell/rules";
 import { chogArt } from "@/lib/og/art";
 import { C, ogOptions, toneOf } from "@/lib/og/theme";
 import { ChogFace, Eyebrow, Frame, POINTS_NOTE } from "@/lib/og/ui";
 
 // The share card of /bell/[day]/recap: the Bell's move and recap headline, two of its lines, and the quotes of the
-// best call and the most rekt with their art. Written on request (the recap itself is written once and stored); a
-// Bell without a recap gets a plain card.
+// best call and the most rekt with their art. Drawn on request from the stored recap (storedRecap never writes one
+// or waits on 0G: the page's own request does that, and the card is re-drawn within minutes once it lands); a Bell
+// without a recap gets a plain card. The art is capped at a few seconds (lib/og/art.ts) and falls back to a tile.
 
 export const alt = "A Daily Bell recap: what $CHOG did, the best call and the most rekt, in the Chogs' own words";
 export const size = { width: 1200, height: 630 };
@@ -23,7 +24,7 @@ const minus = (text: string) => text.replace(/(^|[\s(])-(?=\d)/g, "$1−");
 export default async function Image({ params }: { params: Promise<{ day: string }> }) {
   await connection();
   const day = parseDay((await params).day);
-  const recap = day ? await getRecap(day).catch(() => null) : null;
+  const recap = day ? await storedRecap(day).catch(() => null) : null;
   if (!recap) return new ImageResponse(<NoRecap />, ogOptions(300));
   const [winnerArt, rektArt] = await Promise.all([chogArt(recap.winner.tokenId), recap.rekt ? chogArt(recap.rekt.tokenId) : null]);
   return new ImageResponse(<RecapCard recap={recap} winnerArt={winnerArt} rektArt={rektArt} />, ogOptions(recap.writtenBy === "ai" ? 3600 : 300));

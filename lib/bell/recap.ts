@@ -266,12 +266,17 @@ function isRecap(value: unknown): value is BellRecap {
   return Boolean(recap && recap.v === 1 && typeof recap.headline === "string" && Array.isArray(recap.lines) && recap.winner);
 }
 
-/**
- * The recap of a settled Bell: the stored one, else written once now (0G, else the template). A Chog its holder hid
- * since keeps out of it: then the template is served from the visible Bell instead (not stored). Throws RecapError
- * 404 when no Bell rang that day, 409 while it is still open.
- */
-export async function getRecap(day: string): Promise<BellRecap> {
+type RecapInputs = {
+  stored: BellSummary;
+  /** The Bell as shown (hidden Chogs left out, bearPct always set). */
+  bell: BellSummary;
+  actualPct: number;
+  oracle: BellCall;
+  rekt: BellCall | undefined;
+};
+
+/** What a recap is written from. Throws RecapError 404 when no Bell rang that day, 409 while it is still open. */
+async function recapInputs(day: string): Promise<RecapInputs> {
   const stored = await readSummary(day);
   if (!stored) throw new RecapError(`No Bell rang on ${day}.`, 404);
   if (stored.status !== "settled" || stored.actualPct === null || !stored.oracle) {
@@ -284,8 +289,32 @@ export async function getRecap(day: string): Promise<BellRecap> {
   const bell = typeof shown.bearPct === "number" ? shown : { ...shown, bearPct: bearPct(await readCalls(stored)) };
   if (!bell.oracle) throw new RecapError("This Bell has no call to recap.", 409);
   const rekt = bell.mostRekt && bell.mostRekt.tokenId !== bell.oracle.tokenId ? bell.mostRekt : undefined;
+  return { stored, bell, actualPct, oracle: bell.oracle, rekt };
+}
+
+/**
+ * The recap of a settled Bell without writing one: the stored recap (AI, or a template still waiting for 0G), else
+ * the template, not stored. Never calls 0G, so a share card is drawn in a moment; the page's own request writes the
+ * AI recap and the card picks it up on its next render. Throws like getRecap.
+ */
+export async function storedRecap(day: string): Promise<BellRecap> {
+  const { stored, bell, actualPct, oracle, rekt } = await recapInputs(day);
+  if (bell.oracle === stored.oracle && bell.mostRekt === stored.mostRekt) {
+    const cached = await getKv().get<BellRecap>(recapKey(day));
+    if (isRecap(cached) && cached.stamp === stampOf(stored)) return cached;
+  }
+  return templateRecap(bell, actualPct, oracle, rekt);
+}
+
+/**
+ * The recap of a settled Bell: the stored one, else written once now (0G, else the template). A Chog its holder hid
+ * since keeps out of it: then the template is served from the visible Bell instead (not stored). Throws RecapError
+ * 404 when no Bell rang that day, 409 while it is still open.
+ */
+export async function getRecap(day: string): Promise<BellRecap> {
+  const { stored, bell, actualPct, oracle, rekt } = await recapInputs(day);
   // The visible picks differ from the stored ones: someone hid a Chog the stored recap would name.
-  if (bell.oracle !== stored.oracle || bell.mostRekt !== stored.mostRekt) return templateRecap(bell, actualPct, bell.oracle, rekt);
+  if (bell.oracle !== stored.oracle || bell.mostRekt !== stored.mostRekt) return templateRecap(bell, actualPct, oracle, rekt);
 
   const kv = getKv();
   const stamp = stampOf(stored);
@@ -300,12 +329,12 @@ export async function getRecap(day: string): Promise<BellRecap> {
       const recap = await kv.get<BellRecap>(recapKey(day));
       if (isRecap(recap) && recap.stamp === stamp) return recap;
     }
-    return templateRecap(bell, actualPct, bell.oracle, rekt);
+    return templateRecap(bell, actualPct, oracle, rekt);
   }
   try {
     const again = await kv.get<BellRecap>(recapKey(day));
     if (isRecap(again) && again.stamp === stamp) return again;
-    const recap = await writeRecap(bell, actualPct, bell.oracle, rekt);
+    const recap = await writeRecap(bell, actualPct, oracle, rekt);
     // A template is kept for a while only, so a 0G outage (or a key added later) still gets the AI recap.
     await kv.set(recapKey(day), recap, recap.writtenBy === "template" ? TEMPLATE_TTL_MS : undefined);
     return recap;
