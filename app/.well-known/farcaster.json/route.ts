@@ -21,7 +21,7 @@ export async function GET() {
   const header = process.env.FARCASTER_HEADER?.trim();
   const payload = process.env.FARCASTER_PAYLOAD?.trim();
   const signature = process.env.FARCASTER_SIGNATURE?.trim();
-  const shareImage = absoluteUrl("/landing/og-v2.png");
+  const shareImage = absoluteUrl("/landing/og-v3.png");
 
   const manifest = {
     // Without it the manifest still parses; clients just won't verify the domain (or let anyone add the app).
