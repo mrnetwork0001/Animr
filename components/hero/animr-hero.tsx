@@ -11,14 +11,15 @@ import {
   heroBuiltOn,
   heroCards,
   heroFootnote,
-  heroMedia,
   heroMenu,
   heroNav,
   heroStats,
   heroSubline,
   heroTitle,
 } from "./content";
+import { heroDeckChogs } from "./deck-data";
 import { heroDisplayFont, heroTextFont } from "./fonts";
+import { HeroDeck } from "./hero-deck";
 import { HeroMenu } from "./hero-menu";
 import { HeroEntranceScript, HeroMotion } from "./hero-motion";
 import { FortressLockIcon, NetworkGraphIcon } from "./icons";
@@ -48,14 +49,25 @@ type AnimrHeroProps = {
  * The Animr hero and the page it opens: one screen drawn on a 2048×1455 design canvas on wide screens,
  * one centred column on phones and tablets (hero.css). Server-rendered and prerendered: the League share
  * and its window come from the live League (lib/dna/headline.ts, "use cache" for hours, the same
- * getPopulation /league serves), and the only client code is the entrance timeline + artwork loop
- * (hero-motion.tsx), the phone menu and Random Chog.
+ * getPopulation /league serves), and the only client code is the entrance timeline (hero-motion.tsx), the
+ * Chog deck (hero-deck.tsx), the phone menu and Random Chog.
  *
  * Landmarks: the hero's header (brand, nav, menu) is the page's banner, outside <main>; it is laid over
  * the hero (.hx-header-frame repeats the canvas geometry), so the look is the canvas's. <main> holds the
  * hero's copy and artwork, then `children`; `footer` follows <main>.
  */
 export async function AnimrHero({ className = "", children, footer }: AnimrHeroProps) {
+  // The deck's front card is the wide canvas's largest image: fetch it early there. In the column it sits
+  // below the fold, so it loads at normal priority.
+  const deck = heroDeckChogs();
+  if (deck[0]) {
+    preload(deck[0].src, {
+      as: "image",
+      fetchPriority: "high",
+      media: WIDE_LAYOUT,
+    });
+  }
+
   const league = await leagueHeadline();
   const { passed, total } = heroStats.guard;
   const stats: Stat[] = [
@@ -83,14 +95,6 @@ export async function AnimrHero({ className = "", children, footer }: AnimrHeroP
       label: heroStats.guard.label,
     },
   ];
-
-  // The still is the wide canvas's largest image (and the video's poster): fetch it early there. In the
-  // column it sits below the fold, so it loads at normal priority.
-  preload(heroMedia.still, {
-    as: "image",
-    fetchPriority: "high",
-    media: WIDE_LAYOUT,
-  });
 
   return (
     <HeroMotion className={`hx-page ${heroDisplayFont.variable} ${heroTextFont.variable} ${className}`}>
@@ -195,31 +199,9 @@ export async function AnimrHero({ className = "", children, footer }: AnimrHeroP
               </div>
 
               <div className="hx-stage">
-                {/* Decorative: the slabs loop, with the still underneath for reduced motion and as fallback. */}
-                <div className="hx-art" aria-hidden="true">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- also the video's poster: one URL, one download, no resize step */}
-                  <img
-                    className="hx-still"
-                    src={heroMedia.still}
-                    width={heroMedia.stillSize}
-                    height={heroMedia.stillSize}
-                    alt=""
-                    decoding="async"
-                  />
-                  <video
-                    className="hx-video"
-                    data-hx-video=""
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    poster={heroMedia.still}
-                    disablePictureInPicture
-                    tabIndex={-1}
-                  >
-                    <source src={heroMedia.video} type="video/mp4" media="(prefers-reduced-motion: no-preference)" />
-                  </video>
+                {/* A deck of real Chogs (hero-deck.tsx); only the front card is a link (to its profile). */}
+                <div className="hx-art" data-hx="art">
+                  <HeroDeck chogs={deck} />
                 </div>
 
                 {heroCards.map((card) => {

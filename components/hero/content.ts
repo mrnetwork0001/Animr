@@ -106,9 +106,21 @@ export const heroBuiltOn: { label: string; marks: readonly HeroBuiltOnMark[] } =
   ],
 };
 
-/** The artwork: a 5 s, 960×960 H.264 loop (muted, no audio track) and its 1200×1200 WebP still. */
-export const heroMedia = {
-  video: "/landing/hero/slabs-loop.mp4",
-  still: "/landing/hero/slabs-still.webp",
-  stillSize: 1200,
+/**
+ * The artwork: a deck of real Chogs (hero-deck.tsx). Token ids only, in the order the prerendered page deals
+ * them (the first is the page's LCP image); the browser shuffles the rest after it loads. Picked by eye for
+ * strong art across tiers (1:1 Legendaries, Epics, Rares and a few Commons); none is in
+ * FLAGGED_TOKEN_IDS (deck-data.ts drops any that is). Each has a 600×600 WebP copy of its metadata image in
+ * public/landing/hero/chogs/<id>.webp: the IPFS gateway answers bursts with 429s, so the gateway copy is only
+ * the fallback.
+ */
+export const heroDeck = {
+  ids: [
+    1881, 561, 1667, 70, 851, 1789, 900, 942, 1798, 1884, 196, 539, 923, 981, 1133, 1517, 1708, 1733, 206, 365,
+    428, 630, 715, 767, 833, 926, 991, 1313, 1447, 1553, 1764, 1797, 1821, 1839, 1913, 272, 943, 1114, 1491,
+  ],
+  image: (tokenId: number) => `/landing/hero/chogs/${tokenId}.webp`,
+  imageSize: 600,
+  /** The front card's link: "Open Wobbly Ted, CHOG #1373". */
+  openLabel: (name: string, number: string) => `Open ${name}, ${number}`,
 } as const;

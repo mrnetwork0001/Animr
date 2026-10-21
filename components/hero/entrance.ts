@@ -70,6 +70,18 @@ export function heroEntrance(root: HTMLElement | null | undefined): void {
     // The stats rise in one by one, the footnote under them...
     ["stat", 930, 110, 850, easeOut, rise(20)],
     ["note", 1250, 0, 700, "ease-out", [{ opacity: 0 }, { opacity: 1 }]],
+    // The Chog deck rises in as one piece (its back cards fan out from the front: hero.css hx-deck-deal)...
+    [
+      "art",
+      380,
+      0,
+      1500,
+      easeLift,
+      [
+        { opacity: 0, transform: `translateY(${60 * k}px) scale(0.96)` },
+        { opacity: 1, transform: "translateY(0) scale(1)" },
+      ],
+    ],
     // ...then the two glass cards lift in...
     [
       "card",

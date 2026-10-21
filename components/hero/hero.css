@@ -573,39 +573,361 @@ body:has(.hx-page) {
   width: 100%;
   max-width: calc(940 * var(--k));
   margin-top: calc(40 * var(--k));
-  /* Each card overlaps the artwork's empty top or bottom band, reaching the slab stack's tips without
-     covering the slabs themselves. */
+  /* Each card overlaps the artwork's emptier top or bottom band, beside the deck rather than over it. */
   padding-block: calc(112 * var(--k));
 }
 
-/* The slab loop. Its near-black frame lightens into the page and a radial mask fades its edges, so
-   there's no box. Both live on this element: a mask or blend on an ancestor would isolate it. */
+/* The Chog deck (hero-deck.tsx). Its box is reserved up front (a square, sized like the old artwork), so
+   nothing shifts while the cards load. Every size inside is in cqi of this box, so the deck is one drawing at
+   every scale; each layout only moves the front card (--deck-x/y) and sizes it (--deck-w).
+   Motion: transforms and opacity only. Each card's pose is --pose-<slot>; the cards live in one 3D rendering
+   context (.hx-deck-rig) so they sort by depth as one slides out and tucks behind the rest. */
 .hx-art {
   position: relative;
   z-index: 0;
   aspect-ratio: 1;
-  /* In the column the artwork bleeds into the side margins; its faded edge needs no frame. */
+  /* In the column the artwork bleeds into the side margins. */
   width: calc(100% + 2 * var(--hx-gutter));
   margin-inline: calc(-1 * var(--hx-gutter));
   pointer-events: none;
-  mix-blend-mode: lighten;
-  -webkit-mask-image: radial-gradient(closest-side, #000 74%, rgb(0 0 0 / 0.55) 88%, transparent 100%);
-  mask-image: radial-gradient(closest-side, #000 74%, rgb(0 0 0 / 0.55) 88%, transparent 100%);
+  container-type: inline-size;
+
+  --deck-w: 50cqi;
+  --deck-x: 15cqi;
+  --deck-y: 25cqi;
+  /* All cards share one tilt (parallel planes sort cleanly); the deck recedes up and to the right. */
+  --deck-tilt: rotateY(11deg) rotateX(3deg);
+  --pose-0: translate3d(0, 0, 0) var(--deck-tilt) rotate(-2deg);
+  --pose-1: translate3d(9cqi, -7cqi, -9cqi) var(--deck-tilt) rotate(1.5deg);
+  --pose-2: translate3d(17cqi, -13.5cqi, -18cqi) var(--deck-tilt) rotate(5deg);
+  --pose-3: translate3d(24cqi, -19.5cqi, -27cqi) var(--deck-tilt) rotate(8.5deg);
+  --pose-4: translate3d(29cqi, -24cqi, -36cqi) var(--deck-tilt) rotate(11deg);
+  --pose-out: translate3d(31cqi, 9cqi, 5cqi) var(--deck-tilt) rotate(8deg);
 }
 
-.hx-still,
-.hx-video {
+.hx-deck {
+  position: absolute;
+  inset: 0;
+  perspective: 300cqi;
+  perspective-origin: 34% 50%;
+}
+
+.hx-deck-rig {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  /* The pointer tilt (hero-deck.tsx writes --tilt-x/y, -1…1, on desktop only). */
+  transform: rotateY(calc(var(--tilt-x) * 7deg)) rotateX(calc(var(--tilt-y) * -6deg));
+  transition: transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hx-deck-card {
+  --cw: var(--deck-w);
+  position: absolute;
+  top: var(--deck-y);
+  left: var(--deck-x);
+  width: var(--cw);
+  aspect-ratio: 100 / 122;
+  transform: var(--pose-0);
+  transform-origin: 50% 60%;
+  backface-visibility: hidden;
+  /* Stepping forward waits a beat for the leaving card to clear. */
+  transition:
+    transform 1.15s cubic-bezier(0.65, 0, 0.25, 1) 0.18s,
+    opacity 0.6s ease 0.18s;
+}
+.hx-deck-card[data-slot="1"] {
+  transform: var(--pose-1);
+}
+.hx-deck-card[data-slot="2"] {
+  transform: var(--pose-2);
+}
+.hx-deck-card[data-slot="3"] {
+  transform: var(--pose-3);
+}
+.hx-deck-card[data-slot="4"] {
+  transform: var(--pose-4);
+  opacity: 0;
+  transition: none;
+}
+.hx-deck-card[data-leaving] {
+  animation: hx-deck-leave 1.4s cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+
+@keyframes hx-deck-leave {
+  0% {
+    transform: var(--pose-0);
+    opacity: 1;
+  }
+  40% {
+    transform: var(--pose-out);
+    opacity: 1;
+  }
+  /* Behind the deck by now: it fades out of sight there. */
+  78% {
+    opacity: 1;
+  }
+  100% {
+    transform: var(--pose-4);
+    opacity: 0;
+  }
+}
+
+.hx-deck-link {
   position: absolute;
   inset: 0;
   display: block;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  object-fit: cover;
+  border-radius: calc(var(--cw) * 0.07);
+  color: inherit;
+  text-decoration: none;
+}
+.hx-deck-card[data-slot="0"] .hx-deck-link {
+  pointer-events: auto;
+}
+.hx-page .hx-deck-link:focus-visible {
+  outline-offset: 4px;
 }
 
-[data-hx-video="off"] .hx-video {
-  display: none;
+/* The card: dark glass with a thin luminous edge in the brand's teal → violet, and a soft depth shadow. */
+.hx-deck-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--cw) * 0.045);
+  overflow: hidden;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      118deg,
+      transparent 52%,
+      rgb(159 240 236 / 0.07) 62%,
+      rgb(255 170 230 / 0.05) 70%,
+      rgb(111 90 220 / 0.08) 80%,
+      transparent 92%
+    ),
+    linear-gradient(155deg, rgb(159 240 236 / 0.13), rgb(111 90 220 / 0.06) 38%, rgb(77 25 177 / 0.16)),
+    #121019;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 calc(var(--cw) * 0.09) calc(var(--cw) * 0.16) calc(var(--cw) * -0.05) rgb(0 0 0 / 0.75),
+    0 0 calc(var(--cw) * 0.12) rgb(111 90 220 / 0.16);
+}
+/* The edge: a 1.5px gradient ring (the fill is masked out), brightest at the top-left corner. */
+.hx-deck-face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: linear-gradient(
+    150deg,
+    #9ff0ec 0%,
+    rgb(159 240 236 / 0.55) 22%,
+    rgb(111 90 220 / 0.55) 58%,
+    #6f5adc 82%,
+    #4d19b1 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+.hx-deck-art {
+  position: relative;
+  display: block;
+  flex: none;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: calc(var(--cw) * 0.04);
+  background: radial-gradient(circle at 50% 40%, rgb(111 90 220 / 0.32), transparent 70%), #17151f;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+.hx-deck-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+.hx-deck-art img[data-broken] {
+  opacity: 0;
+}
+
+/* Holographic foil: a fine iridescent grain over the art (static), and a bright band that sweeps across the
+   front card once it has arrived. */
+.hx-deck-foil,
+.hx-deck-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hx-deck-foil {
+  background:
+    repeating-linear-gradient(
+      125deg,
+      rgb(159 240 236 / 0.16) 0,
+      rgb(111 90 220 / 0.16) 7%,
+      rgb(255 170 230 / 0.12) 14%,
+      rgb(255 236 170 / 0.1) 21%,
+      rgb(159 240 236 / 0.16) 28%
+    );
+  mix-blend-mode: soft-light;
+  opacity: 0.85;
+}
+.hx-deck-sheen {
+  inset: 0 -60%;
+  z-index: 2;
+  background: linear-gradient(
+    105deg,
+    transparent 39%,
+    rgb(159 240 236 / 0.1) 44%,
+    rgb(255 255 255 / 0.34) 48.5%,
+    rgb(190 170 255 / 0.16) 52%,
+    rgb(255 160 220 / 0.08) 55%,
+    transparent 60%
+  );
+  mix-blend-mode: screen;
+  transform: translateX(-36%);
+  opacity: 0;
+}
+
+.hx-deck-cap {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--cw) * 0.012);
+  min-width: 0;
+  padding-inline: calc(var(--cw) * 0.012);
+  padding-top: calc(var(--cw) * 0.02);
+  text-align: left;
+}
+.hx-deck-name {
+  overflow: hidden;
+  color: var(--hx-ink);
+  font-family: var(--hx-font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: max(13px, calc(var(--cw) * 0.068));
+  font-weight: 480;
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.hx-deck-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  font-size: max(10px, calc(var(--cw) * 0.04));
+  font-weight: 520;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.hx-deck-number {
+  color: var(--hx-kicker);
+  font-variant-numeric: tabular-nums;
+}
+.hx-deck-style {
+  color: var(--hx-nav);
+}
+.hx-deck-style::before {
+  content: "";
+  display: inline-block;
+  width: 0.32em;
+  height: 0.32em;
+  margin-right: 0.7em;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  vertical-align: 0.25em;
+}
+
+/* Depth: the further back, the darker (an overlay's opacity, not a filter). */
+.hx-deck-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  background: #0d0c11;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.15s cubic-bezier(0.65, 0, 0.25, 1) 0.18s;
+}
+.hx-deck-card[data-slot="1"] .hx-deck-veil {
+  opacity: 0.3;
+}
+.hx-deck-card[data-slot="2"] .hx-deck-veil {
+  opacity: 0.52;
+}
+.hx-deck-card[data-slot="3"] .hx-deck-veil,
+.hx-deck-card[data-slot="4"] .hx-deck-veil {
+  opacity: 0.7;
+}
+/* The leaving card darkens only once it is on its way behind the deck. */
+.hx-deck-card[data-leaving] .hx-deck-veil {
+  transition-duration: 0.6s;
+  transition-delay: 0.7s;
+}
+/* A visible card being re-dealt (after load): the veil closes, the face changes, the veil opens. */
+.hx-deck-card[data-dip] .hx-deck-veil {
+  opacity: 1;
+  transition-duration: 0.26s;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The sweep, once each time a card arrives in front. */
+  .hx-deck-card[data-slot="0"] .hx-deck-sheen {
+    animation: hx-deck-sheen 1.8s cubic-bezier(0.45, 0, 0.25, 1) 1.1s both;
+  }
+
+  /* The first deal: the back cards fan out from behind the front one as the deck rises in. */
+  [data-hx-state="run"] .hx-deck-card:not([data-slot="0"], [data-slot="4"]) {
+    animation: hx-deck-deal 1.25s cubic-bezier(0.16, 1, 0.3, 1) 0.75s backwards;
+  }
+  [data-hx-state="run"] .hx-deck-card[data-slot="2"] {
+    animation-delay: 0.85s;
+  }
+  [data-hx-state="run"] .hx-deck-card[data-slot="3"] {
+    animation-delay: 0.95s;
+  }
+}
+
+@keyframes hx-deck-sheen {
+  0% {
+    opacity: 0;
+    transform: translateX(-36%);
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(38%);
+  }
+}
+
+@keyframes hx-deck-deal {
+  from {
+    transform: translate3d(0, 0, -2cqi) var(--deck-tilt) rotate(-2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-deck-rig {
+    transform: none;
+  }
 }
 
 .hx-card {
@@ -925,7 +1247,7 @@ body:has(.hx-page) {
     pointer-events: none;
   }
 
-  /* Light spilling from the slabs toward the upper card, so its glass has something to refract. */
+  /* Light spilling from the deck toward the upper card, so its glass has something to refract. */
   .hx-stage::before {
     content: "";
     position: absolute;
@@ -945,6 +1267,10 @@ body:has(.hx-page) {
     right: calc(-100 * var(--u)); /* x = 1028: it bleeds past the canvas's right edge */
     width: calc(1120 * var(--u));
     margin: 0;
+    /* The front card, clear of both glass cards: x ≈ 1170…1620, y ≈ 400…950. */
+    --deck-w: 40cqi;
+    --deck-x: 13cqi;
+    --deck-y: 23cqi;
   }
 
   .hx-card {
@@ -1000,12 +1326,6 @@ body:has(.hx-page) {
 @keyframes hx-failsafe {
   to {
     opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hx-video {
-    display: none;
   }
 }
 
