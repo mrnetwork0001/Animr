@@ -18,7 +18,6 @@ export type FooterLink = {
 
 export type FooterColumn = { title: string; links: readonly FooterLink[] };
 
-export const REPO_URL = "https://github.com/mrnetwork0001/Animr";
 
 const explorerName = appConfig.chain.blockExplorers?.default.name ?? "Monadscan";
 const explorerUrl = appConfig.chain.blockExplorers?.default.url ?? "https://monadscan.com";
@@ -44,7 +43,7 @@ export const footerCopy = {
 } as const;
 
 export const footerSocials: readonly { label: string; href: string; icon: "github" }[] = [
-  { label: "Animr on GitHub", href: REPO_URL, icon: "github" },
+  // Add Animr's public profiles here (the GitHub repo is private, so it is not linked).
 ];
 
 export const footerColumns: readonly FooterColumn[] = [
@@ -79,7 +78,6 @@ export const footerColumns: readonly FooterColumn[] = [
       { label: "Stats", href: "/stats" },
       { label: "Guard status", href: "/guard" },
       { label: "FAQ", href: "/#faq" },
-      { label: "GitHub", href: REPO_URL, external: true },
       contractLink("Trophies contract", TROPHIES),
     ],
   },

@@ -132,7 +132,6 @@ export const welcome: DocContent = {
               ["AnimrTradeGuard", <Address key="guard" address={ADDR.guard} kind="contract" />],
               ["AnimrTrophies", <Address key="trophies" address={ADDR.trophies} kind="contract" />],
               [`House Chog wallet (${HOUSE.label})`, <Address key="house" address={HOUSE.wallet} kind="wallet" />],
-              ["Source code", <Ext key="repo" href={LINKS.repo}>{LINKS.repo.replace("https://", "")}</Ext>],
               ["Explorer", <Ext key="exp" href={LINKS.explorer}>{LINKS.explorer.replace("https://", "")}</Ext>],
             ]}
           />

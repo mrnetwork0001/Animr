@@ -17,7 +17,6 @@ import {
 
 export const LINKS = {
   app: "https://useanimr.vercel.app",
-  repo: "https://github.com/mrnetwork0001/Animr",
   explorer: appConfig.chain.blockExplorers?.default.url ?? "https://monadscan.com",
   explorerName: appConfig.chain.blockExplorers?.default.name ?? "Monadscan",
 } as const;

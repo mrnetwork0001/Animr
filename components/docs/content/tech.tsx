@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ZG_DEFAULT_MODEL } from "@/lib/agent/zg-compute";
 import { ADDR, HOUSE, LINKS } from "../facts";
 import type { DocContent } from "../frame";
-import { Address, Callout, Code, CodeBlock, DocLink, DocTable, Ext, P, Tag } from "../primitives";
+import { Address, Callout, Code, CodeBlock, DocLink, DocTable, P, Tag } from "../primitives";
 
 const cron = <Tag tone="warning">CRON_SECRET</Tag>;
 const admin = <Tag tone="warning">HEIST_ADMIN_SECRET</Tag>;
@@ -244,8 +244,7 @@ export const selfHosting: DocContent = {
           <CodeBlock label="Terminal">{"npm install\ncp .env.example .env.local   # every value is optional\nnpm run dev                  # http://localhost:3000"}</CodeBlock>
           <P>
             With no keys at all, everything except the LLM works: the League, Time Machine, Versus, Bell (genome calls) and
-            heist (template defender). State goes to <Code>.data/</Code> as JSON files. Source:{" "}
-            <Ext href={LINKS.repo}>{LINKS.repo.replace("https://", "")}</Ext>.
+            heist (template defender). State goes to <Code>.data/</Code> as JSON files.
           </P>
         </>
       ),

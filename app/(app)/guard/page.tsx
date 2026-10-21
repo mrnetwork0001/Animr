@@ -17,8 +17,6 @@ export const viewport: Viewport = {
   themeColor: "#0d0c11",
 };
 
-const REPO_SOURCE = "https://github.com/mrnetwork0001/Animr/tree/HEAD/contracts/src";
-const GUARD_TESTS = "https://github.com/mrnetwork0001/Animr/blob/main/contracts/test/AnimrTradeGuard.t.sol";
 
 /** "Laser Pounce · CHOG #891": the persona name, then the marketplace name (never the token id). */
 function houseName(tokenId: number): string | null {
@@ -55,15 +53,7 @@ export default function GuardPage() {
       <GuardStatus houseTokenId={house} houseLabel={house === null ? null : houseName(house)} />
       <GuardFlow />
       <p className="v2-note mt-12 text-pretty">
-        Source:{" "}
-        <a href={REPO_SOURCE} target="_blank" rel="noopener noreferrer" className="v2-link">
-          contracts/src on GitHub
-        </a>
-        , tested against forked Monad mainnet (
-        <a href={GUARD_TESTS} target="_blank" rel="noopener noreferrer" className="v2-link">
-          AnimrTradeGuard: 37/37 fork tests
-        </a>
-        ).
+        Tested against forked Monad mainnet: AnimrTradeGuard passes 37/37 fork tests.
       </p>
     </div>
   );
