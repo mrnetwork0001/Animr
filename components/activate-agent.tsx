@@ -1,0 +1,104 @@
+"use client";
+
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import type { Address } from "viem";
+import { useSignMessage } from "wagmi";
+import { activationMessage } from "@/lib/agent/auth";
+import type { ActivateRequest, AgentDetailResponse } from "@/lib/agent/types";
+import { shortAddress } from "@/lib/format";
+import { walletErrorMessage } from "@/lib/wagmi";
+
+type ActivateAgentProps = {
+  tokenId: string;
+  /** The Chog's ERC-6551 account the agent will trade. */
+  account: Address;
+  /** The connected wallet; the caller has already checked it owns the NFT (ownerOf). */
+  owner: Address;
+  /** The agent exists but is paused. */
+  reactivate?: boolean;
+  /** Receives the activate response; the caller updates/refetches its profile with it. */
+  onActivated?: (response: AgentDetailResponse) => void;
+};
+
+function apiErrorMessage(body: unknown): string | undefined {
+  if (!body || typeof body !== "object") return undefined;
+  const { error, message } = body as { error?: unknown; message?: unknown };
+  if (typeof error === "string") return error;
+  if (typeof message === "string") return message;
+  return undefined;
+}
+
+/** Owner signs a free activation message; the API verifies it and starts the agent. */
+export function ActivateAgent({ tokenId, account, owner, reactivate = false, onActivated }: ActivateAgentProps) {
+  const [phase, setPhase] = useState<"sign" | "submit">("sign");
+  const { mutateAsync: signMessage } = useSignMessage();
+
+  const activate = useMutation({
+    mutationFn: async (): Promise<AgentDetailResponse> => {
+      setPhase("sign");
+      // Built at click time so the server's freshness check (ACTIVATION_MAX_AGE_MS) passes.
+      const message = activationMessage({ tokenId, account, owner, issuedAt: new Date().toISOString() });
+      const signature = await signMessage({ account: owner, message });
+
+      setPhase("submit");
+      const body: ActivateRequest = { owner, message, signature };
+      const res = await fetch(`/api/agents/${tokenId}/activate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(apiErrorMessage(data) ?? `Activation failed (HTTP ${res.status}).`);
+      if (!data || typeof data !== "object" || !("agent" in data)) {
+        throw new Error("Unexpected response from the activation API.");
+      }
+      return data as AgentDetailResponse;
+    },
+    onSuccess: (data) => onActivated?.(data),
+  });
+
+  const label = activate.isPending
+    ? phase === "sign"
+      ? "Confirm in your wallet…"
+      : "Waking the agent…"
+    : reactivate
+      ? "Sign & reactivate"
+      : "Sign & activate";
+
+  return (
+    <section className="card border-accent/40 bg-linear-to-br from-accent/15 via-accent/5 to-transparent p-5 sm:p-6">
+      <h2 className="text-lg font-semibold">
+        {reactivate ? `Wake Chog #${tokenId}'s AI back up` : `Activate Chog #${tokenId}'s AI`}
+      </h2>
+      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+        Sign one message to prove you hold this Chog. It&apos;s free: no transaction, no gas, no token approval.{" "}
+        {reactivate
+          ? "The agent picks up its paper portfolio and decision history where it left off."
+          : "The agent then paper-trades: it starts from the $CHOG this Chog's wallet holds right now (or a demo bankroll if the wallet is empty) and simulates every trade, so no tokens move until on-chain execution ships."}{" "}
+        Every decision it makes shows up here.
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => activate.mutate()}
+          disabled={activate.isPending}
+          className="btn btn-primary px-4 py-2.5 disabled:cursor-wait"
+        >
+          {activate.isPending && (
+            <span aria-hidden className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          )}
+          {label}
+        </button>
+        <span className="font-mono text-xs text-subtle">signing as {shortAddress(owner)}</span>
+      </div>
+      <div aria-live="polite">
+        {activate.isError && (
+          <p className="mt-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+            {walletErrorMessage(activate.error)}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
