@@ -141,7 +141,7 @@ function PersonaCard({ chog }: { chog: ShowcaseChog }) {
           {stats.map((stat) => (
             <div key={stat.label}>
               <dt>{stat.label}</dt>
-              <dd>{stat.value}</dd>
+              <dd data-lp-count="">{stat.value}</dd>
             </div>
           ))}
         </dl>

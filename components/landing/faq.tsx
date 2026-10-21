@@ -13,7 +13,7 @@ export function Faq() {
         <SectionHead id={faq.id} title={faq.title} className="lp-faq-head" />
         <div className="lp-faq-list">
           {faq.items.map((item) => (
-            <details key={item.q} name="faq" className="lp-faq-item">
+            <details key={item.q} name="faq" className="lp-faq-item lp-reveal">
               <summary className="lp-faq-q">
                 <span>{item.q}</span>
                 <span aria-hidden="true" className="lp-faq-toggle" />

@@ -1,9 +1,10 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { ArrowRightIcon, PillLink, pillClass } from "@/components/v2";
 import { ChogImage } from "./chog-image";
 import { ctas, finalCta, links, showcaseIds } from "./content";
 import { Icon } from "./icons";
-import { Shell } from "./primitives";
+import { MaskedWords, Shell } from "./primitives";
 import { RandomChog } from "./random-chog-button";
 import { showcaseChogs } from "./showcase";
 
@@ -14,11 +15,16 @@ export function FinalCta() {
   return (
     <section aria-labelledby="final-cta-title" className="lp-section lp-cta-section">
       <Shell>
-        <div className="lp-cta lp-reveal">
+        {/* data-lp-loop: the lineup's slow float runs only while the panel is on screen (landing-motion.tsx). */}
+        <div className="lp-cta lp-reveal" data-lp-loop="">
           <div className="lp-cta-copy">
             <ul aria-hidden="true" className="lp-lineup">
               {lineup.map((chog, index) => (
-                <li key={chog.tokenId} className={index === middle ? "is-raised" : undefined}>
+                <li
+                  key={chog.tokenId}
+                  className={index === middle ? "is-raised" : undefined}
+                  style={{ "--n": index, "--from-mid": Math.abs(index - middle) } as CSSProperties}
+                >
                   <ChogImage
                     src={chog.image.src}
                     fallbackSrc={chog.image.fallbackSrc}
@@ -31,7 +37,7 @@ export function FinalCta() {
               ))}
             </ul>
             <h2 id="final-cta-title" className="lp-cta-title">
-              {finalCta.title}
+              <MaskedWords text={finalCta.title} />
             </h2>
             <p className="lp-lead">{finalCta.lede}</p>
             <div className="lp-cta-actions">

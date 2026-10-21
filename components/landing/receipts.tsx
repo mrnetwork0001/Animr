@@ -23,9 +23,12 @@ export function Receipts() {
           ))}
         </ul>
 
-        <Suspense fallback={<LatestDecisionFallback />}>
-          <LatestDecision />
-        </Suspense>
+        {/* The reveal sits on a wrapper in the static shell: the card itself streams in later (landing-motion.tsx). */}
+        <div className="lp-decision-slot lp-reveal">
+          <Suspense fallback={<LatestDecisionFallback />}>
+            <LatestDecision />
+          </Suspense>
+        </div>
       </div>
     </Section>
   );

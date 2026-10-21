@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { diagram } from "./content";
 import { icons } from "./icons";
 
@@ -14,7 +15,8 @@ const OPT_IN_STROKE = "lp-flow-optin";
  */
 export function FlowDiagram() {
   return (
-    <figure className="v2-card v2-card--roomy lp-flowfig lp-reveal">
+    // data-lp-loop: the dashes march and the dot travels only while the figure is on screen (landing-motion.tsx).
+    <figure className="v2-card v2-card--roomy lp-flowfig lp-reveal" data-lp-loop="">
       <figcaption className="lp-flowfig-cap">
         <h3 className="lp-h3-lg">{diagram.title}</h3>
         <p className="lp-card-p">
@@ -115,6 +117,33 @@ function Chevron({ d, optIn }: { d: string; optIn: boolean }) {
   );
 }
 
+/** Position in the draw-in sequence (landing.css .lp-fnode / .lp-edge). */
+const order = (n: number) => ({ "--n": n }) as CSSProperties;
+
+/**
+ * One small dot that follows a trade around the loop (the AI's order out, the swap output back), started by
+ * landing-motion.tsx once the edges have drawn and paused whenever the figure is off screen. The route's `M`
+ * jumps carry it across the nodes. Invisible until it starts; never shown with reduced motion (landing.css).
+ */
+function TradeDot({ route }: { route: string }) {
+  return (
+    <g className="lp-flow-dot" opacity="0">
+      <circle r="6" className="lp-flow-dot-halo" />
+      <circle r="2.5" className="lp-flow-dot-core" />
+      <animateMotion
+        path={route}
+        begin="indefinite"
+        dur="7s"
+        repeatCount="indefinite"
+        keyPoints="0;1;1"
+        keyTimes="0;0.8;1"
+        calcMode="linear"
+      />
+      <animate attributeName="opacity" begin="indefinite" dur="7s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;0.04;0.76;0.8;1" />
+    </g>
+  );
+}
+
 // ---------------------------------------------------------------- wide: one row
 
 const ROW = { nodeW: 168, nodeH: 120, gap: 50, top: 20 } as const;
@@ -127,6 +156,9 @@ function HorizontalFlow() {
   const walletX = step + nodeW / 2;
   const poolX = 4 * step + nodeW / 2;
   const laneY = bottom + 58;
+  const returnD = `M${poolX} ${bottom + 6}V${laneY - 10}Q${poolX} ${laneY} ${poolX - 10} ${laneY}H${walletX + 10}Q${walletX} ${laneY} ${walletX} ${laneY - 10}V${bottom + 7}`;
+  // The dot's route: along each edge (jumping across the nodes), then back along the return lane.
+  const route = diagram.edges.map((_, i) => `M${i * step + nodeW + 5} ${midY}H${i * step + nodeW + gap - 6}`).join("") + returnD;
 
   return (
     <svg
@@ -143,7 +175,7 @@ function HorizontalFlow() {
         const x1 = index * step + nodeW;
         const x2 = x1 + gap;
         return (
-          <g key={edge.label}>
+          <g key={edge.label} className="lp-edge" style={order(index)}>
             <line
               x1={x1 + 5}
               y1={midY}
@@ -161,31 +193,32 @@ function HorizontalFlow() {
       })}
 
       {/* Swap output returns to the wallet. */}
-      <path
-        d={`M${poolX} ${bottom + 6}V${laneY - 10}Q${poolX} ${laneY} ${poolX - 10} ${laneY}H${walletX + 10}Q${walletX} ${laneY} ${walletX} ${laneY - 10}V${bottom + 7}`}
-        fill="none"
-        strokeWidth="1.75"
-        className={`${OPT_IN_STROKE} lp-dashed`}
-      />
-      <Chevron d={`M${walletX - 5} ${bottom + 12}L${walletX} ${bottom + 6}L${walletX + 5} ${bottom + 12}`} optIn />
-      <text x={(walletX + poolX) / 2} y={laneY + 26} textAnchor="middle" className="lp-svg-return">
-        {diagram.returnLabel}
-      </text>
+      <g className="lp-edge lp-edge--return" style={order(diagram.nodes.length)}>
+        <path d={returnD} fill="none" strokeWidth="1.75" className={`${OPT_IN_STROKE} lp-dashed`} />
+        <Chevron d={`M${walletX - 5} ${bottom + 12}L${walletX} ${bottom + 6}L${walletX + 5} ${bottom + 12}`} optIn />
+        <text x={(walletX + poolX) / 2} y={laneY + 26} textAnchor="middle" className="lp-svg-return">
+          {diagram.returnLabel}
+        </text>
+      </g>
+
+      <TradeDot route={route} />
 
       {diagram.nodes.map((node, index) => (
         <g key={node.title} transform={`translate(${index * step} ${top})`}>
-          <NodeBox node={node} width={nodeW} height={nodeH} />
-          <NodeIcon node={node} x={16} y={16} />
-          {node.optIn && <Badge x={nodeW - 16 - BADGE_W} y={18} />}
-          <text x="16" y="78" className="lp-svg-title">
-            {node.title}
-          </text>
-          <text x="16" y="98" className="lp-svg-mono lp-svg-muted">
-            {node.lines[0]}
-          </text>
-          <text x="16" y="114" className="lp-svg-mono lp-svg-faint">
-            {node.lines[1]}
-          </text>
+          <g className="lp-fnode" style={order(index)}>
+            <NodeBox node={node} width={nodeW} height={nodeH} />
+            <NodeIcon node={node} x={16} y={16} />
+            {node.optIn && <Badge x={nodeW - 16 - BADGE_W} y={18} />}
+            <text x="16" y="78" className="lp-svg-title">
+              {node.title}
+            </text>
+            <text x="16" y="98" className="lp-svg-mono lp-svg-muted">
+              {node.lines[0]}
+            </text>
+            <text x="16" y="114" className="lp-svg-mono lp-svg-faint">
+              {node.lines[1]}
+            </text>
+          </g>
         </g>
       ))}
     </svg>
@@ -203,6 +236,8 @@ function VerticalFlow() {
   const walletY = top + step + nodeH / 2;
   const poolY = top + 4 * step + nodeH / 2;
   const laneX = nodeW + 36;
+  const returnD = `M${nodeW + 6} ${poolY}H${laneX - 10}Q${laneX} ${poolY} ${laneX} ${poolY - 10}V${walletY + 10}Q${laneX} ${walletY} ${laneX - 10} ${walletY}H${nodeW + 7}`;
+  const route = diagram.edges.map((_, i) => `M${midX} ${top + i * step + nodeH + 5}V${top + i * step + nodeH + gap - 6}`).join("") + returnD;
 
   return (
     <svg
@@ -219,7 +254,7 @@ function VerticalFlow() {
         const y1 = top + index * step + nodeH;
         const y2 = y1 + gap;
         return (
-          <g key={edge.label}>
+          <g key={edge.label} className="lp-edge" style={order(index)}>
             <line
               x1={midX}
               y1={y1 + 5}
@@ -237,35 +272,36 @@ function VerticalFlow() {
       })}
 
       {/* Swap output returns to the wallet. */}
-      <path
-        d={`M${nodeW + 6} ${poolY}H${laneX - 10}Q${laneX} ${poolY} ${laneX} ${poolY - 10}V${walletY + 10}Q${laneX} ${walletY} ${laneX - 10} ${walletY}H${nodeW + 7}`}
-        fill="none"
-        strokeWidth="1.75"
-        className={`${OPT_IN_STROKE} lp-dashed`}
-      />
-      <Chevron d={`M${nodeW + 12} ${walletY - 5}L${nodeW + 6} ${walletY}L${nodeW + 12} ${walletY + 5}`} optIn />
-      <text
-        transform={`translate(${laneX + 20} ${(walletY + poolY) / 2}) rotate(-90)`}
-        textAnchor="middle"
-        className="lp-svg-return lp-svg-12"
-      >
-        {diagram.returnLabel}
-      </text>
+      <g className="lp-edge lp-edge--return" style={order(diagram.nodes.length)}>
+        <path d={returnD} fill="none" strokeWidth="1.75" className={`${OPT_IN_STROKE} lp-dashed`} />
+        <Chevron d={`M${nodeW + 12} ${walletY - 5}L${nodeW + 6} ${walletY}L${nodeW + 12} ${walletY + 5}`} optIn />
+        <text
+          transform={`translate(${laneX + 20} ${(walletY + poolY) / 2}) rotate(-90)`}
+          textAnchor="middle"
+          className="lp-svg-return lp-svg-12"
+        >
+          {diagram.returnLabel}
+        </text>
+      </g>
+
+      <TradeDot route={route} />
 
       {diagram.nodes.map((node, index) => (
         <g key={node.title} transform={`translate(0 ${top + index * step})`}>
-          <NodeBox node={node} width={nodeW} height={nodeH} />
-          <NodeIcon node={node} x={14} y={14} />
-          {node.optIn && <Badge x={nodeW - 14 - BADGE_W} y={14} />}
-          <text x="64" y="34" className="lp-svg-title lp-svg-16">
-            {node.title}
-          </text>
-          <text x="64" y="57" className="lp-svg-mono lp-svg-muted lp-svg-12">
-            {node.lines[0]}
-          </text>
-          <text x="64" y="76" className="lp-svg-mono lp-svg-faint lp-svg-12">
-            {node.lines[1]}
-          </text>
+          <g className="lp-fnode" style={order(index)}>
+            <NodeBox node={node} width={nodeW} height={nodeH} />
+            <NodeIcon node={node} x={14} y={14} />
+            {node.optIn && <Badge x={nodeW - 14 - BADGE_W} y={14} />}
+            <text x="64" y="34" className="lp-svg-title lp-svg-16">
+              {node.title}
+            </text>
+            <text x="64" y="57" className="lp-svg-mono lp-svg-muted lp-svg-12">
+              {node.lines[0]}
+            </text>
+            <text x="64" y="76" className="lp-svg-mono lp-svg-faint lp-svg-12">
+              {node.lines[1]}
+            </text>
+          </g>
         </g>
       ))}
     </svg>

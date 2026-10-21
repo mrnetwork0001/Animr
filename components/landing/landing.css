@@ -1485,20 +1485,374 @@ html:has(.lp-root) {
 
 /* ============================================================================ motion */
 
+/*
+ * Everything below the hero, driven by landing-motion.tsx (one IntersectionObserver). A block is hidden only while
+ * html.lp-motion is set AND it says data-reveal="pending", so without JavaScript, with reduced motion, or before the
+ * controller runs, the page is simply there. "in" plays its entrance once; "done" (already on screen when the page
+ * loaded) never animates. Transforms, opacity and clip-path only; the one exception is the FAQ's height, which the
+ * browser animates natively. Child sequences use `both` fill, so their delays hold the first frame.
+ */
+
+.lp-root {
+  --lp-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --lp-step: 90ms;
+}
+
+/* A heading's words sit in their own boxes always (no reflow when motion switches on); the mask applies with motion. */
+.lp-word,
+.lp-word-in {
+  display: inline-block;
+}
+
+/* Counted numbers are always set in tabular figures; while one counts (landing-motion.tsx) it sits right-aligned in
+   a box held at its final width, so the words after it never move. */
+[data-lp-count] {
+  font-variant-numeric: tabular-nums;
+}
+.lp-count-num {
+  display: inline-block;
+  text-align: right;
+}
+
+/* Sequence position inside lists (rows, chips, checks, the lineup). */
+:is(.lp-dots, .lp-checks, .lp-rules, .lp-traits, .lp-genes, .lp-receipt-rows) > :nth-child(2) { --c: 1; }
+:is(.lp-dots, .lp-checks, .lp-rules, .lp-traits, .lp-genes, .lp-receipt-rows) > :nth-child(3) { --c: 2; }
+:is(.lp-dots, .lp-checks, .lp-rules, .lp-traits, .lp-genes, .lp-receipt-rows) > :nth-child(4) { --c: 3; }
+:is(.lp-dots, .lp-checks, .lp-rules, .lp-traits, .lp-genes, .lp-receipt-rows) > :nth-child(5) { --c: 4; }
+:is(.lp-dots, .lp-checks, .lp-rules, .lp-traits, .lp-genes, .lp-receipt-rows) > :nth-child(6) { --c: 5; }
+:is(.lp-dots, .lp-checks, .lp-rules, .lp-traits, .lp-genes, .lp-receipt-rows) > :nth-child(7) { --c: 6; }
+:is(.lp-dots, .lp-checks, .lp-rules, .lp-traits, .lp-genes, .lp-receipt-rows) > :nth-child(8) { --c: 7; }
+:is(.lp-traits) > :nth-child(9) { --c: 8; }
+:is(.lp-traits) > :nth-child(10) { --c: 9; }
+:is(.lp-traits) > :nth-child(11) { --c: 10; }
+:is(.lp-traits) > :nth-child(12) { --c: 11; }
+:is(.lp-traits) > :nth-child(13) { --c: 12; }
+
+/* The latest-decision card's static wrapper (receipts.tsx): a grid item that may shrink like the card did. */
+.lp-decision-slot {
+  min-width: 0;
+}
+
+/* Zero specificity: the FAQ head keeps its sticky position. */
+:where(.lp-head) {
+  position: relative;
+}
+
+/* Hover: cards lift a little; the verbs pick up a faint teal edge. Keyboard focus inside gets the same. */
+.lp-verb,
+.lp-persona {
+  transition:
+    border-color 0.3s ease,
+    background-color 0.3s ease,
+    box-shadow 0.45s var(--lp-ease),
+    translate 0.45s var(--lp-ease);
+}
+.lp-verb:is(:hover, :focus-within) {
+  border-color: rgb(159 240 236 / 0.24);
+  box-shadow:
+    var(--v2-glass-glow),
+    0 22px 44px -32px rgb(159 240 236 / 0.4);
+}
+
+/* The persona art: a soft band of the hero deck's foil light crosses it once on hover. */
+.lp-persona-art::after {
+  content: "";
+  position: absolute;
+  inset: 0 -60%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgb(159 240 236 / 0.08) 45%,
+    rgb(255 255 255 / 0.2) 48.5%,
+    rgb(190 170 255 / 0.1) 52%,
+    transparent 58%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-36%);
+}
+
+/* The flow diagram's travelling dot (flow-diagram.tsx TradeDot). */
+.lp-flow-dot-core {
+  fill: var(--v2-kicker);
+}
+.lp-flow-dot-halo {
+  fill: rgb(159 240 236 / 0.16);
+}
+
+/* Edge reveal directions: across on the row, down the column; the return lane runs back toward the wallet. */
+.lp-flowfig {
+  --lp-edge-from: inset(-4px calc(100% + 4px) -4px -4px);
+}
+.lp-flowfig .lp-edge--return {
+  --lp-edge-from: inset(-4px -4px -4px calc(100% + 4px));
+}
+.lp-flow-col .lp-edge {
+  --lp-edge-from: inset(-4px -4px calc(100% + 4px) -4px);
+}
+.lp-flow-col .lp-edge--return {
+  --lp-edge-from: inset(calc(100% + 4px) -4px -4px -4px);
+}
+/* The negative insets leave room for the arrows' chevrons, which overhang their 1px lines. */
+.lp-handover {
+  --lp-draw-from: inset(-8px -8px calc(100% + 8px) -8px);
+}
+@media (min-width: 768px) {
+  .lp-handover {
+    --lp-draw-from: inset(-8px calc(100% + 8px) -8px -8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-flow-dot {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .lp-dashed {
     animation: lp-flow 1.4s linear infinite;
   }
+  /* Off screen the dashes stop marching (data-lp-active is set only while the figure is visible). */
+  .lp-motion .lp-flowfig:not([data-lp-active]) .lp-dashed {
+    animation-play-state: paused;
+  }
+
+  /* -------------------------------------------------------------- the reveal */
+
+  .lp-motion .lp-reveal[data-reveal="pending"] {
+    opacity: 0;
+  }
+  .lp-motion .lp-reveal[data-reveal="pending"]:focus-within {
+    opacity: 1;
+  }
+  .lp-motion .lp-reveal[data-reveal="in"] {
+    animation: lp-rise 0.75s var(--lp-ease) calc(var(--lp-i, 0) * var(--lp-step)) both;
+  }
+
+  /* Section heads: the block stays, its words rise out of their masks, the lede follows, a glint runs the hairline. */
+  .lp-motion .lp-head.lp-reveal[data-reveal] {
+    opacity: 1;
+    animation: none;
+  }
+  .lp-motion .lp-word {
+    clip-path: inset(-0.25em -0.12em -0.2em -0.12em);
+  }
+  .lp-motion [data-reveal="pending"] .lp-word-in {
+    transform: translateY(125%);
+  }
+  .lp-motion [data-reveal="in"] .lp-word-in {
+    animation: lp-word 0.9s var(--lp-ease) calc(var(--lp-words-at, 0s) + var(--w, 0) * 55ms) both;
+  }
+  .lp-motion .lp-head[data-reveal="pending"] .lp-lead {
+    opacity: 0;
+  }
+  .lp-motion .lp-head[data-reveal="in"] .lp-lead {
+    animation: lp-rise-sm 0.8s var(--lp-ease) 0.28s both;
+  }
+  .lp-motion .lp-head[data-reveal="in"]::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: 0;
+    left: 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgb(189 247 238 / 0.55), transparent) no-repeat;
+    background-size: 28% 100%;
+    animation: lp-glint 1.8s var(--lp-ease) 0.1s both;
+  }
+
+  /* Hover */
+  .lp-verb:is(:hover, :focus-within),
+  .lp-persona:is(:hover, :focus-within) {
+    translate: 0 -3px;
+  }
+  .lp-verb .v2-icon-tile svg {
+    transition: transform 0.5s var(--lp-ease);
+  }
+  .lp-verb[data-verb="league"]:hover .v2-icon-tile svg {
+    transform: translateY(-2px);
+  }
+  .lp-verb[data-verb="versus"]:hover .v2-icon-tile svg {
+    transform: rotate(-30deg);
+  }
+  .lp-verb[data-verb="heist"]:hover .v2-icon-tile svg {
+    transform: rotate(-6deg) scale(1.04);
+  }
+  .lp-verb[data-verb="bell"] .v2-icon-tile svg {
+    transform-origin: 50% 14%;
+  }
+  .lp-verb[data-verb="bell"]:hover .v2-icon-tile svg {
+    animation: lp-bell 0.9s var(--lp-ease);
+  }
+  .lp-persona:hover .lp-persona-art::after {
+    opacity: 1;
+    transform: translateX(38%);
+    transition:
+      transform 1.1s cubic-bezier(0.45, 0, 0.25, 1),
+      opacity 0.2s ease;
+  }
+
+  /* The handover: seller, the transfer, the bundle (its four items light up in order), then the buyer. */
+  .lp-motion .lp-handover[data-reveal="in"] {
+    & .lp-handover-flow > :nth-child(1) {
+      animation: lp-rise-sm 0.6s var(--lp-ease) 0.3s both;
+    }
+    & .lp-handover-flow > :nth-child(2) .lp-flow-line {
+      animation: lp-draw 0.55s var(--lp-ease) 0.5s both;
+    }
+    & .lp-flow-label {
+      animation: lp-fade 0.5s ease 0.7s both;
+    }
+    & .lp-bundle {
+      animation: lp-rise 0.7s var(--lp-ease) 0.75s both;
+    }
+    & .lp-checks > li {
+      animation: lp-light 0.5s var(--lp-ease) calc(1.05s + var(--c, 0) * 140ms) both;
+    }
+    & .lp-check-icon path {
+      stroke-dasharray: 21;
+      animation: lp-tick 0.45s var(--lp-ease) calc(1.12s + var(--c, 0) * 140ms) both;
+    }
+    & .lp-handover-flow > :nth-child(4) .lp-flow-line {
+      animation: lp-draw 0.55s var(--lp-ease) 1.65s both;
+    }
+    & .lp-handover-flow > :nth-child(5) {
+      animation: lp-arrive 0.8s var(--lp-ease) 1.9s both;
+    }
+  }
+
+  /* Trading DNA: the rules, then the traits, "compiles to", and the genome writing out its genes. */
+  .lp-motion .lp-dna[data-reveal="in"] {
+    & .lp-rules > li {
+      animation: lp-rise-sm 0.6s var(--lp-ease) calc(0.2s + var(--c, 0) * 80ms) both;
+    }
+    & .lp-traits > li {
+      animation: lp-rise-sm 0.5s var(--lp-ease) calc(0.35s + var(--c, 0) * 30ms) both;
+    }
+    & .lp-compiles {
+      animation: lp-fade 0.6s ease 0.75s both;
+    }
+    & .lp-compiles-line:first-child {
+      --lp-draw-from: inset(-8px calc(100% + 8px) -8px -8px);
+      animation: lp-draw 0.7s var(--lp-ease) 0.8s both;
+    }
+    & .lp-compiles-line:last-child {
+      --lp-draw-from: inset(-8px -8px -8px calc(100% + 8px));
+      animation: lp-draw 0.7s var(--lp-ease) 0.8s both;
+    }
+    & .lp-genome {
+      animation: lp-rise 0.7s var(--lp-ease) 0.95s both;
+    }
+    & .lp-genes > li {
+      animation: lp-write 0.5s var(--lp-ease) calc(1.2s + var(--c, 0) * 70ms) both;
+    }
+    & .lp-dna-foot {
+      animation: lp-fade 0.6s ease 1.7s both;
+    }
+  }
+
+  /* What's real, what's simulated: the lines arrive one by one under each column. */
+  .lp-motion .lp-realsim[data-reveal="in"] .lp-dots > li {
+    animation: lp-rise-sm 0.55s var(--lp-ease) calc(0.25s + var(--c, 0) * 70ms) both;
+  }
+
+  /* The flow: nodes in order, each edge drawing to the next, then the return lane back to the wallet. */
+  .lp-motion .lp-flowfig[data-reveal="in"] {
+    & .lp-fnode {
+      animation: lp-rise-sm 0.6s var(--lp-ease) calc(0.25s + var(--n, 0) * 150ms) both;
+    }
+    & .lp-edge {
+      animation: lp-edge 0.5s var(--lp-ease) calc(0.4s + var(--n, 0) * 150ms) both;
+    }
+    & .lp-edge--return {
+      animation-duration: 0.9s;
+    }
+  }
+
+  /* The latest decision prints out: the thought, then the receipt feeding down, row by row. */
+  .lp-motion .lp-decision-slot[data-reveal="in"] {
+    & .lp-thought {
+      animation: lp-rise-sm 0.6s var(--lp-ease) 0.2s both;
+    }
+    & .lp-receipt {
+      animation: lp-print 0.9s var(--lp-ease) 0.4s both;
+    }
+    & .lp-receipt-rows > div {
+      animation: lp-row 0.45s var(--lp-ease) calc(0.6s + var(--c, 0) * 90ms) both;
+    }
+    & :is(.lp-receipt-stored, .lp-receipt-note) {
+      animation: lp-fade 0.5s ease 1.15s both;
+    }
+  }
+
+  /* The final call: the lineup gathers from the middle out, then the title, the line and the buttons. */
+  .lp-motion .lp-cta[data-reveal="in"] {
+    & .lp-lineup > li {
+      animation: lp-gather 0.8s var(--lp-ease) calc(0.1s + var(--from-mid, 0) * 80ms) both;
+    }
+    & .lp-cta-title {
+      --lp-words-at: 0.2s;
+    }
+    & .lp-cta-copy > .lp-lead {
+      animation: lp-rise-sm 0.7s var(--lp-ease) 0.42s both;
+    }
+    & .lp-cta-actions {
+      animation: lp-rise-sm 0.7s var(--lp-ease) 0.52s both;
+    }
+    & .lp-cta-copy > .v2-note {
+      animation: lp-fade 0.6s ease 0.7s both;
+    }
+  }
+  /* Then the lineup breathes, slowly and only while the panel is on screen. */
+  .lp-motion .lp-cta[data-lp-active] .lp-lineup-art {
+    animation: lp-float 6.5s ease-in-out calc(var(--n, 0) * -1.6s) infinite alternate;
+  }
+
+  /* FAQ: answers open and close with a height animation where the browser can do it natively. */
+  @supports (interpolate-size: allow-keywords) and selector(::details-content) {
+    .lp-faq-list {
+      interpolate-size: allow-keywords;
+    }
+    .lp-faq-item::details-content {
+      block-size: 0;
+      overflow-y: clip;
+      transition:
+        block-size 0.45s var(--lp-ease),
+        content-visibility 0.45s allow-discrete;
+    }
+    .lp-faq-item[open]::details-content {
+      block-size: auto;
+    }
+    .lp-faq-a {
+      opacity: 0;
+      translate: 0 -4px;
+      transition:
+        opacity 0.3s ease,
+        translate 0.45s var(--lp-ease);
+    }
+    .lp-faq-item[open] .lp-faq-a {
+      opacity: 1;
+      translate: 0 0;
+    }
+    @starting-style {
+      .lp-faq-item[open] .lp-faq-a {
+        opacity: 0;
+        translate: 0 -4px;
+      }
+    }
+  }
 }
 
-/* Blocks rise in as they scroll into view, where scroll-driven animations exist. */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .lp-reveal {
-      animation: lp-reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 30%;
-    }
+@media print {
+  .lp-reveal,
+  .lp-reveal * {
+    animation: none !important;
+    opacity: 1 !important;
+    clip-path: none !important;
   }
 }
 
@@ -1508,15 +1862,151 @@ html:has(.lp-root) {
   }
 }
 
-/* transform, not translate: the v2 cards lift on hover with `translate`, which this must not hold. */
-@keyframes lp-reveal {
+/* transform, not translate: the cards lift on hover with `translate`, which these must not hold. */
+@keyframes lp-rise {
   from {
     opacity: 0;
-    transform: translateY(1.25rem);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+@keyframes lp-rise-sm {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lp-word {
+  from {
+    transform: translateY(125%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes lp-glint {
+  from {
+    background-position: -40% 0;
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  to {
+    background-position: 140% 0;
+    opacity: 0;
+  }
+}
+@keyframes lp-draw {
+  from {
+    clip-path: var(--lp-draw-from);
+  }
+  to {
+    clip-path: inset(-8px);
+  }
+}
+@keyframes lp-edge {
+  from {
+    clip-path: var(--lp-edge-from);
+  }
+  to {
+    clip-path: inset(-4px);
+  }
+}
+@keyframes lp-light {
+  from {
+    opacity: 0.25;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-tick {
+  from {
+    stroke-dashoffset: 21;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes lp-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-write {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-print {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-6px);
+  }
+  to {
+    clip-path: inset(0);
+    transform: none;
+  }
+}
+@keyframes lp-row {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-gather {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lp-float {
+  to {
+    transform: translateY(-3px);
+  }
+}
+@keyframes lp-bell {
+  20% {
+    rotate: 12deg;
+  }
+  45% {
+    rotate: -9deg;
+  }
+  70% {
+    rotate: 4deg;
   }
 }
 
