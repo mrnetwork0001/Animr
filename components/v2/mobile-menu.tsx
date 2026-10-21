@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { V2_NAV_LINKS, isV2NavActive } from "./nav";
+import { NavItemContent, NavWalletSource } from "./nav-hud";
 
 /** Below this width the section links and the wallet live in the hamburger panel (matches design-v2.css). */
 const COMPACT = "(max-width: 1099.98px)";
@@ -33,6 +34,8 @@ export function V2HeaderActions({ wallet }: { wallet?: ReactNode }) {
   const compact = useCompact();
   return (
     <div className="v2-header-actions">
+      {/* Feeds the "Your Chogs" badge for both layouts (one instance per page). */}
+      <NavWalletSource />
       {!compact && <div className="v2-header-wallet">{wallet}</div>}
       <Suspense fallback={<MenuButton open={false} onToggle={() => {}} controls="" />}>
         <MobileMenu wallet={compact ? wallet : null} />
@@ -114,7 +117,7 @@ function MobileMenu({ wallet }: { wallet: ReactNode }) {
                     aria-current={active ? (pathname === link.href ? "page" : "true") : undefined}
                     onClick={() => setOpen(false)}
                   >
-                    {link.label}
+                    <NavItemContent link={link} row badges={open} />
                   </Link>
                 </li>
               );

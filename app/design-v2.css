@@ -346,8 +346,9 @@
     position: relative;
     display: inline-flex;
     align-items: center;
+    gap: 7px;
     height: 36px;
-    padding-inline: 13px;
+    padding-inline: 11px 13px;
     border: 1px solid transparent;
     border-radius: var(--v2-r-pill);
     color: var(--v2-nav);
@@ -359,18 +360,26 @@
     transition:
       color var(--v2-dur) ease,
       background-color var(--v2-dur) ease,
-      border-color var(--v2-dur) ease;
+      border-color var(--v2-dur) ease,
+      box-shadow var(--v2-dur) ease,
+      transform var(--v2-dur) var(--v2-ease);
   }
   .v2-nav-link:hover {
     color: var(--v2-ink);
+    background-color: rgb(255 255 255 / 0.03);
   }
+  /* The current section is the HUD's lit slot: raised a pixel, a faint teal light from below, a teal glyph. */
   .v2-nav-link[aria-current],
   .v2-nav-link.is-active {
     border-color: var(--v2-line);
-    background-color: rgb(255 255 255 / 0.05);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+    background-color: rgb(255 255 255 / 0.055);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      inset 0 -12px 16px -14px rgb(159 240 236 / 0.4),
+      0 8px 18px -12px rgb(0 0 0 / 0.9);
     color: var(--v2-ink);
     font-weight: 480;
+    transform: translateY(-1px);
   }
   /* A teal tick under the current section, the wordmark's "AI" colour. */
   .v2-nav-link[aria-current]::after,
@@ -379,14 +388,185 @@
     position: absolute;
     bottom: -1px;
     left: 50%;
-    width: 16px;
+    width: 18px;
     height: 2px;
     border-radius: 2px;
     background: var(--v2-teal);
+    box-shadow: 0 0 6px rgb(159 240 236 / 0.5);
     transform: translateX(-50%);
+  }
+  /* Keyboard focus only: a slim ring that follows the pill (mouse clicks never show it). */
+  .v2-page .v2-nav-link:focus-visible,
+  .v2-page .v2-menu-link:focus-visible {
+    outline: 1.5px solid var(--v2-teal);
+    outline-offset: 2px;
+  }
+  .v2-nav-link:focus:not(:focus-visible),
+  .v2-menu-link:focus:not(:focus-visible) {
+    outline: none;
   }
   .v2-nav-short {
     display: none;
+  }
+
+  /* Section glyphs (components/v2/icons.tsx Nav*Icon): dimmer than the label until hovered or current. */
+  .v2-nav-glyph {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    overflow: visible;
+    color: var(--v2-faint);
+    transition: color var(--v2-dur) ease;
+  }
+  :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph {
+    color: var(--v2-ink);
+  }
+  :is(.v2-nav-link, .v2-menu-link)[aria-current] .v2-nav-glyph {
+    color: var(--v2-teal);
+  }
+  .v2-nav-glyph [data-part] {
+    transform-box: view-box;
+    transform-origin: 12px 12px;
+  }
+  .v2-nav-glyph [data-part="check"] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+
+  /* Live badges (nav-hud.tsx): a corner chip on the desktop pill, out of the flow, so arriving never moves the nav. */
+  .v2-nav-badge {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 17px;
+    min-width: 17px;
+    padding-inline: 5px;
+    border: 1px solid var(--v2-line);
+    border-radius: var(--v2-r-pill);
+    background-color: #1a1920;
+    box-shadow: 0 2px 6px -2px rgb(0 0 0 / 0.7);
+    color: var(--v2-ink);
+    font-family: var(--v2-font-text);
+    font-size: 10.5px;
+    font-weight: 560;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  /* Rides open on a live Bell: the teal "live" chip with a dot. */
+  .v2-nav-badge[data-tone="live"] {
+    border-color: rgb(159 240 236 / 0.4);
+    background-color: #12201f;
+    color: var(--v2-teal);
+  }
+  .v2-nav-badge[data-tone="live"]::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* Phones and tablets: the hamburger rows carry the same glyph and badge, the badge at the row's end. */
+  .v2-menu-link .v2-nav-glyph {
+    width: 18px;
+    height: 18px;
+  }
+  .v2-menu-link .v2-nav-badge {
+    position: static;
+    margin-left: auto;
+    height: 20px;
+    padding-inline: 7px;
+    font-size: 11.5px;
+    box-shadow: none;
+  }
+
+  /* 1100-1279px: the rail keeps its glyphs and takes the short labels, so it still fits between logo and wallet. */
+  @media (min-width: 1100px) and (max-width: 1279.98px) {
+    .v2-nav-link {
+      gap: 6px;
+      padding-inline: 9px 11px;
+    }
+    .v2-nav-full,
+    .v2-nav-link .v2-nav-badge-extra {
+      display: none;
+    }
+    .v2-nav-short {
+      display: inline;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .v2-nav-badge {
+      animation: v2-badge-in 220ms var(--v2-ease) both;
+    }
+    .v2-nav-badge[data-urgent] {
+      animation:
+        v2-badge-in 220ms var(--v2-ease) both,
+        v2-badge-pulse 2s ease-in-out 220ms infinite;
+    }
+    .v2-nav-glyph [data-part] {
+      transition: transform 180ms var(--v2-ease);
+    }
+    /* Hover micro-motions, each under 200ms: ears up, the cup lifts, blades cross, the bell swings, the mask
+       glances, the check redraws. */
+    :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph [data-part="head"] {
+      transform: translateY(-1px) rotate(-7deg);
+    }
+    :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph [data-part="cup"] {
+      transform: translateY(-1.5px);
+    }
+    :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph [data-part="blade-a"] {
+      transform: rotate(-9deg);
+    }
+    :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph [data-part="blade-b"] {
+      transform: rotate(9deg);
+    }
+    :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph [data-part="bell"] {
+      transform-origin: 12px 3.5px;
+      animation: v2-bell-swing 200ms ease-out;
+    }
+    :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph [data-part="mask"] {
+      transform: translateX(1px) rotate(-6deg);
+    }
+    :is(.v2-nav-link, .v2-menu-link):is(:hover, :focus-visible) .v2-nav-glyph [data-part="check"] {
+      animation: v2-check-draw 200ms ease-out;
+    }
+  }
+  @keyframes v2-badge-in {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  }
+  @keyframes v2-badge-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(159 240 236 / 0);
+    }
+    50% {
+      box-shadow: 0 0 0 3px rgb(159 240 236 / 0.16);
+    }
+  }
+  @keyframes v2-bell-swing {
+    35% {
+      transform: rotate(-14deg);
+    }
+    70% {
+      transform: rotate(9deg);
+    }
+  }
+  @keyframes v2-check-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
   }
 
   .v2-header-actions {
@@ -481,6 +661,7 @@
   .v2-menu-link {
     display: flex;
     align-items: center;
+    gap: 12px;
     min-height: 48px;
     padding-inline: 12px;
     border-radius: 12px;

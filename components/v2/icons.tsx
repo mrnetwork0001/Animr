@@ -130,3 +130,95 @@ export function ExternalIcon(props: IconProps) {
     </svg>
   );
 }
+
+// --- Header nav glyphs ----------------------------------------------------------------------------
+// One family for the six section links (components/v2/nav-hud.tsx): a 24-unit grid drawn at 18px, so the
+// 2.13 stroke lands at the hero's 1.6px; the main shape carries the family's faint fill. Parts that move on
+// hover (design-v2.css `.v2-nav-glyph`) carry a `data-part`.
+
+const nav = { ...base, viewBox: "0 0 24 24", strokeWidth: 2.13, width: 18, height: 18 } as const;
+
+/** Your Chogs: a Chog's head, ears up. */
+export function NavChogIcon(props: IconProps) {
+  return (
+    <svg {...nav} {...props}>
+      <g data-part="head">
+        <path
+          d="M5.2 9.6 5.7 3.9l4.1 3.2h4.4l4.1-3.2.5 5.7c.8 1.2 1.2 2.5 1.2 3.9 0 4.2-3.6 7-8 7s-8-2.8-8-7c0-1.4.4-2.7 1.2-3.9Z"
+          fill="currentColor"
+          fillOpacity={0.1}
+        />
+        <circle cx="9.1" cy="13.2" r="1.15" fill="currentColor" stroke="none" />
+        <circle cx="14.9" cy="13.2" r="1.15" fill="currentColor" stroke="none" />
+        <path d="M11 16.4c.6.5 1.4.5 2 0" />
+      </g>
+    </svg>
+  );
+}
+
+/** League: a trophy. */
+export function NavLeagueIcon(props: IconProps) {
+  return (
+    <svg {...nav} {...props}>
+      <g data-part="cup">
+        <path d="M7.5 3.8h9v5.4a4.5 4.5 0 0 1-9 0Z" fill="currentColor" fillOpacity={0.1} />
+        <path d="M7.5 5.6H4.6v1.1a3.6 3.6 0 0 0 3.5 3.6M16.5 5.6h2.9v1.1a3.6 3.6 0 0 1-3.5 3.6" />
+      </g>
+      <path d="M12 13.7v3.4M8.4 20.4h7.2M9.6 17.1h4.8l.6 3.3H9Z" />
+    </svg>
+  );
+}
+
+/** Versus: two crossed swords. */
+export function NavVersusIcon(props: IconProps) {
+  return (
+    <svg {...nav} {...props}>
+      <g data-part="blade-a">
+        <path d="M4 4h3.4l8.3 8.3M4 4v3.4l8.3 8.3" />
+        <path d="M12.6 17.8l5.2-5.2M16.4 16.4l3.6 3.6" />
+      </g>
+      <g data-part="blade-b">
+        <path d="M20 4h-3.4l-4.2 4.2M20 4v3.4l-4.2 4.2" />
+        <path d="M11.4 17.8 6.2 12.6M7.6 16.4 4 20" />
+      </g>
+    </svg>
+  );
+}
+
+/** Daily Bell. */
+export function NavBellIcon(props: IconProps) {
+  return (
+    <svg {...nav} {...props}>
+      <g data-part="bell">
+        <path d="M6 16.6V11a6 6 0 0 1 12 0v5.6l1.8 2.1H4.2Z" fill="currentColor" fillOpacity={0.1} />
+        <path d="M12 3.4V5M10 21a2.2 2.2 0 0 0 4 0" />
+      </g>
+    </svg>
+  );
+}
+
+/** Rob this Chog: a domino mask. */
+export function NavMaskIcon(props: IconProps) {
+  return (
+    <svg {...nav} {...props}>
+      <g data-part="mask">
+        <path
+          d="M2.6 10.1c0-1.3 1-2.1 2.2-1.9 2.5.5 4.7.9 7.2.9s4.7-.4 7.2-.9c1.2-.2 2.2.6 2.2 1.9 0 4.6-2.2 7.5-5.6 7.5-1.9 0-2.6-2-3.8-2s-1.9 2-3.8 2c-3.4 0-5.6-2.9-5.6-7.5Z"
+          fill="currentColor"
+          fillOpacity={0.1}
+        />
+        <path d="M6.3 12.4c.9-1 2.6-1 3.5 0M14.2 12.4c.9-1 2.6-1 3.5 0" />
+      </g>
+    </svg>
+  );
+}
+
+/** Guard: a shield with a check. */
+export function NavShieldIcon(props: IconProps) {
+  return (
+    <svg {...nav} {...props}>
+      <path d="M12 3.2 19 6v5.3c0 4.4-2.9 7.9-7 9.5-4.1-1.6-7-5.1-7-9.5V6Z" fill="currentColor" fillOpacity={0.1} />
+      <path data-part="check" pathLength={1} d="m8.9 12.1 2.2 2.2 4.1-4.3" />
+    </svg>
+  );
+}
