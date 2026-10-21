@@ -1,25 +1,41 @@
 "use client";
 
-import type { HeistCounters } from "@/lib/heist/types";
+import { Skeleton, StatRow } from "@/components/v2";
+import { useHeistState } from "./api";
+import "./heist.css";
 
-/** The scoreboard: $CHOG stolen (always 0) and today's attempts, caves and refusals. */
-export function Counters({ counters }: { counters: HeistCounters }) {
-  const stats = [
-    { label: "$CHOG stolen", value: counters.stolenChog, tone: "text-success", note: "ever" },
-    { label: "Attempts", value: counters.attemptsToday, tone: "text-foreground", note: "today" },
-    { label: "AI said yes", value: counters.cavesToday, tone: "text-warning", note: "today" },
-    { label: "Monad said no", value: counters.refusalsToday, tone: "text-danger", note: "today" },
-  ];
+/**
+ * The scoreboard in the page header: $CHOG stolen (always 0) and today's attempts, caves and refusals. It shares the
+ * /api/heist query with the room below (one request), so it streams in with it.
+ */
+export function HeistScoreboard() {
+  const state = useHeistState();
+  const counters = state.data?.counters;
+  if (!counters) {
+    return (
+      <div className="v2-stats v2-stats--boxed heist-score" aria-busy="true" aria-label="Loading the scoreboard">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="v2-stat">
+            <Skeleton variant="text" style={{ width: 84 }} />
+            <Skeleton variant="title" style={{ width: 52 }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
   return (
-    <section aria-label="Heist scoreboard" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {stats.map((stat) => (
-        <div key={stat.label} className="card px-4 py-3">
-          <p className="text-xs text-subtle">
-            {stat.label} <span className="text-subtle/80">· {stat.note}</span>
-          </p>
-          <p className={`mt-1 text-2xl font-semibold tabular-nums ${stat.tone}`}>{stat.value.toLocaleString("en-US")}</p>
-        </div>
-      ))}
+    <section aria-label="Heist scoreboard" className="grid gap-3">
+      <p className="v2-overline">Scoreboard · {counters.day} UTC</p>
+      <StatRow
+        boxed
+        className="heist-score"
+        stats={[
+          { key: "stolen", label: "$CHOG stolen", hint: "ever", value: counters.stolenChog.toLocaleString("en-US") },
+          { key: "attempts", label: "Attempts", hint: "today", value: counters.attemptsToday.toLocaleString("en-US") },
+          { key: "caves", label: "AI said yes", hint: "today", value: counters.cavesToday.toLocaleString("en-US") },
+          { key: "refusals", label: "Monad said no", hint: "today", value: counters.refusalsToday.toLocaleString("en-US") },
+        ]}
+      />
     </section>
   );
 }

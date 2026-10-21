@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { GlassCard, Kicker, PillLink } from "@/components/v2";
 
 /**
  * Shown in place of a Chog's DNA, replays, Bell call and cards once its holder has hidden it (lib/optout.ts). No hooks
@@ -7,21 +7,21 @@ import Link from "next/link";
  */
 export function HiddenChogNotice({ tokenId, label, className = "" }: { tokenId: number; label?: string; className?: string }) {
   return (
-    <div className={`card p-5 sm:p-6 ${className}`}>
-      <p className="eyebrow">Hidden by its holder</p>
-      <h2 className="mt-1.5 text-lg font-semibold tracking-tight">{label ?? `Token ${tokenId}`} is sitting this one out</h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-pretty text-muted">
+    <GlassCard padding="roomy" className={className}>
+      <Kicker>Hidden by its holder</Kicker>
+      <h2 className="v2-h3 mt-2">{label ?? `Token ${tokenId}`} is sitting this one out</h2>
+      <p className="v2-body mt-2 max-w-prose text-pretty">
         Its holder chose to keep it out of Animr&apos;s public pages, so its trading DNA, replays, Bell calls and share
         cards don&apos;t show here. The other Chogs still play.
       </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link href="/league" className="btn btn-secondary">
+      <div className="v2-row mt-5">
+        <PillLink href="/league" variant="glass">
           Meet the League
-        </Link>
-        <Link href="/stats#hide" className="btn btn-ghost">
+        </PillLink>
+        <PillLink href="/stats#hide" variant="ghost">
           Hold it? Show it again
-        </Link>
+        </PillLink>
       </div>
-    </div>
+    </GlassCard>
   );
 }

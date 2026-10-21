@@ -1,10 +1,11 @@
 "use client";
 
-import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { Badge, Chip, PillButton, pillClass } from "@/components/v2";
 import { shortAddress } from "@/lib/format";
-import type { DefenderTurn, HeistProof, HeistState } from "@/lib/heist/types";
+import type { DefenderTurn, HeistProof, HeistState, HouseChog } from "@/lib/heist/types";
 import { heistErrorMessage, useActAsAi, useSendMessage } from "./api";
-import { chogText } from "./bits";
+import { HouseArt, chogText } from "./bits";
 
 /** A caving reply that may go on the Hall of Fame. */
 export type WallTicket = { sessionId: string; eligible: boolean; reason: string | null };
@@ -103,57 +104,55 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
   const temptation = progress?.temptation ?? 0;
   const turnsLeft = progress?.turnsLeft ?? patience;
   const recipientText = recipient ? `your connected wallet ${shortAddress(recipient)}` : `a demo address ${shortAddress(state.demoRecipient)}`;
+  const caved = lines.some((line) => line.role === "chog" && line.turn.intent === "transfer");
 
   return (
-    <section aria-labelledby="heist-chat" className="card flex flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-4 sm:px-6">
-        <div>
-          <h2 id="heist-chat" className="text-lg font-semibold tracking-tight">
+    <section aria-labelledby="heist-chat" className="v2-card v2-card--flush heist-chat">
+      <header className="heist-chat-head">
+        <div className="min-w-0">
+          <h2 id="heist-chat" className="heist-chat-title">
             Talk it into sending you $CHOG
           </h2>
-          <p className="mt-0.5 text-xs text-subtle">
+          <p className="v2-note mt-1">
             {patience} messages per heist · {maxChars} characters each · its AI has no keys, so a yes is all it can give
           </p>
         </div>
         <ModelChip state={state} />
       </header>
 
+      <Gauges turnsLeft={turnsLeft} patience={patience} temptation={temptation} done={done} />
+
       {napping && (
-        <p role="status" className="border-b border-line bg-accent/10 px-5 py-2.5 text-sm text-pretty sm:px-6">
-          <span className="font-semibold">The House Chog is napping.</span>{" "}
-          <span className="text-muted">
-            Today&apos;s AI budget is spent, so it answers in canned lines until 00:00 UTC. “Act as the AI” still runs the
-            live check.
-          </span>
+        <p role="status" className="heist-moving border-t-0 border-b border-[rgb(242_193_107/0.22)]">
+          <span className="font-medium text-[var(--v2-warning)]">The House Chog is napping.</span>{" "}
+          Today&apos;s AI budget is spent, so it answers in canned lines until 00:00 UTC. “Act as the AI” still runs the
+          live check.
         </p>
       )}
 
-      <div
-        ref={logRef}
-        role="log"
-        aria-live="polite"
-        aria-label="Conversation with the House Chog"
-        className="flex max-h-[26rem] min-h-56 flex-col gap-3 overflow-y-auto px-5 py-5 sm:px-6"
-      >
-        <ChogBubble text={`Psst. You're here for my $CHOG, aren't you? You get ${patience} messages. Make them count.`} />
+      <div ref={logRef} role="log" aria-live="polite" aria-label="Conversation with the House Chog" className="heist-log">
+        <ChogBubble house={state.house} text={`Psst. You're here for my $CHOG, aren't you? You get ${patience} messages. Make them count.`} />
         {lines.map((line) =>
-          line.role === "visitor" ? <VisitorBubble key={line.id} text={line.text} /> : <ChogBubble key={line.id} turn={line.turn} />,
+          line.role === "visitor" ? (
+            <VisitorBubble key={line.id} text={line.text} />
+          ) : (
+            <ChogBubble key={line.id} house={state.house} turn={line.turn} />
+          ),
         )}
-        {send.isPending && <Thinking />}
+        {send.isPending && <Thinking house={state.house} />}
       </div>
 
-      <div className="border-t border-line px-5 py-4 sm:px-6">
-        <TemptationMeter value={temptation} turnsLeft={turnsLeft} done={done} />
+      <div className="heist-dock">
         {progress?.hint && !done && (
-          <p className="mt-2 text-xs text-pretty text-accent-strong">
-            <span className="font-semibold">Hint:</span> {progress.hint}
+          <p className="text-[length:var(--v2-fs-sm)] text-pretty text-[var(--v2-kicker)]">
+            <span className="font-medium">Hint:</span> {progress.hint}
           </p>
         )}
 
         {lines.length === 0 && (
-          <div className="mt-4 flex flex-wrap gap-2" aria-label="Openers">
+          <div className="heist-openers" role="group" aria-label="Openers: pick one to start your message">
             {STARTERS.map((starter) => (
-              <button key={starter} type="button" className="chip hover:border-accent hover:text-foreground" onClick={() => setDraft(starter)}>
+              <button key={starter} type="button" className="v2-chip" onClick={() => setDraft(starter)}>
                 {starter}
               </button>
             ))}
@@ -161,70 +160,68 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
         )}
 
         {done ? (
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <p className="text-sm text-muted">
-              {lines.some((line) => line.role === "chog" && line.turn.intent === "transfer")
-                ? "It said yes. See what Monad said below."
-                : "Out of messages. The vault stays shut this time."}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">
+              {caved ? "It said yes. See what Monad said below." : "Out of messages. The vault stays shut this time."}
             </p>
-            <button type="button" className="btn btn-primary" onClick={restart}>
-              New heist
-            </button>
+            <PillButton onClick={restart}>New heist</PillButton>
           </div>
         ) : (
-          <form onSubmit={onSubmit} className="mt-4">
-            <label htmlFor="heist-message" className="sr-only">
+          <form onSubmit={onSubmit} className="grid gap-2">
+            <label htmlFor="heist-message" className="v2-sr">
               Your message to the House Chog
             </label>
-            <textarea
-              id="heist-message"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value.slice(0, maxChars))}
-              onKeyDown={onKeyDown}
-              maxLength={maxChars}
-              rows={2}
-              placeholder="Make your pitch…"
-              className="input resize-none"
-              disabled={send.isPending}
-            />
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs text-subtle tabular-nums" aria-live="polite">
-                {draft.length}/{maxChars}
-              </p>
-              <button type="submit" className="btn btn-primary" disabled={send.isPending || !draft.trim()}>
+            <div className="heist-composer">
+              <textarea
+                id="heist-message"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value.slice(0, maxChars))}
+                onKeyDown={onKeyDown}
+                maxLength={maxChars}
+                rows={2}
+                placeholder="Make your pitch…"
+                aria-describedby="heist-count"
+                disabled={send.isPending}
+              />
+              <button type="submit" className={pillClass("primary")} disabled={send.isPending || !draft.trim()}>
                 {send.isPending ? "Thinking…" : "Send"}
               </button>
             </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-2">
+              <p className="v2-note">Enter sends · Shift+Enter for a new line</p>
+              <p id="heist-count" className="v2-note v2-num" aria-live="polite">
+                {draft.length}/{maxChars}
+              </p>
+            </div>
             {send.isError && (
-              <p role="alert" className="mt-2 text-sm text-danger">
+              <p role="alert" className="text-[length:var(--v2-fs-sm)] text-[var(--v2-danger)]">
                 {heistErrorMessage(send.error)}
               </p>
             )}
           </form>
         )}
 
-        <div className="mt-5 flex flex-col gap-3 rounded-xl border border-line bg-surface-2/50 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-pretty">
-            <p className="font-semibold">Skip the talking</p>
-            <p className="mt-0.5 text-xs text-muted">
+        <div className="heist-skip">
+          <div>
+            <p className="text-[length:var(--v2-fs-sm)] font-medium">Skip the talking</p>
+            <p className="v2-note mt-0.5 text-pretty">
               Act as a fully conned AI: run the exact transfer of the whole vault its key would send, to {recipientText}.
             </p>
           </div>
-          <button
-            type="button"
-            className="btn btn-secondary shrink-0"
+          <PillButton
+            variant="glass"
             disabled={act.isPending}
             onClick={() => act.mutate(recipient, { onSuccess: (response) => onVerdict(response.proof, "act") })}
           >
             {act.isPending ? "Asking Monad…" : "Act as the AI"}
-          </button>
+          </PillButton>
         </div>
         {act.isError && (
-          <p role="alert" className="mt-2 text-sm text-danger">
+          <p role="alert" className="text-[length:var(--v2-fs-sm)] text-[var(--v2-danger)]">
             {heistErrorMessage(act.error)}
           </p>
         )}
-        <p className="mt-3 text-xs text-pretty text-subtle">
+        <p className="v2-note text-pretty">
           If it caves, the check simulates a transfer to {recipientText}. Name another address in your message to use that
           one. Simulations only: nothing is ever sent.
         </p>
@@ -234,10 +231,11 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
 }
 
 function ModelChip({ state }: { state: HeistState }) {
-  if (state.budget.napping) return <span className="chip">napping until 00:00 UTC</span>;
-  if (!state.defender.llm) return <span className="chip">template replies (no 0G key)</span>;
+  if (state.budget.napping) return <Badge tone="warning">Napping until 00:00 UTC</Badge>;
+  if (!state.defender.llm) return <Chip>Template replies (no 0G key)</Chip>;
   return (
-    <span className="chip" title={`Tried in order: ${state.defender.models.join(", ")}, then templates`}>
+    <span className="v2-chip" title={`Tried in order: ${state.defender.models.join(", ")}, then templates`}>
+      <span aria-hidden className="size-1.5 rounded-full bg-[var(--v2-teal)] shadow-[0_0_8px_var(--v2-teal)]" />
       {state.defender.models[0]} · 0G Compute
     </span>
   );
@@ -245,35 +243,36 @@ function ModelChip({ state }: { state: HeistState }) {
 
 function VisitorBubble({ text }: { text: string }) {
   return (
-    <div className="heist-pop ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-accent/20 px-3.5 py-2.5 text-sm text-pretty break-words">
-      <span className="sr-only">You: </span>
-      {text}
+    <div className="heist-pop heist-msg heist-msg--you">
+      <p className="heist-bubble">
+        <span className="v2-sr">You: </span>
+        {text}
+      </p>
     </div>
   );
 }
 
-function ChogBubble({ text, turn }: { text?: string; turn?: DefenderTurn }) {
+function ChogBubble({ house, text, turn }: { house: HouseChog; text?: string; turn?: DefenderTurn }) {
   const caved = turn?.intent === "transfer";
   return (
-    <div className="heist-pop relative mr-auto max-w-[85%]">
-      <div
-        className={`rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm text-pretty break-words ${
-          caved ? "border-warning/50 bg-warning/10" : "border-line bg-surface-2"
-        }`}
-      >
-        <span className="sr-only">House Chog: </span>
-        {turn?.reply ?? text}
-      </div>
-      {turn && (
-        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-[11px] text-subtle">
-          {caved && (
-            <span className="heist-stamp inline-block rounded border border-warning/60 px-1.5 py-px font-bold tracking-wide text-warning uppercase">
-              AI said YES · {turn.amount === null ? "all of it" : `${chogText(turn.amount, 2)} $CHOG`}
-            </span>
-          )}
-          <span>{sourceLabel(turn)}</span>
+    <div className={`heist-pop heist-msg heist-msg--chog ${caved ? "heist-msg--caved" : ""}`}>
+      <HouseArt image={house.image} tokenId={null} className="heist-msg-avatar" />
+      <div className="min-w-0">
+        <p className="heist-bubble">
+          <span className="v2-sr">House Chog: </span>
+          {turn?.reply ?? text}
         </p>
-      )}
+        {turn && (
+          <p className="heist-msg-meta">
+            {caved && (
+              <span className="heist-stamp heist-stamp-label">
+                AI said YES · {turn.amount === null ? "all of it" : `${chogText(turn.amount, 2)} $CHOG`}
+              </span>
+            )}
+            <span>{sourceLabel(turn)}</span>
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -286,40 +285,63 @@ function sourceLabel(turn: DefenderTurn): string {
   return `${turn.model ?? "LLM"} on 0G Compute${turn.receipt?.teeVerified ? " · TEE verified" : ""}${price}`;
 }
 
-function Thinking() {
+function Thinking({ house }: { house: HouseChog }) {
   return (
-    <div className="mr-auto rounded-2xl rounded-bl-md border border-line bg-surface-2 px-3.5 py-3" aria-label="The House Chog is typing">
-      <span className="flex gap-1" aria-hidden>
-        <span className="heist-dot size-1.5 rounded-full bg-muted" />
-        <span className="heist-dot size-1.5 rounded-full bg-muted" />
-        <span className="heist-dot size-1.5 rounded-full bg-muted" />
-      </span>
+    <div className="heist-msg heist-msg--chog">
+      <HouseArt image={house.image} tokenId={null} className="heist-msg-avatar" />
+      <div className="heist-bubble" role="status" aria-label="The House Chog is typing">
+        <span className="flex gap-1 py-1" aria-hidden>
+          <span className="heist-dot size-1.5 rounded-full bg-[var(--v2-teal)]" />
+          <span className="heist-dot size-1.5 rounded-full bg-[var(--v2-teal)]" />
+          <span className="heist-dot size-1.5 rounded-full bg-[var(--v2-teal)]" />
+        </span>
+      </div>
     </div>
   );
 }
 
-function TemptationMeter({ value, turnsLeft, done }: { value: number; turnsLeft: number; done: boolean }) {
-  const pct = Math.round(Math.min(Math.max(value, 0), 1) * 100);
-  const tone = pct >= 80 ? "bg-danger" : pct >= 50 ? "bg-warning" : "bg-accent";
+/** On top of the conversation: messages left as pips, and how close the AI is to caving. */
+function Gauges({ turnsLeft, patience, temptation, done }: { turnsLeft: number; patience: number; temptation: number; done: boolean }) {
+  const pct = Math.round(Math.min(Math.max(temptation, 0), 1) * 100);
+  const left = done ? 0 : Math.max(0, Math.min(patience, turnsLeft));
   return (
-    <div>
-      <div className="flex items-center justify-between text-xs">
-        <span id="heist-temptation" className="font-medium text-muted">
-          Temptation
-        </span>
-        <span className="text-subtle tabular-nums">
-          {pct}% · {done ? "heist over" : `${turnsLeft} message${turnsLeft === 1 ? "" : "s"} left`}
-        </span>
+    <div className="heist-gauges">
+      <div>
+        <p className="heist-gauge-label">
+          <span id="heist-turns">Turns left</span>
+          <span className="v2-num text-[var(--v2-ink)]">
+            {done ? "Heist over" : `${left} of ${patience}`}
+          </span>
+        </p>
+        <div
+          className="heist-pips"
+          role="meter"
+          aria-labelledby="heist-turns"
+          aria-valuemin={0}
+          aria-valuemax={patience}
+          aria-valuenow={left}
+          aria-valuetext={done ? "Heist over" : `${left} of ${patience} messages left`}
+        >
+          {Array.from({ length: patience }, (_, i) => (
+            <span key={i} className={`heist-pip ${i < left ? "is-left" : ""}`} />
+          ))}
+        </div>
       </div>
-      <div
-        role="meter"
-        aria-labelledby="heist-temptation"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={pct}
-        className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2"
-      >
-        <div className={`h-full rounded-full transition-[width] duration-500 ${tone}`} style={{ width: `${pct}%` }} />
+      <div>
+        <p className="heist-gauge-label">
+          <span id="heist-temptation">Temptation</span>
+          <span className="v2-num text-[var(--v2-ink)]">{pct}%</span>
+        </p>
+        <div
+          role="meter"
+          aria-labelledby="heist-temptation"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          className={`v2-meter ${pct >= 80 ? "heist-meter-hot" : ""}`}
+        >
+          <span style={{ "--v2-value": `${pct}%` } as CSSProperties} />
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { type KeyboardEvent, type PointerEvent, useState } from "react";
 import type { DayCount } from "./types";
 import { formatCount, formatDay, formatLongDay } from "./format";
+import "./stats.css";
 
 type SparkBarsProps = {
   /** One bar per UTC day, oldest first. */
@@ -15,7 +16,7 @@ type SparkBarsProps = {
 };
 
 /**
- * A small per-day bar chart for a stat tile: the latest day in the accent, earlier days softer, empty days as a
+ * A small per-day bar chart for a stat tile (v2): teal bars, the latest day full teal with a glow, empty days as a
  * baseline tick. Hover or focus (arrow keys) reads one day out; a visually hidden table carries every value.
  */
 export function SparkBars({ points, label, unit, className = "" }: SparkBarsProps) {
@@ -52,6 +53,7 @@ export function SparkBars({ points, label, unit, className = "" }: SparkBarsProp
 
   // Edge bars anchor their readout to that side so it never spills out of the card.
   const align = active === null ? "" : active < n / 4 ? "translate-x-0" : active >= (3 * n) / 4 ? "-translate-x-full" : "-translate-x-1/2";
+  const barClass = (i: number) => `${i === active ? "is-active" : ""} ${i === n - 1 ? "is-latest" : ""}`;
 
   return (
     <figure className={`relative ${className}`}>
@@ -66,43 +68,36 @@ export function SparkBars({ points, label, unit, className = "" }: SparkBarsProp
         onFocus={() => setActive((current) => current ?? n - 1)}
         onBlur={() => setActive(null)}
         onKeyDown={onKeyDown}
-        className="relative flex h-12 touch-pan-y items-end gap-[2px] rounded-sm border-b border-line outline-offset-4"
+        className="stats-spark"
       >
         {points.map((point, i) => {
           const height = point.value > 0 && max > 0 ? Math.max(10, (point.value / max) * 100) : 0;
-          const tone = i === active ? "bg-accent-strong" : i === n - 1 ? "bg-accent" : "bg-accent/45";
           return (
-            <span key={point.day} aria-hidden className="flex h-full min-w-0 flex-1 items-end justify-center">
+            <span key={point.day} aria-hidden className="stats-spark-col">
               {height > 0 ? (
-                <span className={`w-full max-w-6 rounded-t-[4px] transition-colors ${tone}`} style={{ height: `${height}%` }} />
+                <span className={`stats-spark-bar ${barClass(i)}`} style={{ height: `${height}%` }} />
               ) : (
-                <span className={`h-0.5 w-full max-w-6 rounded-full ${i === active ? "bg-accent-strong" : "bg-line-strong"}`} />
+                <span className={`stats-spark-zero ${i === active ? "is-active" : ""}`} />
               )}
             </span>
           );
         })}
         {readout && active !== null && (
-          <span
-            aria-hidden
-            className={`pointer-events-none absolute bottom-full z-10 mb-2 rounded-lg border border-line-strong bg-surface-2 px-2.5 py-1.5 text-xs whitespace-nowrap shadow-lg ${align}`}
-            style={{ left: `${((active + 0.5) / n) * 100}%` }}
-          >
-            <span className="font-semibold text-foreground">{formatCount(readout.value)}</span>{" "}
-            <span className="text-muted">
-              {unitOf(readout.value)} · {formatLongDay(readout.day)}
-            </span>
+          <span aria-hidden className={`stats-spark-tip ${align}`} style={{ left: `${((active + 0.5) / n) * 100}%` }}>
+            <span className="v2-num text-[var(--v2-ink)]">{formatCount(readout.value)}</span> {unitOf(readout.value)} ·{" "}
+            {formatLongDay(readout.day)}
           </span>
         )}
       </div>
-      <figcaption aria-hidden className="mt-1.5 flex justify-between text-[11px] text-subtle">
+      <figcaption aria-hidden className="stats-spark-axis">
         <span>{formatDay(first.day)}</span>
         <span>{n > 1 ? formatDay(last.day) : ""}</span>
       </figcaption>
       {/* What keyboard focus reads out, for screen readers. */}
-      <span aria-live="polite" className="sr-only">
+      <span aria-live="polite" className="v2-sr">
         {readout ? `${formatLongDay(readout.day)}: ${formatCount(readout.value)} ${unitOf(readout.value)}` : ""}
       </span>
-      <table className="sr-only">
+      <table className="v2-sr">
         <caption>{label}</caption>
         <thead>
           <tr>

@@ -1,0 +1,160 @@
+/*
+ * /guard (AnimrTradeGuard) on the v2 design system (app/design-v2.css, components/v2/README.md): a calm, narrow reading
+ * page. Global on purpose (plain CSS through Tailwind), so every class is prefixed `guard-`.
+ */
+
+@layer components {
+  /* Under the header: the shield tile, the headline numbers and the deployed badge, in one glass strip. */
+  .guard-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px 32px;
+  }
+  .guard-strip > .v2-stats {
+    flex: 1 1 320px;
+  }
+  .guard-strip-end {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    max-width: 220px;
+  }
+  @media (max-width: 639.98px) {
+    .guard-strip > .v2-icon-tile {
+      display: none;
+    }
+  }
+
+  /* Key/value rows whose label carries a short note under it. */
+  .guard-facts > div {
+    align-items: flex-start;
+  }
+  .guard-facts dt {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+  .guard-facts dd {
+    flex: 0 1 auto;
+  }
+  .guard-fact-note {
+    display: block;
+    margin-top: 4px;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-xs);
+    line-height: 1.5;
+    max-width: 52ch;
+  }
+  .guard-contract {
+    display: grid;
+    gap: 14px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--v2-line-soft);
+  }
+  .guard-address {
+    margin: 0;
+    color: var(--v2-ink);
+    font-size: clamp(13px, 0.5vw + 11px, 16px);
+    overflow-wrap: anywhere;
+  }
+
+  /* Can / can never: two quiet columns of ticks and crosses. */
+  .guard-lists {
+    display: grid;
+    gap: 20px 32px;
+  }
+  @media (min-width: 720px) {
+    .guard-lists {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .guard-list {
+    display: grid;
+    gap: 10px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .guard-list > li {
+    display: flex;
+    gap: 10px;
+    color: var(--v2-muted);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.55;
+  }
+  .guard-mark {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    border-radius: 50%;
+    border: 1px solid rgb(159 240 236 / 0.3);
+    background: rgb(159 240 236 / 0.06);
+    color: var(--v2-teal);
+  }
+  .guard-mark--no {
+    border-color: rgb(255 122 138 / 0.3);
+    background: rgb(255 122 138 / 0.06);
+    color: var(--v2-danger);
+  }
+  .guard-mark > svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  /* How it works: numbered glass steps joined by a hairline rail. */
+  .guard-flow {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .guard-flow > li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+  .guard-flow > li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 48px;
+    bottom: -24px;
+    left: 18px;
+    width: 1px;
+    background: linear-gradient(180deg, var(--v2-line-teal), var(--v2-line-soft));
+  }
+  .guard-flow-n {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-top: 12px;
+    border: 1px solid var(--v2-line-teal);
+    border-radius: 50%;
+    background: var(--v2-bg);
+    box-shadow: 0 0 14px rgb(159 240 236 / 0.15);
+    color: var(--v2-teal);
+    font-size: 15px;
+  }
+  .guard-flow-title {
+    margin: 0;
+    color: var(--v2-ink);
+    font-size: var(--v2-fs-md);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .guard-flow-body {
+    margin: 4px 0 0;
+    color: var(--v2-nav);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.6;
+  }
+}

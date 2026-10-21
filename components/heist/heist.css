@@ -1,13 +1,611 @@
 /*
- * Heist effects (components/heist/*): only what Tailwind utilities can't express, i.e. keyframes.
+ * /heist ("Rob this Chog") on the v2 design system (app/design-v2.css, components/v2/README.md).
  * Global on purpose (every *.css goes through Tailwind as plain CSS), so every class is prefixed `heist-`.
+ * Only page-specific pieces live here: the vault card, the chat, the verdict panel. Everything else is v2 classes.
  * Every animation is opt-in: it only runs when the system allows motion.
  */
 
+@layer components {
+  /* ------------------------------------------------------------------ the room */
+
+  .heist-room {
+    display: grid;
+    gap: var(--v2-s-4);
+    align-items: start;
+  }
+  @media (min-width: 1024px) {
+    .heist-room {
+      grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+      gap: var(--v2-s-5);
+    }
+    .heist-room > .heist-vault {
+      position: sticky;
+      top: calc(var(--v2-header-h) + 16px);
+    }
+    /* The chat takes the vault card's height; its log scrolls inside instead of growing the row. */
+    .heist-room > .heist-chat {
+      align-self: stretch;
+    }
+    .heist-room > .heist-chat .heist-log {
+      flex: 1 1 0;
+      height: 0;
+      max-height: none;
+    }
+  }
+
+  /* The header scoreboard: a 2 x 2 counter, hairlines between. */
+  .heist-score.v2-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 22px;
+  }
+  .heist-score .v2-stat {
+    padding-inline: 22px 0;
+  }
+  .heist-score .v2-stat:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  /* ------------------------------------------------------------------ the House Chog (the vault) */
+
+  .heist-vault {
+    overflow: hidden;
+  }
+  /* The vault door: concentric hairline rings behind the portrait, a dial of ticks, a violet bloom. */
+  .heist-vault-door {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 36px 24px 28px;
+    border-bottom: 1px solid var(--v2-line-soft);
+    background:
+      radial-gradient(closest-side, rgb(111 90 220 / 0.2), transparent 78%) center / 320px 320px no-repeat,
+      repeating-radial-gradient(circle at center, transparent 0 37px, rgb(255 255 255 / 0.055) 37px 38px);
+  }
+  .heist-vault-door::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 236px;
+    height: 236px;
+    translate: -50% -50%;
+    border-radius: 50%;
+    border: 1px dashed rgb(189 247 238 / 0.22);
+    pointer-events: none;
+  }
+  .heist-vault-door::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgb(13 12 17 / 0.65));
+    pointer-events: none;
+  }
+  .heist-vault-door > * {
+    position: relative;
+    z-index: 1;
+  }
+  @media (max-width: 639.98px) {
+    .heist-vault-door {
+      padding: 24px 16px 20px;
+    }
+    .heist-vault-door .v2-avatar--xl {
+      width: 128px;
+      height: 128px;
+      border-radius: 22px;
+    }
+    .heist-vault-door::before {
+      width: 184px;
+      height: 184px;
+    }
+    .heist-step {
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 4px 10px;
+      padding: 14px 12px;
+    }
+    .heist-step-n {
+      width: 26px;
+      height: 26px;
+      margin-top: 3px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+  }
+  .heist-vault-art {
+    position: relative;
+    display: block;
+    overflow: hidden;
+  }
+  .heist-vault-art > img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .heist-vault-art-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: rgb(159 240 236 / 0.6);
+  }
+  .heist-vault-mask {
+    position: absolute;
+    right: -14px;
+    bottom: -14px;
+    z-index: 2;
+  }
+  .heist-vault-body {
+    display: grid;
+    gap: 18px;
+    padding: var(--v2-s-6);
+  }
+  .heist-vault-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 12px;
+    margin: 6px 0 0;
+    font-family: var(--v2-font-display);
+    font-size: clamp(26px, 1.4vw + 18px, 34px);
+    font-weight: var(--v2-fw-display);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .heist-vault-sum {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--v2-line-soft);
+    border-radius: var(--v2-r-md);
+    background: rgb(255 255 255 / 0.02);
+  }
+  .heist-vault-sum-value {
+    font-size: var(--v2-fs-stat-sm);
+    line-height: 1;
+  }
+  .heist-clues {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .heist-clues .v2-chip {
+    height: auto;
+    min-height: 26px;
+    padding-block: 4px;
+    white-space: normal;
+  }
+  .heist-moving {
+    padding: 14px var(--v2-s-6);
+    border-top: 1px solid rgb(242 193 107 / 0.22);
+    background: rgb(242 193 107 / 0.06);
+    color: var(--v2-nav);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.55;
+  }
+
+  /* ------------------------------------------------------------------ chat */
+
+  .heist-chat {
+    display: flex;
+    flex-direction: column;
+  }
+  .heist-chat-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    padding: 18px var(--v2-s-6);
+    border-bottom: 1px solid var(--v2-line-soft);
+  }
+  .heist-chat-title {
+    margin: 0;
+    font-family: var(--v2-font-display);
+    font-size: clamp(20px, 0.8vw + 15px, 24px);
+    font-weight: var(--v2-fw-display);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  /* The turns-left strip on top of the conversation. */
+  .heist-gauges {
+    display: grid;
+    gap: 14px 28px;
+    padding: 16px var(--v2-s-6);
+    border-bottom: 1px solid var(--v2-line-soft);
+    background: rgb(255 255 255 / 0.012);
+  }
+  @media (min-width: 640px) {
+    .heist-gauges {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: end;
+    }
+  }
+  .heist-gauge-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    color: var(--v2-nav);
+    font-size: var(--v2-fs-xs);
+  }
+  .heist-pips {
+    display: flex;
+    gap: 5px;
+  }
+  .heist-pip {
+    width: 30px;
+    height: 6px;
+    border-radius: var(--v2-r-pill);
+    background: rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+  }
+  .heist-pip.is-left {
+    background: var(--v2-teal);
+    box-shadow: 0 0 10px rgb(159 240 236 / 0.45);
+  }
+  .heist-meter-hot > span {
+    background: linear-gradient(90deg, var(--v2-violet-b), var(--v2-warning));
+    box-shadow: 0 0 12px rgb(242 193 107 / 0.4);
+  }
+
+  .heist-log {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 15rem;
+    max-height: 30rem;
+    overflow-y: auto;
+    padding: var(--v2-s-6);
+    overscroll-behavior: contain;
+  }
+  .heist-msg {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: min(88%, 560px);
+  }
+  .heist-msg--you {
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+  .heist-bubble {
+    padding: 11px 15px;
+    border: 1px solid var(--v2-line-soft);
+    border-radius: var(--v2-r-lg);
+    color: var(--v2-ink);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+  .heist-msg--you .heist-bubble {
+    border-bottom-right-radius: 6px;
+    background: var(--v2-glass-fill-hover);
+  }
+  .heist-msg--chog .heist-bubble {
+    border-color: var(--v2-line-teal);
+    border-bottom-left-radius: 6px;
+    background: rgb(159 240 236 / 0.035);
+    box-shadow: inset 0 0 18px rgb(159 240 236 / 0.04);
+  }
+  .heist-msg--caved .heist-bubble {
+    border-color: rgb(242 193 107 / 0.5);
+    background: rgb(242 193 107 / 0.06);
+  }
+  .heist-msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+  .heist-msg-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin-top: 6px;
+    padding-left: 4px;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-2xs);
+  }
+  .heist-stamp-label {
+    display: inline-block;
+    padding: 2px 7px;
+    border: 1px solid rgb(242 193 107 / 0.6);
+    border-radius: 6px;
+    color: var(--v2-warning);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    rotate: -3deg;
+  }
+
+  .heist-dock {
+    display: grid;
+    gap: 14px;
+    padding: 18px var(--v2-s-6) var(--v2-s-6);
+    border-top: 1px solid var(--v2-line-soft);
+  }
+  .heist-openers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .heist-openers .v2-chip {
+    height: auto;
+    min-height: 30px;
+    padding-block: 6px;
+    white-space: normal;
+    text-align: left;
+    cursor: pointer;
+  }
+  /* The composer: a glass well with the textarea and the Send pill (the input-group recipe, two lines tall). */
+  .heist-composer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 8px;
+    padding: 6px 6px 6px 4px;
+    border: 1px solid var(--v2-line);
+    border-radius: 22px;
+    background: rgb(255 255 255 / 0.03);
+    box-shadow: var(--v2-glass-glow);
+    transition:
+      border-color var(--v2-dur) ease,
+      box-shadow var(--v2-dur) ease;
+  }
+  .heist-composer:focus-within {
+    border-color: var(--v2-line-teal);
+    box-shadow:
+      0 0 0 4px rgb(159 240 236 / 0.12),
+      var(--v2-glass-glow);
+  }
+  .heist-composer textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    resize: none;
+    border: 0;
+    background: transparent;
+    color: var(--v2-ink);
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .heist-composer textarea::placeholder {
+    color: var(--v2-faint);
+  }
+  .heist-composer textarea:focus,
+  .heist-composer textarea:focus-visible {
+    outline: none;
+  }
+  .heist-composer textarea:disabled {
+    opacity: 0.6;
+  }
+  .heist-skip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    padding: 14px 16px;
+    border: 1px dashed var(--v2-line);
+    border-radius: var(--v2-r-md);
+    background: rgb(255 255 255 / 0.015);
+  }
+  .heist-skip > div {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+
+  /* ------------------------------------------------------------------ the verdict */
+
+  .heist-verdict {
+    overflow: hidden;
+  }
+  .heist-verdict--no {
+    border-color: rgb(255 122 138 / 0.34);
+    background:
+      radial-gradient(90% 120% at 100% 0%, rgb(255 122 138 / 0.1), transparent 60%),
+      radial-gradient(80% 90% at 0% 100%, rgb(111 90 220 / 0.12), transparent 60%),
+      var(--v2-glass-fill);
+    box-shadow:
+      var(--v2-glass-glow),
+      0 0 0 1px rgb(255 122 138 / 0.05),
+      0 30px 80px -40px rgb(255 122 138 / 0.45);
+  }
+  .heist-verdict--went {
+    border-color: rgb(242 193 107 / 0.36);
+    background:
+      radial-gradient(90% 120% at 100% 0%, rgb(242 193 107 / 0.08), transparent 60%),
+      var(--v2-glass-fill);
+  }
+  .heist-verdict-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+  }
+  .heist-block {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--v2-line);
+    border-radius: var(--v2-r-pill);
+    background: rgb(255 255 255 / 0.03);
+    color: var(--v2-nav);
+    font-size: var(--v2-fs-xs);
+  }
+  .heist-block .v2-num {
+    color: var(--v2-ink);
+    font-size: 15px;
+  }
+  .heist-verdict-title {
+    display: grid;
+    gap: 2px;
+    margin: 18px 0 0;
+    font-family: var(--v2-font-display);
+    font-size: clamp(36px, 4.2vw + 14px, 72px);
+    font-weight: var(--v2-fw-display);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+  .heist-verdict-title > span:first-child {
+    background-image: var(--v2-grad-title);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .heist-verdict-no {
+    color: var(--v2-danger);
+    text-shadow: 0 0 36px rgb(255 122 138 / 0.35);
+  }
+  .heist-verdict-went {
+    color: var(--v2-warning);
+  }
+  .heist-verdict-quiet {
+    color: var(--v2-nav);
+  }
+  .heist-steps {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: heist-step;
+  }
+  .heist-step {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 4px 14px;
+    padding: 16px;
+    border: 1px solid var(--v2-line-soft);
+    border-radius: var(--v2-r-md);
+    background: rgb(13 12 17 / 0.4);
+  }
+  .heist-step-n {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--v2-line);
+    border-radius: 10px;
+    color: var(--v2-nav);
+    font-size: 14px;
+  }
+  .heist-step-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    min-height: 32px;
+  }
+  .heist-step-call {
+    margin: 8px 0 0;
+    color: var(--v2-muted);
+    font-size: var(--v2-fs-xs);
+    overflow-wrap: anywhere;
+  }
+  /* The decoded revert: the chain's own answer, set like a stamp. */
+  .heist-decoded {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+    padding: 5px 10px;
+    border: 1px solid rgb(255 122 138 / 0.45);
+    border-radius: var(--v2-r-xs);
+    background: rgb(255 122 138 / 0.09);
+    color: var(--v2-danger);
+    font-family: var(--v2-font-mono);
+    font-size: 12.5px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  .heist-decoded--ok {
+    border-color: rgb(242 193 107 / 0.45);
+    background: rgb(242 193 107 / 0.08);
+    color: var(--v2-warning);
+    font-family: var(--v2-font-text);
+  }
+  .heist-demo {
+    padding: 18px;
+    border: 1px dashed var(--v2-line-strong);
+    border-radius: var(--v2-r-md);
+    background: rgb(255 255 255 / 0.015);
+  }
+  .heist-demo ol {
+    display: grid;
+    gap: 10px;
+    margin: 12px 0 0;
+    padding-left: 22px;
+    color: var(--v2-nav);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.6;
+  }
+  .heist-demo li::marker {
+    color: var(--v2-teal);
+    font-family: var(--v2-font-display);
+  }
+
+  /* ------------------------------------------------------------------ why it's safe */
+
+  .heist-locks {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .heist-lock {
+    display: flex;
+    flex-direction: column;
+  }
+  .heist-lock .v2-card-title {
+    margin-top: 18px;
+  }
+  .heist-lock-evidence {
+    display: block;
+    margin-top: auto;
+    padding-top: var(--v2-s-4);
+  }
+  .heist-lock-evidence > div {
+    padding-top: var(--v2-s-4);
+    border-top: 1px solid var(--v2-line-soft);
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-xs);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  /* ------------------------------------------------------------------ hall of fame */
+
+  .heist-wall-reply {
+    margin: 0;
+    color: var(--v2-ink);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+  .heist-wall-form {
+    display: grid;
+    gap: 12px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  /* "Monad said NO": the verdict card flashes red once. */
+  /* "Monad said NO": the verdict panel flashes red once. */
   .heist-flash {
-    animation: heist-flash 1.1s ease-out both;
+    animation: heist-flash 1.2s ease-out both;
   }
 
   /* "AI said YES" lands like a rubber stamp (and stays tilted). */
@@ -30,20 +628,21 @@
   .heist-dot:nth-child(3) {
     animation-delay: 0.3s;
   }
+
+  .heist-pip {
+    transition: background-color 0.4s ease, box-shadow 0.4s ease;
+  }
 }
 
 @keyframes heist-flash {
-  /* Ends on the card's resting fill (bg-danger/5). */
   0% {
-    background-color: rgb(255 107 129 / 0.32);
-    box-shadow: 0 0 0 0 rgb(255 107 129 / 0.7);
+    box-shadow: 0 0 0 0 rgb(255 122 138 / 0.7), inset 0 0 120px rgb(255 122 138 / 0.35);
   }
   40% {
-    box-shadow: 0 0 0 8px rgb(255 107 129 / 0.22);
+    box-shadow: 0 0 0 10px rgb(255 122 138 / 0.16), inset 0 0 80px rgb(255 122 138 / 0.18);
   }
   100% {
-    background-color: rgb(255 107 129 / 0.05);
-    box-shadow: 0 0 0 0 rgb(255 107 129 / 0);
+    box-shadow: 0 0 0 0 rgb(255 122 138 / 0), inset 0 0 0 rgb(255 122 138 / 0);
   }
 }
 
@@ -54,7 +653,7 @@
   }
   100% {
     opacity: 1;
-    transform: scale(1) rotate(-4deg);
+    transform: scale(1) rotate(0deg);
   }
 }
 

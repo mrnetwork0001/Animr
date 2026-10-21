@@ -2,6 +2,7 @@
 
 import { type FormEvent, type ReactNode, useState } from "react";
 import type { HallOfFameEntry, WallCheck } from "@/lib/heist/types";
+import { EmptyState, MaskIcon, PillLink, SectionTitle, Toast, pillClass } from "@/components/v2";
 import { heistErrorMessage, useSubmitToWall } from "./api";
 import { chogText, utcTime } from "./bits";
 import type { WallTicket } from "./chat";
@@ -13,45 +14,75 @@ const NICKNAME_MAX = 20;
  * only once a moderator approved it) and a sanitized nickname, never what the visitor typed. What Monad said is shown
  * exactly as the check stored it.
  */
-export function HallOfFame({ entries, ticket, onSubmitted }: { entries: HallOfFameEntry[]; ticket: WallTicket | null; onSubmitted: () => void }) {
+export function HallOfFame({ entries }: { entries: HallOfFameEntry[] }) {
   return (
-    <section aria-labelledby="heist-wall" className="card p-5">
-      <h2 id="heist-wall" className="text-lg font-semibold tracking-tight">
-        Hall of Fame
-      </h2>
-      <p className="mt-1 text-xs text-pretty text-subtle">
-        AIs that said yes, and what Monad said about each one.
-      </p>
-
-      {ticket && <WallForm ticket={ticket} onSubmitted={onSubmitted} />}
-
+    <section aria-labelledby="heist-wall" className="v2-section">
+      <SectionTitle
+        id="heist-wall"
+        kicker="Hall of Fame"
+        title="AIs that said yes"
+        description="Only the AI's own reply and a nickname, never what the visitor typed. What Monad said about each one is shown exactly as the check stored it."
+      />
       {entries.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-dashed border-line-strong px-4 py-5 text-center text-sm text-muted">
-          No House Chog has caved yet. Be the first name on the wall.
-        </p>
+        <EmptyState
+          icon={<MaskIcon />}
+          title="No House Chog has caved yet."
+          body="Be the first name on the wall: talk its AI into a yes."
+          actions={<PillLink href="#heist-chat" variant="glass" size="sm">Start a heist</PillLink>}
+        />
       ) : (
-        <ol className="mt-4 space-y-3">
-          {entries.map((entry) => (
-            <li key={entry.id} className="heist-pop rounded-xl border border-line bg-surface-2/60 p-3.5">
-              {entry.reply !== null ? (
-                <blockquote className="text-sm text-pretty">“{entry.reply}”</blockquote>
-              ) : (
-                <p className="text-sm text-pretty text-muted italic">
-                  {entry.replyHeld ? "Its AI-written reply shows once a moderator has read it." : "No reply on record."}
-                </p>
-              )}
-              <p className="mt-2 text-xs text-muted">
-                conned by <span className="font-semibold text-foreground">{entry.nickname}</span>
-                {entry.amountChog !== null && <> · {chogText(entry.amountChog, 2)} $CHOG promised</>}
-              </p>
-              <p className="mt-1 text-[11px] text-subtle">
-                {utcTime(entry.at)}
-                {checkCaption(entry.check)}
-                {entry.source === "0g" && entry.model ? ` · ${entry.model}` : entry.source === "template" ? " · template reply" : ""}
-              </p>
-            </li>
-          ))}
-        </ol>
+        <div className="v2-table-wrap">
+          <table className="v2-table">
+            <thead>
+              <tr>
+                <th scope="col">The AI said</th>
+                <th scope="col" className="v2-hide-sm">
+                  Conned by
+                </th>
+                <th scope="col" className="v2-hide-sm">
+                  What Monad said
+                </th>
+                <th scope="col" className="v2-hide-sm">
+                  When (UTC)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry.id}>
+                  <td className="sm:min-w-[16rem]">
+                    {entry.reply !== null ? (
+                      <blockquote className="heist-wall-reply">“{entry.reply}”</blockquote>
+                    ) : (
+                      <p className="heist-wall-reply italic text-[var(--v2-nav)]">
+                        {entry.replyHeld ? "Its AI-written reply shows once a moderator has read it." : "No reply on record."}
+                      </p>
+                    )}
+                    <div className="v2-show-sm mt-2 grid gap-1">
+                      <p className="v2-note">
+                        by {entry.nickname} · {utcTime(entry.at)}
+                      </p>
+                      <div className="text-[length:var(--v2-fs-xs)] text-[var(--v2-nav)]">{checkCaption(entry.check)}</div>
+                    </div>
+                    {(entry.source === "template" || (entry.source === "0g" && entry.model)) && (
+                      <p className="v2-note mt-1">{entry.source === "template" ? "template reply" : entry.model}</p>
+                    )}
+                  </td>
+                  <td className="v2-hide-sm">
+                    <span className="font-medium">{entry.nickname}</span>
+                    {entry.amountChog !== null && (
+                      <span className="v2-note block">
+                        <span className="v2-num">{chogText(entry.amountChog, 2)}</span> $CHOG promised
+                      </span>
+                    )}
+                  </td>
+                  <td className="v2-hide-sm text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">{checkCaption(entry.check)}</td>
+                  <td className="v2-hide-sm whitespace-nowrap text-[var(--v2-faint)]">{utcTime(entry.at).replace(/ UTC$/, "")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );
@@ -59,14 +90,17 @@ export function HallOfFame({ entries, ticket, onSubmitted }: { entries: HallOfFa
 
 /** What the check said when that AI caved, exactly as stored: never more than it found. */
 function checkCaption(check: WallCheck | null): ReactNode {
-  if (!check) return " · no check on record";
+  if (!check) return "No check on record";
   if (check.kind === "live") {
-    if (!check.refused) return " · Monad did not refuse it";
+    if (!check.refused) return "Monad did not refuse it";
     return (
       <>
-        {" "}
-        · Monad said <span className="font-mono text-danger">{check.error ?? "no"}</span>
-        {check.blockNumber && <> at block {Number(check.blockNumber).toLocaleString("en-US")}</>}
+        <span className="heist-decoded">{check.error ?? "NO"}</span>
+        {check.blockNumber && (
+          <span className="v2-note mt-1 block">
+            at block <span className="v2-num">{Number(check.blockNumber).toLocaleString("en-US")}</span>
+          </span>
+        )}
       </>
     );
   }
@@ -75,27 +109,28 @@ function checkCaption(check: WallCheck | null): ReactNode {
     case "tba-none":
     case "tba-uninitialized":
     case "vault-empty":
-      return " · before the House Chog moved in (no live check)";
+      return "Before the House Chog moved in (no live check)";
     case "busy":
-      return " · not checked (too many checks at once)";
+      return "Not checked (too many checks at once)";
     case "inconclusive":
-      return " · the live check was inconclusive";
+      return "The live check was inconclusive";
     case "rpc-error":
-      return " · the live check couldn't reach Monad";
+      return "The live check couldn't reach Monad";
     default:
-      return " · no live check";
+      return "No live check";
   }
 }
 
-function WallForm({ ticket, onSubmitted }: { ticket: WallTicket; onSubmitted: () => void }) {
+/** "It said yes!": put the caving reply on the wall (shown right under the verdict). */
+export function WallForm({ ticket, onSubmitted }: { ticket: WallTicket; onSubmitted: () => void }) {
   const submit = useSubmitToWall();
   const [nickname, setNickname] = useState("");
 
   if (!ticket.eligible) {
     return (
-      <p className="mt-4 rounded-xl border border-line bg-surface-2/60 px-4 py-3 text-sm text-pretty text-muted">
-        It said yes! {ticket.reason ?? "This reply can't go on the wall."}
-      </p>
+      <Toast title="It said yes!" tone="warning">
+        {ticket.reason ?? "This reply can't go on the wall."}
+      </Toast>
     );
   }
 
@@ -105,15 +140,17 @@ function WallForm({ ticket, onSubmitted }: { ticket: WallTicket; onSubmitted: ()
   }
 
   return (
-    <form onSubmit={onSubmit} className="heist-pop mt-4 rounded-xl border border-warning/40 bg-warning/10 p-4">
-      <label htmlFor="heist-nickname" className="text-sm font-semibold">
-        It said yes! Put its reply on the wall
-      </label>
-      <p className="mt-0.5 text-xs text-muted">
-        Only the AI&apos;s reply and your nickname are shown, never your messages. A reply an AI model wrote appears once a
-        moderator has read it.
-      </p>
-      <div className="mt-3 flex gap-2">
+    <form onSubmit={onSubmit} className="v2-card heist-pop heist-wall-form">
+      <div>
+        <label htmlFor="heist-nickname" className="v2-h3 block">
+          It said yes! Put its reply on the wall
+        </label>
+        <p className="v2-note mt-1 text-pretty">
+          Only the AI&apos;s reply and your nickname are shown, never your messages. A reply an AI model wrote appears once a
+          moderator has read it.
+        </p>
+      </div>
+      <div className="v2-input-group max-w-xl">
         <input
           id="heist-nickname"
           value={nickname}
@@ -121,14 +158,14 @@ function WallForm({ ticket, onSubmitted }: { ticket: WallTicket; onSubmitted: ()
           maxLength={NICKNAME_MAX}
           placeholder="Nickname (optional)"
           autoComplete="nickname"
-          className="input min-w-0 flex-1"
+          className="v2-input min-w-0 flex-1"
         />
-        <button type="submit" className="btn btn-primary" disabled={submit.isPending}>
-          {submit.isPending ? "Adding…" : "Add"}
+        <button type="submit" className={pillClass("primary")} disabled={submit.isPending}>
+          {submit.isPending ? "Adding…" : "Add to the wall"}
         </button>
       </div>
       {submit.isError && (
-        <p role="alert" className="mt-2 text-sm text-danger">
+        <p role="alert" className="text-[length:var(--v2-fs-sm)] text-[var(--v2-danger)]">
           {heistErrorMessage(submit.error)}
         </p>
       )}

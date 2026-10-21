@@ -2,9 +2,10 @@
 
 import type { ReactNode } from "react";
 import type { HeistProof, HouseChog } from "@/lib/heist/types";
+import { ChartIcon, GuardIcon, IconTile, SectionTitle, SparkIcon, WalletIcon } from "@/components/v2";
 import { AddressLink } from "./bits";
 
-type Point = { title: string; body: ReactNode; evidence: ReactNode | null };
+type Point = { title: string; body: ReactNode; evidence: ReactNode | null; icon: ReactNode; tone?: "teal" | "violet" };
 
 /**
  * "Why is this safe?": the four reasons the heist can't work, each with its live evidence once a live check has run.
@@ -22,11 +23,14 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
 
   const points: Point[] = [
     {
+      icon: <SparkIcon />,
+      tone: "violet",
       title: "This chat isn't the trading brain",
       body: "You're talking to a separate defender persona with no tools, no keys and no wallet access: all it can do is write text. The House Chog's trading brain never reads this chat.",
       evidence: null,
     },
     {
+      icon: <WalletIcon />,
       title: "Only ownerOf(Chog) controls the wallet",
       body: "The $CHOG sits in the Chog's own Tokenbound ERC-6551 wallet, which executes only for whoever owns the NFT (or an address that owner approved). Sell the Chog and control moves with it.",
       evidence:
@@ -36,7 +40,7 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
             {keyApproved === true ? (
               <>
                 {" "}
-                · <span className="font-semibold text-warning">warning: the wallet accepts the AI key (isValidSigner)</span>
+                · <span className="font-medium text-[var(--v2-warning)]">warning: the wallet accepts the AI key (isValidSigner)</span>
               </>
             ) : keyApproved === false ? (
               " · isValidSigner(AI key): not approved"
@@ -44,7 +48,7 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
             {execute?.reverted && (
               <>
                 {" "}
-                · the AI key got <span className="font-mono text-danger">{execute.error}</span>
+                · the AI key got <span className="v2-mono text-[var(--v2-danger)]">{execute.error}</span>
               </>
             )}
             {live.control && !live.control.reverted && " · the owner's identical call goes through"}
@@ -52,6 +56,7 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
         ) : null,
     },
     {
+      icon: <GuardIcon />,
       title: "The AI's key can only call the guard",
       body: "The House Chog's AI trades through AnimrTradeGuard. Its trade() takes no recipient, no token and no calldata: it can only swap $CHOG and WMON back into this same wallet, within the owner's limits.",
       evidence: guardAddress ? (
@@ -61,7 +66,7 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
             <>
               {" "}
               · at block {block} it answered{" "}
-              <span className={`font-mono ${guardStep.reverted ? "text-danger" : "text-warning"}`}>
+              <span className={`v2-mono ${guardStep.reverted ? "text-[var(--v2-danger)]" : "text-[var(--v2-warning)]"}`}>
                 {guardStep.reverted ? guardStep.error : "an allowed swap inside the wallet"}
               </span>
             </>
@@ -70,7 +75,7 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
       ) : keyApproved === false ? (
         `No guard is configured on this deployment yet, and at block ${block} the wallet didn't accept the AI's key (isValidSigner): it has no way in.`
       ) : keyApproved === true ? (
-        <span className="text-warning">
+        <span className="text-[var(--v2-warning)]">
           No guard is configured, and at block {block} the wallet accepts the AI&apos;s key directly. That should never happen.
         </span>
       ) : (
@@ -78,46 +83,54 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
       ),
     },
     {
+      icon: <ChartIcon />,
       title: "Even a trade stays in the wallet",
       body: "The guard caps every trade by the holder's limits, and a swap (buy or sell) lands back in the same wallet. A holder can also switch on buy-only mode, so the guard refuses every sell.",
       evidence: buyOnly ? (
         <>
           Checked live at block {block}: buy-only is on,{" "}
-          <span className="font-mono text-danger">TradeRejected(&quot;buy-only vault&quot;)</span>
+          <span className="v2-mono text-[var(--v2-danger)]">TradeRejected(&quot;buy-only vault&quot;)</span>
         </>
       ) : guardStep ? (
         <>
           Live check at block {block}: a sell through the guard answered{" "}
-          <span className="font-mono">{guardStep.reverted ? guardStep.error : "an allowed swap, back into the same wallet"}</span>.
+          <span className="v2-mono">{guardStep.reverted ? guardStep.error : "an allowed swap, back into the same wallet"}</span>.
         </>
       ) : null,
     },
   ];
 
   return (
-    <section aria-labelledby="heist-safe" className="card p-5">
-      <h2 id="heist-safe" className="text-lg font-semibold tracking-tight">
-        Why is this safe?
-      </h2>
-      <p className="mt-1 text-sm font-medium text-accent-strong">The AI can be fooled. The NFT can&apos;t.</p>
-      <ol className="mt-4 space-y-4">
+    <section aria-labelledby="heist-safe" className="v2-section scroll-mt-24" id="why-safe">
+      <SectionTitle
+        id="heist-safe"
+        kicker="Why is this safe?"
+        title="Four locks between the AI and the vault"
+        description="The AI can be fooled. The NFT can't. Each lock below is enforced by contracts on Monad, not by the chat."
+      />
+      <ol className="heist-locks v2-grid v2-grid--2">
         {points.map((point, i) => (
-          <li key={point.title} className="flex gap-3">
-            <span
-              aria-hidden
-              className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent-strong"
-            >
-              {i + 1}
+          <li key={point.title} className="v2-card heist-lock">
+            <span className="v2-card-head">
+              <IconTile size="lg" tone={point.tone}>
+                {point.icon}
+              </IconTile>
+              <span className="v2-kicker">Lock {i + 1}</span>
             </span>
-            <div className="min-w-0">
-              <h3 className="text-sm font-semibold">{point.title}</h3>
-              <p className="mt-1 text-sm text-pretty text-muted">{point.body}</p>
-              {point.evidence && <p className="mt-1.5 text-xs text-pretty break-words text-subtle">{point.evidence}</p>}
-            </div>
+            <h3 className="v2-card-title">{point.title}</h3>
+            <p className="v2-card-body text-pretty">{point.body}</p>
+            {point.evidence && (
+              <div className="heist-lock-evidence">
+                <div>
+                  <span className="v2-overline mb-1.5 block">{block ? `Live evidence · block ${block}` : "On this deployment"}</span>
+                  {point.evidence}
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ol>
-      <p className="mt-4 border-t border-line pt-3 text-xs text-pretty text-subtle">
+      <p className="v2-note mt-4 text-pretty">
         {live
           ? `Evidence from the live check at block ${block}.`
           : house.phase === "open"

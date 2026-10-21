@@ -12,13 +12,13 @@ export function chogText(value: string | number | null | undefined, digits = 0):
   return formatAmount(value, digits);
 }
 
-/** The House Chog's real NFT art (never a generated image); a vault icon until it has one. */
+/** The House Chog's real NFT art (never a generated image); a vault icon until it has one. Size it with a v2-avatar class. */
 export function HouseArt({ image, tokenId, className = "" }: { image: string | null; tokenId: number | null; className?: string }) {
   const [failed, setFailed] = useState(false);
   const src = image && !failed ? resolveUri(image) : null;
   return (
-    <span className={`relative block shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-2 ${className}`}>
-      <span aria-hidden className="absolute inset-0 flex items-center justify-center text-accent-strong/70">
+    <span className={`v2-avatar heist-vault-art ${className}`}>
+      <span aria-hidden className="heist-vault-art-fallback">
         <VaultIcon className="size-1/2" />
       </span>
       {src && (
@@ -26,13 +26,12 @@ export function HouseArt({ image, tokenId, className = "" }: { image: string | n
         <img
           src={src}
           alt={tokenId ? `The House Chog, token ${tokenId}` : ""}
-          width={160}
-          height={160}
+          width={168}
+          height={168}
           loading="eager"
           decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setFailed(true)}
-          className="relative size-full object-cover"
         />
       )}
     </span>
@@ -63,11 +62,12 @@ export function AddressLink({ address, label }: { address: string; label?: strin
   const href = explorerAddressUrl(address);
   const text = label ?? shortAddress(address);
   return href ? (
-    <a href={href} target="_blank" rel="noreferrer" className="font-mono text-accent-strong hover:underline" title={address}>
+    <a href={href} target="_blank" rel="noreferrer" className="v2-link v2-mono" title={address}>
       {text}
+      <span className="v2-sr"> (opens the explorer)</span>
     </a>
   ) : (
-    <span className="font-mono" title={address}>
+    <span className="v2-mono" title={address}>
       {text}
     </span>
   );

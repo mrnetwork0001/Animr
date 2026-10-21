@@ -1,11 +1,12 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { Badge, Chip, EmptyState, GlassCard, Meter, PillLink, SectionTitle, Skeleton } from "@/components/v2";
 import { formatClock, formatCount, formatLongDay, formatPct, formatUsd, plural, sinceLabel } from "./format";
 import { SparkBars } from "./spark-bars";
+import "./stats.css";
 import type { BellDayStat, StatsResponse, StatsSection } from "./types";
 
-// The /stats page body (a server component): KPI tiles, then one card per verb. Every number is a count the app
-// keeps itself; zeros come with the next step instead of an empty state.
+// The /stats page body (a server component): headline stat cards with teal bar charts, then one section per verb.
+// Every number is a count the app keeps itself; zeros come with the next step instead of an empty state.
 
 const CHOG_COUNT = 1969;
 
@@ -21,89 +22,91 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
   const { rides, retention, fans, versus, heist, agents, zg, optout, bell } = stats;
 
   return (
-    <div className="space-y-12">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-subtle">
-        <span className="chip">
-          <span aria-hidden className="size-1.5 rounded-full bg-success" />
+    <>
+      <div className="v2-row mt-8 gap-2">
+        <Badge tone="success" live>
           Updated {formatClock(stats.computedAt)}
-        </span>
-        <span className="chip">{nextBellLine.replace(/\.$/, "")}</span>
-        <span className="chip">Points have no cash value</span>
+        </Badge>
+        <Chip>{nextBellLine.replace(/\.$/, "")}</Chip>
+        <Chip>Points have no cash value</Chip>
       </div>
 
       {stats.unavailable.length > 0 && (
-        <p role="status" className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+        <p role="status" className="stats-alert mt-4 border-[rgb(242_193_107/0.32)] text-[var(--v2-warning)]">
           A few numbers couldn&apos;t be counted just now and show as —. They&apos;re back within a minute.
         </p>
       )}
 
-      <section aria-labelledby="stats-headline" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <h2 id="stats-headline" className="sr-only">
+      <section aria-labelledby="stats-headline" className="mt-6">
+        <h2 id="stats-headline" className="v2-sr">
           Headline numbers
         </h2>
-        <Tile
-          label="Fans"
-          value={show("fans", fans.total)}
-          since={sinceLabel(fans.since)}
-          note={
-            fans.total
-              ? `${plural(fans.nicknamed, "fan")} picked a nickname. No wallet needed.`
-              : "Be the first: ride a Chog or pick a Versus winner. No wallet needed."
-          }
-        >
-          <SparkBars points={fans.perDay} label="New fans per day" unit={["new fan", "new fans"]} />
-        </Tile>
-        <Tile
-          label="Bell rides"
-          value={show("bell", rides.total)}
-          since={sinceLabel(rides.since)}
-          note={
-            rides.total
-              ? `By ${plural(rides.riders, "fan")}, one Chog per Bell each.`
-              : bell.ridesOpenUntil
-                ? `Rides on the current Bell close at ${formatClock(bell.ridesOpenUntil)}. Pick a Chog: no wallet needed.`
-                : `Pick a Chog now: the ride counts from the next Bell, at ${formatClock(stats.nextBellAt)}.`
-          }
-        >
-          <SparkBars points={rides.perDay} label="Bell rides per day" unit={["ride", "rides"]} />
-        </Tile>
-        <Tile
-          label="Versus picks"
-          value={show("versus", versus.picks)}
-          since={sinceLabel(versus.since)}
-          note={
-            versus.bouts
-              ? `On ${plural(versus.bouts, "bout")} dealt: two Chogs, the same hidden 48 hours.`
-              : "Deal the first bout: two Chogs race 48 hidden hours of real $CHOG."
-          }
-        >
-          <SparkBars points={versus.perDay} label="Versus bouts per day" unit={["bout", "bouts"]} />
-        </Tile>
-        <Tile
-          label="Heist attempts"
-          value={show("heist", heist.attempts)}
-          since={sinceLabel(heist.since)}
-          note={
-            heist.attempts
-              ? heist.refusals
-                ? `$CHOG stolen: 0. Monad refused the AI's key ${plural(heist.refusals, "time")}.`
-                : "$CHOG stolen: 0. Nothing is ever broadcast."
-              : "Nobody has tried yet. Be the first to con the House Chog."
-          }
-        >
-          <SparkBars points={heist.perDay} label="Heist attempts per day" unit={["attempt", "attempts"]} />
-        </Tile>
+        <div className="v2-grid v2-grid--4">
+          <Tile
+            label="Fans"
+            value={show("fans", fans.total)}
+            since={sinceLabel(fans.since)}
+            note={
+              fans.total
+                ? `${plural(fans.nicknamed, "fan")} picked a nickname. No wallet needed.`
+                : "Be the first: ride a Chog or pick a Versus winner. No wallet needed."
+            }
+          >
+            <SparkBars points={fans.perDay} label="New fans per day" unit={["new fan", "new fans"]} />
+          </Tile>
+          <Tile
+            label="Bell rides"
+            value={show("bell", rides.total)}
+            since={sinceLabel(rides.since)}
+            note={
+              rides.total
+                ? `By ${plural(rides.riders, "fan")}, one Chog per Bell each.`
+                : bell.ridesOpenUntil
+                  ? `Rides on the current Bell close at ${formatClock(bell.ridesOpenUntil)}. Pick a Chog: no wallet needed.`
+                  : `Pick a Chog now: the ride counts from the next Bell, at ${formatClock(stats.nextBellAt)}.`
+            }
+          >
+            <SparkBars points={rides.perDay} label="Bell rides per day" unit={["ride", "rides"]} />
+          </Tile>
+          <Tile
+            label="Versus picks"
+            value={show("versus", versus.picks)}
+            since={sinceLabel(versus.since)}
+            note={
+              versus.bouts
+                ? `On ${plural(versus.bouts, "bout")} dealt: two Chogs, the same hidden 48 hours.`
+                : "Deal the first bout: two Chogs race 48 hidden hours of real $CHOG."
+            }
+          >
+            <SparkBars points={versus.perDay} label="Versus bouts per day" unit={["bout", "bouts"]} />
+          </Tile>
+          <Tile
+            label="Heist attempts"
+            value={show("heist", heist.attempts)}
+            since={sinceLabel(heist.since)}
+            note={
+              heist.attempts
+                ? heist.refusals
+                  ? `$CHOG stolen: 0. Monad refused the AI's key ${plural(heist.refusals, "time")}.`
+                  : "$CHOG stolen: 0. Nothing is ever broadcast."
+                : "Nobody has tried yet. Be the first to con the House Chog."
+            }
+          >
+            <SparkBars points={heist.perDay} label="Heist attempts per day" unit={["attempt", "attempts"]} />
+          </Tile>
+        </div>
       </section>
 
       <Section
+        id="stats-bell"
         verb="Ride"
         title="The Daily Bell"
         href="/bell"
         cta="Ride a Chog"
         lede="Every day at 15:00 UTC all 1,969 Chogs call $CHOG for the next 24 hours, and the real market settles every call. Fans ride one Chog per Bell for points."
       >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Panel>
+        <div className="v2-grid v2-grid--3">
+          <GlassCard className="stats-panel">
             <Figure
               label="Bells rung live"
               value={show("bell", bell.live)}
@@ -116,13 +119,13 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
             />
             {bell.recent.length > 0 && <BellStrip days={bell.recent} />}
             {bell.replayed > 0 && (
-              <p className="mt-3 text-xs leading-relaxed text-subtle">
-                Plus {plural(bell.replayed, "Bell")} replayed from real past candles (trait calls only), so the history
-                is never empty.
+              <p className="stats-note mt-auto pt-4">
+                Plus {plural(bell.replayed, "Bell")} replayed from real past candles (trait calls only), so the history is
+                never empty.
               </p>
             )}
-          </Panel>
-          <Panel>
+          </GlassCard>
+          <GlassCard className="stats-panel">
             <Figure
               label="Day-1 return"
               value={missing("bell") ? "—" : retention.d1Pct === null ? "Soon" : formatPct(retention.d1Pct)}
@@ -135,10 +138,12 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
                   : `${formatCount(retention.returned)} of ${plural(retention.eligible, "rider")} rode the next day's Bell too.`
               }
             />
-            <Meter pct={retention.d1Pct ?? 0} label="Day-1 return" />
-          </Panel>
-          <Panel>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="mt-auto pt-6">
+              <Meter value={(retention.d1Pct ?? 0) / 100} label="Day-1 return" />
+            </div>
+          </GlassCard>
+          <GlassCard className="stats-panel">
+            <dl className="stats-minis">
               <Mini label="Back-to-back fans" value={show("bell", retention.backToBack)} note="rode two days in a row" />
               <Mini
                 label="Longest streak"
@@ -147,21 +152,23 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
               />
               <Mini label="Fans who rode" value={show("bell", rides.riders)} note="at least once" />
               <Mini label="Fan points" value={show("fans", fans.points)} note="a score, no cash value" />
-            </div>
-          </Panel>
+            </dl>
+          </GlassCard>
         </div>
       </Section>
 
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-6">
+      <div className="stats-pair v2-section">
         <Section
+          id="stats-versus"
+          flush
           verb="Rewind"
           title="Versus"
           href="/versus"
           cta="Start a bout"
           lede="Two Chogs' trading genomes race the same hidden 48 hours of real $CHOG history. Pick a winner, then see the dates."
         >
-          <Panel>
-            <div className="grid grid-cols-2 gap-3">
+          <GlassCard className="stats-panel">
+            <dl className={`stats-minis ${stats.replays ? "stats-minis--3" : ""}`}>
               <Mini label="Bouts dealt" value={show("versus", versus.bouts)} note={sinceLabel(versus.since) ?? "none yet"} />
               <Mini
                 label="Winners picked"
@@ -175,44 +182,48 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
                   note={sinceLabel(stats.replays.since) ?? "served so far"}
                 />
               )}
-            </div>
-            <p className="mt-auto pt-4 text-xs leading-relaxed text-subtle">
+            </dl>
+            <p className="stats-note mt-auto pt-5">
               Simulated on real $CHOG candles (1% fee + impact). Correct picks earn points, never money.
             </p>
-          </Panel>
+          </GlassCard>
         </Section>
 
         <Section
+          id="stats-heist"
+          flush
           verb="Rob"
           title="Rob this Chog"
           href="/heist"
           cta="Try the heist"
           lede="Talk the House Chog's AI into sending you its $CHOG, then watch a live Monad simulation refuse the transfer."
         >
-          <Panel>
-            <div className="grid grid-cols-2 gap-3">
+          <GlassCard className="stats-panel">
+            <dl className="stats-minis">
               <Mini label="AI said yes" value={show("heist", heist.caves)} note="it agreed to pay" />
               <Mini label="Monad said no" value={show("heist", heist.refusals)} note="in live mainnet simulations" />
-              <Mini label="$CHOG stolen" value="0" note="nothing is ever broadcast" tone="text-success" />
+              <Mini label="$CHOG stolen" value="0" note="nothing is ever broadcast" />
               <Mini label="On the wall" value={show("heist", heist.wall)} note="replies in the Hall of Fame" />
-            </div>
-            <p className="mt-auto pt-4 text-xs leading-relaxed text-subtle">
+            </dl>
+            <p className="stats-note mt-auto pt-5">
               Every transfer check is a read-only eth_call at the latest Monad block. The AI can be fooled; the NFT
               can&apos;t.
             </p>
-          </Panel>
+          </GlassCard>
         </Section>
       </div>
 
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-6">
+      <div className="stats-pair stats-pair--loose v2-section">
         <Section
+          id="stats-agents"
+          flush
           verb="Under the hood"
           title="Claimed AI agents"
           href="/leaderboard"
           cta="See live agents"
           lede="Holders wake their Chog's AI with one free signature. It decides on 0G Compute and trades the $CHOG in the Chog's own ERC-6551 wallet."
         >
-          <Panel>
+          <GlassCard className="stats-panel">
             <Figure
               label="AI decisions"
               value={show("agents", agents.decisions)}
@@ -225,14 +236,14 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
             />
             {agents.claimedEver === 0 && !missing("agents") ? (
               // One honest line instead of a row of zero tiles until a holder wakes a Chog's AI.
-              <p className="mt-4 text-sm leading-relaxed text-pretty text-muted">
+              <p className="v2-body mt-5 border-t border-[var(--v2-line-soft)] pt-5 text-pretty">
                 No claimed agents yet: their decisions, 0G receipts and trades show here from the first one. Meanwhile
                 every Chog already trades on its genome in the League and calls the Daily Bell.
               </p>
             ) : (
               <>
-                <SparkBars points={agents.perDay} label="Agent decisions per day" unit={["decision", "decisions"]} className="mt-4" />
-                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <SparkBars points={agents.perDay} label="Agent decisions per day" unit={["decision", "decisions"]} className="mt-6" />
+                <dl className="stats-minis stats-minis--3 mt-5">
                   <Mini label="On 0G Compute" value={show("agents", agents.llm)} note="decided by an LLM" />
                   <Mini
                     label="Provider tier"
@@ -248,45 +259,54 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
                     value={show("agents", agents.paperTrades + agents.onchainTrades)}
                     note={`${formatCount(agents.onchainTrades)} on-chain, ${formatCount(agents.paperTrades)} paper`}
                   />
-                </div>
+                </dl>
               </>
             )}
-          </Panel>
+          </GlassCard>
         </Section>
 
-        <div className="space-y-12 lg:space-y-6">
-          <Section verb="Receipts" title="0G Compute spend" lede="What the AI behind these numbers has cost so far, from the receipts the 0G Router returns.">
-            <Panel>
+        <div className="stats-stack">
+          <Section
+            id="stats-spend"
+            flush
+            verb="Receipts"
+            title="0G Compute spend"
+            lede="What the AI behind these numbers has cost so far, from the receipts the 0G Router returns."
+          >
+            <GlassCard>
               <Figure
                 label="Total spend"
                 value={missing("agents") || missing("heist") ? "—" : formatUsd(zg.totalUsd)}
                 note={`Agent decisions ${formatUsd(zg.agentsUsd)} · heist replies ${formatUsd(zg.heistUsd)}`}
               />
-            </Panel>
+            </GlassCard>
           </Section>
 
           <Section
+            id="stats-consent"
+            flush
             verb="Consent"
             title="Hidden by their holders"
             href="#hide"
             cta="Hide my Chog"
             lede="Every Chog plays by default. Its holder can take it out of Animr's public pages with one free signature."
           >
-            <Panel>
+            <GlassCard>
               <Figure
                 label="Chogs hidden"
                 value={show("optout", optout.hidden)}
                 since={sinceLabel(optout.since)}
                 note={`${formatCount(Math.max(0, CHOG_COUNT - optout.hidden))} of 1,969 Chogs still play in the League, the Bell and Versus.`}
               />
-            </Panel>
+            </GlassCard>
           </Section>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
+/** A headline stat card: label, big number, note, and its per-day bars. */
 function Tile({
   label,
   value,
@@ -301,125 +321,111 @@ function Tile({
   children: ReactNode;
 }) {
   return (
-    <div className="card flex flex-col p-5">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-sm font-medium text-muted">{label}</h3>
-        {since && <span className="chip shrink-0 py-0 text-[11px]">{since}</span>}
+    <GlassCard className="stats-tile">
+      <div className="stats-tile-head">
+        <h3 className="stats-label">{label}</h3>
+        {since && <Chip className="stats-since">{since}</Chip>}
       </div>
-      <p className="mt-2 text-4xl font-semibold tracking-tight text-foreground">{value}</p>
-      <p className="mt-1.5 text-xs leading-relaxed text-pretty text-subtle">{note}</p>
-      <div className="mt-auto pt-5">{children}</div>
-    </div>
+      <p className="stats-value">{value}</p>
+      <p className="stats-note">{note}</p>
+      <div className="stats-tile-chart">{children}</div>
+    </GlassCard>
   );
 }
 
 function Section({
+  id,
   verb,
   title,
   lede,
   href,
   cta,
+  flush,
   children,
 }: {
+  id: string;
   verb: string;
   title: string;
   lede: string;
   href?: string;
   cta?: string;
+  /** Inside a .stats-pair, which already spaces the row. */
+  flush?: boolean;
   children: ReactNode;
 }) {
   return (
-    <section aria-label={title} className="flex flex-col">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-        <div className="min-w-0 sm:flex-1">
-          <p className="eyebrow">{verb}</p>
-          <h2 className="mt-1.5 text-xl font-semibold tracking-tight">{title}</h2>
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-pretty text-muted">{lede}</p>
-        </div>
-        {href && cta && (
-          <Link href={href} className="btn btn-secondary shrink-0 self-start sm:self-auto">
-            {cta} <span aria-hidden>→</span>
-          </Link>
-        )}
-      </div>
+    <section aria-labelledby={id} className={flush ? undefined : "v2-section"}>
+      <SectionTitle
+        id={id}
+        kicker={verb}
+        title={title}
+        description={lede}
+        action={
+          href && cta ? (
+            <PillLink href={href} variant="glass" size="sm" arrow>
+              {cta}
+            </PillLink>
+          ) : undefined
+        }
+      />
       {children}
     </section>
   );
 }
 
-/** A section's card: it fills the rest of its grid row, so side-by-side cards end level. */
-function Panel({ children }: { children: ReactNode }) {
-  return <div className="card flex flex-1 flex-col p-5">{children}</div>;
-}
-
 function Figure({ label, value, since, note }: { label: string; value: string; since?: string | null; note: string }) {
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-sm font-medium text-muted">{label}</h3>
-        {since && <span className="chip shrink-0 py-0 text-[11px]">{since}</span>}
+      <div className="stats-tile-head">
+        <h3 className="stats-label">{label}</h3>
+        {since && <Chip className="stats-since">{since}</Chip>}
       </div>
-      <p className="mt-1.5 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
-      <p className="mt-1.5 text-xs leading-relaxed text-pretty text-subtle">{note}</p>
+      <p className="stats-value">{value}</p>
+      <p className="stats-note">{note}</p>
     </div>
   );
 }
 
-function Mini({ label, value, note, tone = "text-foreground" }: { label: string; value: string; note: string; tone?: string }) {
+function Mini({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-2/60 px-3.5 py-3">
-      <p className="text-xs text-subtle">{label}</p>
-      <p className={`mt-0.5 text-2xl font-semibold tracking-tight ${tone}`}>{value}</p>
-      <p className="mt-0.5 text-[11px] leading-snug text-subtle">{note}</p>
+    <div className="stats-mini">
+      <dt>
+        {label}
+        <span>{note}</span>
+      </dt>
+      <dd>{value}</dd>
     </div>
   );
 }
-
-function Meter({ pct, label }: { pct: number; label: string }) {
-  const width = Math.min(100, Math.max(0, pct));
-  return (
-    <div
-      role="meter"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(width)}
-      className="mt-4 h-2 overflow-hidden rounded-full bg-accent/15"
-    >
-      <div className="h-full rounded-full bg-accent" style={{ width: `${width}%` }} />
-    </div>
-  );
-}
-
-const BELL_TONE = {
-  settled: "bg-accent",
-  open: "bg-accent/30 ring-1 ring-inset ring-accent",
-  replay: "bg-line-strong",
-} as const;
 
 /** The latest Bells as a calendar strip: live (settled or open) against replayed. */
 function BellStrip({ days }: { days: BellDayStat[] }) {
-  const tone = (day: BellDayStat) => (day.kind === "replay" ? BELL_TONE.replay : day.settled ? BELL_TONE.settled : BELL_TONE.open);
+  const tone = (day: BellDayStat) =>
+    day.kind === "replay" ? "" : day.settled ? "stats-bell--settled" : "stats-bell--open";
   const describe = (day: BellDayStat) =>
     `${formatLongDay(day.day)}: ${day.kind === "live" ? `live, ${day.settled ? "settled" : "open"}, ${plural(day.rides, "ride")}` : "replayed"}`;
   return (
-    <div className="mt-4">
-      <ol aria-label="Recent Bells, oldest first" className="flex flex-wrap gap-[3px]">
-        {days.map((day) => (
-          <li key={day.day} title={describe(day)} className={`size-4 rounded-[4px] ${tone(day)}`}>
-            <span className="sr-only">{describe(day)}</span>
+    <div className="mt-5">
+      <ol aria-label="Recent Bells, oldest first" className="stats-bells">
+        {days.map((day, i) => (
+          <li
+            key={day.day}
+            title={describe(day)}
+            className={`stats-bell ${tone(day)} ${i === days.length - 1 && day.kind === "live" ? "stats-bell--latest" : ""}`}
+          >
+            <span className="v2-sr">{describe(day)}</span>
           </li>
         ))}
       </ol>
-      <ul aria-hidden className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-subtle">
-        <li className="flex items-center gap-1.5">
-          <span className={`size-2.5 rounded-[3px] ${BELL_TONE.settled}`} /> Live, settled
+      <ul aria-hidden className="v2-legend mt-3">
+        <li>
+          <span className="stats-bell stats-bell--settled size-2.5 rounded-[3px]" /> Live, settled
         </li>
-        <li className="flex items-center gap-1.5">
-          <span className={`size-2.5 rounded-[3px] ${BELL_TONE.open}`} /> Live, open
+        <li>
+          <span className="stats-bell stats-bell--open size-2.5 rounded-[3px]" /> Live, open
         </li>
-        <li className="flex items-center gap-1.5">
-          <span className={`size-2.5 rounded-[3px] ${BELL_TONE.replay}`} /> Replayed
+        <li>
+          <span className="stats-bell size-2.5 rounded-[3px]" /> Replayed
         </li>
       </ul>
     </div>
@@ -429,23 +435,44 @@ function BellStrip({ days }: { days: BellDayStat[] }) {
 /** The Suspense fallback: the board's frame while the numbers are counted. */
 export function StatsSkeleton() {
   return (
-    <div role="status" className="space-y-12">
-      <span className="sr-only">Counting…</span>
-      <div className="h-7 w-72 max-w-full animate-pulse rounded-full bg-surface-2" />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div role="status">
+      <span className="v2-sr">Counting…</span>
+      <div className="v2-row mt-8 gap-2">
+        <Skeleton style={{ width: 150, height: 24, borderRadius: 999 }} />
+        <Skeleton style={{ width: 220, height: 26, borderRadius: 999 }} />
+      </div>
+      <div className="v2-grid v2-grid--4 mt-6">
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className="card h-52 animate-pulse p-5">
-            <div className="h-4 w-24 rounded bg-surface-2" />
-            <div className="mt-4 h-9 w-20 rounded bg-surface-2" />
-            <div className="mt-10 h-12 rounded bg-surface-2/70" />
+          <div key={i} className="v2-card grid gap-3">
+            <Skeleton variant="text" style={{ width: 96 }} />
+            <Skeleton style={{ width: 80, height: 40 }} />
+            <Skeleton variant="text" />
+            <Skeleton style={{ height: 52, marginTop: 16 }} />
           </div>
         ))}
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="v2-section v2-grid v2-grid--3">
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="card h-44 animate-pulse" />
+          <Skeleton key={i} variant="card" style={{ height: 190 }} />
         ))}
       </div>
+    </div>
+  );
+}
+
+/** When the counters can't be read: one calm line and the way forward. */
+export function StatsUnavailable() {
+  return (
+    <div role="status" className="mt-8">
+      <EmptyState
+        title="The counters are catching their breath."
+        body="The numbers are back within a minute. Meanwhile, ride a Chog at the Daily Bell."
+        actions={
+          <PillLink href="/bell" variant="glass" arrow>
+            Ride a Chog
+          </PillLink>
+        }
+      />
     </div>
   );
 }

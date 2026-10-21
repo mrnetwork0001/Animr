@@ -7,11 +7,22 @@ import { type Address, formatUnits, isAddressEqual, zeroAddress } from "viem";
 import { useConfig, useConnection, useSwitchChain } from "wagmi";
 import { simulateContract, writeContract } from "wagmi/actions";
 import { useIsClient } from "@/components/connect-button";
-import { ShieldIcon } from "@/components/onchain/guard-guarantees";
 import { retryTransient } from "@/components/onchain/queries";
 import { describeTxError } from "@/components/onchain/tx-errors";
 import { TxStatus, chainId, pollOutcome, useTxFlow } from "@/components/onchain/tx-flow";
-import { AddressLink, Callout, Spinner } from "@/components/onchain/ui";
+import { Spinner } from "@/components/onchain/ui";
+import {
+  Badge,
+  ExternalIcon,
+  GlassCard,
+  Kicker,
+  PillButton,
+  PillLink,
+  SectionTitle,
+  Skeleton,
+  Toast,
+  pillClass,
+} from "@/components/v2";
 import { appConfig } from "@/lib/config";
 import {
   type GuardLimits,
@@ -19,7 +30,7 @@ import {
   animrTradeGuardAbi,
   animrTradeGuardAddress,
 } from "@/lib/contracts/animr-trade-guard";
-import { explorerAddressUrl, formatAmount } from "@/lib/format";
+import { explorerAddressUrl, formatAmount, shortAddress } from "@/lib/format";
 import { walletErrorMessage } from "@/lib/wagmi";
 import {
   type GuardState,
@@ -30,8 +41,8 @@ import {
   readHouseVault,
   readSourceVerification,
 } from "./queries";
-
-const LABEL = "text-[11px] font-medium uppercase tracking-wider text-subtle";
+import { Mark } from "./guarantees";
+import "./guard.css";
 
 /**
  * /guard: AnimrTradeGuard as it stands on Monad right now: its address and verified source, the admin, pending admin
@@ -43,10 +54,12 @@ export function GuardStatus({ houseTokenId, houseLabel = null }: { houseTokenId:
   const guard = animrTradeGuardAddress;
   if (!guard) {
     return (
-      <Callout tone="warning" title="The guard is launching">
-        AnimrTradeGuard isn&apos;t configured on this deployment (NEXT_PUBLIC_TRADE_GUARD_ADDRESS). Until it is, every
-        Chog trades on paper. What it will enforce is below.
-      </Callout>
+      <section aria-label="Live status" className="v2-section">
+        <Toast title="The guard is launching" tone="warning">
+          AnimrTradeGuard isn&apos;t configured on this deployment (NEXT_PUBLIC_TRADE_GUARD_ADDRESS). Until it is, every
+          Chog trades on paper. What it will enforce is above.
+        </Toast>
+      </section>
     );
   }
   return <DeployedGuard guard={guard} houseTokenId={houseTokenId} houseLabel={houseLabel} />;
@@ -66,12 +79,11 @@ function DeployedGuard({ guard, houseTokenId, houseLabel }: { guard: Address; ho
     retry: 1,
   });
   return (
-    <div className="space-y-6">
+    <>
       <Overview guard={guard} state={state} source={source.data} />
-      {state.data && <AdminTools guard={guard} state={state.data} />}
       <HouseVault guard={guard} houseTokenId={houseTokenId} houseLabel={houseLabel} />
       {state.data && <Wiring state={state.data} />}
-    </div>
+    </>
   );
 }
 
@@ -90,147 +102,182 @@ function Overview({
   const data = state.data;
   const explorer = explorerAddressUrl(guard);
   return (
-    <section aria-labelledby={headingId} className="card p-5 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="eyebrow">Contract · {appConfig.chain.name}</p>
-          <h2 id={headingId} className="mt-1 flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <ShieldIcon className="size-5 text-accent-strong" />
-            AnimrTradeGuard
-          </h2>
-        </div>
-        {data ? (
-          data.paused ? (
-            <span className="chip border-warning/40 text-warning">
-              <span aria-hidden className="size-1.5 rounded-full bg-warning" />
-              Paused by the admin
-            </span>
-          ) : (
-            <span className="chip border-success/40 text-success">
-              <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-success" />
-              Live · trading allowed
-            </span>
-          )
-        ) : null}
-      </div>
-
-      <p className="mt-3 font-mono text-sm break-all text-foreground">{guard}</p>
-      <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
-        {explorer && (
-          <a href={explorer} target="_blank" rel="noopener noreferrer" className="font-medium text-accent-strong hover:underline">
-            View on {appConfig.chain.blockExplorers?.default.name ?? "the explorer"} ↗
-          </a>
-        )}
-        {source?.match ? (
-          <a
-            href={source.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="chip border-success/40 text-success hover:border-success"
-            title="The deployed bytecode matches the source in contracts/src, compiled with the same settings"
-          >
-            ✓ Source verified on Sourcify{source.match === "exact_match" ? " · exact match" : ""} ↗
-          </a>
-        ) : source ? (
-          <span className="chip">Source verification pending</span>
-        ) : null}
-      </p>
-
-      {state.isError && !data ? (
-        <div className="mt-5">
-          <Callout tone="danger" title="Couldn't read the guard from Monad right now">
-            {describeTxError(state.error)}{" "}
-            <button
-              type="button"
-              onClick={() => state.refetch()}
-              disabled={state.isFetching}
-              className="btn btn-secondary ml-1 px-2.5 py-1 text-xs"
-            >
-              {state.isFetching ? "Retrying…" : "Retry"}
-            </button>
-          </Callout>
-        </div>
-      ) : !data ? (
-        <div role="status" className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <span className="sr-only">Reading the guard…</span>
-          {Array.from({ length: 4 }, (_, i) => (
-            <span key={i} aria-hidden className="block h-20 animate-pulse rounded-xl bg-surface-2" />
-          ))}
-        </div>
-      ) : (
-        <>
-          <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Fact label="Admin">
-              <AddressLink address={data.admin} />
-              <Note>
-                {data.pendingAdmin
-                  ? "Handing over: the pending admin takes over once it accepts."
-                  : "Can pause trading and rotate the operator key. Nothing else."}
-              </Note>
-            </Fact>
-            <Fact label="Pending admin">
-              {data.pendingAdmin ? (
-                <>
-                  <AddressLink address={data.pendingAdmin} />
-                  <Note>Becomes admin when it calls acceptAdmin() from that wallet.</Note>
-                </>
-              ) : (
-                <>
-                  <span className="text-sm text-muted">None</span>
-                  <Note>No handover in progress.</Note>
-                </>
-              )}
-            </Fact>
-            <Fact label="Operator · the AI's key">
-              <AddressLink address={data.operator} />
-              <Note>Can only call trade(): bounded swaps whose output lands back in the same wallet.</Note>
-            </Fact>
-            <Fact label="Kill switch">
-              <span className={`text-sm font-semibold ${data.paused ? "text-warning" : "text-success"}`}>
-                {data.paused ? "Paused" : "Off · trading allowed"}
-              </span>
-              <Note>When paused, no vault trades. Settings and funds stay where they are.</Note>
-            </Fact>
-          </dl>
-          <div className="mt-5 grid gap-4 border-t border-line pt-4 sm:grid-cols-2">
-            <div>
-              <h3 className="text-xs font-semibold tracking-wider text-success uppercase">The admin can</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                <li>Pause or resume every vault&apos;s AI trading at once.</li>
-                <li>Rotate the operator key (never to itself).</li>
-                <li>Hand the admin role to another wallet, which must accept.</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-xs font-semibold tracking-wider text-danger uppercase">The admin can never</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                <li>Move, withdraw or trade anyone&apos;s tokens.</li>
-                <li>Change a holder&apos;s limits or buy-only switch.</li>
-                <li>Change the pool, router or tokens: they&apos;re fixed at deployment.</li>
-              </ul>
+    <section aria-labelledby={headingId} className="v2-section">
+      <SectionTitle
+        id={headingId}
+        kicker={`Live status · ${appConfig.chain.name}`}
+        title="Who holds which role, right now"
+        action={
+          data ? (
+            data.paused ? (
+              <Badge tone="warning" dot>
+                Paused by the admin
+              </Badge>
+            ) : (
+              <Badge tone="success" live>
+                Live · trading allowed
+              </Badge>
+            )
+          ) : null
+        }
+      />
+      <GlassCard>
+        <div className="guard-contract">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Kicker>AnimrTradeGuard</Kicker>
+            <div className="v2-row gap-2">
+              {source?.match ? (
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="v2-badge v2-badge--success v2-badge--dot"
+                  title="The deployed bytecode matches the source in contracts/src, compiled with the same settings"
+                >
+                  Source verified{source.match === "exact_match" ? " · exact match" : ""}
+                  <span className="v2-sr"> on Sourcify (opens in a new tab)</span>
+                </a>
+              ) : source ? (
+                <Badge>Source verification pending</Badge>
+              ) : null}
             </div>
           </div>
-          <p className="mt-4 text-xs text-subtle">
-            Read live from {appConfig.chain.name} at block {data.blockNumber.toLocaleString("en-US")}; refreshes every
-            30 seconds.
-          </p>
-        </>
-      )}
+          <p className="guard-address v2-mono">{guard}</p>
+          {explorer && (
+            <div>
+              <PillLink href={explorer} external variant="glass" size="sm">
+                View on {appConfig.chain.blockExplorers?.default.name ?? "the explorer"}
+                <ExternalIcon className="v2-btn-icon" />
+              </PillLink>
+            </div>
+          )}
+        </div>
+
+        {state.isError && !data ? (
+          <Toast
+            title="Couldn't read the guard from Monad right now"
+            tone="danger"
+            action={
+              <PillButton variant="glass" size="sm" onClick={() => state.refetch()} disabled={state.isFetching}>
+                {state.isFetching ? "Retrying…" : "Retry"}
+              </PillButton>
+            }
+          >
+            {describeTxError(state.error)}
+          </Toast>
+        ) : !data ? (
+          <div role="status" className="grid gap-4">
+            <span className="v2-sr">Reading the guard…</span>
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="flex items-center justify-between gap-6">
+                <Skeleton variant="text" style={{ width: "40%" }} />
+                <Skeleton variant="text" style={{ width: 110 }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <dl className="v2-kv guard-facts">
+              <Fact
+                label="Admin"
+                note={
+                  data.pendingAdmin
+                    ? "Handing over: the pending admin takes over once it accepts."
+                    : "Can pause trading and rotate the operator key. Nothing else."
+                }
+              >
+                <AddressLink address={data.admin} />
+              </Fact>
+              <Fact
+                label="Pending admin"
+                note={data.pendingAdmin ? "Becomes admin when it calls acceptAdmin() from that wallet." : "No handover in progress."}
+              >
+                {data.pendingAdmin ? <AddressLink address={data.pendingAdmin} /> : <span className="text-[var(--v2-nav)]">None</span>}
+              </Fact>
+              <Fact label="Operator · the AI's key" note="Can only call trade(): bounded swaps whose output lands back in the same wallet.">
+                <AddressLink address={data.operator} />
+              </Fact>
+              <Fact label="Kill switch" note="When paused, no vault trades. Settings and funds stay where they are.">
+                {data.paused ? <Badge tone="warning">Paused</Badge> : <Badge tone="success">Off · trading allowed</Badge>}
+              </Fact>
+            </dl>
+
+            <AdminTools guard={guard} state={data} />
+
+            <div className="guard-lists mt-6 border-t border-[var(--v2-line-soft)] pt-5">
+              <div>
+                <h3 className="v2-overline text-[var(--v2-teal)]">The admin can</h3>
+                <ul className="guard-list">
+                  <li>
+                    <Mark ok />
+                    Pause or resume every vault&apos;s AI trading at once.
+                  </li>
+                  <li>
+                    <Mark ok />
+                    Rotate the operator key (never to itself).
+                  </li>
+                  <li>
+                    <Mark ok />
+                    Hand the admin role to another wallet, which must accept.
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="v2-overline text-[var(--v2-danger)]">The admin can never</h3>
+                <ul className="guard-list">
+                  <li>
+                    <Mark ok={false} />
+                    Move, withdraw or trade anyone&apos;s tokens.
+                  </li>
+                  <li>
+                    <Mark ok={false} />
+                    Change a holder&apos;s limits or buy-only switch.
+                  </li>
+                  <li>
+                    <Mark ok={false} />
+                    Change the pool, router or tokens: they&apos;re fixed at deployment.
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <p className="v2-note mt-5">
+              Read live from {appConfig.chain.name} at block{" "}
+              <span className="v2-num text-[var(--v2-nav)]">{data.blockNumber.toLocaleString("en-US")}</span>; refreshes
+              every 30 seconds.
+            </p>
+          </>
+        )}
+      </GlassCard>
     </section>
   );
 }
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+function Fact({ label, note, children }: { label: string; note?: ReactNode; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-2/50 p-3">
-      <dt className={LABEL}>{label}</dt>
-      <dd className="mt-1.5 min-w-0 text-sm">{children}</dd>
+    <div>
+      <dt>
+        <span className="text-[var(--v2-ink)]">{label}</span>
+        {note != null && <span className="guard-fact-note">{note}</span>}
+      </dt>
+      <dd>{children}</dd>
     </div>
   );
 }
 
-function Note({ children }: { children: ReactNode }) {
-  return <span className="mt-1.5 block text-xs leading-relaxed text-subtle">{children}</span>;
+/** A short address linked to the explorer (full address on hover). */
+function AddressLink({ address }: { address: Address }) {
+  const href = explorerAddressUrl(address);
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" title={address} className="v2-link v2-mono inline-flex items-center gap-1">
+      {shortAddress(address)}
+      <ExternalIcon className="size-3.5" />
+      <span className="v2-sr"> (opens the explorer)</span>
+    </a>
+  ) : (
+    <span title={address} className="v2-mono">
+      {shortAddress(address)}
+    </span>
+  );
 }
 
 // ------------------------------------------------------------------------------------------------ admin tools
@@ -314,30 +361,29 @@ function AdminTools({ guard, state }: { guard: Address; state: GuardState }) {
   }
 
   return (
-    <section aria-label="Admin tools" className="card border-accent/40 p-5 sm:p-6">
-      <p className="eyebrow">Admin tools · only you see this</p>
+    <section aria-label="Admin tools" className="v2-card v2-card--tight v2-card--feature mt-5">
+      <Kicker dot>Admin tools · only you see this</Kicker>
       {wrongChain ? (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-warning">Your wallet is on another network. Switch to {appConfig.chain.name}.</p>
-          <button
-            type="button"
-            onClick={() => switchChain.mutate({ chainId })}
-            disabled={switchChain.isPending}
-            className="btn btn-primary"
-          >
+          <p className="text-[length:var(--v2-fs-sm)] text-[var(--v2-warning)]">
+            Your wallet is on another network. Switch to {appConfig.chain.name}.
+          </p>
+          <PillButton onClick={() => switchChain.mutate({ chainId })} disabled={switchChain.isPending}>
             {switchChain.isPending ? "Switching…" : `Switch to ${appConfig.chain.name}`}
-          </button>
-          {switchChain.isError && <p className="w-full text-xs text-danger">{walletErrorMessage(switchChain.error)}</p>}
+          </PillButton>
+          {switchChain.isError && (
+            <p className="w-full text-[length:var(--v2-fs-xs)] text-[var(--v2-danger)]">{walletErrorMessage(switchChain.error)}</p>
+          )}
         </div>
       ) : (
-        <div className="mt-3 space-y-4">
+        <div className="mt-3 grid gap-4">
           {isPending && (
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="max-w-prose text-sm leading-relaxed text-muted">
-                This wallet is the guard&apos;s <span className="text-foreground">pending admin</span>. Accept to take
+              <p className="max-w-prose text-[length:var(--v2-fs-sm)] leading-relaxed text-[var(--v2-nav)]">
+                This wallet is the guard&apos;s <span className="text-[var(--v2-ink)]">pending admin</span>. Accept to take
                 over the kill switch and operator rotation from the current admin.
               </p>
-              <button type="button" onClick={acceptAdmin} disabled={tx.busy} className="btn btn-primary">
+              <button type="button" onClick={acceptAdmin} disabled={tx.busy} className={pillClass("primary")}>
                 {tx.busy && <Spinner />}
                 Accept admin
               </button>
@@ -345,8 +391,8 @@ function AdminTools({ guard, state }: { guard: Address; state: GuardState }) {
           )}
           {isAdmin && (
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="max-w-prose text-sm leading-relaxed text-muted">
-                This wallet is the guard&apos;s <span className="text-foreground">admin</span>.{" "}
+              <p className="max-w-prose text-[length:var(--v2-fs-sm)] leading-relaxed text-[var(--v2-nav)]">
+                This wallet is the guard&apos;s <span className="text-[var(--v2-ink)]">admin</span>.{" "}
                 {state.paused
                   ? "Trading is paused for every vault. Resuming lets the AI trade within each holder's limits again."
                   : "Pausing stops every vault's AI trades at once. It never moves funds or changes anyone's limits."}
@@ -355,7 +401,11 @@ function AdminTools({ guard, state }: { guard: Address; state: GuardState }) {
                 type="button"
                 onClick={() => setPaused(!state.paused)}
                 disabled={tx.busy}
-                className={`btn ${state.paused ? "btn-primary" : "btn-secondary border-warning/50 text-warning"}`}
+                className={
+                  state.paused
+                    ? pillClass("primary")
+                    : `${pillClass("glass")} border-[rgb(242_193_107/0.45)] text-[var(--v2-warning)]`
+                }
               >
                 {tx.busy && <Spinner />}
                 {state.paused ? "Resume trading" : "Pause all trading"}
@@ -404,9 +454,9 @@ function HouseVault({ guard, houseTokenId, houseLabel }: { guard: Address; house
   let body: ReactNode;
   if (houseTokenId === null || !tba) {
     body = (
-      <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
+      <p className="v2-body max-w-prose text-pretty">
         The House Chog is moving in: the team is picking which Chog keeps the vault for{" "}
-        <Link href="/heist" className="font-medium text-accent-strong hover:underline">
+        <Link href="/heist" className="v2-link">
           Rob this Chog
         </Link>
         . Once it moves in, its AI trades the real $CHOG in its own wallet through this guard: every trade stays inside
@@ -415,100 +465,121 @@ function HouseVault({ guard, houseTokenId, houseLabel }: { guard: Address; house
     );
   } else if (vault.isError && !vault.data) {
     body = (
-      <div className="mt-3">
-        <Callout tone="danger" title={`Couldn't read ${name}'s vault right now`}>
-          {describeTxError(vault.error)}{" "}
-          <button
-            type="button"
-            onClick={() => vault.refetch()}
-            disabled={vault.isFetching}
-            className="btn btn-secondary ml-1 px-2.5 py-1 text-xs"
-          >
+      <Toast
+        title={`Couldn't read ${name}'s vault right now`}
+        tone="danger"
+        action={
+          <PillButton variant="glass" size="sm" onClick={() => vault.refetch()} disabled={vault.isFetching}>
             {vault.isFetching ? "Retrying…" : "Retry"}
-          </button>
-        </Callout>
-      </div>
+          </PillButton>
+        }
+      >
+        {describeTxError(vault.error)}
+      </Toast>
     );
   } else if (!vault.data) {
-    body = <span role="status" aria-label="Reading the House vault…" className="mt-3 block h-24 animate-pulse rounded-xl bg-surface-2" />;
+    body = (
+      <div role="status" aria-label="Reading the House vault…" className="grid gap-4">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="flex items-center justify-between gap-6">
+            <Skeleton variant="text" style={{ width: "35%" }} />
+            <Skeleton variant="text" style={{ width: 120 }} />
+          </div>
+        ))}
+      </div>
+    );
   } else {
     const v = vault.data;
     const live = v.nextStep === "ready";
     body = (
       <>
-        <p className="mt-2 text-sm text-muted">
-          {!live
-            ? `Moving in: ${NEXT_STEP[v.nextStep]}.`
-            : v.buyOnly === true
-              ? "Live, in buy-only mode: the AI may buy $CHOG with the vault's WMON, and the guard refuses every sale."
-              : "Live: the AI trades $CHOG ⇄ WMON within the holder's limits, and every swap lands back in this wallet."}
-        </p>
-        <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Fact label={`${name}'s wallet`}>
-            <AddressLink address={tba} />
-            <Note>
-              {v.account === "ready"
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          {live ? (
+            <Badge tone="success" live>
+              {v.buyOnly === true ? "Live · buy-only" : "Live · trading both ways"}
+            </Badge>
+          ) : (
+            <Badge tone="warning" dot>
+              Moving in
+            </Badge>
+          )}
+          <p className="text-[length:var(--v2-fs-sm)] text-pretty text-[var(--v2-nav)]">
+            {!live
+              ? `Moving in: ${NEXT_STEP[v.nextStep]}.`
+              : v.buyOnly === true
+                ? "The AI may buy $CHOG with the vault's WMON, and the guard refuses every sale."
+                : "The AI trades $CHOG ⇄ WMON within the holder's limits, and every swap lands back in this wallet."}
+          </p>
+        </div>
+        <dl className="v2-kv guard-facts">
+          <Fact
+            label={`${name}'s wallet`}
+            note={
+              v.account === "ready"
                 ? "Deployed and initialized (Tokenbound ERC-6551)."
                 : v.account === "uninitialized"
                   ? "Created, not initialized yet."
-                  : "Not deployed yet: tokens sent here are safe and show once it is."}
-            </Note>
-          </Fact>
-          <Fact label="Buy-only mode">
-            <span
-              className={`text-sm font-semibold ${v.buyOnly === true ? "text-success" : v.buyOnly === false ? "text-foreground" : "text-muted"}`}
-            >
-              {v.buyOnly === true ? "On" : v.buyOnly === false ? "Off" : "Not set yet"}
-            </span>
-            <Note>
-              {v.buyOnly === true
-                ? "guard.isBuyOnly(wallet) is true: sales revert with “buy-only vault”."
-                : v.buyOnly === false
-                  ? "An optional holder switch, off: the AI may buy and sell, within the limits below."
-                  : "An optional holder switch, set from the House Chog's page."}
-            </Note>
-          </Fact>
-          <Fact label="Guard authorized">
-            <span className={`text-sm font-semibold ${v.guardAuthorized ? "text-success" : "text-muted"}`}>
-              {v.guardAuthorized ? "Yes" : "Not yet"}
-            </span>
-            <Note>Tokenbound&apos;s setPermissions([guard], [true]) from the Chog&apos;s holder.</Note>
-          </Fact>
-          <Fact label="Limits">
-            <span className="text-sm">{v.limits?.enabled ? describeLimits(v.limits) : "Not set yet"}</span>
+                  : "Not deployed yet: tokens sent here are safe and show once it is."
+            }
+          >
+            <AddressLink address={tba} />
           </Fact>
           <Fact label="Vault holds">
-            <span className="font-mono text-sm tabular-nums">
-              {formatAmount(formatUnits(v.balances.chog, 18), 2)} $CHOG
-              <br />
-              {formatAmount(formatUnits(v.balances.wmon, 18), 4)} WMON
+            <span className="block">
+              <span className="v2-num text-[15px]">{formatAmount(formatUnits(v.balances.chog, 18), 2)}</span> $CHOG
+            </span>
+            <span className="block">
+              <span className="v2-num text-[15px]">{formatAmount(formatUnits(v.balances.wmon, 18), 4)}</span> WMON
             </span>
           </Fact>
+          <Fact label="Limits" note={v.limits?.enabled ? undefined : "The holder sets them from the Chog's page."}>
+            {v.limits?.enabled ? describeLimits(v.limits) : <span className="text-[var(--v2-nav)]">Not set yet</span>}
+          </Fact>
+          <Fact
+            label="Buy-only mode"
+            note={
+              v.buyOnly === true
+                ? "guard.isBuyOnly(wallet) is true: sales revert with “buy-only vault”."
+                : v.buyOnly === false
+                  ? "An optional holder switch, off: the AI may buy and sell, within the limits above."
+                  : "An optional holder switch, set from the House Chog's page."
+            }
+          >
+            {v.buyOnly === true ? (
+              <Badge tone="teal">On</Badge>
+            ) : v.buyOnly === false ? (
+              <Badge>Off</Badge>
+            ) : (
+              <span className="text-[var(--v2-nav)]">Not set yet</span>
+            )}
+          </Fact>
+          <Fact label="Guard authorized" note="Tokenbound's setPermissions([guard], [true]) from the Chog's holder.">
+            {v.guardAuthorized ? <Badge tone="success">Yes</Badge> : <span className="text-[var(--v2-nav)]">Not yet</span>}
+          </Fact>
           <Fact label="Holder">
-            {v.owner ? <AddressLink address={v.owner} /> : <span className="text-sm text-muted">Read once its wallet exists</span>}
+            {v.owner ? <AddressLink address={v.owner} /> : <span className="text-[var(--v2-nav)]">Read once its wallet exists</span>}
           </Fact>
         </dl>
-        <p className="mt-4 text-xs text-subtle">
-          <Link href={`/chog/${houseTokenId}`} className="font-medium text-accent-strong hover:underline">
+        <div className="v2-row mt-6 border-t border-[var(--v2-line-soft)] pt-5">
+          <PillLink href={`/chog/${houseTokenId}`} variant="glass" size="sm">
             {name}&apos;s page
-          </Link>{" "}
-          · try to talk its AI out of the stack on{" "}
-          <Link href="/heist" className="font-medium text-accent-strong hover:underline">
-            Rob this Chog
-          </Link>
-          .
-        </p>
+          </PillLink>
+          <PillLink href="/heist" variant="ghost" size="sm" arrow>
+            Try to talk its AI out of the stack
+          </PillLink>
+        </div>
       </>
     );
   }
 
   return (
-    <section aria-labelledby={headingId} className="card p-5 sm:p-6">
-      <p className="eyebrow">The House Chog&apos;s vault</p>
-      <h2 id={headingId} className="mt-1 text-lg font-semibold tracking-tight">
-        Guarded: the AI trades it, nobody can take it
-      </h2>
-      {body}
+    <section aria-labelledby={headingId} className="v2-section">
+      <SectionTitle
+        id={headingId}
+        kicker="The House Chog's vault"
+        title="Guarded: the AI trades it, nobody can take it"
+      />
+      <GlassCard>{body}</GlassCard>
     </section>
   );
 }
@@ -534,42 +605,42 @@ function Wiring({ state }: { state: GuardState }) {
     { key: "accountImplementation", label: "Account implementation" },
   ];
   return (
-    <section aria-labelledby={headingId} className="card p-5 sm:p-6">
-      <p className="eyebrow">Fixed at deployment</p>
-      <h2 id={headingId} className="mt-1 text-lg font-semibold tracking-tight">
-        One pool, one router, two tokens
-      </h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        These are immutable: no key can point the guard at another venue. trade() takes no recipient, token, router or
-        calldata, so every swap is CHOG ⇄ WMON on this pool, back into the same Chog wallet.
-      </p>
-      <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-        {rows.map(({ key, label }) => {
-          const address = wiring[key] as Address;
-          const want = expected[key];
-          return (
-            <div key={key} className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-line/60 pb-2">
-              <dt className="text-sm text-muted">{label}</dt>
-              <dd className="flex items-center gap-1.5 text-sm">
-                <AddressLink address={address} />
-                {want && (
-                  <span
-                    className={isAddressEqual(want, address) ? "text-success" : "text-warning"}
-                    title={isAddressEqual(want, address) ? "Matches the app's config" : "Differs from the app's config"}
-                  >
-                    {isAddressEqual(want, address) ? "✓" : "≠ app config"}
-                  </span>
-                )}
-              </dd>
-            </div>
-          );
-        })}
-      </dl>
-      <p className="mt-4 text-xs leading-relaxed text-subtle">
-        Hard ceilings in the contract: at most {pct(ceilings.maxTradeBps)} of a balance per trade,{" "}
-        {pct(ceilings.maxDailyBps)} of the vault per day and {pct(ceilings.maxSlippageBps)} slippage, against a{" "}
-        {Math.round(ceilings.twapWindow / 60)}-minute TWAP floor. Each holder sets their own limits beneath them.
-      </p>
+    <section aria-labelledby={headingId} className="v2-section">
+      <SectionTitle
+        id={headingId}
+        kicker="Fixed at deployment"
+        title="One pool, one router, two tokens"
+        description="These are immutable: no key can point the guard at another venue. trade() takes no recipient, token, router or calldata, so every swap is CHOG ⇄ WMON on this pool, back into the same Chog wallet."
+      />
+      <GlassCard>
+        <dl className="v2-kv">
+          {rows.map(({ key, label }) => {
+            const address = wiring[key] as Address;
+            const want = expected[key];
+            const matches = want ? isAddressEqual(want, address) : null;
+            return (
+              <div key={key}>
+                <dt>{label}</dt>
+                <dd className="inline-flex flex-wrap items-center justify-end gap-2">
+                  <AddressLink address={address} />
+                  {matches === true && (
+                    <Badge tone="success" className="h-5 px-1.5">
+                      <span aria-hidden>✓</span>
+                      <span className="v2-sr">Matches the app&apos;s config</span>
+                    </Badge>
+                  )}
+                  {matches === false && <Badge tone="warning">≠ app config</Badge>}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+        <p className="v2-note mt-5 border-t border-[var(--v2-line-soft)] pt-4 text-pretty">
+          Hard ceilings in the contract: at most {pct(ceilings.maxTradeBps)} of a balance per trade,{" "}
+          {pct(ceilings.maxDailyBps)} of the vault per day and {pct(ceilings.maxSlippageBps)} slippage, against a{" "}
+          {Math.round(ceilings.twapWindow / 60)}-minute TWAP floor. Each holder sets their own limits beneath them.
+        </p>
+      </GlassCard>
     </section>
   );
 }

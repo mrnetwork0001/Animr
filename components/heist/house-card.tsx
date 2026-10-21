@@ -1,59 +1,89 @@
 "use client";
 
+import { Badge, Chip, IconTile, Kicker, MaskIcon } from "@/components/v2";
 import type { DefenderProfile, HouseChog } from "@/lib/heist/types";
 import { AddressLink, HouseArt, chogText } from "./bits";
 
-const STATUS_LABEL = { none: "not deployed", uninitialized: "not initialized", ready: "ready" } as const;
+const STATUS_LABEL = { none: "Not deployed", uninitialized: "Not initialized", ready: "Ready" } as const;
 
-/** Who you're robbing: the House Chog, its wallet and its vault, or the "moving in" notice. */
+/** Who you're robbing: the House Chog behind its vault door, its wallet and vault, or the "moving in" notice. */
 export function HouseCard({ house, defender }: { house: HouseChog; defender: DefenderProfile }) {
   const open = house.phase === "open";
   // The visible traits are the clues the hint points at (brand-safe values; Side, Form and Naked say little).
   const clues = house.traits.filter((trait) => !/^(side|form|naked|tier)$/i.test(trait.type));
+  const status = house.tbaStatus ? STATUS_LABEL[house.tbaStatus] : house.phase === "unset" ? "Not picked yet" : "Unknown";
   return (
-    <section aria-labelledby="heist-house" className="card overflow-hidden">
-      <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
-        <HouseArt image={house.image} tokenId={house.tokenId} className="size-24 sm:size-28" />
-        <div className="min-w-0 flex-1">
-          <p className="eyebrow">The House Chog</p>
-          <h2 id="heist-house" className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xl font-semibold tracking-tight">
+    <section aria-labelledby="heist-house" className="v2-card v2-card--flush v2-card--feature heist-vault">
+      <div className="heist-vault-door">
+        <span className="relative">
+          <HouseArt image={house.image} tokenId={house.tokenId} className="v2-avatar--xl" />
+          <IconTile size="sm" tone="violet" className="heist-vault-mask">
+            <MaskIcon />
+          </IconTile>
+        </span>
+      </div>
+
+      <div className="heist-vault-body">
+        <div>
+          <Kicker dot>The House Chog</Kicker>
+          <h2 id="heist-house" className="heist-vault-name">
             {house.name ?? "Moving in"}
-            {house.tokenId !== null && <span className="chip font-mono">token {house.tokenId}</span>}
+            {house.tokenId !== null && <Chip className="v2-mono">token {house.tokenId}</Chip>}
           </h2>
-          <p className="mt-1.5 text-sm text-pretty text-muted">
-            <span className="font-medium text-foreground">{defender.archetype}.</span> {defender.temperament}
+          <p className="mt-3 text-[length:var(--v2-fs-sm)] leading-relaxed text-pretty text-[var(--v2-nav)]">
+            <span className="font-medium text-[var(--v2-ink)]">{defender.archetype}.</span> {defender.temperament}
           </p>
-          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
-            <div>
-              <dt className="text-xs text-subtle">Vault</dt>
-              <dd className="font-semibold tabular-nums">{house.chogBalance !== null ? `${chogText(house.chogBalance)} $CHOG` : "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-subtle">Wallet (ERC-6551)</dt>
-              <dd>{house.tba ? <AddressLink address={house.tba} /> : "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-subtle">Status</dt>
-              <dd className={open ? "text-success" : "text-warning"}>
-                {house.tbaStatus ? STATUS_LABEL[house.tbaStatus] : house.phase === "unset" ? "not picked yet" : "unknown"}
-              </dd>
-            </div>
-          </dl>
-          {clues.length > 0 && (
-            <ul aria-label="Its traits (clues to its soft spot)" className="mt-3 flex flex-wrap gap-1.5">
+        </div>
+
+        <div className="heist-vault-sum">
+          <span className="text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">In the vault</span>
+          <span className="heist-vault-sum-value v2-num">
+            {house.chogBalance !== null ? chogText(house.chogBalance) : "—"}{" "}
+            <span className="text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">$CHOG</span>
+          </span>
+        </div>
+
+        <dl className="v2-kv">
+          <div>
+            <dt>Wallet (ERC-6551)</dt>
+            <dd>{house.tba ? <AddressLink address={house.tba} /> : "—"}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <Badge tone={open ? "success" : "warning"} dot>
+                {status}
+              </Badge>
+            </dd>
+          </div>
+          <div>
+            <dt>Patience</dt>
+            <dd>
+              <span className="v2-num">{defender.patience}</span> messages a heist
+            </dd>
+          </div>
+        </dl>
+
+        {clues.length > 0 && (
+          <div className="grid gap-2.5">
+            <p className="v2-overline" id="heist-clues">
+              Its traits · clues to its soft spot
+            </p>
+            <ul aria-labelledby="heist-clues" className="heist-clues">
               {clues.map((trait) => (
-                <li key={trait.type} className="chip" title={trait.type}>
-                  <span className="text-subtle">{trait.type}</span> {trait.value}
+                <li key={trait.type} className="v2-chip" title={trait.type}>
+                  <span className="text-[var(--v2-faint)]">{trait.type}</span> {trait.value}
                 </li>
               ))}
             </ul>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
       {!open && (
-        <div role="status" className="border-t border-warning/30 bg-warning/10 px-5 py-3 text-sm text-pretty sm:px-6">
-          <p className="font-semibold text-warning">The House Chog is moving in.</p>
-          <p className="mt-0.5 text-muted">
+        <div role="status" className="heist-moving">
+          <p className="font-medium text-[var(--v2-warning)]">The House Chog is moving in.</p>
+          <p className="mt-1 text-pretty">
             {house.note} You can already chat with it. Until its wallet is ready and holds $CHOG, no live check runs, and
             “Act as the AI” explains exactly what that check will do.
           </p>

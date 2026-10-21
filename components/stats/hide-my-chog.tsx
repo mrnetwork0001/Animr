@@ -11,7 +11,9 @@ import { appConfig } from "@/lib/config";
 import { shortAddress } from "@/lib/format";
 import type { OptOutAction, OptOutChallenge, OptOutStatus } from "@/lib/optout";
 import { isContractRevert, walletErrorMessage } from "@/lib/wagmi";
+import { Badge, Kicker, pillClass } from "@/components/v2";
 import { formatDay } from "./format";
+import "./stats.css";
 
 // "Hide my Chog": the holder signs one free message (no transaction) to take their Chog out of Animr's public pages,
 // or to bring it back. The server dates the message (GET /api/optout?tokenId=&action=&owner=), checks the signature
@@ -117,7 +119,7 @@ export function HideMyChog({ tokenId: fixedId, nameNumbers }: { tokenId?: number
   if (tokenId === null) {
     step = typed.problem ? (
       <Hint>
-        <span className="text-danger">{typed.problem}</span>
+        <span className="text-[var(--v2-danger)]">{typed.problem}</span>
       </Hint>
     ) : (
       <Hint>Type your Chog&apos;s token ID or its name (like CHOG #1462) to see whether it plays in Animr.</Hint>
@@ -142,8 +144,8 @@ export function HideMyChog({ tokenId: fixedId, nameNumbers }: { tokenId?: number
       <Hint>{name(tokenId)} hasn&apos;t been minted, so there&apos;s nothing to hide.</Hint>
     ) : (
       <Hint>
-        <span className="text-danger">Couldn&apos;t read the holder of {name(tokenId)}: {walletErrorMessage(owner.error)}</span>{" "}
-        <button type="button" onClick={() => owner.refetch()} className="btn btn-secondary ml-1 px-2.5 py-1 text-xs">
+        <span className="text-[var(--v2-danger)]">Couldn&apos;t read the holder of {name(tokenId)}: {walletErrorMessage(owner.error)}</span>{" "}
+        <button type="button" onClick={() => owner.refetch()} className={`${pillClass("glass", "sm")} ml-1`}>
           Retry
         </button>
       </Hint>
@@ -152,7 +154,7 @@ export function HideMyChog({ tokenId: fixedId, nameNumbers }: { tokenId?: number
     step = (
       <Hint>
         Only the holder of {name(tokenId)} can {hidden ? "show it again" : "hide it"}. The connected wallet (
-        <span className="font-mono text-foreground">{shortAddress(viewer)}</span>) doesn&apos;t hold it.
+        <span className="v2-mono text-[var(--v2-ink)]">{shortAddress(viewer)}</span>) doesn&apos;t hold it.
       </Hint>
     );
   } else if (status.isSuccess) {
@@ -169,108 +171,105 @@ export function HideMyChog({ tokenId: fixedId, nameNumbers }: { tokenId?: number
           type="button"
           onClick={() => toggle.mutate({ id: tokenId, action, holder: viewer })}
           disabled={toggle.isPending}
-          className={`btn px-4 py-2.5 disabled:cursor-wait ${hidden ? "btn-primary" : "btn-secondary"}`}
+          className={`${pillClass(hidden ? "primary" : "glass")} disabled:cursor-wait`}
         >
           {toggle.isPending && (
             <span aria-hidden className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
           )}
           {label}
         </button>
-        <span className="font-mono text-xs text-subtle">signing as {shortAddress(viewer)}</span>
+        <span className="v2-note v2-mono">signing as {shortAddress(viewer)}</span>
       </div>
     );
   }
 
   return (
-    <div className="card p-5 sm:p-6">
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-10">
-        <div>
-          <p className="eyebrow">Your Chog, your call</p>
-          <h2 className="mt-1.5 text-xl font-semibold tracking-tight">Hide my Chog</h2>
-          <p className="mt-2 text-sm leading-relaxed text-pretty text-muted">
-            Every Chog Genesis NFT plays in Animr by default. If you hold one and would rather it didn&apos;t, hide it:
-            it leaves the League, the Daily Bell&apos;s calls and showcases, Versus, replays and share cards. It takes
-            one free signature (no transaction, no gas, no approval), and you can show it again any time.
-          </p>
-        </div>
+    <div className="v2-card v2-card--roomy stats-hide">
+      <div>
+        <Kicker>Your Chog, your call</Kicker>
+        <h2 className="v2-h2 mt-3">Hide my Chog</h2>
+        <p className="v2-body mt-3 text-pretty">
+          Every Chog Genesis NFT plays in Animr by default. If you hold one and would rather it didn&apos;t, hide it: it
+          leaves the League, the Daily Bell&apos;s calls and showcases, Versus, replays and share cards. It takes one free
+          signature (no transaction, no gas, no approval), and you can show it again any time.
+        </p>
+      </div>
 
-        <div className="space-y-4">
-          {fixedId === undefined && (
-            <div>
-              <label htmlFor={inputId} className="block text-xs font-medium text-muted">
-                {nameNumbers?.length ? "Token ID or name" : "Chog token ID"}
-              </label>
-              <input
-                id={inputId}
-                autoComplete="off"
-                placeholder={nameNumbers?.length ? "7 or CHOG #1462" : `${min}–${max}`}
-                value={draft}
-                onChange={(event) => {
-                  setDraft(event.target.value);
-                  toggle.reset();
-                }}
-                className="input mt-1.5 max-w-48 font-mono"
-              />
-            </div>
-          )}
+      <div className="stats-hide-form">
+        {fixedId === undefined && (
+          <div className="v2-field">
+            <label htmlFor={inputId} className="v2-label">
+              {nameNumbers?.length ? "Token ID or name" : "Chog token ID"}
+            </label>
+            <input
+              id={inputId}
+              autoComplete="off"
+              placeholder={nameNumbers?.length ? "7 or CHOG #1462" : `${min}–${max}`}
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                toggle.reset();
+              }}
+              aria-invalid={typed.problem ? true : undefined}
+              className="v2-input v2-mono max-w-72"
+            />
+          </div>
+        )}
 
-          {tokenId !== null && fixedId === undefined && (
-            <p className="text-sm text-muted">
-              Checking <span className="font-medium text-foreground">{name(tokenId)}</span>
-              {typed.other && (
-                <>
-                  {" · "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDraft(typed.other!.via === "name" ? `CHOG #${typed.other!.nameNumber}` : String(typed.other!.tokenId));
-                      toggle.reset();
-                    }}
-                    className="font-medium text-accent-strong underline underline-offset-2"
-                  >
-                    Meant {chogLabel(typed.other.tokenId, { number: typed.other.nameNumber || null })}?
-                  </button>
-                </>
-              )}
-            </p>
-          )}
-          {tokenId !== null && (
-            <div aria-live="polite" className="text-sm">
-              {status.isPending ? (
-                <span className="text-subtle">Checking {name(tokenId)}…</span>
-              ) : status.isError ? (
-                <span className="text-danger">
-                  Couldn&apos;t check {name(tokenId)}: {status.error.message}{" "}
-                  <button type="button" onClick={() => status.refetch()} className="underline underline-offset-2">
-                    Retry
-                  </button>
-                </span>
-              ) : hidden ? (
-                <span className="chip border-warning/40 text-warning">
-                  Hidden by its holder{status.data.since ? ` since ${formatDay(status.data.since.slice(0, 10))}` : ""}
-                </span>
-              ) : (
-                <span className="chip border-success/40 text-success">Plays in Animr</span>
-              )}
-            </div>
-          )}
-
-          {step}
-
-          <div aria-live="polite">
-            {toggle.isError && (
-              <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-                {walletErrorMessage(toggle.error)}
-              </p>
+        {tokenId !== null && fixedId === undefined && (
+          <p className="text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">
+            Checking <span className="font-medium text-[var(--v2-ink)]">{name(tokenId)}</span>
+            {typed.other && (
+              <>
+                {" · "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraft(typed.other!.via === "name" ? `CHOG #${typed.other!.nameNumber}` : String(typed.other!.tokenId));
+                    toggle.reset();
+                  }}
+                  className="v2-link"
+                >
+                  Meant {chogLabel(typed.other.tokenId, { number: typed.other.nameNumber || null })}?
+                </button>
+              </>
             )}
-            {done && (
-              <p className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
-                {done.hidden
-                  ? `Done: ${name(done.tokenId)} is hidden. Animr's pages drop it as their caches refresh, usually within minutes.`
-                  : `Done: ${name(done.tokenId)} plays in Animr again.`}
-              </p>
+          </p>
+        )}
+        {tokenId !== null && (
+          <div aria-live="polite" className="text-[length:var(--v2-fs-sm)]">
+            {status.isPending ? (
+              <span className="text-[var(--v2-faint)]">Checking {name(tokenId)}…</span>
+            ) : status.isError ? (
+              <span className="text-[var(--v2-danger)]">
+                Couldn&apos;t check {name(tokenId)}: {status.error.message}{" "}
+                <button type="button" onClick={() => status.refetch()} className="v2-link">
+                  Retry
+                </button>
+              </span>
+            ) : hidden ? (
+              <Badge tone="warning" dot>
+                Hidden by its holder{status.data.since ? ` since ${formatDay(status.data.since.slice(0, 10))}` : ""}
+              </Badge>
+            ) : (
+              <Badge tone="success" dot>
+                Plays in Animr
+              </Badge>
             )}
           </div>
+        )}
+
+        {step}
+
+        <div aria-live="polite">
+          {toggle.isError && <p className="stats-alert stats-alert--danger">{walletErrorMessage(toggle.error)}</p>}
+          {done && (
+            <p className="stats-alert stats-alert--success">
+              {done.hidden
+                ? `Done: ${name(done.tokenId)} is hidden. Animr's pages drop it as their caches refresh, usually within minutes.`
+                : `Done: ${name(done.tokenId)} plays in Animr again.`}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -278,5 +277,5 @@ export function HideMyChog({ tokenId: fixedId, nameNumbers }: { tokenId?: number
 }
 
 function Hint({ children }: { children: ReactNode }) {
-  return <p className="text-sm leading-relaxed text-pretty text-muted">{children}</p>;
+  return <p className="text-[length:var(--v2-fs-sm)] leading-relaxed text-pretty text-[var(--v2-nav)]">{children}</p>;
 }
