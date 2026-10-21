@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { maxUint256 } from "viem";
 import { AgentProfile, AgentProfileSkeleton, type ChogDna } from "@/components/agent-profile";
 import { ChogJump } from "@/components/chog-jump";
+import { ListedFor } from "@/components/market/listed-for";
 import { PillLink } from "@/components/v2";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
 import { chogLabel } from "@/lib/chog-id";
@@ -82,15 +83,24 @@ async function Profile({ params }: Pick<PageProps<"/chog/[tokenId]">, "params">)
   if (!tokenId) notFound();
   // The "Hide my Chog" list below is request data (lib/visibility.ts): read it at request time.
   await connection();
+  // "Hide my Chog": its DNA, replays and Bell call give way to a notice (its wallet and agent stay).
+  const hidden = HAS_SNAPSHOT && (await isHiddenChog(tokenId));
   return (
-    <AgentProfile
-      tokenId={tokenId}
-      dna={chogDna(tokenId)}
-      metadataName={metadataNameOf(tokenId)}
-      // The House Chog (HOUSE_CHOG_TOKEN_ID; unset until it moves in): its holder also gets the buy-only step.
-      house={houseChogTokenId() === Number(tokenId)}
-      // "Hide my Chog": its DNA, replays and Bell call give way to a notice (its wallet and agent stay).
-      hidden={HAS_SNAPSHOT && (await isHiddenChog(tokenId))}
-    />
+    <>
+      {/* A live OpenSea listing, if there is one (renders nothing otherwise). */}
+      {!hidden && (
+        <Suspense fallback={null}>
+          <ListedFor tokenId={tokenId} className="mb-3" />
+        </Suspense>
+      )}
+      <AgentProfile
+        tokenId={tokenId}
+        dna={chogDna(tokenId)}
+        metadataName={metadataNameOf(tokenId)}
+        // The House Chog (HOUSE_CHOG_TOKEN_ID; unset until it moves in): its holder also gets the buy-only step.
+        house={houseChogTokenId() === Number(tokenId)}
+        hidden={hidden}
+      />
+    </>
   );
 }

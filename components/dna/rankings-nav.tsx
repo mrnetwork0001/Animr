@@ -8,6 +8,7 @@ import { DEFAULT_WINDOW } from "./shared";
 const LINKS = [
   { key: "league", href: "/league", label: "League" },
   { key: "traits", href: "/traits", label: "Traits" },
+  { key: "market", href: "/market", label: "For sale" },
   { key: "live", href: "/leaderboard", label: "Claimed AIs" },
 ] as const;
 
