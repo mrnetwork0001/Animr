@@ -1,0 +1,1 @@
+Next.js 16, React 19, Tailwind 4, viem, wagmi, Vercel AI SDK, 0G Compute (glm-5.3), ERC-6551 + Tokenbound V3, Solidity + Foundry, Upstash Redis, GeckoTerminal, Vercel, Monad mainnet
