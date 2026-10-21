@@ -94,6 +94,7 @@ With no keys at all, everything except the LLM works. The League, Time Machine, 
 | `HEIST_DAILY_USD_CAP` (default 3), `HEIST_ADMIN_SECRET`, `HEIST_IP_SALT` | The heist's daily 0G budget, Hall of Fame moderation, and the IP-hash key. |
 | `ORACLE_PURSE_CHOG` (default 5000, `0` turns it off) | The Oracle Purse a settled live Bell shows as "on its way" until a transfer is recorded. |
 | `ANIMR_MANUAL_RUNS_PER_DAY` (default 400) | The "Think now" cap. |
+| `NEXT_PUBLIC_PRIVY_APP_ID` (+ optional `NEXT_PUBLIC_PRIVY_CLIENT_ID`) | Privy login: wallets, email code, Google, X, Discord, and an embedded wallet for users without one. Unset means a plain "Connect wallet" menu for browser wallets. |
 
 The full list with comments, including the heist and Purse variables, is in [`.env.example`](.env.example).
 

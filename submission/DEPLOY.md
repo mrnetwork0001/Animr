@@ -125,6 +125,7 @@ The Purse script reads Redis from `.env.local`, where the `UPSTASH_REDIS_REST_*`
 ```dotenv
 NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_TRADE_GUARD_ADDRESS=0x92D3d4Af4B3b0F29Ec020e407803e135af61987b
+NEXT_PUBLIC_PRIVY_APP_ID=<the Privy App ID from 4.3>
 OPERATOR_ADDRESS=0x2523bBdD941783C4E565180D2a1b18DE86319cC2
 ORACLE_PURSE_CHOG=<whole $CHOG you will really send per settled live Bell, or 0>
 HOUSE_CHOG_TOKEN_ID=1399
@@ -164,6 +165,7 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `HEIST_IP_SALT` | Optional | Secret | New `openssl rand -hex 32`. | The key for visitors' IP hashes. Unset means it's derived from `CRON_SECRET`. |
 | `HOUSE_CHOG_TOKEN_ID` | Required | Config | `1399`: its **token ID** ("CHOG #891" on OpenSea), never its "CHOG #" number. `.env.local` already has it. | Block A. Unset means the House Chog is "moving in" on `/heist`, `/guard` and `/`. |
 | `HEIST_DAILY_USD_CAP` | Optional | Config | Default `3`. | 0G spend per UTC day on heist replies. `0` means template replies only. |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | Recommended | Config | The App ID from dashboard.privy.io (4.3). Public, not a secret. | Turns on Privy login in the app header: external wallets (MetaMask, Rabby, Coinbase, WalletConnect…), email code, Google, X and Discord, plus an embedded wallet for users without one. Unset means the plain "Connect wallet" menu for browser wallets. Inlined at build time. |
 | `NEXT_PUBLIC_SITE_URL` | Optional on Vercel | Config | `https://<custom domain>`, only if you add one. | The base for `og:image` URLs and the host printed on share cards. Unset on Vercel means the production domain (`VERCEL_PROJECT_PRODUCTION_URL`). Inlined at build time. |
 
 **Optional: leave unset unless you have a reason**
@@ -178,6 +180,7 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `NEXT_PUBLIC_RPC_URL` | `https://rpc.monad.xyz` | **Ships to every browser.** Set it only for rate-limit trouble (troubleshooting), then redeploy. |
 | `NEXT_PUBLIC_IPFS_GATEWAY` | `https://ipfs.filebase.io/ipfs/` | Needs a trailing slash. |
 | `NEXT_PUBLIC_MARKETPLACE_URL_TEMPLATE` | OpenSea item page | `{contract}` and `{tokenId}` are substituted. |
+| `NEXT_PUBLIC_PRIVY_CLIENT_ID` | unset | Only if the Privy app uses app clients (Settings → Clients). |
 | `ANIMR_MANUAL_RUNS_PER_DAY` | `400` | The global daily cap on "Think now" runs, each one 0G call (about $0.002). |
 | `NEXT_PUBLIC_CHOG_NFT_ADDRESS`, `NEXT_PUBLIC_CHOG_TOKEN_ADDRESS`, `NEXT_PUBLIC_TBA_IMPLEMENTATION`, `NEXT_PUBLIC_TBA_SALT` | Chog Genesis, $CHOG, Tokenbound AccountProxy, zero salt | **Never change these.** A different value moves every Chog's wallet address or breaks the guard's fixed wiring. |
 
@@ -190,7 +193,7 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `ANIMR_ENV` | Vercel already namespaces Redis by `VERCEL_ENV`. If you set it (to `production`, say), preview deployments would write production data. Use it only on your laptop, for the Purse script. |
 | `ANIMR_DATA_DIR` | The local file store only. |
 | `JITI_TSCONFIG_PATHS` | A command-line flag for running the scripts with jiti. |
-| Any key or token with a `NEXT_PUBLIC_` prefix | It would ship to every visitor's browser. |
+| Any key or token with a `NEXT_PUBLIC_` prefix | It would ship to every visitor's browser. (The Privy **App ID** is public by design; the Privy **App Secret** is never needed.) |
 
 **Set by Vercel or Next.js: don't add these**
 
@@ -204,7 +207,7 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 ### 4.2 When you must redeploy
 
 - **After any variable change.** Vercel applies variables to *new* deployments only.
-- **`NEXT_PUBLIC_*` variables:** they are compiled into the JavaScript bundles at build time. The code reads each one as a literal `process.env.NEXT_PUBLIC_…` expression (in `lib/config.ts`, `lib/nft.ts`, `lib/contracts/animr-trade-guard.ts`, `app/layout.tsx` and `lib/og/theme.ts`), which Next replaces with the value, so only a new build changes them.
+- **`NEXT_PUBLIC_*` variables:** they are compiled into the JavaScript bundles at build time. The code reads each one as a literal `process.env.NEXT_PUBLIC_…` expression (in `lib/config.ts`, `lib/nft.ts`, `lib/contracts/animr-trade-guard.ts`, `lib/privy.ts`, `app/layout.tsx` and `lib/og/theme.ts`), which Next replaces with the value, so only a new build changes them.
 - **`HOUSE_CHOG_TOKEN_ID`:** this one is **server-only**, not `NEXT_PUBLIC_`. `lib/heist/config.ts` reads it lazily on the server. It still needs a redeploy for two reasons:
   - Vercel applies it only to new deployments.
   - `/guard` and the landing page `/` are prerendered at build time (Cache Components), so they only show the House Chog after a rebuild.
@@ -218,6 +221,17 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 3. **Untick "Use existing Build Cache"** and click **Redeploy**. It takes about 2–4 minutes.
 
 A push to `main` also redeploys. Redeploys keep every Bell, ride and agent, because they live in Redis.
+
+### 4.3 Privy login (one-time setup)
+
+The header's "Log in" uses Privy. Without `NEXT_PUBLIC_PRIVY_APP_ID` the app falls back to a plain wallet menu, so this is safe to do last.
+
+1. Go to https://dashboard.privy.io, create an app (or open the existing one), and copy its **App ID** (Settings → Basic). Not the App Secret.
+2. **Login methods** (User management → Authentication): turn on **External wallets**, **Email**, **Google**, **Twitter** and **Discord**. Turn off anything else you don't want to see (for example **Passkeys**, which adds an "I have a passkey" link to the modal). Google, Twitter and Discord work with Privy's default OAuth credentials; add your own later if you want your app's name on the consent screens.
+3. **Embedded wallets** (Wallets): enable Ethereum embedded wallets. The app asks for one only for users who log in without a wallet.
+4. **Allowed domains** (Settings → Domains / App clients → Allowed origins): add `https://useanimr.vercel.app` and `http://localhost:3000` (plus any custom domain). Preview deployments get a login error until their domain is added, which is fine.
+5. Add `NEXT_PUBLIC_PRIVY_APP_ID` in Vercel (Block A above), then **redeploy**: the value is inlined at build time.
+6. Check: open `/app`, click **Log in**. The modal lists wallets first, then "Log in with email or socials" (email, Google, Twitter, Discord).
 
 ## 5. Crons
 
