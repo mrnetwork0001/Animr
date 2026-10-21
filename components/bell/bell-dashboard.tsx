@@ -11,6 +11,7 @@ import { FanPanel } from "./fan-panel";
 import { scheduledDay, shiftDay } from "./format";
 import { BellHero } from "./hero";
 import { PastBells } from "./past-bells";
+import { BellRecapCard } from "./recap";
 import { SeasonStandings } from "./standings";
 import { Verdict } from "./verdict";
 
@@ -43,6 +44,7 @@ export function BellDashboard() {
       ) : (
         <BellHero bell={bell} pending={today.isPending} />
       )}
+      {verdict?.status === "settled" && <BellRecapCard day={verdict.day} link />}
       <FanPanel bell={bell} />
 
       <div className="v2-section grid items-start gap-x-10 gap-y-16 lg:grid-cols-[minmax(0,1fr)_23rem]">

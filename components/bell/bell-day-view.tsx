@@ -10,6 +10,7 @@ import { CallRow, CallRowsHeader, rideable } from "./call-card";
 import { formatDay, formatPrice, formatUtcTime, shiftDay } from "./format";
 import { PRACTICE_ID } from "./hero";
 import { BullBearBar, HerdHistogram } from "./herd";
+import { BellRecapCard } from "./recap";
 import { ReplayGame } from "./replay-game";
 import { Verdict } from "./verdict";
 
@@ -89,6 +90,7 @@ export function BellDayView({ day }: { day: string }) {
     <div className="flex flex-col gap-6">
       <SampleBanner />
       {pager("Bell pager")}
+      {bell.status === "settled" && <BellRecapCard day={bell.day} />}
       <Overview bell={bell} />
       {bell.status === "settled" && <Verdict bell={bell} cardsOnly />}
       <div className="v2-section">
