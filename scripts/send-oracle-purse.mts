@@ -1,5 +1,5 @@
 /**
- * Sends a settled Daily Bell's Oracle Purse: ORACLE_PURSE_CHOG $CHOG (default 5000) from the House key into the
+ * Sends a settled Daily Bell's Oracle Purse: ORACLE_PURSE_CHOG $CHOG (default 0: no purse) from the House key into the
  * winning Chog's own ERC-6551 wallet, then records the transfer where the Bell page reads it
  * (animr:bell:purse:<day>, lib/bell/purse.ts). The winner is the Oracle of the Day; when that is the House Chog
  * (HOUSE_CHOG_TOKEN_ID), or a Chog whose holder hid it, the next-closest call takes the purse.
@@ -29,7 +29,7 @@
  * Environment (.env.local is loaded when present; variables already set in the shell win):
  *   HOUSE_PRIVATE_KEY   the House hot key that pays (required for --broadcast). Only its address is ever printed.
  *   HOUSE_ADDRESS       optional: must match HOUSE_PRIVATE_KEY's address; enough on its own for a dry run
- *   ORACLE_PURSE_CHOG   whole $CHOG per purse (default 5000; 0 = no purse)
+ *   ORACLE_PURSE_CHOG   whole $CHOG per purse (default 0 = no purse)
  *   HOUSE_CHOG_TOKEN_ID the House Chog: never paid, its runner-up is
  *   UPSTASH_REDIS_REST_URL / _TOKEN (or KV_REST_API_*) and ANIMR_ENV: where the Bells live. The live site on Vercel
  *                       reads namespace "production": run with ANIMR_ENV=production. --broadcast refuses Redis

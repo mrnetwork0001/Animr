@@ -126,6 +126,8 @@ The Purse script reads Redis from `.env.local`, where the `UPSTASH_REDIS_REST_*`
 NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_TRADE_GUARD_ADDRESS=0x92D3d4Af4B3b0F29Ec020e407803e135af61987b
 NEXT_PUBLIC_PRIVY_APP_ID=<the Privy App ID from 4.3>
+NEXT_PUBLIC_TROPHIES_ADDRESS=0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d
+NEXT_PUBLIC_SITE_URL=https://useanimr.vercel.app
 OPERATOR_ADDRESS=0x2523bBdD941783C4E565180D2a1b18DE86319cC2
 ORACLE_PURSE_CHOG=<whole $CHOG you will really send per settled live Bell, or 0>
 HOUSE_CHOG_TOKEN_ID=1399
@@ -167,6 +169,11 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `HEIST_DAILY_USD_CAP` | Optional | Config | Default `3`. | 0G spend per UTC day on heist replies. `0` means template replies only. |
 | `NEXT_PUBLIC_PRIVY_APP_ID` | Recommended | Config | The App ID from dashboard.privy.io (4.3). Public, not a secret. | Turns on Privy login in the app header: external wallets (MetaMask, Rabby, Coinbase, WalletConnect…), email code, Google, X and Discord, plus an embedded wallet for users without one. Unset means the plain "Connect wallet" menu for browser wallets. Inlined at build time. |
 | `NEXT_PUBLIC_SITE_URL` | Optional on Vercel | Config | `https://<custom domain>`, only if you add one. | The base for `og:image` URLs and the host printed on share cards. Unset on Vercel means the production domain (`VERCEL_PROJECT_PRODUCTION_URL`). Inlined at build time. |
+| `NEXT_PUBLIC_TROPHIES_ADDRESS` | Required for trophies | Config | `0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d` | AnimrTrophies on Monad. Unset means no trophy cabinet and no awards (everything no-ops). Inlined at build time. |
+| `OPENSEA_API_KEY` | Optional | Secret | A key from opensea.io/settings/developer. | Live listings on /market. Unset: the app requests a free, short-lived agent key itself. |
+| `OPENSEA_AUTO_KEY` | Optional | Config | `0` to disable. | Turns off the free agent-key fallback when no `OPENSEA_API_KEY` is set. |
+| `OPENSEA_COLLECTION_SLUG` | Optional | Config | Default `chog-genesis`. | The OpenSea collection read by /market. |
+| `CHOG_CHAT_DAILY_CALLS` | Optional | Config | Default `1500`; `0` = template answers only. | Global daily cap on 0G calls for "Ask this Chog". |
 
 **Optional: leave unset unless you have a reason**
 
