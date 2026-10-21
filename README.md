@@ -4,7 +4,9 @@
 
 Animr turns all 1,969 Chog Genesis NFTs into traders, each with its own ERC-6551 wallet on Monad mainnet. Every result is measured in one number: **$CHOG stacked vs just holding**.
 
-Built for Chogathon 2026 · **Not affiliated with Chog** · App: `<APP_URL>` · Demo: `<VIDEO_URL>` · Code: `<REPO_URL>`
+Built for Chogathon 2026 · **Not affiliated with Chog** · App: [useanimr.vercel.app](https://useanimr.vercel.app) · Demo: `<VIDEO_URL>` · Code: private repository (access for judges on request, via the submission form)
+
+**Judges, start here:** [useanimr.vercel.app/tour](https://useanimr.vercel.app/tour), a 2-minute guided tour with no wallet. The full docs (19 pages, including Contracts and API) are at [/docs](https://useanimr.vercel.app/docs).
 
 ---
 
@@ -15,11 +17,26 @@ Built for Chogathon 2026 · **Not affiliated with Chog** · App: `<APP_URL>` · 
 | **Meet** | Each Chog's 13 on-chain traits compile into a published, versioned **trading genome** with 8 genes (genome `g1-7de62b`). Eyes pick the signal, auras the trigger, hats the trade size. The **League** ranks all 1,969 against just holding. Unclaimed Chogs are *Wild* and trade on instinct; claimed ones get an AI brain. **Trait Alpha** shows which trait values win. | `/league` → **Random Chog**, or `/app` and type a token ID (1–1969). Trait Alpha: `/traits`. |
 | **Rewind** | The **Time Machine** replays any Chog over real hourly CHOG/WMON candles, trade by trade, in its own voice, and races two Chogs on the same chart. **Versus** races two Chogs on a hidden 48 hours of real $CHOG history: you call the one that stacks more $CHOG, watch, then the real dates are revealed. | `/replay/2?vs=8`, or **Random Chog** in the League. Versus: `/versus` (+10 points per correct call, points only). |
 | **Ride** | The **Daily Bell** rings at 15:00 UTC. Every Chog publishes a 24h $CHOG call, fans ride one Chog for points, and 24h later the real market settles it: Oracle of the Day, Most Rekt, streaks. After each live Bell the team sends an **Oracle Purse** of $CHOG it bought into the Oracle's own ERC-6551 wallet: the Oracle shown on the Bell page, the best call among featured Chogs, never the House Chog. Fans never receive $CHOG. | `/bell`: pick a Chog to ride. Your fan card lives in a cookie. Points have no cash value. |
-| **Rob** | **Rob this Chog.** The team's House Chog, **CHOG #891 · token 1399**, holds real $CHOG in its Tokenbound wallet. Anyone can try to talk its AI into handing it over. When the AI caves, the page simulates the exact transfer out of the wallet from the AI's key against live mainnet state, and Monad refuses: Tokenbound answers `NotAuthorized()`. *The AI can be fooled. The NFT can't.* | `/heist`: chat, or press **Act as the AI** to run the mainnet check directly. |
+| **Rob** | **Rob this Chog.** The team's House Chog, **CHOG #891 · token 1399** (*launching*), keeps real $CHOG in its Tokenbound wallet; the mainnet check opens once that wallet is funded. Anyone can try to talk its AI into handing it over. When the AI caves, the page simulates the exact transfer out of the wallet from the AI's key against live mainnet state, and Monad refuses: Tokenbound answers `NotAuthorized()`. *The AI can be fooled. The NFT can't.* | `/heist`: chat, or press **Run the check** to run the mainnet check directly. |
+
+### More to explore (no wallet needed)
+
+| Feature | What it is | Where |
+| --- | --- | --- |
+| **Judge tour** | Nine guided steps through the real pages (Chog, League, Time Machine, Versus, Breed, Bell, heist, guard), each with why the NFT matters there. About 2 minutes. | `/tour` |
+| **Breed** | Pick two Chogs: the child takes each of the 13 traits from one parent (deterministic per pair), its genome comes from the same compiler, and all three replay the same real candles. Simulated; nothing is minted or traded. | `/breed` |
+| **Daily Bell recap** | Each settled Bell gets a short write-up in the Chogs' voices: what $CHOG did, the best call, the most rekt and the crowd. Written once by the LLM on 0G Compute (template fallback) and stored. | `/bell/<day>/recap` |
+| **Ask this Chog** | Ask any Chog's AI about its trades, DNA and record. It answers in text and can't act. 0G Compute under a global daily cap (`CHOG_CHAT_DAILY_CALLS`, default 1,500), else answers built from its stats. | `/chog/<tokenId>` |
+| **Best traders for sale** | Chog Genesis NFTs listed on OpenSea right now, ranked by their genome's simulated edge over holding, with a link to each listing. | `/market` |
+| **Trophy cabinet** | **AnimrTrophies**, a soulbound ERC-1155 on Monad ([`0x7720…513d`](https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d)), mints trophies into each Chog's own ERC-6551 wallet: Best call and Most rekt on a live Bell, Survived a heist, First real trade. They move with the NFT. | `/chog/<tokenId>` |
+| **Docs** | 19 pages: getting started, every game, owning a Chog, AnimrTradeGuard, trophies, Contracts and API, self-hosting, trust model. | `/docs` |
+| **Farcaster mini app** | Casting an Animr link shows today's Bell card with a **Ride a Chog** button that opens `/bell` inside Warpcast and other clients. | any page |
+
+The header is a game-style HUD: a glyph per section with live badges (the Bell countdown, today's heist attempts, how many Chogs the logged-in wallet holds). **Log in** uses Privy: a wallet, email, Google, X or Discord, with an embedded wallet for users who have none.
 
 **Holders** can also open `/chog/<tokenId>` and do three things. They create the Chog's wallet in one transaction. They sign one free message to give it an LLM brain on 0G Compute. Optionally, they switch it to real trading through **AnimrTradeGuard** with a five-step setup.
 
-**The House Chog** (*launching*) is the team's own real-money trader: **CHOG #891 · token 1399**. Its genome makes it *Paper Paws*, an aggressive trader whose Round Crying eyes give it the "Panic seller" signal. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead. Like every Chog it is scored on $CHOG stacked vs just holding, so it buys dips and sells only into sharp pumps, aiming to buy back lower. It trades two-way through AnimrTradeGuard, and every swap lands back in its own wallet [`0xa46a…AD71`](https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71), the same wallet the heist dares you to rob.
+**The House Chog** (*launching*) is the team's own real-money trader: **CHOG #891 · token 1399**. Its genome makes it *Paper Paws*, an aggressive trader whose Round Crying eyes give it the "Panic seller" signal. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead. Like every Chog it is scored on $CHOG stacked vs just holding, so it buys dips and sells only into sharp pumps, aiming to buy back lower. Once its wallet is funded and switched on-chain, it trades two-way through AnimrTradeGuard, and every swap lands back in its own wallet [`0xa46a…AD71`](https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71), the same wallet the heist dares you to rob.
 
 ## Why the NFT is essential
 
@@ -53,9 +70,10 @@ Full design, data flow, security model and costs: **[ARCHITECTURE.md](ARCHITECTU
 - **Price protection:** a floor built from the 30-minute and 1-minute TWAPs, which the AI can raise but never lower. A spot-vs-TWAP deviation check, a deadline on every trade, and fail-closed behavior when the TWAP is unavailable.
 - **Settlement is checked against balances.** Exactly `amountIn` spent, at least the floor received, no allowance left. Anything else reverts with `SettlementMismatch`.
 - **Kill switches:** the owner can `disable()` or revoke at any time. The admin can pause, but can never move funds and can never be the operator. Admin transfer takes two steps.
-- **Two-way, within limits:** the House Chog buys and sells under limits of 10% per trade and 30% per day, a minimum gap between trades, the TWAP floor and a deadline on every trade. A rule in the agent engine blocks real-money sells into dips. **Buy-only mode** stays an optional owner toggle: `setBuyOnly(tba, true)` makes the guard refuse every sell from that vault. The House Chog leaves it off.
+- **Two-way, within limits:** the House Chog is set up to buy and sell under limits of 10% per trade and 30% per day, a minimum gap between trades, the TWAP floor and a deadline on every trade. A rule in the agent engine blocks real-money sells into dips. **Buy-only mode** stays an optional owner toggle: `setBuyOnly(tba, true)` makes the guard refuse every sell from that vault. The House Chog leaves it off.
 - **The heist proof never broadcasts.** It is a set of read-only `eth_call` simulations pinned to one mainnet block, with a control call from the real owner. It claims a refusal only when the wallet is deployed, initialized and funded.
-- **37 Foundry tests** (2 of them fuzz tests) fork live Monad mainnet state. They use the real Chog Genesis, $CHOG, WMON, registry, Tokenbound and Capricorn pool and router. See [Contracts](#run-it-locally) for their current status against today's mainnet.
+- **Fork tests against live Monad mainnet state.** AnimrTradeGuard: 37 Foundry tests (2 of them fuzz tests) using the real Chog Genesis, $CHOG, WMON, registry, Tokenbound and Capricorn pool and router. AnimrTrophies: 12 Foundry tests on the real Chog Genesis, registry and Tokenbound. See [Contracts](#run-it-locally) for their status against today's mainnet.
+- **Trophies can't be moved or misdirected.** AnimrTrophies derives each Chog's canonical Tokenbound address itself, so its minter (the AI key) can only mint into real Chog wallets, once per award key. Transfers and approvals revert: trophies leave a wallet only when the NFT changes hands.
 
 ## What's real and what's simulated
 
@@ -67,12 +85,13 @@ Full design, data flow, security model and costs: **[ARCHITECTURE.md](ARCHITECTU
 | 0G Compute LLM calls and their receipts (provider, request ID, cost, provider tier) | Past Bells before the first live ring are replays rebuilt from real candles (labelled) |
 | The heist's mainnet simulation against live state (never broadcast) | |
 | On-chain trades through AnimrTradeGuard [`0x92D3d4Af4B3b0F29Ec020e407803e135af61987b`](https://monadscan.com/address/0x92D3d4Af4B3b0F29Ec020e407803e135af61987b), deployed on Monad mainnet with its source verified on Sourcify; `/guard` reads its roles and status live | |
-| Oracle Purse transfers of $CHOG into Chog wallets | |
+| Oracle Purse transfers of $CHOG into Chog wallets | Breed: the child Chog and its replay (nothing is minted) |
+| Trophies minted by AnimrTrophies [`0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`](https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d) into Chog wallets | "Best traders for sale": real OpenSea listings, ranked by simulated League results |
 | The House Chog, CHOG #891 · token 1399 (*launching*): real $CHOG and WMON in its wallet [`0xa46a…AD71`](https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71), traded two-way by its AI through the guard | |
 
 ## Tech stack
 
-Next.js 16 (App Router, React 19), Tailwind CSS 4, viem + wagmi, TanStack Query, Vercel AI SDK with an OpenAI-compatible provider for the 0G Compute Router (`glm-5.3`), zod, Upstash Redis, Foundry (Solidity 0.8.28), ERC-6551 registry v0.3.1 and Tokenbound V3, Capricorn CL (nad.fun's Uniswap v3 fork), GeckoTerminal and DexScreener APIs, Monad mainnet, Vercel.
+Next.js 16 (App Router, React 19), Tailwind CSS 4, viem + wagmi, TanStack Query, Privy (login and embedded wallets), Vercel AI SDK with an OpenAI-compatible provider for the 0G Compute Router (`glm-5.3`), zod, Upstash Redis, Foundry (Solidity 0.8.28), ERC-6551 registry v0.3.1 and Tokenbound V3, Capricorn CL (nad.fun's Uniswap v3 fork), GeckoTerminal, DexScreener and OpenSea APIs, the Farcaster Mini App SDK, Monad mainnet, Vercel.
 
 ## Run it locally
 
@@ -95,6 +114,10 @@ With no keys at all, everything except the LLM works. The League, Time Machine, 
 | `ORACLE_PURSE_CHOG` (default 5000, `0` turns it off) | The Oracle Purse a settled live Bell shows as "on its way" until a transfer is recorded. |
 | `ANIMR_MANUAL_RUNS_PER_DAY` (default 400) | The "Think now" cap. |
 | `NEXT_PUBLIC_PRIVY_APP_ID` (+ optional `NEXT_PUBLIC_PRIVY_CLIENT_ID`) | Privy login: wallets, email code, Google, X, Discord, and an embedded wallet for users without one. Unset means a plain "Connect wallet" menu for browser wallets. |
+| `NEXT_PUBLIC_TROPHIES_ADDRESS` (`0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`) | The trophy cabinet and trophy awards. Minting also needs `OPERATOR_PRIVATE_KEY` (the contract's minter). Unset turns trophies off. |
+| `CHOG_CHAT_DAILY_CALLS` (default 1500, `0` = templates only) | The global daily cap on "Ask this Chog" 0G calls. |
+| `OPENSEA_API_KEY` (+ `OPENSEA_AUTO_KEY`, `OPENSEA_COLLECTION_SLUG`) | Listings for `/market`. Without a key the app requests a free, short-lived OpenSea agent key on first use. |
+| `FARCASTER_HEADER` / `_PAYLOAD` / `_SIGNATURE` | The Farcaster Mini App's signed account association (`submission/FARCASTER.md`). The embed works without it; clients just can't verify the domain. |
 
 The full list with comments, including the heist and Purse variables, is in [`.env.example`](.env.example).
 
@@ -102,12 +125,14 @@ The full list with comments, including the heist and Purse variables, is in [`.e
 
 ```bash
 cd contracts
-forge test --fork-url https://rpc.monad.xyz -vv    # 37 tests against live Monad mainnet state
+forge test --fork-url https://rpc.monad.xyz -vv    # 49 tests against live Monad mainnet state (37 guard + 12 trophies)
 OPERATOR_ADDRESS=0x... ADMIN_ADDRESS=0x... forge script script/DeployAnimrTradeGuard.s.sol --rpc-url monad --sender <deployer>   # dry run
 forge script script/GrowPoolOracle.s.sol --rpc-url monad --sender <any>                                                              # dry run
 ```
 
-**Test status against today's mainnet:** 37 of 37 pass (`Suite result: ok. 37 passed; 0 failed; 0 skipped`). We grew the CHOG/WMON pool's oracle to 1,801 slots on Oct 19: `test_GrownOracleKeepsTheTwapThroughBursts` checks the grown ring keeps the TWAP through a burst, and `test_TwapUnavailableFailsClosed` undoes the pending growth on the fork to prove an ungrown pool still fails closed.
+**Test status against today's mainnet (Oct 21):**
+- **AnimrTrophies:** 12 of 12 pass (`Suite result: ok. 12 passed; 0 failed; 0 skipped`).
+- **AnimrTradeGuard:** 37 tests, 0 failures: 36 pass and 1 skips by design (`ok. 36 passed; 0 failed; 1 skipped`). On Oct 19, before the grown ring was in use, all 37 passed. We grew the CHOG/WMON pool's oracle to 1,801 slots that day. `test_GrownOracleKeepsTheTwapThroughBursts` checks the grown ring keeps the TWAP through a burst. `test_TwapUnavailableFailsClosed` proves an ungrown pool fails closed, so it skips itself once the live pool's ring is past 256 slots, as it is now.
 
 **Data:** `node scripts/snapshot-chogs.mts` rebuilds `data/chogs.json` from on-chain `tokenURI`s.
 
@@ -116,26 +141,40 @@ forge script script/GrowPoolOracle.s.sol --rpc-url monad --sender <any>         
 1. **Vercel + Upstash.** Set the environment variables above. Set `NEXT_PUBLIC_*` before building, because they are inlined at build time. The owner deploys by hand; the step-by-step guide is [`submission/DEPLOY.md`](submission/DEPLOY.md).
 2. **Crons.** `vercel.json` calls `GET /api/bell/cron` at 15:00 UTC (ring) and 16:00 UTC (settle). Vercel sends `CRON_SECRET` as a Bearer token. Add an **external hourly pulse** on `/api/bell/cron` with the same header; it is idempotent and catches up anything missed. Optionally add one on `/api/agent/tick` so awake agents think between Bells.
 3. **On-chain trading.** Done on Monad mainnet on Oct 19: the pool oracle is grown to 1,801 slots (`GrowPoolOracle.s.sol`), and the guard is deployed at `0x92D3d4Af4B3b0F29Ec020e407803e135af61987b` with the AI key as operator. Its admin is the team's main wallet `0xc742…960C`, which accepted the role with `acceptAdmin()`. Set `NEXT_PUBLIC_TRADE_GUARD_ADDRESS=0x92D3d4Af4B3b0F29Ec020e407803e135af61987b` and `OPERATOR_PRIVATE_KEY`. For a fresh deployment, run the two scripts in that order (oracle at least a day ahead) with `OPERATOR_ADDRESS` set to the AI key and `ADMIN_ADDRESS` set to a cold wallet. The step-by-step launch is in [`submission/launch-checklist.md`](submission/launch-checklist.md).
+4. **Trophies.** AnimrTrophies was deployed on Monad mainnet on Oct 21 at `0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`, with the AI key as its minter. Set `NEXT_PUBLIC_TROPHIES_ADDRESS` to that address. For a fresh deployment, run `script/DeployTrophies.s.sol` from a key other than the minter (the deployer becomes the owner; `OWNER_ADDRESS` starts a two-step handover).
+5. **Production** is live at [useanimr.vercel.app](https://useanimr.vercel.app).
 
 ## Repository map
 
 ```
 app/(site)/            landing page (/)
-app/(app)/             /app, /league, /traits, /replay/[id], /versus, /versus/[id], /bell, /bell/[day], /heist, /chog/[id],
-                       /guard, /leaderboard, /stats; opengraph-image share cards for Chogs, Bells, the League, replays and bouts
-app/api/               dna, versus, bell, fan, heist, agents, agent/tick, leaderboard, stats, optout
+app/(app)/             /app, /league, /traits, /market, /replay/[id], /versus, /versus/[id], /breed, /bell, /bell/[day],
+                       /bell/[day]/recap, /heist, /chog/[id], /guard, /leaderboard, /stats, /tour, /docs, /docs/[slug];
+                       opengraph-image share cards for Chogs, Bells, recaps, the League, replays and bouts
+app/api/               dna, versus, breed, bell (incl. recap), fan, heist, agents, agent/tick, chog/[id]/ask, holders,
+                       trophies (meta, art), farcaster (embed image), leaderboard, stats, optout
+app/.well-known/       farcaster.json: the Farcaster Mini App manifest
 lib/chog-id.ts         token ID <-> "CHOG #n" name number, for lookups and labels
 lib/erc6551.ts         TBA address (local CREATE2), status, create+initialize via Multicall3
 lib/dna/               trait snapshot, genome, candle history, replay engine, League and Trait Alpha
 lib/rewind/            Versus: drama-ranked 48h windows, bout IDs, picks and points
-lib/bell/              Daily Bell: ring, settle, scoring, fans and rides, Oracle Purse records
+lib/breed/             Breed: which parent passes each trait, the child's name, the three replays
+lib/bell/              Daily Bell: ring, settle, scoring, fans and rides, Oracle Purse records, AI recap
 lib/heist/             Rob this Chog: defender, moderation, House Chog, mainnet proof
+lib/chog-chat/         Ask this Chog: context, 0G answers under a daily cap, template fallback
 lib/agent/             market data, brain (0G + rules + guardrails), paper and on-chain execution, store
 lib/contracts/         AnimrTradeGuard client: onboarding, limits, quotes, prepareTrade
+lib/trophies/          AnimrTrophies client: kinds, award hooks (Bell, heist, first trade), cabinet reads, metadata
+lib/market/            OpenSea listings joined with the League ("Best traders for sale")
+lib/farcaster/         Mini App embed tags and URLs
+lib/privy.ts           Privy login config (components/privy/ holds the login button and the wagmi bridge)
 lib/brand-safety.ts    trait display and AI-prompt filter (data/brand-safety.json)
 lib/optout.ts          "Hide my Chog": a holder's signed opt-out; lib/visibility.ts applies it everywhere
 lib/og/                share-card rendering
-contracts/             AnimrTradeGuard, vendored Uniswap v3 math, fork tests, deploy and oracle scripts
+components/docs/       the /docs site: 19 pages, registry and facts read from the code
+components/tour/       the judge tour's steps and the "back to the tour" pill
+components/v2/         app shell and the game-HUD header nav (glyphs and live badges)
+contracts/             AnimrTradeGuard, AnimrTrophies, vendored Uniswap v3 math, fork tests, deploy and oracle scripts
 data/                  chogs.json (1,969 Chogs), chog-ohlcv-1h.json (committed candles), brand-safety.json
 scripts/               snapshot-chogs.mts (trait snapshot), send-oracle-purse.mts (sends and records a Purse; dry run by default)
 submission/            Chogathon submission texts and launch checklist
@@ -156,12 +195,12 @@ The Versus API contract is in `lib/rewind/types.ts`. `/stats` shows live usage (
   - `TickMath.sol` (GPL-2.0-or-later, verbatim from v3-core `0.8`)
   - `OracleLibrary.sol` (GPL-2.0-or-later, trimmed from v3-periphery `0.8` to `meanTick` and `getQuoteAtTick`, math unchanged)
 - **forge-std** for tests and scripts. **Open-source npm packages** are listed in `package.json`.
-- **Data:** the Chog Genesis on-chain metadata (IPFS), and the public GeckoTerminal and DexScreener APIs. Models are served by the 0G Compute Router.
+- **Data:** the Chog Genesis on-chain metadata (IPFS), the public GeckoTerminal and DexScreener APIs, and OpenSea's API for `/market` listings. Models are served by the 0G Compute Router.
 - **No prior Animr code.** Everything else was written for Chogathon 2026.
 
 ## License
 
-The Solidity files carry SPDX headers. `contracts/src/AnimrTradeGuard.sol` is **GPL-2.0-or-later** because it links the vendored GPL-2.0-or-later Uniswap libraries (`TickMath.sol`, `OracleLibrary.sol`). The interfaces, `FullMath.sol`, tests and scripts are MIT. The app code (TypeScript) has no license file or headers yet. Chog art and names belong to their owners.
+The Solidity files carry SPDX headers. `contracts/src/AnimrTradeGuard.sol` is **GPL-2.0-or-later** because it links the vendored GPL-2.0-or-later Uniswap libraries (`TickMath.sol`, `OracleLibrary.sol`). `contracts/src/AnimrTrophies.sol`, the interfaces, `FullMath.sol`, tests and scripts are MIT. The app code (TypeScript) has no license file or headers yet. Chog art and names belong to their owners.
 
 ---
 
