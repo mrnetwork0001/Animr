@@ -1,0 +1,118 @@
+/*
+ * VERSUS effects (components/versus/*): only what Tailwind utilities can't express, i.e. keyframes.
+ * Global on purpose (next.config.ts routes every *.css through Tailwind as plain CSS), so every class
+ * is prefixed `vs-`. Every animation is opt-in: it only runs when the system allows motion.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The VS badge lands between the two fighters. */
+  .vs-slam {
+    animation: vs-slam 520ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  }
+
+  /* Fighter cards slide in from their corners. */
+  .vs-in-left {
+    animation: vs-in-left 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .vs-in-right {
+    animation: vs-in-right 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* KO and REVEAL stamps land with a thud. */
+  .vs-stamp {
+    animation: vs-stamp 460ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  }
+
+  /* Speech bubbles pop out of their fighter. */
+  .vs-pop {
+    animation: vs-pop 240ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* The KO card rises in at the end of the race. */
+  .vs-rise {
+    animation: vs-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* A trade marker pops on the line (SVG: scale around its own box). */
+  .vs-mark {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: vs-mark 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* The leader's crown bobs. */
+  .vs-bob {
+    animation: vs-bob 1.4s ease-in-out infinite;
+  }
+
+  /* The playhead dots breathe while the race runs. */
+  .vs-pulse {
+    animation: vs-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes vs-slam {
+  from {
+    opacity: 0;
+    transform: scale(2.2) rotate(-12deg);
+  }
+}
+
+@keyframes vs-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+}
+
+@keyframes vs-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+/* Ends at no transform: the stamp's resting tilt is a Tailwind rotate-* utility (the `rotate` property). */
+@keyframes vs-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.9) rotate(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes vs-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+}
+
+@keyframes vs-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+@keyframes vs-mark {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+@keyframes vs-bob {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes vs-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
