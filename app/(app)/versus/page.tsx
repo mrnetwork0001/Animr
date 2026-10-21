@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { PageHeader } from "@/components/v2";
+import { PageHeader, PillLink } from "@/components/v2";
 import { VersusArena, VersusArenaSkeleton } from "@/components/versus/arena";
 import { allChogs } from "@/lib/dna/chogs";
 import { REPLAY } from "@/lib/dna/genome";
@@ -26,6 +26,11 @@ export default function VersusPage() {
             Two Chogs get {REPLAY.startChog.toLocaleString("en-US")} $CHOG each and the same 48 hours of real $CHOG
             history, dates hidden. Pick the one that ends with more, watch them trade, then see when it really happened.
           </>
+        }
+        actions={
+          <PillLink href="/breed" variant="ghost" arrow>
+            Or breed two Chogs
+          </PillLink>
         }
       />
 
