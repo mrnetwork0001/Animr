@@ -2,6 +2,7 @@ import type { Viewport } from "next";
 import { Suspense } from "react";
 import { AppFooterFacts } from "@/components/app-footer";
 import { ConnectButton, ConnectButtonFallback } from "@/components/connect-button";
+import { TourPill } from "@/components/tour/tour-pill";
 import { AppShell } from "@/components/v2";
 import { Providers } from "../providers";
 
@@ -34,6 +35,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         footerExtra={<AppFooterFacts />}
       >
         {children}
+        <TourPill />
       </AppShell>
     </Providers>
   );
