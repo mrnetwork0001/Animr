@@ -299,15 +299,17 @@
     backdrop-filter: blur(14px) saturate(0.9);
   }
 
+  /* Wide screens: brand and wallet take equal side columns, so the links sit at the true centre. */
   .v2-header-bar {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: var(--v2-s-4);
     min-height: var(--v2-header-h);
   }
 
   .v2-brand {
+    justify-self: start;
     display: inline-flex;
     align-items: center;
     gap: 12px;
@@ -364,6 +366,7 @@
   .v2-nav-list {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 2px;
     margin: 0;
     padding: 0;
@@ -448,6 +451,9 @@
     }
     .v2-nav::-webkit-scrollbar {
       display: none;
+    }
+    .v2-nav-list {
+      justify-content: flex-start;
     }
     .v2-nav-link {
       height: 34px;
