@@ -62,11 +62,12 @@ export function TimeMachineTeaser({ tokenId, className = "" }: { tokenId: number
         <span aria-hidden className="v2-skeleton mt-5 block h-20" />
       )}
 
-      {data && (
+      {/* Its row is there while the replay loads too ("…"), so the card doesn't grow when the numbers land. */}
+      {(data || !replay.isError) && (
         <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-[var(--v2-line-soft)] pt-4">
           <Stat label="League rank">{row ? `#${formatInt(row.rank)}` : "…"}</Stat>
-          <Stat label="Trades">{formatInt(data.trades.length)}</Stat>
-          <Stat label="Worst dip">{signedPct(data.maxDrawdownPct)}</Stat>
+          <Stat label="Trades">{data ? formatInt(data.trades.length) : "…"}</Stat>
+          <Stat label="Worst dip">{data ? signedPct(data.maxDrawdownPct) : "…"}</Stat>
         </dl>
       )}
 

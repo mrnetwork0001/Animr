@@ -53,7 +53,7 @@ export default function FindChogPage() {
     <div className="v2-shell">
       {/* The header with its search box, then the result. ChogLookup reads ?id= (useSearchParams), so it streams in
           behind this boundary; the fallback carries the same h1. */}
-      <Suspense fallback={<ChogLookupSkeleton header={HEADER} />}>
+      <Suspense fallback={<ChogLookupSkeleton header={HEADER} examples={examples} metadataIds={metadataIds} />}>
         <ChogLookup metadataIds={metadataIds} header={HEADER} examples={examples} />
       </Suspense>
 

@@ -141,14 +141,39 @@ function ShareRecap({ recap }: { recap: BellRecap }) {
   );
 }
 
-function RecapSkeleton() {
+/** The recap card's frame with the same rows and spacing as the card, so the recap lands without moving the page. */
+export function RecapSkeleton() {
+  const quote = (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-10 rounded-[10px]" />
+        <span className="flex flex-col gap-1.5">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3.5 w-40" />
+        </span>
+      </div>
+      <Skeleton className="h-[46px] w-full" />
+    </div>
+  );
   return (
-    <div role="status" className="v2-card space-y-4">
+    <div role="status" className="v2-card flex flex-col gap-5">
       <span className="v2-sr">Loading the recap…</span>
-      <Skeleton className="h-4 w-40" />
-      <Skeleton className="h-6 w-3/4" />
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-5/6" />
+      <div className="flex min-h-9 items-center">
+        <Skeleton className="h-4 w-40" />
+      </div>
+      <div>
+        <Skeleton className="h-7 w-3/4" />
+        <div className="mt-3 grid gap-1.5">
+          {["w-full", "w-5/6", "w-4/6"].map((width) => (
+            <Skeleton key={width} className={`h-5 ${width}`} />
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-4 border-t border-[var(--v2-line-soft)] pt-5 md:grid-cols-2">
+        {quote}
+        {quote}
+      </div>
+      <Skeleton className="h-4 w-56" />
     </div>
   );
 }

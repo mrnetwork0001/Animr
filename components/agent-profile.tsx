@@ -497,7 +497,8 @@ export function AgentProfile({
               <span className="v2-sr">Loading agent…</span>
               <span aria-hidden className="v2-skeleton v2-skeleton--text w-32" />
               <span aria-hidden className="v2-skeleton v2-skeleton--title w-64" />
-              <span aria-hidden className="v2-skeleton h-36" />
+              {/* About the unclaimed card's height (most Chogs), so the column doesn't jump when it lands. */}
+              <span aria-hidden className="v2-skeleton h-[105px]" />
             </div>
           ) : !detail.data ? (
             <Callout tone="danger" title="Couldn't load this Chog's agent">

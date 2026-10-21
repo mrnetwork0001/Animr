@@ -37,7 +37,15 @@ export function V2HeaderActions({ wallet }: { wallet?: ReactNode }) {
       {/* Feeds the "Your Chogs" badge for both layouts (one instance per page). */}
       <NavWalletSource />
       {!compact && <div className="v2-header-wallet">{wallet}</div>}
-      <Suspense fallback={<MenuButton open={false} onToggle={() => {}} controls="" />}>
+      {/* The fallback sits in the same .v2-menu wrapper as the menu, so CSS hides it on wide screens too (a bare
+          button showed there until the menu streamed in, and its 42px nudged the header). */}
+      <Suspense
+        fallback={
+          <div className="v2-menu">
+            <MenuButton open={false} onToggle={() => {}} controls="" />
+          </div>
+        }
+      >
         <MobileMenu wallet={compact ? wallet : null} />
       </Suspense>
     </div>

@@ -27,11 +27,22 @@ export function ChogDailyCall({ tokenId }: { tokenId: number }) {
   let body: ReactNode;
   if (chog.isPending) {
     body = (
-      <div role="status" className="mt-4 space-y-3">
+      // The loaded call's rows (forecast, note, thesis, conviction, Ride) and its record, at their heights, so the card
+      // fills in without pushing the wallet card down.
+      <div role="status">
         <span className="v2-sr">Loading this Chog&apos;s call…</span>
-        <Skeleton className="h-10 w-32" />
-        <Skeleton className="h-4" />
-        <Skeleton className="h-9" />
+        <div aria-hidden className="mt-4">
+          <Skeleton className="h-10 w-32 sm:h-16 sm:w-40" />
+          <Skeleton className="mt-1.5 h-[18px] w-3/4" />
+          <Skeleton className="mt-3 h-[47px]" />
+          <Skeleton className="mt-3 h-[23px] w-32" />
+          <Skeleton className="mt-4 h-9 w-20 rounded-full" />
+        </div>
+        <div aria-hidden className="mt-5 border-t border-[var(--v2-line-soft)] pt-4">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="mt-2 h-[100px]" />
+          <Skeleton className="mt-3 h-[18px] w-2/3" />
+        </div>
       </div>
     );
   } else if (chog.isError && !isNotFound(chog.error)) {

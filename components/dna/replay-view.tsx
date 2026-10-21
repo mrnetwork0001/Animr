@@ -19,6 +19,7 @@ import {
   chogNumberLabel,
   formatInt,
   parseChogId,
+  parseWindow,
   randomChogId,
   signedPct,
 } from "./shared";
@@ -48,6 +49,15 @@ function resultTitle(r: ReplayResult) {
   return <>Matched just holding{on}</>;
 }
 
+/** /replay/<id>, with ?vs= for a race and ?window= when it isn't the default window. */
+function replayHref(tokenId: number, rivalId: number | undefined, span: WindowKey): string {
+  const query = new URLSearchParams();
+  if (rivalId !== undefined) query.set("vs", String(rivalId));
+  if (span !== DEFAULT_WINDOW) query.set("window", span);
+  const search = query.toString();
+  return `/replay/${tokenId}${search ? `?${search}` : ""}`;
+}
+
 /**
  * The shareable /replay/[tokenId] page body: who this Chog is, its Time Machine, its trades and trading DNA, and
  * how its holder claims its AI. `?vs=<id>` turns the replay into a race against another Chog. `nameNumbers`
@@ -66,8 +76,10 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
   const rivalName = useChogName(rivalId, nameNumbers);
   // Versus: the same pair (or this Chog and a random rival) on a hidden 48 hours, picked before the race.
   const versusHref = rivalId === undefined ? `/versus?a=${tokenId}` : `/versus?a=${tokenId}&b=${rivalId}`;
-  // The window is the page's: the title, the numbers and the trade log follow the Time Machine's picker.
-  const [span, setSpan] = useState<WindowKey>(DEFAULT_WINDOW);
+  // The window is the page's and the URL's (?window=30d, so a shared link opens on it): the title, the numbers and the
+  // trade log follow the Time Machine's picker. Switching replaces the entry (no history step per switch).
+  const span = parseWindow(params.get("window"));
+  const setSpan = (next: WindowKey) => window.history.replaceState(null, "", replayHref(tokenId, rivalId, next));
   const replay = useReplay(tokenId, span);
   const genome = useGenome(tokenId);
   // The rank and claimed badge: this Chog's league row only, not the whole ~0.5 MB population.
@@ -75,15 +87,26 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
   const row = standing.data?.row;
   const r = replay.data;
 
-  const setRival = (id?: number) =>
-    router.replace(id ? `/replay/${tokenId}?vs=${id}` : `/replay/${tokenId}`, { scroll: false });
+  const setRival = (id?: number) => router.replace(replayHref(tokenId, id, span), { scroll: false });
 
   return (
     <>
       <PageHeader
         className="dna-replay-header pt-6 sm:pt-10"
         kicker="Time Machine"
-        title={r ? resultTitle(r) : (genome.data?.genome.archetype ?? name)}
+        title={
+          r ? (
+            resultTitle(r)
+          ) : (
+            // Until the replay loads, a hidden line as long as the result's holds its height (no jump when it lands).
+            <>
+              <span className="v2-sr">{name}</span>
+              <span aria-hidden className="invisible">
+                Trailed holding by 00.0% on 45 days of real $CHOG
+              </span>
+            </>
+          )
+        }
         lead={
           <>
             <span className="text-[var(--v2-ink)]">{name}</span> trades as a{" "}
@@ -96,6 +119,11 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
                 </Link>{" "}
                 in the League.{" "}
               </>
+            ) : standing.isPending ? (
+              // The rank's room, kept while it loads.
+              <span aria-hidden className="invisible">
+                : #0,000 of 1,969 in the League.{" "}
+              </span>
             ) : (
               ". "
             )}
@@ -126,7 +154,8 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
               {/* Its persona name, as on the landing page and the League ("Rocket Ears"). */}
               <p className="v2-h3">{name}</p>
               <p className="mt-0.5 text-[13px] text-[var(--v2-faint)]">{label}</p>
-              <div className="mt-2.5 flex flex-wrap items-center gap-1.5 lg:justify-end">
+              {/* min-h: one chip's height, kept while the DNA loads. */}
+              <div className="mt-2.5 flex min-h-[26px] flex-wrap items-center gap-1.5 lg:justify-end">
                 {genome.data && <Chip>{genome.data.genome.archetype}</Chip>}
                 {genome.data && <StyleChip style={genome.data.genome.style} />}
                 {row?.claimed && (

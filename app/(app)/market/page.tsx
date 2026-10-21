@@ -24,9 +24,13 @@ export default function MarketPage() {
         lead="Chogs listed on OpenSea right now, ranked by how their trading DNA did against just holding $CHOG."
         actions={<RankingsNav active="market" />}
       />
-      <Suspense fallback={<MarketSkeleton />}>
-        <MarketSection />
-      </Suspense>
+      {/* At least the skeleton's height, whatever streams in (the board, or a one-line note when OpenSea is quiet), so
+          the footer never jumps while the listings load. */}
+      <div className="min-h-[600px]">
+        <Suspense fallback={<MarketSkeleton />}>
+          <MarketSection />
+        </Suspense>
+      </div>
     </div>
   );
 }

@@ -360,14 +360,31 @@ function ReadingHint({
 }
 
 /** Suspense fallback: the same header, with an inert search box of the same footprint. */
-export function ChogLookupSkeleton({ header }: { header: LookupHeader }) {
+export function ChogLookupSkeleton({
+  header,
+  examples = [],
+  metadataIds,
+}: {
+  header: LookupHeader;
+  examples?: readonly ExampleChog[];
+  metadataIds?: readonly number[];
+}) {
+  // The card as it first renders (the random-pick line and the example Chogs, inert), so the lookup streams in
+  // without growing and pushing the page down.
   return (
     <PageHeader
       {...header}
       className={HEADER_CLASS}
       aside={
         <LookupCard value="" onChange={() => {}} named={BOUNDED} disabled>
-          {BOUNDED && <Skeleton variant="text" className="mt-4 w-4/5" />}
+          {BOUNDED && (
+            <div aria-hidden inert>
+              <p className="v2-help m-0 mt-3">
+                Or <span className="v2-link">pick a random Chog</span>.
+              </p>
+              <ExampleChogs examples={examples} onPick={() => {}} metadataIds={metadataIds} />
+            </div>
+          )}
         </LookupCard>
       }
     />
