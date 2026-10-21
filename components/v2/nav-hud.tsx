@@ -6,6 +6,7 @@ import { WagmiContext, useConnection } from "wagmi";
 import { nextBellAt, ringOverdue } from "@/components/bell/format";
 import { HOUR_MS } from "@/lib/bell/rules";
 import type { BellSummaryResponse } from "@/lib/bell/types";
+import { HEIST_ATTEMPT_EVENT } from "@/components/heist/api";
 import type { HeistCounters } from "@/lib/heist/types";
 import type { HoldingsResponse } from "@/lib/holdings";
 import { NavBellIcon, NavChogIcon, NavLeagueIcon, NavMaskIcon, NavShieldIcon, NavVersusIcon } from "./icons";
@@ -144,15 +145,25 @@ async function loadBell() {
 let heistLoadedAt = 0;
 let heistTimer: ReturnType<typeof setInterval> | undefined;
 
+function triesOf(body: Partial<HeistCounters> | null | undefined): number | null {
+  return typeof body?.attemptsToday === "number" && Number.isFinite(body.attemptsToday) ? body.attemptsToday : null;
+}
+
 async function loadHeist() {
   heistLoadedAt = Date.now();
   try {
-    const body = (await getJson("/api/heist/counters")) as Partial<HeistCounters>;
-    const tries = typeof body.attemptsToday === "number" && Number.isFinite(body.attemptsToday) ? body.attemptsToday : null;
-    setData({ heistTries: tries });
+    setData({ heistTries: triesOf((await getJson("/api/heist/counters")) as Partial<HeistCounters>) });
   } catch {
     setData({ heistTries: null });
   }
+}
+
+/** A heist attempt just finished (components/heist/api.ts): its response carries the fresh counters. */
+function onHeistAttempt(event: Event) {
+  const tries = triesOf((event as CustomEvent<Partial<HeistCounters> | undefined>).detail);
+  if (tries === null) return void loadHeist();
+  heistLoadedAt = Date.now();
+  setData({ heistTries: tries });
 }
 
 function syncHeistTimer() {
@@ -207,6 +218,8 @@ function onIdle(callback: () => void): void {
 function startHud() {
   if (scheduled) return;
   scheduled = true;
+  // Listened for from the first mount (not after idle), so an attempt made right away still updates the badge.
+  window.addEventListener(HEIST_ATTEMPT_EVENT, onHeistAttempt);
   onIdle(() => {
     started = true;
     void loadBell();

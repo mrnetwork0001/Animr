@@ -49,11 +49,16 @@ export function useHeistState() {
   });
 }
 
-/** Keeps the page's counters in step with the latest response. */
+/** Fired on window after every heist attempt, with the fresh counters as `detail` (the nav's badge listens). */
+export const HEIST_ATTEMPT_EVENT = "animr:heist-attempt";
+
+/** Keeps the page's counters, and the nav's "tries today" badge, in step with the latest response. */
 function useCountersUpdate() {
   const queryClient = useQueryClient();
-  return (counters: HeistCounters) =>
+  return (counters: HeistCounters) => {
     queryClient.setQueryData<HeistState>(heistKeys.state, (state) => (state ? { ...state, counters } : state));
+    window.dispatchEvent(new CustomEvent<HeistCounters>(HEIST_ATTEMPT_EVENT, { detail: counters }));
+  };
 }
 
 export function useSendMessage() {
