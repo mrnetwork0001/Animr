@@ -169,6 +169,8 @@ body:has(.hx-page) {
   right: 0;
   left: 0;
   z-index: 20;
+  /* Half the page gutter (owner request); --u was already resolved on .hx-page. */
+  --hx-gutter: clamp(4.5px, 2.34375vw - 11.25px, 24px);
   padding-inline: var(--hx-gutter);
   color: var(--hx-ink);
   font-family: var(--hx-font-text), ui-sans-serif, system-ui, sans-serif;
@@ -857,7 +859,7 @@ body:has(.hx-page) {
     display: flex;
     justify-content: space-between;
     height: calc(148 * var(--u));
-    padding-inline: calc(112 * var(--u));
+    padding-inline: calc(56 * var(--u));
   }
 
   .hx-nav {

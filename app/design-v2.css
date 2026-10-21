@@ -299,6 +299,11 @@
     backdrop-filter: blur(14px) saturate(0.9);
   }
 
+  /* The header runs at half the page gutter (owner request), rail included. */
+  .v2-header {
+    --v2-gutter: clamp(4.5px, 2.34375vw - 11.25px, 24px);
+  }
+
   /* Wide screens: brand and wallet take equal side columns, so the links sit at the true centre. */
   .v2-header-bar {
     display: grid;
