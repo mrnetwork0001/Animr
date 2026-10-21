@@ -3,6 +3,7 @@ import { formatDay, formatUtcTime } from "@/components/bell/format";
 import { formatInt, signedPct } from "@/components/dna/shared";
 import type { TradingStyle } from "@/lib/agent/types";
 import { nameNumberOf } from "@/lib/chog-id";
+import { getChog } from "@/lib/dna/chogs";
 import type {
   BellCardData,
   BellOracle,
@@ -24,6 +25,15 @@ import { ChogFace, Chip, Eyebrow, FaceStrip, Frame, HerdChart, POINTS_NOTE, SIM_
 const CHOGS = "1,969";
 const STYLE_TONE: Record<TradingStyle, string> = { aggressive: C.warning, balanced: C.accentStrong, cautious: "#7DD3FC" };
 const upper = (text: string) => text.toUpperCase();
+/** "CHOG #1468", its marketplace number (never the token id); "" when unknown. Shown after the persona name. */
+function numberTag(tokenId: number): string {
+  const n = nameNumberOf(getChog(tokenId)?.name);
+  return n === null ? "" : `CHOG #${n}`;
+}
+/** A face tile's number when its art is missing: "#1468" (marketplace number), never the token id. */
+const faceLabel = (tokenId: number) => numberTag(tokenId).replace("CHOG ", "");
+/** "Patient Ears · CHOG #1468": persona name first, then the marketplace number. */
+const chogTag = (tokenId: number, name: string) => [name, numberTag(tokenId)].filter(Boolean).join(" · ");
 /** "Oct 17" from "2026-10-17". */
 const shortDay = (day: string) => formatDay(day).replace(/^\w+,\s*/, "");
 /** "TUE, OCT 20 · 15:00 UTC" from an ISO time. */
@@ -35,7 +45,7 @@ export function ChogCard({ core, bell }: { core: ChogCardCore; bell: ChogBellBri
   // "CHOG #1468 · token 7" (lib/chog-id.ts): the name marketplaces show, then the id the app uses. The
   // ten 1:1s carry long names ("CHOG #392 — Burning Skully"), so the title shrinks to fit its column.
   const nameNumber = nameNumberOf(core.metadataName);
-  const title = nameNumber === null ? `Chog #${core.tokenId}` : core.metadataName;
+  const title = nameNumber === null ? core.name : core.metadataName;
   const titleSize = Math.min(58, Math.floor(520 / (0.6 * title.length)));
   // "Knife-Catching Breakout Chaser" and its style chip must share the column too.
   const archetypeSize = Math.min(34, Math.floor(470 / (0.58 * core.archetype.length)));
@@ -46,7 +56,7 @@ export function ChogCard({ core, bell }: { core: ChogCardCore; bell: ChogBellBri
         <ChogFace
           art={core.art}
           tokenId={core.tokenId}
-          label={nameNumber === null ? undefined : `#${nameNumber}`}
+          label={nameNumber === null ? "" : `#${nameNumber}`}
           name={core.name}
           size={398}
           radius={40}
@@ -81,7 +91,7 @@ export function ChogCard({ core, bell }: { core: ChogCardCore; bell: ChogBellBri
                 {upper(core.style)}
               </Chip>
             </div>
-            <div style={{ display: "flex", marginTop: 8, fontSize: 20, color: C.muted }}>{`AI trader “${core.name}”`}</div>
+            <div style={{ display: "flex", marginTop: 8, fontSize: 20, color: C.muted }}>{`Trader “${core.name}”`}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {core.genes.map((gene) => (
@@ -299,10 +309,10 @@ function OracleBox({ oracle, sameBell }: { oracle: BellOracle; sameBell: boolean
   return (
     <SpotBox title={title}>
       <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 16 }}>
-        <ChogFace art={oracle.art} tokenId={oracle.tokenId} size={140} radius={22} border={2} />
+        <ChogFace art={oracle.art} tokenId={oracle.tokenId} label={faceLabel(oracle.tokenId)} size={140} radius={22} border={2} />
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontSize: 32, fontWeight: 600, letterSpacing: -0.5 }}>{`Chog #${oracle.tokenId}`}</div>
-          <div style={{ display: "flex", fontSize: 19, color: C.muted, marginTop: 2 }}>{oracle.name}</div>
+          <div style={{ display: "flex", fontSize: 32, fontWeight: 600, letterSpacing: -0.5 }}>{oracle.name}</div>
+          <div style={{ display: "flex", fontSize: 19, color: C.muted, marginTop: 2 }}>{numberTag(oracle.tokenId)}</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 10 }}>
             <div style={{ display: "flex", fontSize: 19, color: C.muted }}>called</div>
             <div style={{ display: "flex", fontSize: 36, fontWeight: 600, color: toneOf(oracle.forecastPct) }}>{signedPct(oracle.forecastPct)}</div>
@@ -314,13 +324,13 @@ function OracleBox({ oracle, sameBell }: { oracle: BellOracle; sameBell: boolean
       <div style={{ display: "flex", flex: 1 }} />
       {oracle.rekt && (
         <div style={{ display: "flex", alignItems: "center", gap: 14, paddingTop: 14, borderTop: `2px solid ${C.line}` }}>
-          <ChogFace art={oracle.rekt.art} tokenId={oracle.rekt.tokenId} size={58} radius={12} border={2} />
+          <ChogFace art={oracle.rekt.art} tokenId={oracle.rekt.tokenId} label={faceLabel(oracle.rekt.tokenId)} size={58} radius={12} border={2} />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 14, fontWeight: 600, letterSpacing: 2, color: C.warning }}>
               {oracle.rekt.errorPts === null ? "MOST REKT" : `MOST REKT · MISSED BY ${upper(pts(oracle.rekt.errorPts))}`}
             </div>
             <div style={{ display: "flex", gap: 8, fontSize: 19, marginTop: 2 }}>
-              <div style={{ display: "flex", color: C.fg }}>{`Chog #${oracle.rekt.tokenId} called`}</div>
+              <div style={{ display: "flex", color: C.fg }}>{`${chogTag(oracle.rekt.tokenId, oracle.rekt.name)} called`}</div>
               <div style={{ display: "flex", fontWeight: 600, color: toneOf(oracle.rekt.forecastPct) }}>{signedPct(oracle.rekt.forecastPct)}</div>
             </div>
           </div>
@@ -341,14 +351,14 @@ function BoldRow({ spot, side }: { spot: BellSpot | null; side: "bull" | "bear" 
   }
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-      <ChogFace art={spot.art} tokenId={spot.tokenId} size={112} radius={18} border={2} />
+      <ChogFace art={spot.art} tokenId={spot.tokenId} label={faceLabel(spot.tokenId)} size={112} radius={18} border={2} />
       <div style={{ display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", fontSize: 15, fontWeight: 600, letterSpacing: 2, color }}>{side === "bull" ? "▲ BOLDEST BULL" : "▼ BOLDEST BEAR"}</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 4 }}>
           <div style={{ display: "flex", fontSize: 34, fontWeight: 600, color }}>{signedPct(spot.forecastPct)}</div>
           <div style={{ display: "flex", fontSize: 17, color: C.muted }}>{`${Math.round(spot.conviction * 100)}% conviction`}</div>
         </div>
-        <div style={{ display: "flex", fontSize: 19, color: C.fg, marginTop: 2 }}>{`Chog #${spot.tokenId} · ${spot.name}`}</div>
+        <div style={{ display: "flex", fontSize: 19, color: C.fg, marginTop: 2 }}>{chogTag(spot.tokenId, spot.name)}</div>
       </div>
     </div>
   );
@@ -409,7 +419,7 @@ export function LeagueCard({ data, showcase = [] }: { data: LeagueCardData | nul
     <Frame section="MEET · THE LEAGUE" note={SIM_NOTE}>
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", width: "100%" }}>
         <div style={{ display: "flex", fontSize: data ? 60 : 68, fontWeight: 600, letterSpacing: -2, lineHeight: 1 }}>
-          {`${CHOGS} Chogs, ${CHOGS} AI traders`}
+          {`${CHOGS} Chogs, ${CHOGS} traders`}
         </div>
         <div style={{ display: "flex", marginTop: 14, fontSize: data ? 24 : 28, color: C.muted, lineHeight: 1.35 }}>
           Every Chog’s traits compile into a trading genome, ranked by $CHOG stacked vs just holding.
@@ -453,7 +463,7 @@ function Podium({ row }: { row: LeagueCardData["podium"][number] }) {
       }}
     >
       <div style={{ display: "flex", position: "relative" }}>
-        <ChogFace art={row.art} tokenId={row.tokenId} size={150} radius={20} border={2} />
+        <ChogFace art={row.art} tokenId={row.tokenId} label={faceLabel(row.tokenId)} size={150} radius={20} border={2} />
         <div
           style={{
             display: "flex",
@@ -472,7 +482,10 @@ function Podium({ row }: { row: LeagueCardData["podium"][number] }) {
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", fontSize: 24, fontWeight: 600, letterSpacing: -0.5, whiteSpace: "nowrap" }}>{`Chog #${row.tokenId}`}</div>
+        <div style={{ display: "flex", fontSize: 24, fontWeight: 600, letterSpacing: -0.5, whiteSpace: "nowrap" }}>{row.name}</div>
+        {numberTag(row.tokenId) && (
+          <div style={{ display: "flex", marginTop: 2, fontSize: 16, color: C.subtle }}>{numberTag(row.tokenId)}</div>
+        )}
         <div style={{ display: "flex", marginTop: 4, fontSize: 18, color: C.accentStrong, lineHeight: 1.2 }}>{row.archetype}</div>
         <div style={{ display: "flex", marginTop: 12, fontSize: 40, fontWeight: 600, letterSpacing: -1, lineHeight: 1, color: toneOf(row.edgePct) }}>
           {signedPct(row.edgePct)}
@@ -492,7 +505,7 @@ export function GenericCard({ showcase }: { showcase: ShowcaseChog[] }) {
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", width: "100%" }}>
         <div style={{ display: "flex", fontSize: 68, fontWeight: 600, letterSpacing: -2.5, lineHeight: 1 }}>Every Chog is a trader</div>
         <div style={{ display: "flex", marginTop: 18, maxWidth: 980, fontSize: 28, color: C.muted, lineHeight: 1.35 }}>
-          {`${CHOGS} Chog NFTs, ${CHOGS} AI traders: each one’s traits compile into a trading genome, replayed on the real $CHOG chart against just holding.`}
+          {`${CHOGS} Chog NFTs, ${CHOGS} traders: each one’s traits compile into a trading genome, replayed on the real $CHOG chart against just holding.`}
         </div>
         <div style={{ display: "flex", marginTop: 30 }}>
           <FaceStrip faces={showcase} size={144} />
