@@ -51,10 +51,10 @@ This copy is for bringing real people to Animr before judging. Post it from the 
 | --- | --- |
 | `<APP_URL>` | The production domain (`https://…`), never a preview or deployment URL |
 | `<id>` | An unflagged Chog's token ID, from the table above or checked with `jq` |
-| `CHOG #<n> · token <id>` | The label on the Chog's genome card, Chog page or Versus card |
+| `CHOG #<n> · token <id>` | The label on the Chog's genome card, Chog page or Versus card. **Not the Bell page:** Bell cards may show "Chog #<token id>", which is the token ID, not the CHOG # name. Take the token ID from the Bell, then read "CHOG #n · token id" at `<APP_URL>/chog/<token id>` |
 | `<boutId>` | The ID in the link that **Share this bout** copies after you play a Versus bout. The card shows how the race ended. |
 | `<bullPct>`, `<bearPct>` | `/api/bell/today`, once `kind` is `"live"` (command below the table) |
-| `<actualPct>`, Oracle, `<callPct>` | The settled Bell at `<APP_URL>/bell/2026-10-21` |
+| `<actualPct>`, Oracle, `<callPct>` | The settled Bell at `<APP_URL>/bell/2026-10-21`. For the Oracle's name, open `/chog/<its token id>` (see the row above) |
 | `<PURSE_AMOUNT>`, `<EXPLORER_TX_URL>` | The Purse script's output, and the transfer on the Bell page, once confirmed |
 | `<CONTACT>` | The same contact as in `judge-instructions.md` |
 
@@ -221,7 +221,7 @@ Four hours left to ride today's Daily Bell. Pick the Chog you trust; the real $C
 <APP_URL>/bell
 ```
 
-**Bell settled:** Thu, once `/bell/2026-10-21` says settled (237/280). Name the Oracle of the Day only, and never Most Rekt or a holder.
+**Bell settled:** Thu, once `/bell/2026-10-21` says settled (237/280). Name the Oracle of the Day only, and never Most Rekt or a holder. Read its "CHOG #n · token id" label from `/chog/<token id>`, not from the Bell card.
 ```text
 The first live Daily Bell is settled: $CHOG moved <actualPct>% in 24 hours. Oracle of the Day: CHOG #<n> · token <id>, which called <callPct>%.
 

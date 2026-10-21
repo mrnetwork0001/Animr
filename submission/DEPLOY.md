@@ -42,7 +42,7 @@ Production gets its own Redis namespace and starts empty:
   openssl rand -hex 32   # HEIST_IP_SALT
   ```
 - [ ] **Have two values from `.env.local` ready:** `ZG_API_KEY` and `OPERATOR_PRIVATE_KEY`. Copy them one at a time.
-- [ ] **Decide `ORACLE_PURSE_CHOG`.** Use the whole $CHOG the House key will really send after the Oct 21 Bell settles. Use `0` if the House key won't hold that much $CHOG by Thu 15:10. If you leave it unset, the settled Bell shows a 5,000 $CHOG Purse "on its way" for 48 hours.
+- [ ] **Decide `ORACLE_PURSE_CHOG`.** Use the whole $CHOG the House key will really send after the Oct 21 Bell settles. Unset or `0` means no Purse is promised. Set it only to the whole $CHOG the House key will really hold and send by Thu 15:10.
 
 ## 1. Put the code on GitHub
 
@@ -127,7 +127,10 @@ NEXT_PUBLIC_NETWORK=mainnet
 NEXT_PUBLIC_TRADE_GUARD_ADDRESS=0x92D3d4Af4B3b0F29Ec020e407803e135af61987b
 OPERATOR_ADDRESS=0x2523bBdD941783C4E565180D2a1b18DE86319cC2
 ORACLE_PURSE_CHOG=<whole $CHOG you will really send per settled live Bell, or 0>
+HOUSE_CHOG_TOKEN_ID=1399
 ```
+
+`HOUSE_CHOG_TOKEN_ID=1399` is the House Chog's **token ID** ("CHOG #891" on OpenSea). Never use the CHOG # number 891, or `#891`: that is a different Chog.
 
 **Block B.** Type **Secret**, environment **Production only**. Previews then run without the AI and without the trading key, which is what you want.
 
@@ -139,7 +142,7 @@ HEIST_ADMIN_SECRET=<new value from step 0>
 HEIST_IP_SALT=<new value from step 0>
 ```
 
-Then **redeploy** (4.2). The Redis variables from step 3 are already there. `HOUSE_CHOG_TOKEN_ID` comes later, in step 8.
+Then **redeploy** (4.2). The Redis variables from step 3 are already there.
 
 ### 4.1 Every variable the code reads
 
@@ -156,10 +159,10 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `OPERATOR_ADDRESS` | Recommended | Config | `0x2523bBdD941783C4E565180D2a1b18DE86319cC2` | The heist proof's sender when the guard's `operator()` can't be read. The deploy script also reads it. |
 | `NEXT_PUBLIC_TRADE_GUARD_ADDRESS` | Recommended | Config | `0x92D3d4Af4B3b0F29Ec020e407803e135af61987b` | The live guard. Unset on mainnet means the same address. **An empty value means paper only**, so never save it blank. Inlined at build time. |
 | `NEXT_PUBLIC_NETWORK` | Recommended | Config | `mainnet` | Monad mainnet (chain 143), which is also what unset means. Never `testnet`: the Chog assets exist only on mainnet. Inlined at build time. |
-| `ORACLE_PURSE_CHOG` | Decide | Config | Whole $CHOG per Purse, or `0`. Use the same value in `.env.local`. | What a settled live Bell promises its Oracle. Unset means 5,000, shown as "on its way" for 48 hours until the script records a transfer. |
+| `ORACLE_PURSE_CHOG` | Decide | Config | Whole $CHOG per Purse, or `0`. Use the same value in `.env.local`. | What a settled live Bell promises its Oracle, shown as "on its way" for 48 hours until the script records a transfer. Unset or `0` means no Purse is promised. |
 | `HEIST_ADMIN_SECRET` | Recommended | Secret | New `openssl rand -hex 32`. | The bearer token for Hall of Fame moderation (appendix). Unset means no admin, and LLM-written replies stay held. |
 | `HEIST_IP_SALT` | Optional | Secret | New `openssl rand -hex 32`. | The key for visitors' IP hashes. Unset means it's derived from `CRON_SECRET`. |
-| `HOUSE_CHOG_TOKEN_ID` | Once the House Chog is bought | Config | Its **token ID** (1–1969, for example `1820`), never its "CHOG #" number. Use the same value in `.env.local`. | Step 8. Unset means the House Chog is "moving in" on `/heist`, `/guard` and `/`. |
+| `HOUSE_CHOG_TOKEN_ID` | Required | Config | `1399`: its **token ID** ("CHOG #891" on OpenSea), never its "CHOG #" number. `.env.local` already has it. | Block A. Unset means the House Chog is "moving in" on `/heist`, `/guard` and `/`. |
 | `HEIST_DAILY_USD_CAP` | Optional | Config | Default `3`. | 0G spend per UTC day on heist replies. `0` means template replies only. |
 | `NEXT_PUBLIC_SITE_URL` | Optional on Vercel | Config | `https://<custom domain>`, only if you add one. | The base for `og:image` URLs and the host printed on share cards. Unset on Vercel means the production domain (`VERCEL_PROJECT_PRODUCTION_URL`). Inlined at build time. |
 
@@ -274,7 +277,7 @@ Then open each URL in an incognito window:
 
 | URL | What you should see |
 | --- | --- |
-| `/` | **"Every Chog is an AI trader. Its traits are its strategy, and the $CHOG market keeps score."** Below it, the Meet, Rewind, Ride and Rob cards, and "Not affiliated with Chog" in the footer. The Rob card says the House Chog is moving in until step 8, and never says "live" before then. |
+| `/` | **"Every Chog is an AI trader. Its traits are its strategy, and the $CHOG market keeps score."** Below it, the Meet, Rewind, Ride and Rob cards, and "Not affiliated with Chog" in the footer. The Rob card says the House Chog is moving in until its wallet is set up (step 8), and never says "live" before then. |
 | `/app` | "Find any Chog's DNA, wallet and AI". Type `1820` or `CHOG #1312`. You get its trading DNA (archetype and League rank), today's Bell call, and the Chog's ERC-6551 wallet address with its $CHOG and MON balances. |
 | `/league` | "The League": all 1,969 Chogs ranked against just holding $CHOG, labelled as simulated. **Random Chog** opens an unflagged Chog's Time Machine. |
 | `/replay/1820` | "CHOG #1312 · token 1820" and its genome card. Press play: trades appear on the real hourly chart, and the run ends with its edge over holding, labelled "Simulated on real $CHOG candles (1% fee + impact)". |
@@ -327,16 +330,15 @@ If the Bell hasn't rung by 15:05, run `curl -s -H "Authorization: Bearer $CRON_S
 - If an incognito visit to the production domain hits a Vercel login, the protection scope is **All Deployments** (a team default can set that). Switch it to **Standard Protection** under **Settings → Deployment Protection**.
 - Fill `<APP_URL>` in `description.md`, `judge-instructions.md` and the social kit with the production domain only.
 
-## 8. When the House Chog is bought
+## 8. Deploy and fund the House Chog's wallet
 
-1. Find its **token ID** on the item page (for example 1820, which is "CHOG #1312"). `HOUSE_CHOG_TOKEN_ID=1312` or `#1312` would point at a different Chog.
-2. In Vercel, add `HOUSE_CHOG_TOKEN_ID=<token id>` as Config for Production and Preview. Then **Redeploy without the build cache** (4.2).
-3. Add the same line to `.env.local`, so the Purse script never pays the House Chog.
-4. Set up the House Chog's wallet with the launch checklist (step 4, 4a–4g). After the redeploy:
+The House Chog is already bought: token **1399**, "CHOG #891" on OpenSea. `HOUSE_CHOG_TOKEN_ID=1399` goes in with the first deploy (Block A) and is already in `.env.local`, so the Purse script never pays the House Chog. The value is always the token ID: `891` or `#891` would point at a different Chog.
+
+1. Set up the House Chog's wallet with the launch checklist (step 4, 4a–4g). Its Tokenbound wallet is `0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71`. Once it is deployed and holds $CHOG:
    - `/guard` shows its wallet and its buy-only state (off: the House Chog trades two-way).
-   - `/chog/<token id>` shows its holder the optional buy-only switch (leave it off).
+   - `/chog/1399` shows its holder the optional buy-only switch (leave it off).
    - `/heist` opens once its wallet is deployed and holds $CHOG.
-5. Aim to finish before the freeze at Thu 00:00. A redeploy of the same commit is a configuration change, not a feature, but it has to happen before the heist recording on Thursday morning.
+2. If `/guard` or `/` still shows "moving in" after the wallet is live, **Redeploy without the build cache** (4.2): both pages are prerendered at build. Aim to finish before the freeze at Thu 00:00 and before the heist recording on Thursday morning.
 
 ## 9. The Oracle Purse (Thu Oct 22, after the Bell settles)
 
@@ -344,7 +346,7 @@ Before you run it, check these:
 
 - [ ] `/bell/2026-10-21` shows **settled**.
 - [ ] The House key `0xbcfD…e259` holds at least `ORACLE_PURSE_CHOG` $CHOG plus at least 1 MON for gas.
-- [ ] `.env.local` has `HOUSE_PRIVATE_KEY`, the same `ORACLE_PURSE_CHOG` as Vercel, `HOUSE_CHOG_TOKEN_ID` if it's set, and the **production** Redis credentials as `UPSTASH_REDIS_REST_URL`/`TOKEN` (step 3C).
+- [ ] `.env.local` has `HOUSE_PRIVATE_KEY`, the same `ORACLE_PURSE_CHOG` as Vercel, `HOUSE_CHOG_TOKEN_ID=1399`, and the **production** Redis credentials as `UPSTASH_REDIS_REST_URL`/`TOKEN` (step 3C).
 
 ```bash
 cd /Users/mrnetwork/Animr
@@ -411,8 +413,8 @@ The public Monad RPC throttles bursts, and every server-side read comes from Ver
 
 **`/heist` still says "moving in" after step 8.** One of these:
 
-- You haven't redeployed.
-- The value is the "CHOG #" number instead of the token ID.
+- You haven't redeployed without the build cache since the wallet went live.
+- The value is the "CHOG #" number (891) instead of the token ID (1399).
 - The House Chog's wallet isn't deployed and initialized yet, or holds no $CHOG (launch checklist 4a–4e).
 
 **You changed a variable and nothing changed.** Redeploy (4.2).

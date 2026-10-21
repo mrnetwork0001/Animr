@@ -126,6 +126,9 @@ const RECHECK_MS = 30_000;
 const BALANCE_TTL_MS = 15_000;
 const MAX_BALANCES = 1_000;
 const AGENTS_TTL_MS = 5_000;
+/** How long the previous map answers without retrying while another instance holds the scan lock, or after a failed scan. */
+const HOLD_WHILE_LOCKED_MS = 5_000;
+const HOLD_AFTER_FAILURE_MS = 30_000;
 
 // --- The owner map ---------------------------------------------------------------------------------
 
@@ -140,6 +143,8 @@ export type OwnerMap = {
   /** eth_calls the scan made, and how long it took (ms). */
   calls: number;
   ms: number;
+  /** Tokens whose ownerOf read failed (at most MAX_UNREADABLE). */
+  unreadable: number;
 };
 
 /** The map as stored in lib/kv.ts: distinct holders once, then an index per token. */
@@ -157,13 +162,17 @@ type StoredOwners = {
 };
 
 type HoldingsCache = {
-  v: 1;
+  v: 2;
   /** The newest map this instance has seen. */
   map?: OwnerMap;
   /** This instance's refresh in flight. */
   pending?: Promise<OwnerMap>;
   /** Lowercase holder -> live balanceOf. */
   balances: Map<string, { count: number; expires: number }>;
+  /** Lowercase holder -> a balance a rebuild couldn't reconcile with the map, and until when not to rebuild for it again. */
+  mismatches: Map<string, { balance: number; until: number }>;
+  /** While another instance scans, or after a failed scan, this instance answers from `map` until then (ms). */
+  holdUntil?: number;
   agents?: { expires: number; byId: Map<number, AgentRecord> };
 };
 
@@ -171,7 +180,9 @@ const globalForHoldings = globalThis as typeof globalThis & { __animrHoldings?: 
 
 function cache(): HoldingsCache {
   // (The version check drops a copy left by an older build of this module across a dev hot reload.)
-  if (globalForHoldings.__animrHoldings?.v !== 1) globalForHoldings.__animrHoldings = { v: 1, balances: new Map() };
+  if (globalForHoldings.__animrHoldings?.v !== 2) {
+    globalForHoldings.__animrHoldings = { v: 2, balances: new Map(), mismatches: new Map() };
+  }
   return globalForHoldings.__animrHoldings;
 }
 
@@ -199,13 +210,17 @@ function holderOf(address: string): string {
 
 function indexOwners(owners: (string | null)[], at: number, calls: number, ms: number): OwnerMap {
   const byHolder = new Map<string, number[]>();
+  let unreadable = 0;
   owners.forEach((owner, i) => {
-    if (!owner) return;
+    if (!owner) {
+      unreadable++;
+      return;
+    }
     const ids = byHolder.get(owner);
     if (ids) ids.push(i + 1);
     else byHolder.set(owner, [i + 1]);
   });
-  return { owners, byHolder, at, calls, ms };
+  return { owners, byHolder, at, calls, ms, unreadable };
 }
 
 function encode(map: OwnerMap, nft: Address): StoredOwners {
@@ -285,10 +300,10 @@ async function scanOwners(nft: Address): Promise<OwnerMap> {
   };
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, batches.length) }, worker));
   if (failure) throw failure.error;
-  const unreadable = owners.filter((owner) => owner === null).length;
-  if (unreadable > MAX_UNREADABLE) throw new Error(`${unreadable} of ${CHOG_SUPPLY} ownerOf reads failed`);
   const finished = Date.now();
   const map = indexOwners(owners, finished, calls, finished - started);
+  const { unreadable } = map;
+  if (unreadable > MAX_UNREADABLE) throw new Error(`${unreadable} of ${CHOG_SUPPLY} ownerOf reads failed`);
   console.info(
     `[animr] holders: read the owners of ${CHOG_SUPPLY} Chogs in ${calls} eth_calls, ${map.ms} ms ` +
       `(${map.byHolder.size} holders${unreadable ? `, ${unreadable} unreadable` : ""}).`,
@@ -346,9 +361,13 @@ async function refresh(nft: Address, maxAgeMs: number): Promise<OwnerMap> {
     console.warn("[animr] holders: couldn't take the scan lock:", errorText(error));
   }
   if (heldElsewhere) {
-    // Another instance is scanning: the previous map answers meanwhile; with none at all, wait for theirs.
+    // Another instance is scanning: the previous map answers meanwhile (this instance stops re-reading the store and
+    // re-trying the lock for a few seconds); with none at all, wait for theirs.
     const copy = newest(stored, cache().map);
-    if (copy) return copy;
+    if (copy) {
+      cache().holdUntil = Date.now() + HOLD_WHILE_LOCKED_MS;
+      return keep(copy);
+    }
     const landed = await waitForStored(kv, nft, 0);
     if (landed) return keep(landed);
   }
@@ -366,7 +385,9 @@ async function refresh(nft: Address, maxAgeMs: number): Promise<OwnerMap> {
     const copy = newest(stored, cache().map);
     if (copy) {
       console.warn(`[animr] holders: owner scan failed (${errorText(error)}); answering from the map of ${new Date(copy.at).toISOString()}.`);
-      return copy;
+      // Monad is struggling: don't rescan on every request meanwhile.
+      cache().holdUntil = Date.now() + HOLD_AFTER_FAILURE_MS;
+      return keep(copy);
     }
     console.error("[animr] holders: owner scan failed:", error);
     throw new HoldingsError("Couldn't read who holds which Chog from Monad right now. Try again in a minute.", 503);
@@ -382,7 +403,8 @@ async function refresh(nft: Address, maxAgeMs: number): Promise<OwnerMap> {
 export async function getOwnerMap({ maxAgeMs = OWNERS_FRESH_MS }: { maxAgeMs?: number } = {}): Promise<OwnerMap> {
   const nft = collection();
   const state = cache();
-  if (state.map && Date.now() - state.map.at < maxAgeMs) return state.map;
+  const now = Date.now();
+  if (state.map && (now - state.map.at < maxAgeMs || (state.holdUntil ?? 0) > now)) return state.map;
   // One refresh per instance at a time; callers that arrive meanwhile share it.
   state.pending ??= refresh(nft, maxAgeMs).finally(() => {
     state.pending = undefined;
@@ -410,13 +432,30 @@ async function liveBalance(nft: Address, holder: string): Promise<number | null>
   }
 }
 
-/** The map and `holder`'s token ids; rebuilt first when its live balance says the map missed a buy or a sale. */
+/**
+ * The map and `holder`'s token ids; rebuilt first when its live balance says the map missed a buy or a sale. A gap a
+ * rebuild can't close (unreadable tokens, a lagging RPC node) rebuilds at most once per holder until the normal
+ * 10-minute refresh, so one holder can't make every request rescan Monad.
+ */
 async function heldBy(nft: Address, holder: string): Promise<{ map: OwnerMap; ids: readonly number[] }> {
   const [map, balance] = await Promise.all([getOwnerMap(), liveBalance(nft, holder)]);
   const ids = map.byHolder.get(holder) ?? [];
   if (balance === null || balance === ids.length || Date.now() - map.at < RECHECK_MS) return { map, ids };
+  // Tokens the scan couldn't read may be exactly the ones missing: a rescan wouldn't be any wiser.
+  if (balance > ids.length && balance - ids.length <= map.unreadable) return { map, ids };
+  const mismatches = cache().mismatches;
+  const known = mismatches.get(holder);
+  if (known && known.balance === balance && known.until > Date.now()) return { map, ids };
+
   const fresh = await getOwnerMap({ maxAgeMs: RECHECK_MS });
-  return { map: fresh, ids: fresh.byHolder.get(holder) ?? [] };
+  const freshIds = fresh.byHolder.get(holder) ?? [];
+  mismatches.delete(holder);
+  // Remember the gap only when a newer map really came back and still disagrees (not while the old map holds).
+  if (fresh.at > map.at && freshIds.length !== balance) {
+    if (mismatches.size >= MAX_BALANCES) mismatches.delete(mismatches.keys().next().value!);
+    mismatches.set(holder, { balance, until: Date.now() + OWNERS_FRESH_MS });
+  }
+  return { map: fresh, ids: freshIds };
 }
 
 // --- What each Chog has been up to ---------------------------------------------------------------

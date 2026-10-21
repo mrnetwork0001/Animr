@@ -119,10 +119,17 @@ function titleOf(chog: HolderChog): string {
   return cut > 0 ? chog.label.slice(0, cut) : `Chog #${chog.tokenId}`;
 }
 
-function headline(count: number): string {
-  return count === 1
-    ? "Your Chog has been trading without you."
-    : `Your ${fmtInt(count)} Chogs have been trading without you.`;
+/**
+ * "Trading without you" only when every AI is awake and really trading; otherwise the claim is the League's replay,
+ * so the headline says how they trade rather than that they do.
+ */
+function headline(count: number, asleep: number): string {
+  if (asleep === 0) {
+    return count === 1
+      ? "Your Chog has been trading without you."
+      : `Your ${fmtInt(count)} Chogs have been trading without you.`;
+  }
+  return count === 1 ? "Here's how your Chog trades." : `Here's how your ${fmtInt(count)} Chogs trade.`;
 }
 
 /**
@@ -268,7 +275,7 @@ export function YourChogsPanel({
       <SectionTitle
         id={headingId}
         kicker={<Kicker address={holdings.address} />}
-        title={headline(chogs.length)}
+        title={headline(chogs.length, asleep)}
         description={
           <>
             {plural ? "Their traits are their strategy" : "Its traits are its strategy"}, and the $CHOG market keeps
@@ -654,7 +661,7 @@ function EmptyPanel({ address, className }: { address: string; className: string
       <SectionTitle id={headingId} kicker={<Kicker address={address} />} title="No Chog Genesis in this wallet yet" />
       <EmptyState
         icon={<LeagueIcon />}
-        title="All 1,969 are already trading"
+        title="All 1,969 are ranked in the League"
         body="Their traits are their strategy, and the $CHOG market keeps score. Meet a few, race two of them, or ride one at today's Bell. No Chog needed."
         actions={
           <>
