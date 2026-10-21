@@ -1,0 +1,171 @@
+/*
+ * /tour (the judge tour) on the v2 design system (app/design-v2.css, components/v2/README.md). Global on purpose (plain
+ * CSS through Tailwind), so every class is prefixed `tour-`.
+ */
+
+@layer components {
+  .tour {
+    display: grid;
+    gap: var(--v2-s-6);
+    margin-top: var(--v2-s-8);
+  }
+  @media (min-width: 1024px) {
+    .tour {
+      grid-template-columns: minmax(0, 1fr) 280px;
+      align-items: start;
+    }
+  }
+
+  .tour-card {
+    display: grid;
+    gap: var(--v2-s-4);
+    min-width: 0;
+  }
+
+  .tour-progress {
+    display: grid;
+    gap: var(--v2-s-2);
+    margin-bottom: var(--v2-s-2);
+  }
+
+  .tour-title {
+    margin: 0;
+    outline: none;
+  }
+  .tour-why {
+    margin: 0;
+    max-width: 62ch;
+  }
+
+  .tour-point {
+    margin: 0;
+    max-width: 64ch;
+    padding-left: var(--v2-s-4);
+    border-left: 1px solid var(--v2-line-teal);
+    color: var(--v2-ink);
+    font-size: var(--v2-fs-base);
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+  .tour-point-label {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-sm);
+  }
+
+  .tour-summary {
+    display: grid;
+    gap: var(--v2-s-3);
+    margin: 0;
+    padding-left: 1.1em;
+    max-width: 64ch;
+    color: var(--v2-muted);
+    font-size: var(--v2-fs-base);
+    line-height: 1.55;
+  }
+  .tour-summary strong {
+    color: var(--v2-ink);
+    font-weight: 500;
+  }
+
+  .tour-live {
+    margin: 0;
+    color: var(--v2-teal);
+    font-family: var(--v2-font-display);
+    font-size: var(--v2-fs-md);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tour-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--v2-s-3) var(--v2-s-5);
+    margin-top: var(--v2-s-2);
+  }
+  .tour-also {
+    font-size: var(--v2-fs-base);
+  }
+
+  .tour-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--v2-s-3);
+    margin-top: var(--v2-s-4);
+    padding-top: var(--v2-s-4);
+    border-top: 1px solid var(--v2-line-soft);
+  }
+
+  .tour-steps {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tour-step {
+    display: flex;
+    align-items: center;
+    gap: var(--v2-s-3);
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--v2-r-sm);
+    background: none;
+    color: var(--v2-nav);
+    font: inherit;
+    font-size: var(--v2-fs-sm);
+    text-align: left;
+    cursor: pointer;
+  }
+  .tour-step:hover {
+    background: var(--v2-glass-fill-hover);
+    color: var(--v2-ink);
+  }
+  .tour-step[aria-current="step"] {
+    border-color: var(--v2-line);
+    background: var(--v2-glass-fill);
+    color: var(--v2-ink);
+  }
+  .tour-step-num {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--v2-line);
+    border-radius: var(--v2-r-pill);
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-xs);
+  }
+  .tour-step[data-seen] .tour-step-num {
+    border-color: var(--v2-line-teal);
+    color: var(--v2-teal);
+  }
+  .tour-step[aria-current="step"] .tour-step-num {
+    border-color: var(--v2-violet-ink);
+    color: var(--v2-ink);
+  }
+
+  /* Phones: the step list becomes a compact two-column grid under the card. */
+  @media (max-width: 1023px) {
+    .tour-steps {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+  }
+
+  /* The "Back to the tour" pill other pages can show when ?tour= is present. */
+  .tour-pill-wrap {
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 40;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 32px);
+  }
+  .tour-pill {
+    white-space: nowrap;
+    box-shadow: var(--v2-shadow-pop);
+  }
+}
