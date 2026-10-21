@@ -254,7 +254,7 @@ Issued at: <ISO time>`}
       body: (
         <>
           <P lead="Every LLM decision is stored with the receipt the 0G Router returns.">
-            It holds the request ID, the serving provider&apos;s address and the exact cost of the call (about $0.002). The
+            It holds the request ID, the serving provider&apos;s address and the cost of the call; the exact cost is on every receipt. The
             decision feed labels each provider TeeML, TeeTLS or standard from 0G&apos;s public provider list.
           </P>
           <Callout tone="honest">
@@ -434,7 +434,8 @@ export const tradeGuard: DocContent = {
             registry, Tokenbound and pool. They cover the happy path, every limit, sandwich and spot manipulation, the TWAP
             failing closed, pause, disable, NFT sale dormancy, nested ownership, buy-only mode (including a fuzz test that
             every sell from a buy-only wallet is refused) and a fuzz test that a trade only moves tokens between the wallet
-            and the pool.
+            and the pool. Result: 37 fork tests, 36 pass, 1 skipped by design (0 failures), Oct 21 2026. The skipped one,
+            the TWAP failing closed, needs an ungrown oracle and skips itself now the live pool&apos;s ring is past 256 slots.
           </P>
           <CodeBlock label="Run them">{"cd contracts\nforge test --fork-url https://rpc.monad.xyz -vv"}</CodeBlock>
         </>

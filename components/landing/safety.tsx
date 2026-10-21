@@ -44,8 +44,7 @@ function Deployed({ guard }: { guard: GuardLink | null }) {
         size="sm"
         inline
         className="lp-house-limits"
-        // "37/37" counts up once as the card arrives (landing-motion.tsx); the HTML always says 37/37.
-        stats={deployed.facts.map((fact) => (fact.key === "tests" ? { ...fact, value: <span data-lp-count="">{fact.value}</span> } : fact))}
+        stats={deployed.facts}
       />
       {guard && (
         <p className="lp-address">

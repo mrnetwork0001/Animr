@@ -91,10 +91,11 @@ export const meta = {
     "Every Chog is an AI trader: its traits are its strategy, and the $CHOG market keeps score. Meet all 1,969, race them on the real chart, ride one at the Daily Bell, or try to rob the House Chog. Each Chog owns its ERC-6551 wallet on Monad, and AnimrTradeGuard lets its AI trade but never withdraw.",
   /**
    * The share card for / and, through the root layout, every app page without its own. A new file name
-   * (not og.png) so social caches fetch it fresh. Rendered once from real Chog art with next/og.
+   * so social caches fetch it fresh. Rendered once from real Chog art with next/og; v3 fixes v2's caption
+   * (token 1820 is Silver Whiskers, CHOG #1312).
    */
   ogImage: {
-    url: "/landing/og-v2.png",
+    url: "/landing/og-v3.png",
     width: 1200,
     height: 630,
     alt: "Animr: every Chog is an AI trader. Its traits are its strategy, and the $CHOG market keeps score.",
@@ -212,7 +213,8 @@ export const safety = {
     status: "Guard details",
     /** README "Contracts" and ARCHITECTURE §8: deployment day, the fork-test suite, source verification. */
     facts: [
-      { key: "tests", value: "37/37", spoken: "37 of 37", label: "AnimrTradeGuard fork tests" },
+      // 37 tests, 0 failures (Oct 21 2026): 36 pass and one skips by design now the pool's oracle is grown.
+      { key: "tests", value: "0/37", spoken: "None of 37", label: "guard fork tests failed (Oct 21)" },
       { key: "deployed", value: "Oct 19", label: "deployed, 2026" },
       { key: "source", value: "Sourcify", label: "source verified" },
     ],

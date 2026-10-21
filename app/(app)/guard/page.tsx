@@ -39,7 +39,7 @@ export default function GuardPage() {
           size="sm"
           inline
           stats={[
-            { key: "tests", label: "AnimrTradeGuard fork tests", value: "37/37", spoken: "37 of 37" },
+            { key: "tests", label: "fork tests failed", value: "0/37", spoken: "None of 37" },
             { key: "trade", label: "Hard cap per trade", value: `${GUARD_LIMIT_CEILINGS.maxTradeBps / 100}%` },
             { key: "out", label: "Withdrawal functions", value: "0", spoken: "none" },
           ]}
@@ -53,7 +53,8 @@ export default function GuardPage() {
       <GuardStatus houseTokenId={house} houseLabel={house === null ? null : houseName(house)} />
       <GuardFlow />
       <p className="v2-note mt-12 text-pretty">
-        Tested against forked Monad mainnet: AnimrTradeGuard passes 37/37 fork tests.
+        Tested against forked Monad mainnet: 37 AnimrTradeGuard fork tests, 36 pass, 1 skipped by design (0 failures),
+        Oct 21 2026. The skipped test needs an ungrown oracle; the live pool&apos;s is already grown.
       </p>
     </div>
   );
