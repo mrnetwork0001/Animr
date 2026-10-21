@@ -48,7 +48,6 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [meta.ogImage],
   },
-  icons: { icon: { url: "/animr.svg", type: "image/svg+xml" } },
   // Farcaster Mini App embed (fc:miniapp + legacy fc:frame): a cast of any Animr link shows today's Bell card
   // with "Ride a Chog", opening /bell inside the client. A page that sets its own `other` replaces this.
   other: miniAppEmbed(),
