@@ -210,8 +210,6 @@ export const safety = {
     text: "On Monad mainnet and fork-tested against live mainnet state. A holder opts in from the Chog's page: create its wallet, grant the guard, set limits, deposit.",
     explorer: "View on Monadscan",
     status: "Guard details",
-    /** The guard's fork-test suite the "37/37" fact counts (contracts/test/AnimrTradeGuard.t.sol). */
-    tests: { label: "Fork tests", href: "https://github.com/mrnetwork0001/Animr/blob/main/contracts/test/AnimrTradeGuard.t.sol" },
     /** README "Contracts" and ARCHITECTURE §8: deployment day, the fork-test suite, source verification. */
     facts: [
       { key: "tests", value: "37/37", spoken: "37 of 37", label: "AnimrTradeGuard fork tests" },

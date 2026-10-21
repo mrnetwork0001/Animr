@@ -40,7 +40,13 @@ function Deployed({ guard }: { guard: GuardLink | null }) {
         {deployed.title}
       </h3>
       <p className="lp-card-p">{deployed.text}</p>
-      <StatRow size="sm" inline className="lp-house-limits" stats={deployed.facts} />
+      <StatRow
+        size="sm"
+        inline
+        className="lp-house-limits"
+        // "37/37" counts up once as the card arrives (landing-motion.tsx); the HTML always says 37/37.
+        stats={deployed.facts.map((fact) => (fact.key === "tests" ? { ...fact, value: <span data-lp-count="">{fact.value}</span> } : fact))}
+      />
       {guard && (
         <p className="lp-address">
           <span className="v2-overline">Contract</span>
@@ -62,11 +68,6 @@ function Deployed({ guard }: { guard: GuardLink | null }) {
             <span className="v2-sr"> ({labels.newTab})</span>
           </a>
         )}
-        <a href={deployed.tests.href} target="_blank" rel="noopener noreferrer" className="v2-btn-ghost v2-btn--sm">
-          {deployed.tests.label}
-          <ExternalIcon className="v2-btn-icon" />
-          <span className="v2-sr"> ({labels.newTab})</span>
-        </a>
         <Link href={links.guard} className="v2-btn-ghost v2-btn--sm">
           {deployed.status}
           <ArrowRightIcon className="v2-btn-icon" />
