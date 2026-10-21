@@ -1,0 +1,141 @@
+/*
+ * Landing-only effects, imported by app/(site)/layout.tsx. Layout and color come from Tailwind
+ * utilities; this file holds what utilities can't express: keyframes, masks and scroll-linked
+ * reveals.
+ *
+ * Global on purpose: next.config.ts routes every *.css through Tailwind as plain CSS, so CSS
+ * Modules aren't scoped here. Every class is prefixed `landing-` to stay out of everyone's way.
+ * Every animation is opt-in: it only runs when the system doesn't ask for reduced motion.
+ */
+
+/* Marks the landing page; the html rules below key off it. */
+.landing-root {
+  isolation: isolate;
+}
+
+/*
+ * Anchor jumps, the skip link and keyboard focus scrolling all stop below the sticky header
+ * (h-16 plus its border), so no target or focus ring lands underneath it. Sections carry no
+ * scroll-margin of their own, so the offsets don't add up.
+ *
+ * Note: with Cache Components, Next keeps a visited landing page in the DOM (hidden by React
+ * Activity) after navigating into the app, so these html rules can stay on there. Both are
+ * harmless in the app, and <html data-scroll-behavior="smooth"> (app/layout.tsx) makes Next
+ * switch smooth scrolling off during route changes, so navigations still land at the top.
+ */
+html:has(.landing-root) {
+  scroll-padding-top: 4.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.landing-root) {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Faint grid behind the hero, fading out from the top. */
+.landing-grid {
+  background-image:
+    linear-gradient(to right, rgb(131 110 249 / 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(131 110 249 / 0.09) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center top;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, #000 25%, transparent 75%);
+}
+
+/* Soft halo behind the hero card; slowly turns when motion is welcome. */
+.landing-halo {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgb(131 110 249 / 0.6) 70deg,
+    transparent 150deg,
+    rgb(61 220 151 / 0.22) 230deg,
+    transparent 310deg
+  );
+  filter: blur(48px);
+  opacity: 0.75;
+}
+
+/* Glow for the final call to action. */
+.landing-glow {
+  background:
+    radial-gradient(40rem 18rem at 50% 0%, rgb(131 110 249 / 0.35), transparent 70%),
+    radial-gradient(30rem 16rem at 85% 100%, rgb(61 220 151 / 0.12), transparent 70%);
+}
+
+/* Dashes for the holder's opt-in connectors (real-wallet trades) in the flow diagram. */
+.landing-dashed {
+  stroke-dasharray: 6 7;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-float {
+    animation: landing-float 7s ease-in-out infinite;
+  }
+
+  .landing-halo {
+    animation: landing-spin 24s linear infinite;
+    will-change: transform;
+  }
+
+  .landing-dashed {
+    animation: landing-flow 1.4s linear infinite;
+  }
+
+  .landing-ping {
+    animation: landing-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+}
+
+/* Blocks slide in as they scroll into view, where scroll-driven animations exist. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .landing-reveal {
+      animation: landing-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes landing-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes landing-flow {
+  to {
+    stroke-dashoffset: -13;
+  }
+}
+
+@keyframes landing-ping {
+  75%,
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes landing-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
