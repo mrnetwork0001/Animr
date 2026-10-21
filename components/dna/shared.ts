@@ -12,6 +12,20 @@ export const IN_SAMPLE_NOTE = "The gene rules were designed on this same history
 /** Chog Genesis token ids run 1–1969; the DNA engine covers exactly these. */
 export const CHOG_COUNT = 1969;
 
+/**
+ * A Chog's marketplace name, "CHOG #1312" (the number in its metadata name; `nameNumbers[id - 1]`). Never its
+ * token id dressed as a name: without a name number it falls back to "token 1820".
+ */
+export function chogNumberLabel(tokenId: number, nameNumbers?: readonly number[] | null): string {
+  const n = nameNumbers?.[tokenId - 1];
+  return n ? `CHOG #${n}` : `token ${tokenId}`;
+}
+
+/** "Sep 6 – Oct 21" for a replay window (unix seconds). */
+export function windowDates(window: { from: number; to: number }): string {
+  return `${formatDay(window.from)} – ${formatDay(window.to)}`;
+}
+
 export const WINDOWS = ["30d", "45d", "max"] as const;
 export type WindowKey = (typeof WINDOWS)[number];
 export const DEFAULT_WINDOW: WindowKey = "45d";

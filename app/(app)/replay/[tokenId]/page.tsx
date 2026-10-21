@@ -5,13 +5,21 @@ import { Suspense } from "react";
 import { BackToLeague, ReplaySkeleton, ReplayView } from "@/components/dna/replay-view";
 import { parseChogId } from "@/components/dna/shared";
 import { HiddenChogNotice } from "@/components/stats/hidden-notice";
-import { chogLabel } from "@/lib/chog-id";
+import { personaName, sanitizeTraits } from "@/lib/agent/persona";
+import { nameNumberOf } from "@/lib/chog-id";
 import { allChogs, getChog } from "@/lib/dna/chogs";
 import { isHiddenChog } from "@/lib/visibility";
 
-/** "CHOG #1463 · token 2": both numbers, as on the Chog's own page (1:1s keep their title). */
+/** "CHOG #1463": its marketplace name (1:1s keep their title), never its token id dressed as a name. */
 function labelOf(tokenId: number): string {
-  return chogLabel(tokenId, { metadataName: getChog(tokenId)?.name });
+  const name = getChog(tokenId)?.name ?? "";
+  return nameNumberOf(name) !== null ? name.trim() : `token ${tokenId}`;
+}
+
+/** "Silver Whiskers (CHOG #1312)": its persona name first, as every page shows it. */
+function titleOf(tokenId: number): string {
+  const chog = getChog(tokenId);
+  return chog ? `${personaName(String(tokenId), sanitizeTraits(chog.traits))} (${labelOf(tokenId)})` : labelOf(tokenId);
 }
 
 export const viewport: Viewport = { themeColor: "#0d0c11" };
@@ -23,10 +31,10 @@ export async function generateMetadata({ params }: PageProps<"/replay/[tokenId]"
   // (lib/visibility.ts), so it is read after connection().
   await connection();
   if (await isHiddenChog(tokenId)) return { title: "Time Machine" };
-  const label = labelOf(tokenId);
+  const title = titleOf(tokenId);
   return {
-    title: `${label} · Time Machine`,
-    description: `Watch ${label}'s trait-coded trading DNA replay the real $CHOG market trade by trade, against just holding. Simulated on real $CHOG candles (1% fee + impact).`,
+    title: `${title} · Time Machine`,
+    description: `Watch ${title} trade the real $CHOG chart on its trading DNA, trade by trade, against just holding. Simulated on real $CHOG candles (1% fee + impact).`,
   };
 }
 

@@ -5,9 +5,9 @@ import { RankingsNav } from "@/components/dna/rankings-nav";
 import { TraitAlphaBoard } from "@/components/dna/trait-alpha";
 
 export const metadata: Metadata = {
-  title: "Trait Alpha",
+  title: "Traits",
   description:
-    "Which Chog traits make the best traders? Every trait value's median edge over holding $CHOG, from all 1,969 trading genomes replayed on real $CHOG candles.",
+    "Which Chog traits make the best traders? Every trait value's median result vs holding $CHOG, from all 1,969 Chogs' trading DNA replayed on real $CHOG candles.",
 };
 
 export const viewport: Viewport = { themeColor: "#0d0c11" };
@@ -20,13 +20,11 @@ export default function TraitsPage() {
       <TraitAlphaBoard
         index={buildLeagueIndex()}
         header={{
-          kicker: "Trait Alpha · 1,969 genomes",
           title: "Which traits trade best?",
           lead: (
             <>
-              A Chog&apos;s traits are its trading DNA: eyes pick the signal, auras set the trigger, hats size the trades. Here
-              is how every trait value did across all 1,969 Chogs on the same real $CHOG chart, measured against just
-              holding.{" "}
+              A Chog&apos;s traits are its trading DNA: eyes pick the signal, auras set the trigger, hats size the trades.
+              Here is how each trait did against just holding.{" "}
               <Link href="/league" className="v2-link whitespace-nowrap">
                 See the League
               </Link>

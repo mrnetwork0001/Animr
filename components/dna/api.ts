@@ -8,12 +8,17 @@ import type {
   ReplayWindow,
   TraitAlphaRow,
 } from "@/lib/dna/types";
-import type { WindowKey } from "./shared";
+import { type WindowKey, chogNumberLabel } from "./shared";
 
 // Client side of the /api/dna/* contract (lib/dna/types.ts). Everything is cacheable and public:
 // results only change when the candles or the genome version do.
 
-export type GenomeResponse = { chog: ChogSnapshot; genome: Genome };
+export type GenomeResponse = {
+  chog: ChogSnapshot;
+  genome: Genome;
+  /** Its persona name ("Silver Whiskers"), computed on the server from the raw traits. */
+  personaName?: string;
+};
 export type TraitAlphaResponse = { genomeVersion: string; window: ReplayWindow; rows: TraitAlphaRow[] };
 
 export class DnaApiError extends Error {
@@ -49,14 +54,27 @@ export const dnaKeys = {
   traits: (window: WindowKey) => ["dna", "traits", window] as const,
 };
 
-/** GET /api/dna/[tokenId] -> { chog, genome }. */
-export function useGenome(tokenId: number) {
+/** GET /api/dna/[tokenId] -> { chog, genome, personaName }. Pass undefined to skip. */
+export function useGenome(tokenId: number | undefined) {
   return useQuery({
-    queryKey: dnaKeys.genome(tokenId),
-    queryFn: () => getJson<GenomeResponse>(`/api/dna/${tokenId}`, (b) => Array.isArray(b.genome?.genes) && !!b.chog),
+    queryKey: dnaKeys.genome(tokenId ?? 0),
+    queryFn:
+      tokenId === undefined
+        ? skipToken
+        : () => getJson<GenomeResponse>(`/api/dna/${tokenId}`, (b) => Array.isArray(b.genome?.genes) && !!b.chog),
     staleTime: Infinity,
     retry,
   });
+}
+
+/**
+ * A Chog's display name: its persona name ("Silver Whiskers") once its DNA loads, else its marketplace name
+ * ("CHOG #1312", from `nameNumbers[id - 1]`). Shares the genome query, so it's usually cached already.
+ */
+export function useChogName(tokenId: number | undefined, nameNumbers?: readonly number[] | null): string {
+  const { data } = useGenome(tokenId);
+  if (tokenId === undefined) return "";
+  return data?.personaName || chogNumberLabel(tokenId, nameNumbers);
 }
 
 /** GET /api/dna/[tokenId]/replay?window= -> ReplayResult. Pass undefined to skip. */

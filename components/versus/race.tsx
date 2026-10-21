@@ -2,8 +2,8 @@
 
 import { type CSSProperties, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { pillClass } from "@/components/v2/primitives";
-import type { FanState } from "@/lib/bell/types";
 import type { VersusBout, VersusRecord } from "@/lib/rewind/types";
+import { possessive } from "@/lib/possessive";
 import { Portrait, SIDE_TONE, useReducedMotion } from "./bits";
 import { KoCard, type PlayKind } from "./ko-card";
 import { RaceChart, useRaceGeometry } from "./race-chart";
@@ -13,7 +13,6 @@ import {
   SIDE_COLOR,
   SIDES,
   type Side,
-  VERSUS_SIM_LABEL,
   boutHours,
   boutLines,
   edgeOf,
@@ -39,7 +38,6 @@ export type RaceProps = {
   kind: PlayKind;
   correct: boolean | null;
   awarded?: number;
-  fan?: FanState;
   record?: VersusRecord;
   onRematch: () => void;
   onRandom: () => void;
@@ -52,7 +50,7 @@ export type RaceProps = {
  * trade markers and speech bubbles, then the KO and the reveal of the real dates. Plays itself once on
  * screen (never with reduced motion: then it opens on the result); play, pause, skip and scrub.
  */
-export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, onRematch, onRandom, scrollOnMount }: RaceProps) {
+export function Race({ bout, labels, pick, kind, correct, awarded, record, onRematch, onRandom, scrollOnMount }: RaceProps) {
   const reduced = useReducedMotion();
   const headingId = useId();
   const n = bout.frames.length;
@@ -132,11 +130,6 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
     seek(1);
     setLanded(true);
   };
-  const replay = () => {
-    seek(0);
-    setPlaying(true);
-    sectionRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-  };
 
   const pos = progress * (n - 1);
   const finished = progress >= 1;
@@ -183,18 +176,14 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
       className="v2-card v2-card--flush vs-stage scroll-mt-28 md:scroll-mt-24"
     >
       <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-8 sm:pt-7">
-        <div className="grid min-w-0 gap-2">
-          <p className="v2-kicker v2-kicker--dot">{finished ? "The reveal" : "48 hidden hours · live"}</p>
-          <h2 ref={headingRef} id={headingId} tabIndex={-1} className="v2-h2 outline-none">
-            <span className={SIDE_TONE.a.text}>{labels.a.title}</span>{" "}
-            <span className="text-[var(--v2-faint)]">vs</span> <span className={SIDE_TONE.b.text}>{labels.b.title}</span>
-          </h2>
-        </div>
-        {finished ? (
-          <span className="v2-badge v2-badge--teal v2-badge--dot">{bout.reveal.label.split(":")[0]}</span>
-        ) : (
-          <span className="v2-badge v2-badge--live v2-badge--dot">Real dates hidden until the KO</span>
-        )}
+        <h2 ref={headingRef} id={headingId} tabIndex={-1} className="v2-h2 min-w-0 outline-none">
+          <span className={SIDE_TONE.a.text}>{labels.a.title}</span>{" "}
+          <span className="text-[var(--v2-faint)]">vs</span> <span className={SIDE_TONE.b.text}>{labels.b.title}</span>
+        </h2>
+        {/* The page's one honesty line, next to the first simulated numbers. */}
+        <p className="text-[13px] text-[var(--v2-faint)]">
+          {finished ? "Simulated on real $CHOG candles" : "Simulated · real dates hidden until the KO"}
+        </p>
       </div>
 
       {/* Fighters' corners: live edge and stack, the latest thing each one said. Visual only; the
@@ -301,23 +290,16 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
             kind={kind}
             correct={correct}
             awarded={awarded}
-            fan={fan}
             record={record}
             onRematch={onRematch}
             onRandom={onRandom}
-            onReplay={replay}
             busy={null}
             scrollIntoView={landed}
           />
         </div>
       )}
 
-      {finished && <PlayByPlay bout={bout} labels={labels} />}
-
-      <p className="v2-note mt-6 border-t border-[var(--v2-line-soft)] px-4 py-4 sm:px-8">
-        {VERSUS_SIM_LABEL}: both Chogs start with {formatChog(bout.startChog)} $CHOG and trade the same hourly closes by
-        their trait genomes. No real trades. Points only: no cash value.
-      </p>
+      {finished ? <PlayByPlay bout={bout} labels={labels} /> : <div className="pb-6 sm:pb-8" />}
     </section>
   );
 }
@@ -362,7 +344,7 @@ function Corner({
       <div className={`mt-3 flex min-h-[4rem] items-start ${right ? "justify-end" : ""}`}>
         {bubble && (
           <div key={`${bubble.i}:${bubble.text}`} className={`vs-pop vs-bubble ${right ? "vs-bubble--right" : "vs-bubble--left"}`}>
-            <p className="line-clamp-3">
+            <p className="line-clamp-5 sm:line-clamp-3">
               {bubble.kind === "trade" && (
                 <span className={`mr-1 text-[10px] font-semibold tracking-wider uppercase ${bubble.tradeSide === "buy" ? "v2-up" : "v2-down"}`}>
                   {bubble.tradeSide === "buy" ? "▲ buys" : "▼ sells"}
@@ -383,7 +365,7 @@ function Legend({ labels }: { labels: Record<Side, FighterLabel> }) {
       {SIDES.map((side) => (
         <li key={side} className="min-w-0">
           <span className="v2-legend-swatch" style={{ "--v2-swatch": SIDE_COLOR[side] } as CSSProperties} />
-          <span className="truncate">{labels[side].title}&apos;s $CHOG stack</span>
+          <span className="truncate">{possessive(labels[side].title)} $CHOG stack</span>
         </li>
       ))}
       <li>
@@ -422,7 +404,7 @@ function PlayByPlay({ bout, labels }: { bout: VersusBout; labels: Record<Side, F
   ].sort((x, y) => x.i - y.i);
 
   return (
-    <details className="group mx-3 mt-5 rounded-[var(--v2-r-lg)] border border-[var(--v2-line-soft)] px-3 sm:mx-8 sm:px-5">
+    <details className="group mx-3 mt-5 mb-6 rounded-[var(--v2-r-lg)] border border-[var(--v2-line-soft)] px-3 sm:mx-8 sm:mb-8 sm:px-5">
       <summary className="flex cursor-pointer list-none items-center gap-2 py-3.5 text-sm font-medium text-[var(--v2-muted)] hover:text-[var(--v2-ink)] [&::-webkit-details-marker]:hidden">
         <span aria-hidden className="text-[10px] text-[var(--v2-faint)] transition-transform group-open:rotate-90">
           ▶

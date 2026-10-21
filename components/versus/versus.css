@@ -44,10 +44,8 @@
     border-radius: var(--v2-r-pill);
     background: rgb(var(--vs-side-rgb) / 0.08);
     color: var(--vs-side);
-    font-size: 10px;
-    font-weight: 560;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-size: 11.5px;
+    font-weight: 500;
     white-space: nowrap;
   }
 
@@ -327,11 +325,10 @@
     display: inline-block;
     color: var(--vs-side, var(--v2-muted));
     font-family: var(--v2-font-display);
-    font-size: clamp(44px, 5vw + 18px, 88px);
+    font-size: clamp(28px, 3vw + 11px, 53px);
     font-weight: var(--v2-fw-display);
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
     line-height: 0.9;
-    text-shadow: 0 0 34px rgb(var(--vs-side-rgb, 211 211 215) / 0.45);
   }
   .vs-ko-title {
     margin: 0;

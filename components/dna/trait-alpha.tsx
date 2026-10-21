@@ -11,20 +11,22 @@ import { usePopulation, useTraitAlpha } from "./api";
 import { EdgeBadge } from "./edge-badge";
 import { type FamilyStats, familyStats } from "./families";
 import type { LeagueIndex } from "./league-index";
-import { DEFAULT_WINDOW, IN_SAMPLE_NOTE, SIM_LABEL, type WindowKey, formatInt } from "./shared";
+import { DEFAULT_WINDOW, type WindowKey, formatInt, windowDates } from "./shared";
 import { WindowPicker } from "./window-picker";
 import "./dna.css";
 
 type SortKey = "trait" | "count" | "median" | "beat";
 type Sort = { key: SortKey; desc: boolean };
 const SORTS: { key: SortKey; label: string }[] = [
-  { key: "median", label: "Median edge" },
-  { key: "beat", label: "Beat hold" },
+  { key: "median", label: "Median" },
+  { key: "beat", label: "Beat holding" },
   { key: "count", label: "Chogs" },
   { key: "trait", label: "A–Z" },
 ];
 
 const MIN_COUNTS = [1, 5, 10, 25] as const;
+/** The index opens on one trait type (all 13 at once run thousands of pixels): eyes pick the signal. */
+const DEFAULT_TYPE = "Eyes";
 /** A headline needs enough Chogs on both sides to mean something. */
 const HEADLINE_MIN = 15;
 
@@ -75,16 +77,17 @@ function findHeadline(contenders: Contender[]) {
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** The page's title block, from the server (the board renders it so the headline can sit beside it). */
-export type TraitAlphaHeader = { kicker: ReactNode; title: ReactNode; lead: ReactNode; actions?: ReactNode };
+export type TraitAlphaHeader = { title: ReactNode; lead: ReactNode; actions?: ReactNode };
 
 /**
- * The Trait Alpha index: which trait values make the best and worst traders, on real $CHOG history.
+ * The Traits index: which trait values make the best and worst traders, on real $CHOG history.
  * With the league index (server-built) it also pools related values into families ("laser eyes").
  * With `header`, it renders the page header too, with this window's headline as its aside.
  */
 export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header?: TraitAlphaHeader }) {
   const [span, setSpan] = useState<WindowKey>(DEFAULT_WINDOW);
-  const [type, setType] = useState("");
+  /** The trait type shown in the full index; "" is every type. */
+  const [type, setType] = useState(DEFAULT_TYPE);
   const [minCount, setMinCount] = useState<number>(10);
   const [sort, setSort] = useState<Sort>({ key: "median", desc: true });
   const traits = useTraitAlpha(span);
@@ -98,7 +101,13 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
   const tableTitleId = useId();
 
   const allRows = useMemo(() => data?.rows ?? [], [data]);
-  const types = useMemo(() => [...new Set(allRows.map((r) => r.traitType))].sort(), [allRows]);
+  // A–Z, with the default type first so its chip is in view on a phone (the row scrolls sideways).
+  const types = useMemo(
+    () => [...new Set(allRows.map((r) => r.traitType))].sort((a, b) => Number(b === DEFAULT_TYPE) - Number(a === DEFAULT_TYPE) || a.localeCompare(b)),
+    [allRows],
+  );
+  // A type this window doesn't have (the default, on odd data) falls back to every type.
+  const shownType = type && types.length > 0 && !types.includes(type) ? "" : type;
   const families = useMemo(() => (index && populationRows ? familyStats(index, populationRows) : []), [index, populationRows]);
   // The story reads best family vs family ("side-eyed Chogs beat laser-eyed Chogs"); single values
   // carry it until the families are in, or when they don't split the field.
@@ -114,7 +123,7 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
   }, [allRows]);
 
   const rows = useMemo(() => {
-    const filtered = allRows.filter((r) => (!type || r.traitType === type) && r.count >= minCount);
+    const filtered = allRows.filter((r) => (!shownType || r.traitType === shownType) && r.count >= minCount);
     const dir = sort.desc ? -1 : 1;
     return filtered.sort((a, b) => {
       const va = value(a, sort.key);
@@ -122,7 +131,7 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
       const cmp = typeof va === "string" ? va.localeCompare(vb as string) : va - (vb as number);
       return cmp * dir || b.count - a.count;
     });
-  }, [allRows, type, minCount, sort]);
+  }, [allRows, shownType, minCount, sort]);
   // One card per trait type, in the order of each type's best row under the current sort.
   const groups = useMemo(() => {
     const byType = new Map<string, TraitAlphaRow[]>();
@@ -137,11 +146,16 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
   const picker = <WindowPicker value={span} onChange={setSpan} />;
   const pageHeader = header && (
     <PageHeader
-      kicker={header.kicker}
       title={header.title}
       lead={header.lead}
       actions={header.actions}
-      aside={headlineReady && headline ? <Headline headline={headline} picker={picker} /> : <HeadlineSkeleton />}
+      aside={
+        headlineReady && headline && data ? (
+          <Headline headline={headline} picker={picker} dates={windowDates(data.window)} />
+        ) : (
+          <HeadlineSkeleton />
+        )
+      }
     />
   );
 
@@ -153,7 +167,7 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
           <div role="alert" className="v2-section">
             <EmptyState
               icon={<PulseIcon />}
-              title="Couldn't load the Trait Alpha index"
+              title="Couldn't load the traits"
               body={<span className="v2-mono break-words">{error.message}</span>}
               actions={
                 <button type="button" onClick={() => refetch()} disabled={isFetching} className={pillClass("glass")}>
@@ -173,21 +187,15 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
     <>
       {pageHeader}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="v2-note max-w-3xl">
-          {SIM_LABEL} · {data.window.label} · genome <span className="v2-mono text-[0.95em]">{data.genomeVersion}</span>. {IN_SAMPLE_NOTE}
-        </p>
-        {/* Without the header the picker has no headline to sit in. */}
-        {!header && picker}
-      </div>
+      {/* Without the header the picker has no headline to sit in. */}
+      {!header && <div className="mt-6 flex justify-end">{picker}</div>}
 
       {spotlight.alpha.length > 0 && (
         <section aria-labelledby="spotlight-title" className="v2-section">
           <SectionTitle
             id="spotlight-title"
-            kicker="Spotlight"
             title="Alpha and rekt traits"
-            description={`The five best and five worst median edges among trait values ${HEADLINE_MIN}+ Chogs wear.`}
+            description={`The five best and five worst medians vs holding among trait values ${HEADLINE_MIN}+ Chogs wear.`}
           />
           <div className="v2-grid--2 grid gap-4">
             <Spotlight title="Alpha traits" tone="up" rows={spotlight.alpha} />
@@ -201,9 +209,8 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
       <section aria-labelledby={tableTitleId} className="v2-section">
         <SectionTitle
           id={tableTitleId}
-          kicker="The full index"
           title="Every trait value"
-          description="Grouped by trait type. Each row opens the League filtered to the Chogs wearing it."
+          description="Pick a trait type. Each row opens the League filtered to the Chogs wearing it."
           action={
             <label className="flex items-center gap-2 text-[13px] text-[var(--v2-faint)]">
               Min. Chogs
@@ -224,11 +231,11 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
 
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div role="group" aria-label="Trait type" className="dna-scroll-x -mx-[var(--v2-gutter)] px-[var(--v2-gutter)] lg:mx-0 lg:flex-wrap lg:px-0">
-            {["", ...types].map((t) => (
+            {[...types, ""].map((t) => (
               <button
                 key={t || "all"}
                 type="button"
-                aria-pressed={type === t}
+                aria-pressed={shownType === t}
                 onClick={() => setType(t)}
                 className="v2-chip h-8 shrink-0 cursor-pointer px-3"
               >
@@ -268,16 +275,13 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
             }
           />
         ) : (
-          <div className="dna-columns">
+          // One trait type spans the full width; every type flows into columns.
+          <div className={groups.length > 1 ? "dna-columns" : undefined}>
             {groups.map(([traitType, typeRows]) => (
               <TraitGroup key={traitType} type={traitType} rows={typeRows} maxAbs={maxAbs} />
             ))}
           </div>
         )}
-        <p className="v2-note mt-2 max-w-3xl">
-          Each Chog runs its own genome; a trait&apos;s row summarizes every Chog carrying it, so traits that ride along with
-          each other share credit. Points of edge are simulated, not earned.
-        </p>
       </section>
     </>
   );
@@ -286,11 +290,11 @@ export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header
 type Headline = NonNullable<ReturnType<typeof findHeadline>>;
 
 /** The header's aside: this window's widest split, winner in teal, loser in violet, with the window picker. */
-function Headline({ headline, picker }: { headline: Headline; picker: ReactNode }) {
+function Headline({ headline, picker, dates }: { headline: Headline; picker: ReactNode; dates: string }) {
   return (
     <GlassCard feature as="section" aria-label="This window's headline" className="p-5 sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="v2-kicker">Headline · {headline.type}</p>
+        <p className="text-[13.5px] text-[var(--v2-nav)]">Widest split: {headline.type}</p>
         {picker}
       </div>
       <p className="mt-5 font-[family-name:var(--v2-font-display)] text-[clamp(26px,1.6vw+18px,38px)] leading-[1.12] font-[380] tracking-[-0.018em] text-balance">
@@ -311,7 +315,7 @@ function Headline({ headline, picker }: { headline: Headline; picker: ReactNode 
               </span>
             </dt>
             <dd className="mt-1.5">
-              <span className="v2-sr">Median edge vs holding </span>
+              <span className="v2-sr">Median vs holding </span>
               <EdgeBadge pct={side.medianEdgePct} className="text-[length:var(--v2-fs-stat-sm)]" />
               <Link href={side.href} className="v2-link mt-1.5 block w-fit text-[13px] font-normal">
                 See them
@@ -320,6 +324,7 @@ function Headline({ headline, picker }: { headline: Headline; picker: ReactNode 
           </div>
         ))}
       </dl>
+      <p className="v2-note mt-5">Simulated · {dates}</p>
     </GlassCard>
   );
 }
@@ -368,7 +373,7 @@ function TraitGroup({ type, rows, maxAbs }: { type: string; rows: TraitAlphaRow[
       </div>
       <table className="w-full table-fixed border-collapse text-left text-[13.5px]">
         <caption className="v2-sr">
-          {type}: median simulated edge vs holding $CHOG and share of Chogs beating holding, per value.
+          {type}: median simulated result vs holding $CHOG and share of Chogs beating holding, per value.
         </caption>
         <thead className="text-[10.5px] tracking-[0.12em] text-[var(--v2-faint)] uppercase">
           <tr className="border-y border-[var(--v2-line-soft)]">
@@ -381,8 +386,8 @@ function TraitGroup({ type, rows, maxAbs }: { type: string; rows: TraitAlphaRow[
             <th scope="col" className="w-[5.5rem] py-2 text-right font-[520]">
               Median
             </th>
-            <th scope="col" className="w-[4.75rem] py-2 pr-5 text-right font-[520]">
-              Beat
+            <th scope="col" className="w-[7.5rem] py-2 pr-5 text-right font-[520] whitespace-nowrap">
+              Beat holding
             </th>
           </tr>
         </thead>
@@ -412,6 +417,10 @@ function TraitGroup({ type, rows, maxAbs }: { type: string; rows: TraitAlphaRow[
   );
 }
 
+/** The families list's columns (its header row uses the same grid). */
+const FAMILY_GRID =
+  "grid grid-cols-[minmax(0,1fr)_auto_6rem] items-center gap-x-4 px-5 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_5.5rem_6.5rem] sm:px-6";
+
 function Families({ families }: { families: FamilyStats[] }) {
   const sorted = [...families].sort((a, b) => b.medianEdgePct - a.medianEdgePct);
   const maxAbs = Math.max(1, ...sorted.map((f) => Math.abs(f.medianEdgePct)));
@@ -419,17 +428,25 @@ function Families({ families }: { families: FamilyStats[] }) {
     <section aria-labelledby="families-title" className="v2-section">
       <SectionTitle
         id="families-title"
-        kicker="Families"
         title="Trait families"
         description="Related values pooled: all four laser eyes count as one, so the bigger groups speak louder."
       />
       <GlassCard padding="flush">
+        <div
+          aria-hidden
+          className={`${FAMILY_GRID} v2-th border-b border-[var(--v2-line-soft)] py-2.5`}
+        >
+          <span>Family</span>
+          <span className="max-sm:hidden" />
+          <span className="text-right">Median</span>
+          <span className="text-right">Beat holding</span>
+        </div>
         <ol className="divide-y divide-[var(--v2-line-soft)]">
           {sorted.map((family) => (
             <li key={family.key}>
               <Link
                 href={`/league?trait=${encodeURIComponent(`family:${family.key}`)}`}
-                className="grid grid-cols-[minmax(0,1fr)_auto_3.5rem] items-center gap-x-4 px-5 py-3.5 transition-colors hover:bg-white/[0.03] sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_5.5rem_4rem] sm:px-6"
+                className={`${FAMILY_GRID} py-3.5 transition-colors hover:bg-white/[0.03]`}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-[15px] text-[var(--v2-ink)]">
@@ -466,7 +483,7 @@ function Spotlight({ title, tone, rows }: { title: string; tone: "up" | "down"; 
         <h3 id={headingId} className="v2-h3">
           {title}
         </h3>
-        <span className="text-xs text-[var(--v2-faint)]">Median edge · {HEADLINE_MIN}+ Chogs</span>
+        <span className="text-xs text-[var(--v2-faint)]">Median, {HEADLINE_MIN}+ Chogs</span>
       </div>
       <ol className="mt-4 space-y-1">
         {rows.map((row, i) => (
@@ -495,7 +512,7 @@ function Spotlight({ title, tone, rows }: { title: string; tone: "up" | "down"; 
 export function TraitAlphaSkeleton({ bare = false }: { bare?: boolean }) {
   return (
     <div role="status">
-      <span className="v2-sr">Loading the Trait Alpha index…</span>
+      <span className="v2-sr">Loading the traits…</span>
       {!bare && <HeadlineSkeleton />}
       <div aria-hidden className="v2-section">
         <span className="block space-y-3">

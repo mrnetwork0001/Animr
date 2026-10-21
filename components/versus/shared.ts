@@ -5,13 +5,10 @@ import { VERSUS_DAILY_POINTS_CAP, VERSUS_POINTS_PER_WIN } from "@/lib/rewind/rul
 import type { VersusBout, VersusFighter, VersusFrame } from "@/lib/rewind/types";
 import { parseChogQuery } from "@/lib/chog-id";
 
-// Shared by the VERSUS UI (components/versus/*, app/(app)/versus/*). Safe on server and client.
+// Shared by the Versus UI (components/versus/*, app/(app)/versus/*). Safe on server and client.
 // The engine's own copy and rules (lib/rewind/rules.ts) are client-safe too: scoring numbers come from there.
 
-/** Every bout carries this label: it is a simulation on real candles, not a track record. */
-export const VERSUS_SIM_LABEL = "Simulated on real $CHOG history (1% fee + impact)";
-export const POINTS_LABEL = "Points only: no cash value";
-/** What a correct pick earns, and the most VERSUS points a fan can earn per UTC day. */
+/** What a correct pick earns, and the most Versus points a fan can earn per UTC day. */
 export const PICK_POINTS = VERSUS_POINTS_PER_WIN;
 export const DAILY_POINTS_CAP = VERSUS_DAILY_POINTS_CAP;
 /** Chog Genesis token ids run 1–1969. */
@@ -88,8 +85,8 @@ export const formatDay = (ms: number) => (Number.isFinite(ms) ? DAY_FMT.format(m
 export const formatHour = (ms: number) => (Number.isFinite(ms) ? `${HOUR_FMT.format(ms)} UTC` : "—");
 
 // ---------------------------------------------------------------------------------------------
-// Names: the app titles a Chog by token id ("Chog #1"); marketplaces show its metadata name
-// ("CHOG #1462" is token #1). VERSUS shows both, so either number finds the right Chog.
+// Names: a Chog goes by its persona name ("Rocket Ears"), then its marketplace name ("CHOG #1462", which is
+// token 1). The token id only shows where a Chog is looked up (the pick form).
 
 /** The number in a metadata name: "CHOG #1462" -> 1462, "CHOG #53 — Blaze" -> 53. */
 function metadataNumberOf(name: string): number | null {
@@ -98,11 +95,11 @@ function metadataNumberOf(name: string): number | null {
 }
 
 export type FighterLabel = {
-  /** Display name: its persona name ("Rocket Ears") when the engine sends one, else "Chog #<id>". */
+  /** Display name: its persona name ("Rocket Ears") when the engine sends one, else its marketplace name. */
   title: string;
-  /** "CHOG #1462 · token #1". */
+  /** Its marketplace name, "CHOG #1462" ("token 1" when unknown). */
   ids: string;
-  /** For buttons and screen readers: "Rocket Ears (Chog #1)". */
+  /** For buttons and screen readers: "Rocket Ears (CHOG #1462)". */
   spoken: string;
 };
 
@@ -112,9 +109,9 @@ export function fighterLabel(fighter: Pick<VersusFighter, "tokenId" | "name">, m
   const name = (fighter.name ?? "").trim();
   const fromName = metadataNumberOf(name);
   const metadataNumber = metadataIds?.[tokenId - 1] || fromName;
-  const ids = metadataNumber ? `CHOG #${metadataNumber} · token #${tokenId}` : `token #${tokenId}`;
-  const title = name && fromName === null ? name : `Chog #${tokenId}`;
-  return { title, ids, spoken: title === `Chog #${tokenId}` ? title : `${title} (Chog #${tokenId})` };
+  const ids = metadataNumber ? `CHOG #${metadataNumber}` : `token ${tokenId}`;
+  const title = name && fromName === null ? name : ids;
+  return { title, ids, spoken: title === ids ? title : `${title} (${ids})` };
 }
 
 export type ParsedFighter =
@@ -148,8 +145,8 @@ export function parseFighterInput(raw: string, metadataIds: readonly number[]): 
         tokenId: other.tokenId,
         hint:
           other.via === "name"
-            ? `Meant CHOG #${other.nameNumber}? That's token #${other.tokenId} →`
-            : `Meant token #${other.tokenId}, not CHOG #${query.nameNumber}? Use it →`,
+            ? `Meant CHOG #${other.nameNumber}? That's token ${other.tokenId} →`
+            : `Meant token ${other.tokenId}, not CHOG #${query.nameNumber}? Use it →`,
       },
     }),
   };

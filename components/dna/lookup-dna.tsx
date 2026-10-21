@@ -9,9 +9,8 @@ import { HiddenChogNotice } from "@/components/stats/hidden-notice";
 import { useHiddenChogs } from "../hidden-chogs";
 import { DnaApiError, useStanding } from "./api";
 import { EdgeBadge } from "./edge-badge";
-import { StyleChip } from "./genome-card";
 import { PlayIcon } from "./icons";
-import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, WINDOW_LABEL, formatInt, parseChogId } from "./shared";
+import { CHOG_COUNT, DEFAULT_WINDOW, WINDOW_LABEL, formatInt, parseChogId } from "./shared";
 
 /**
  * After a dashboard lookup: the Chog's trading DNA at a glance (archetype, league rank, simulated
@@ -41,8 +40,8 @@ export function LookupDna({ tokenId }: { tokenId: string }) {
   return (
     <section aria-label="Trading DNA" className="border-t border-[var(--v2-line-soft)] px-5 py-5 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="v2-kicker">Trading DNA · every Chog is already a trader</h4>
-        {row && <StyleChip style={row.style} />}
+        <h4 className="v2-kicker">Trading DNA</h4>
+        {row && <span className="v2-muted text-[13.5px] capitalize">{row.style}</span>}
       </div>
 
       {row ? (
@@ -56,7 +55,7 @@ export function LookupDna({ tokenId }: { tokenId: string }) {
               {formatInt(standing.data?.total ?? CHOG_COUNT)}
             </span>
             <EdgeBadge pct={row.edgePct} className="text-[15px]" />
-            <span className="text-xs text-[var(--v2-faint)]">vs holding, last {WINDOW_LABEL[DEFAULT_WINDOW]}</span>
+            <span className="text-xs text-[var(--v2-faint)]">vs holding, last {WINDOW_LABEL[DEFAULT_WINDOW]}, simulated</span>
           </p>
         </>
       ) : standing.isError ? (
@@ -87,7 +86,6 @@ export function LookupDna({ tokenId }: { tokenId: string }) {
           Its Bell call
         </Link>
       </div>
-      <p className="v2-note mt-3">League: {SIM_LABEL}.</p>
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { useId } from "react";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
 import type { TradingStyle } from "@/lib/agent/types";
 import { displayTraitValue, scrubTraitText, traitSafety } from "@/lib/brand-safety";
-import { chogLabel } from "@/lib/chog-id";
+import { nameNumberOf } from "@/lib/chog-id";
 import type { ChogSnapshot, Gene, Genome } from "@/lib/dna/types";
 import { useGenome } from "./api";
 import { ChogThumb } from "./chog-thumb";
@@ -27,13 +27,12 @@ export function GenomeCard(props: GenomeCardProps) {
 function GenomeCardQuery({ tokenId, hideIdentity, className = "" }: { tokenId: number } & Omit<GenomeCardProps, "chog" | "genome">) {
   const { data, error, refetch, isFetching } = useGenome(tokenId);
   // The API sends display-safe traits, so the persona name (a hash of the raw traits) comes computed with them.
-  const name = (data as { personaName?: unknown } | undefined)?.personaName;
   if (data) {
     return (
       <GenomeCardView
         chog={data.chog}
         genome={data.genome}
-        name={typeof name === "string" ? name : undefined}
+        name={data.personaName || undefined}
         hideIdentity={hideIdentity}
         className={className}
       />
@@ -42,7 +41,7 @@ function GenomeCardQuery({ tokenId, hideIdentity, className = "" }: { tokenId: n
   if (!error) return <GenomeCardSkeleton className={className} />;
   return (
     <div role="alert" className={`v2-card px-5 py-8 text-center ${className}`}>
-      <p className="font-medium text-[var(--v2-danger)]">Couldn&apos;t read Chog #{tokenId}&apos;s DNA</p>
+      <p className="font-medium text-[var(--v2-danger)]">Couldn&apos;t read this Chog&apos;s DNA</p>
       <p className="v2-mono mt-1 break-words text-xs text-[var(--v2-nav)]">{error.message}</p>
       <button type="button" onClick={() => refetch()} disabled={isFetching} className="v2-btn-glass v2-btn--sm mt-4">
         {isFetching ? "Retrying…" : "Try again"}
@@ -74,16 +73,17 @@ function GenomeCardView({
           <ChogThumb image={chog.image} tokenId={chog.id} size={56} className="rounded-[14px] border border-[var(--v2-line)]" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="v2-kicker">Trading DNA</p>
+          <p className="v2-kicker" title={`Compiled from its traits by genome ${genome.version}: same traits, same trader.`}>
+            Trading DNA
+          </p>
           <h2 id={headingId} className="v2-h3 mt-2 text-balance">
             {hideIdentity ? `The genes behind the ${genome.archetype}` : genome.archetype}
           </h2>
           {!hideIdentity && (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-[var(--v2-nav)]">
-              {/* Both numbers: the name marketplaces show and the token id ("CHOG #1462 · token 1"). */}
-              <span className="font-medium text-[var(--v2-ink)]">{chogLabel(chog.id, { metadataName: chog.name })}</span>
-              {/* Its persona name, the one every page shows. */}
-              <span className="text-[var(--v2-faint)]">{persona}</span>
+              {/* Its persona name, the one every page shows, then the name marketplaces show ("CHOG #1462"). */}
+              <span className="font-medium text-[var(--v2-ink)]">{persona}</span>
+              {nameNumberOf(chog.name) !== null && <span className="text-[var(--v2-faint)]">{chog.name.trim()}</span>}
               <StyleChip style={genome.style} />
             </p>
           )}
@@ -100,10 +100,6 @@ function GenomeCardView({
         <p className="mt-5 text-sm text-[var(--v2-nav)]">This Chog&apos;s metadata couldn&apos;t be read, so it trades on default genes.</p>
       )}
 
-      <p className="v2-note mt-6 border-t border-[var(--v2-line-soft)] pt-4">
-        Compiled from this Chog&apos;s traits by genome <span className="v2-mono text-[var(--v2-nav)]">{genome.version}</span>.
-        Same traits, same trader: anyone can re-run it.
-      </p>
     </section>
   );
 }
@@ -153,7 +149,7 @@ function GeneRow({ gene, index }: { gene: Gene; index: number }) {
 
 export function StyleChip({ style }: { style: TradingStyle }) {
   return (
-    <span className={`v2-badge h-[22px] px-2 text-[10.5px] ${STYLE_TONE[style] ?? STYLE_TONE.balanced}`}>{style}</span>
+    <span className={`v2-badge h-[22px] px-2 text-[12px] capitalize ${STYLE_TONE[style] ?? STYLE_TONE.balanced}`}>{style}</span>
   );
 }
 

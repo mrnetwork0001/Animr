@@ -2,10 +2,9 @@
 
 import { type CSSProperties, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Badge, type BadgeTone, pillClass } from "@/components/v2/primitives";
-import { chogLabel } from "@/lib/chog-id";
-import type { ReplayMoment, ReplayTrade } from "@/lib/dna/types";
+import type { ReplayTrade } from "@/lib/dna/types";
 import { formatAmount } from "@/lib/format";
-import { useReplay } from "./api";
+import { useChogName, useReplay } from "./api";
 import { PauseIcon, PlayIcon, RestartIcon } from "./icons";
 import {
   Chart,
@@ -18,7 +17,7 @@ import {
   sampleAt,
   useGeometry,
 } from "./replay-chart";
-import { DEFAULT_WINDOW, SIM_LABEL, type WindowKey, formatDay, formatHour, formatPrice, signedPct } from "./shared";
+import { DEFAULT_WINDOW, type WindowKey, formatDay, formatHour, formatPrice, signedPct } from "./shared";
 import { WindowPicker } from "./window-picker";
 import "./dna.css";
 
@@ -27,19 +26,17 @@ const DURATION_MS = 14_000;
 const SPEEDS = [1, 2, 4] as const;
 type Speed = (typeof SPEEDS)[number];
 
-/** "CHOG #1463 · token 2" for a token id. */
+/** A Chog's display name for a token id: "Silver Whiskers" (or "CHOG #1312" until its DNA loads). */
 type Labeler = (tokenId: number) => string;
 
 type TimeMachineProps = {
   tokenId: number;
   /** Race a second Chog over the same candles ("Challenge"). */
   rivalId?: number;
-  /** nameNumbers[id - 1]: the number in token id's name ("CHOG #1462" is token 1), so labels show both numbers. */
+  /** nameNumbers[id - 1]: the number in token id's name ("CHOG #1462" is token 1), the fallback label. */
   nameNumbers?: readonly number[];
   /** Start playing once the chart is on screen; never with reduced motion. */
   autoPlay?: boolean;
-  /** Shown on the verdict card of a solo replay, e.g. to pick a rival. */
-  onChallenge?: () => void;
   /** The replay window, when the page owns it (the replay page's header and stats follow it); else internal. */
   span?: WindowKey;
   onSpanChange?: (span: WindowKey) => void;
@@ -49,19 +46,20 @@ type TimeMachineProps = {
 /**
  * The Time Machine: replays a Chog's genome over real hourly CHOG/WMON candles as an animated chart —
  * its $CHOG stack against just holding, the price with its buys and sells, speech bubbles at key
- * moments, a running counter and a verdict at the end. With `rivalId`, two Chogs race.
+ * moments, a running counter and a verdict under the chart at the end. With `rivalId`, two Chogs race.
  */
 export function TimeMachine({
   tokenId,
   rivalId,
   nameNumbers,
   autoPlay = true,
-  onChallenge,
   span: spanProp,
   onSpanChange,
   className = "",
 }: TimeMachineProps) {
-  const labelOf: Labeler = (id) => chogLabel(id, { number: nameNumbers?.[id - 1] || null });
+  const mainName = useChogName(tokenId, nameNumbers);
+  const rivalName = useChogName(rivalId, nameNumbers);
+  const labelOf: Labeler = (id) => (id === rivalId ? rivalName : mainName);
   const [ownSpan, setOwnSpan] = useState<WindowKey>(DEFAULT_WINDOW);
   const span = spanProp ?? ownSpan;
   const setSpan = (next: WindowKey) => {
@@ -78,18 +76,14 @@ export function TimeMachine({
     return rival.data ? [{ tokenId, result: main.data }, { tokenId: rivalId, result: rival.data }] : null;
   }, [tokenId, rivalId, main.data, rival.data]);
   const error = main.error ?? (rivalId !== undefined ? rival.error : null);
-  const meta = main.data;
 
   return (
     <section aria-labelledby={headingId} className={`v2-card v2-card--feature v2-card--flush ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-5 sm:px-7 sm:pt-6">
         <div className="min-w-0">
-          <p className="v2-kicker">Time Machine</p>
-          <h2 id={headingId} className="v2-h3 mt-1.5">
+          <h2 id={headingId} className="v2-h3">
             {rivalId === undefined ? (
-              <>
-                {labelOf(tokenId)} <span className="text-[var(--v2-nav)]">vs just holding $CHOG</span>
-              </>
+              "vs just holding $CHOG"
             ) : (
               <>
                 <span style={{ color: SERIES_INK[0] }}>{labelOf(tokenId)}</span> <span className="text-[var(--v2-nav)]">vs</span>{" "}
@@ -108,7 +102,6 @@ export function TimeMachine({
             series={series}
             autoPlay={autoPlay}
             labelOf={labelOf}
-            onChallenge={rivalId === undefined ? onChallenge : undefined}
           />
         ) : error ? (
           <div role="alert" className="flex h-[300px] flex-col items-center justify-center px-6 text-center sm:h-[440px]">
@@ -129,17 +122,6 @@ export function TimeMachine({
           <ChartSkeleton />
         )}
       </div>
-
-      <p className="v2-note border-t border-[var(--v2-line-soft)] px-4 py-3.5 sm:px-7">
-        {SIM_LABEL}
-        {meta && (
-          <>
-            {" "}
-            · {meta.window.label} · genome <span className="v2-mono">{meta.genomeVersion}</span>
-          </>
-        )}
-        . A rules replay of this Chog&apos;s DNA, not a promise: past candles don&apos;t predict the next ones.
-      </p>
     </section>
   );
 }
@@ -162,22 +144,11 @@ export function useReducedMotion(): boolean {
   );
 }
 
-function Player({
-  series,
-  autoPlay,
-  labelOf,
-  onChallenge,
-}: {
-  series: Series[];
-  autoPlay: boolean;
-  labelOf: Labeler;
-  onChallenge?: () => void;
-}) {
+function Player({ series, autoPlay, labelOf }: { series: Series[]; autoPlay: boolean; labelOf: Labeler }) {
   const reducedMotion = useReducedMotion();
   const [progress, setProgress] = useState(() => (autoPlay && !reducedMotion ? 0 : 1));
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<Speed>(1);
-  const [verdictClosed, setVerdictClosed] = useState(false);
   const [width, setWidth] = useState(0);
   const progressRef = useRef(progress);
   const chartRef = useRef<HTMLDivElement>(null);
@@ -234,12 +205,10 @@ function Player({
   };
   const play = () => {
     if (progressRef.current >= 1) seek(0);
-    setVerdictClosed(false);
     setPlaying(true);
   };
   const restart = () => {
     seek(0);
-    setVerdictClosed(false);
     setPlaying(true);
   };
 
@@ -279,35 +248,31 @@ function Player({
                 {signedPct(s.edge)}
               </span>
               <span className="text-[13px] text-[var(--v2-nav)]">
-                {solo ? "vs holding · simulated" : `token ${s.tokenId}`} · {s.trades} {s.trades === 1 ? "trade" : "trades"}
+                {solo ? (
+                  <>
+                    vs holding · <span className="v2-num text-[var(--v2-ink)]">{formatAmount(s.value, 0)}</span> $CHOG (from{" "}
+                    {formatAmount(s.result.startChog, 0)})
+                  </>
+                ) : (
+                  labelOf(s.tokenId)
+                )}{" "}
+                · {s.trades} {s.trades === 1 ? "trade" : "trades"}
               </span>
             </p>
           ))}
         </div>
-        <p className="v2-overline v2-num tracking-[0.12em]">
+        <p className="v2-overline v2-num">
           Day {day}/{totalDays} · {formatDay(now)}
         </p>
       </div>
 
-      <div className="relative">
-        <div ref={chartRef} className="relative h-[270px] sm:h-[400px]">
-          {width > 0 && points.length > 1 ? (
-            <Chart series={series} g={g} width={width} height={height} progress={progress} now={now} summary={summary} />
-          ) : (
-            <ChartSkeleton bare />
-          )}
-          {width > 0 && points.length > 1 && !finished && <SpeechBubble series={primary} g={g} width={width} now={now} />}
-        </div>
-
-        {finished && !verdictClosed && !playing && (
-          <VerdictCard
-            series={live}
-            labelOf={labelOf}
-            onReplay={restart}
-            onClose={() => setVerdictClosed(true)}
-            onChallenge={onChallenge}
-          />
+      <div ref={chartRef} className="relative h-[270px] sm:h-[400px]">
+        {width > 0 && points.length > 1 ? (
+          <Chart series={series} g={g} width={width} height={height} progress={progress} now={now} summary={summary} />
+        ) : (
+          <ChartSkeleton bare />
         )}
+        {width > 0 && points.length > 1 && !finished && <SpeechBubble series={primary} g={g} width={width} now={now} />}
       </div>
 
       <p aria-live="polite" className="sr-only">
@@ -331,6 +296,9 @@ function Player({
       />
 
       <Legend ids={series.map((s) => s.tokenId)} labelOf={labelOf} />
+
+      {/* The verdict sits under the chart, never over it: the finished chart stays readable. */}
+      {finished && !playing && <Verdict series={series} labelOf={labelOf} onReplay={restart} />}
     </div>
   );
 }
@@ -347,19 +315,7 @@ function verdictLine(series: Series[], labelOf: Labeler): string {
   return r.verdict || `${signedPct(r.edgePct)} vs holding`;
 }
 
-function VerdictCard({
-  series,
-  labelOf,
-  onReplay,
-  onClose,
-  onChallenge,
-}: {
-  series: (Series & { edge: number })[];
-  labelOf: Labeler;
-  onReplay: () => void;
-  onClose: () => void;
-  onChallenge?: () => void;
-}) {
+function Verdict({ series, labelOf, onReplay }: { series: Series[]; labelOf: Labeler; onReplay: () => void }) {
   const [shared, setShared] = useState<"idle" | "copied" | "failed">("idle");
   const solo = series.length === 1;
   const r = series[0].result;
@@ -390,75 +346,25 @@ function VerdictCard({
   };
 
   return (
-    // Phones: a card under the chart, so the finished chart stays visible. From sm: over the chart.
-    <div className="z-20 mt-3 sm:absolute sm:inset-0 sm:mt-0 sm:flex sm:items-center sm:justify-center sm:bg-[rgb(13_12_17/0.5)] sm:p-3 sm:backdrop-blur-[2px]">
-      <div
-        role="group"
-        aria-label="Replay verdict"
-        className="dna-rise v2-glass--strong relative w-full rounded-[var(--v2-r-lg)] p-5 sm:max-w-[30rem] sm:p-6"
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close the verdict"
-          className="absolute top-3 right-3 grid size-8 place-items-center rounded-full text-lg leading-none text-[var(--v2-faint)] transition-colors hover:bg-white/5 hover:text-[var(--v2-ink)]"
-        >
-          ×
-        </button>
-        <Badge tone={stampTone} dot>
-          {stamp}
-        </Badge>
-        <p className="mt-3 pr-6 font-[family-name:var(--v2-font-display)] text-[22px] leading-[1.18] font-[380] tracking-[-0.015em] text-balance sm:text-[28px]">
+    <div
+      role="group"
+      aria-label="Replay verdict"
+      className="dna-rise mx-2 mb-5 flex flex-col gap-4 rounded-[var(--v2-r-lg)] border border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.02)] p-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5"
+    >
+      <div className="min-w-0">
+        <Badge tone={stampTone}>{stamp}</Badge>
+        <p className="mt-2.5 font-[family-name:var(--v2-font-display)] text-[20px] leading-[1.2] font-[380] tracking-[-0.012em] text-balance sm:text-[24px]">
           {line}
         </p>
-
-        {solo ? (
-          <dl className="mt-5 grid grid-cols-4 gap-x-3 gap-y-2 border-t border-[var(--v2-line-soft)] pt-4">
-            <Stat label="vs hold" value={signedPct(r.edgePct)} color={edgeColor(r.edgePct)} />
-            <Stat label="Worst dip" value={signedPct(-Math.abs(r.maxDrawdownPct))} />
-            <Stat label="Trades" value={String(r.trades.length)} />
-            <Stat label="Fees" value={formatAmount(r.feesPaidChog, 0)} hint="$CHOG" />
-          </dl>
-        ) : (
-          <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-[var(--v2-line-soft)] pt-4">
-            {series.map((s, i) => (
-              <Stat
-                key={s.tokenId}
-                label={labelOf(s.tokenId)}
-                value={signedPct(s.result.edgePct)}
-                color={SERIES_INK[i]}
-                hint={`${s.result.trades.length} trades`}
-              />
-            ))}
-          </dl>
-        )}
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          <button type="button" onClick={onReplay} className={pillClass("glass", "sm")}>
-            <RestartIcon className="size-4" /> Replay
-          </button>
-          <button type="button" onClick={share} className={pillClass("glass", "sm")}>
-            {shared === "copied" ? "Link copied" : shared === "failed" ? "Couldn't share" : "Share"}
-          </button>
-          {onChallenge && (
-            <button type="button" onClick={onChallenge} className={pillClass("primary", "sm")}>
-              Challenge a Chog
-            </button>
-          )}
-        </div>
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, hint, color }: { label: string; value: string; hint?: string; color?: string }) {
-  return (
-    <div className="min-w-0">
-      <dt className="truncate text-xs text-[var(--v2-nav)]">{label}</dt>
-      <dd className="v2-num mt-1 text-[19px] leading-tight sm:text-[22px]" style={color ? { color } : undefined}>
-        {value}
-        {hint && <span className="block font-[family-name:var(--v2-font-text)] text-[11px] text-[var(--v2-faint)] sm:ml-1 sm:inline">{hint}</span>}
-      </dd>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        <button type="button" onClick={onReplay} className={pillClass("glass", "sm")}>
+          <RestartIcon className="size-4" /> Replay
+        </button>
+        <button type="button" onClick={share} className={pillClass("glass", "sm")}>
+          {shared === "copied" ? "Link copied" : shared === "failed" ? "Couldn't share" : "Share"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -569,23 +475,6 @@ function Legend({ ids, labelOf }: { ids: number[]; labelOf: Labeler }) {
   );
 }
 
-/** The key moments of a replay, oldest first, on a rail. */
-export function KeyMoments({ moments }: { moments: readonly ReplayMoment[] }) {
-  const sorted = [...moments].sort((a, b) => a.t - b.t);
-  return (
-    <ol className="dna-rail">
-      {sorted.map((m, i) => (
-        <li key={i}>
-          <time dateTime={new Date(m.t * 1000).toISOString()} className="v2-num block text-xs text-[var(--v2-faint)]">
-            {formatHour(m.t)}
-          </time>
-          <span className="mt-0.5 block text-[14px] leading-relaxed text-[var(--v2-muted)]">{m.text}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 /** Every simulated trade: when (faint), side (a teal Buy / violet Sell badge), price and amounts in DM Sans, why. */
 export function TradeLog({ trades }: { trades: readonly ReplayTrade[] }) {
   return (
@@ -618,7 +507,7 @@ export function TradeLog({ trades }: { trades: readonly ReplayTrade[] }) {
             <tr key={i}>
               <td className="v2-num text-[13px] text-[var(--v2-faint)]">{formatHour(trade.t).replace(" UTC", "")}</td>
               <td>
-                <Badge tone={buy ? "teal" : "violet"}>{trade.side}</Badge>
+                <Badge tone={buy ? "teal" : "violet"}>{buy ? "Buy" : "Sell"}</Badge>
               </td>
               <td className="is-num">{formatPrice(trade.price)}</td>
               <td className="is-num v2-hide-sm text-[var(--v2-muted)]">

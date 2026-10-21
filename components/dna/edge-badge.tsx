@@ -9,7 +9,7 @@ export function EdgeBadge({ pct, className = "" }: { pct: number; className?: st
   const value = Number.isFinite(pct) && Math.abs(pct) >= 0.005 ? pct : 0;
   const tone = value > 0 ? "up" : value < 0 ? "down" : "flat";
   return (
-    <span title="Simulated edge vs simply holding $CHOG" data-tone={tone} className={`dna-edge ${className}`}>
+    <span title="vs just holding $CHOG (simulated)" data-tone={tone} className={`dna-edge ${className}`}>
       {value !== 0 && (
         <span aria-hidden className="dna-edge-arrow">
           {value > 0 ? "▲" : "▼"}

@@ -7,10 +7,7 @@ import { STYLE_CHIP, type Side } from "./shared";
 import "@/app/design-v2.css";
 import "./versus.css";
 
-// Small building blocks shared by every VERSUS view (v2 design system: A teal, B violet).
-
-/** Tracked caps for row and column labels (the v2 overline). */
-export const LABEL = "v2-overline";
+// Small building blocks shared by every Versus view (v2 design system: A teal, B violet).
 
 /**
  * Fighter A in teal, B in violet. Each value is a class string: the side class (`vs-side-a` sets the
@@ -89,7 +86,7 @@ export function Portrait({
 }
 
 export function StyleTag({ style }: { style: TradingStyle }) {
-  return <span className={`v2-badge ${STYLE_CHIP[style] ?? STYLE_CHIP.balanced}`}>{style}</span>;
+  return <span className={`v2-badge capitalize ${STYLE_CHIP[style] ?? STYLE_CHIP.balanced}`}>{style}</span>;
 }
 
 /** A small die, for "Random" buttons. */

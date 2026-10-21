@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, parseChogId, signedPct } from "@/components/dna/shared";
 import { chogThumbUrl } from "@/components/dna/thumb-url";
 import { isFlaggedTokenId } from "@/lib/brand-safety";
-import { chogLabel } from "@/lib/chog-id";
+import { nameNumberOf } from "@/lib/chog-id";
 import { getChog } from "@/lib/dna/chogs";
 import { chogGenome, chogName, getPopulation, getReplay } from "@/lib/dna/population";
 import type { PopulationResponse, ReplayResult } from "@/lib/dna/types";
@@ -110,7 +110,8 @@ async function loadCard(tokenId: number): Promise<Card | null> {
   else cacheLife("minutes");
   return {
     tokenId,
-    label: chogLabel(tokenId, { metadataName: chog.name }),
+    // Its marketplace name ("CHOG #1312"; a 1:1 keeps its title), never its token id dressed as a name.
+    label: nameNumberOf(chog.name) !== null ? chog.name.trim() : `token ${tokenId}`,
     // Its persona name ("Rocket Ears"), the one every page shows.
     name: chogName(chog),
     archetype: genome.archetype,
@@ -184,7 +185,7 @@ export default async function Image({ params }: { params: Promise<{ tokenId: str
           {card?.face ? (
             <img src={card.face} width={460} height={460} alt="" style={{ objectFit: "cover" }} />
           ) : card ? (
-            card.label.split(" · ")[0]
+            card.label
           ) : (
             <img src={LOGO} width={200} height={200} alt="" />
           )}
@@ -196,10 +197,10 @@ export default async function Image({ params }: { params: Promise<{ tokenId: str
               ANIMR · TIME MACHINE
             </div>
             <div style={{ display: "flex", marginTop: 14, fontSize: card ? 44 : 76, fontWeight: 600, letterSpacing: -1, lineHeight: 1.05 }}>
-              {card ? card.label : "Every Chog is a trader"}
+              {card ? card.name : "Every Chog is a trader"}
             </div>
             <div style={{ display: "flex", marginTop: 14, fontSize: 32, color: C.muted }}>
-              {card ? `${card.archetype} · ${card.name}` : "1,969 trading genomes on real $CHOG candles"}
+              {card ? `${card.label} · ${card.archetype}` : "1,969 traders on real $CHOG candles"}
             </div>
           </div>
 

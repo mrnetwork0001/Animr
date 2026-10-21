@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useId, useRef, useState } from "react";
 import { parseChogId } from "@/components/dna/shared";
-import type { FanState } from "@/lib/bell/types";
 import type { VersusBout, VersusBoutPreview, VersusRecord } from "@/lib/rewind/types";
 import {
   VersusApiError,
@@ -19,7 +18,6 @@ import {
   retryVersus,
   useRememberedPick,
   useVersusSampleMode,
-  useVersusStats,
 } from "./api";
 import { RewindIcon } from "@/components/v2/icons";
 import { pillClass } from "@/components/v2/primitives";
@@ -43,7 +41,6 @@ type Play = {
   kind: PlayKind;
   correct: boolean | null;
   awarded?: number;
-  fan?: FanState;
   record?: VersusRecord;
   scroll: boolean;
 };
@@ -84,7 +81,7 @@ const labelsOf = (bout: VersusBoutPreview, metadataIds: readonly number[]): Reco
 });
 
 /**
- * VERSUS: deal a bout (random, a chosen pair, or a shared /versus/[id]), show the tale of the tape, take
+ * Versus: deal a bout (random, a chosen pair, or a shared /versus/[id]), show the tale of the tape, take
  * the visitor's pick (or let them just watch), then race the two genomes and reveal the real window.
  */
 export function VersusArena({ initialId, metadataIds }: { initialId?: string; metadataIds: readonly number[] }) {
@@ -147,7 +144,6 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
         kind: "points",
         correct: res.correct,
         awarded: res.awarded,
-        fan: res.fan,
         record: res.record,
         scroll: true,
       });
@@ -193,7 +189,6 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
         kind={current.kind}
         correct={current.correct}
         awarded={current.awarded}
-        fan={current.fan}
         record={current.record}
         onRematch={() => rematch(current.bout)}
         onRandom={randomBout}
@@ -237,7 +232,7 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
         <div role="status" className="v2-toast v2-toast--warning">
           <div>
             <span className="v2-toast-title">Sample data</span>
-            The VERSUS engine isn&apos;t answering on this server yet, so these races are a synthetic stand-in
+            The Versus engine isn&apos;t answering on this server yet, so these races are a synthetic stand-in
             (development only).
           </div>
           <span />
@@ -257,7 +252,6 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
         >
           Pick two Chogs
         </button>
-        <Stats />
       </div>
 
       {formOpen && (
@@ -272,18 +266,6 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
 
       {body}
     </div>
-  );
-}
-
-function Stats() {
-  const { data } = useVersusStats();
-  if (!data || data.bouts < 10) return null;
-  const format = (n: number) => new Intl.NumberFormat("en-US").format(n);
-  return (
-    <p className="v2-chip ml-auto">
-      <span className="v2-num text-[var(--v2-ink)]">{format(data.bouts)}</span> bouts dealt ·{" "}
-      <span className="v2-num text-[var(--v2-ink)]">{format(data.picks)}</span> picks
-    </p>
   );
 }
 

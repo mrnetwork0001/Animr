@@ -187,7 +187,7 @@ function Field({
             <Portrait side={side} image={info?.chog.image} tokenId={parsed.tokenId} size={44} />
             <div className="min-w-0">
               <p className="truncate text-[var(--v2-ink)]">
-                {metadataNumber ? `CHOG #${metadataNumber} · ` : ""}token #{parsed.tokenId}
+                {metadataNumber ? `CHOG #${metadataNumber} · ` : ""}token {parsed.tokenId}
               </p>
               <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[var(--v2-nav)]">
                 {info ? (

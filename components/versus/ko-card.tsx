@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { type ReactNode, useCallback, useState } from "react";
-import type { FanState } from "@/lib/bell/types";
+import { possessive } from "@/lib/possessive";
 import { VERSUS_COPY } from "@/lib/rewind/rules";
 import type { VersusBout, VersusRecord } from "@/lib/rewind/types";
 import { Badge, pillClass } from "@/components/v2/primitives";
@@ -10,7 +10,6 @@ import { DiceIcon, Portrait, SIDE_TONE } from "./bits";
 import {
   type FighterLabel,
   PICK_POINTS,
-  POINTS_LABEL,
   SIDES,
   type Side,
   boutPath,
@@ -36,11 +35,9 @@ type KoCardProps = {
   correct: boolean | null;
   /** Points this pick added (0 when wrong, a repeat, a draw or past the daily cap). */
   awarded?: number;
-  fan?: FanState;
   record?: VersusRecord;
   onRematch: () => void;
   onRandom: () => void;
-  onReplay: () => void;
   busy: "rematch" | "random" | null;
   /** Bring the card into view when it appears (after a race played out, not on a static load). */
   scrollIntoView: boolean;
@@ -54,11 +51,9 @@ export function KoCard({
   kind,
   correct,
   awarded,
-  fan,
   record,
   onRematch,
   onRandom,
-  onReplay,
   busy,
   scrollIntoView,
 }: KoCardProps) {
@@ -127,7 +122,6 @@ export function KoCard({
             awarded={awarded}
             winner={result.winner}
             labels={labels}
-            fan={fan}
             record={record}
           />
         </div>
@@ -192,7 +186,7 @@ export function KoCard({
 
       {/* The reveal: until now the window was "48 hours of real $CHOG history". */}
       <div className="vs-reveal mt-7">
-        <p className="v2-kicker v2-kicker--dot">Reveal · the real window</p>
+        <p className="v2-kicker">The real dates</p>
         <p className="vs-reveal-dates vs-wipe mt-3">{revealDates}</p>
         {revealStory && <p className="v2-lead mt-2 text-[var(--v2-muted)]">{revealStory}</p>}
         <dl className="vs-reveal-times mt-6">
@@ -226,34 +220,19 @@ export function KoCard({
           <DiceIcon /> {busy === "random" ? "Shuffling…" : "Random bout"}
         </button>
         <ShareButton bout={bout} labels={labels} />
-        <button type="button" onClick={onReplay} className={`max-sm:w-full ${pillClass("ghost")}`}>
-          <span aria-hidden>↺</span> Watch again
-        </button>
       </div>
 
-      <nav aria-label="Both Chogs" className="mt-6 grid gap-x-6 gap-y-2 border-t border-[var(--v2-line-soft)] pt-5 text-sm sm:grid-cols-2">
+      <nav
+        aria-label="Both Chogs"
+        className="mt-6 flex flex-wrap items-baseline gap-x-5 gap-y-2 border-t border-[var(--v2-line-soft)] pt-5 text-sm text-[var(--v2-faint)]"
+      >
+        Meet them:
         {SIDES.map((side) => (
-          <p key={side} className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className={`truncate font-medium ${SIDE_TONE[side].text}`}>{labels[side].title}:</span>
-            <Link href={`/chog/${bout[side].tokenId}`} className="v2-link">
-              its page
-            </Link>
-            <Link href={`/replay/${bout[side].tokenId}`} className="v2-link">
-              its Time Machine
-            </Link>
-          </p>
-        ))}
-        <p className="sm:col-span-2">
-          <Link href={`/replay/${bout.a.tokenId}?vs=${bout.b.tokenId}`} className="v2-link">
-            Race these two over all of $CHOG&apos;s history →
+          <Link key={side} href={`/chog/${bout[side].tokenId}`} className={`v2-link font-medium ${SIDE_TONE[side].text}`}>
+            {labels[side].title}
           </Link>
-        </p>
+        ))}
       </nav>
-
-      <p className="v2-note mt-5">
-        Genome <span className="v2-mono">{bout.a.genomeVersion}</span>: a rules replay of each Chog&apos;s DNA on real
-        candles, not a promise. Past candles don&apos;t predict the next ones. Simulated, points only.
-      </p>
     </div>
   );
 }
@@ -266,7 +245,6 @@ function Verdict({
   awarded,
   winner,
   labels,
-  fan,
   record,
 }: {
   pick: Side | null;
@@ -275,19 +253,18 @@ function Verdict({
   awarded?: number;
   winner: Side | "draw";
   labels: Record<Side, FighterLabel>;
-  fan?: FanState;
   record?: VersusRecord;
 }) {
   if (kind === "watch" || !pick) {
     return (
       <p className="v2-body m-0">
-        {VERSUS_COPY.spectate} A fresh bout lets you call it for +{PICK_POINTS}.
+        {VERSUS_COPY.spectate} A fresh bout lets you call it for +{PICK_POINTS} points.
       </p>
     );
   }
   const right = winner === pick;
   const fumbled =
-    winner === "draw" ? "Dead heat: neither genome stacked more." : `${labels[pick].title}'s genome fumbled this window.`;
+    winner === "draw" ? "Dead heat: neither Chog stacked more." : `${possessive(labels[pick].title)} DNA fumbled this window.`;
   let text: ReactNode;
   if (kind === "returning" || correct === null) {
     text = right ? (
@@ -299,8 +276,8 @@ function Verdict({
     text =
       awarded && awarded > 0 ? (
         <>
-          <span className="font-medium text-[var(--v2-success)]">Called it: +{awarded} points.</span> {labels[pick].title}&apos;s genome
-          read the chart better.
+          <span className="font-medium text-[var(--v2-success)]">Called it: +{awarded} points.</span>{" "}
+          {possessive(labels[pick].title)} DNA read the chart better.
         </>
       ) : (
         <>
@@ -313,40 +290,17 @@ function Verdict({
         <>{fumbled} No points for a draw.</>
       ) : (
         <>
-          {fumbled} {labels[otherSide(pick)].title}&apos;s genome read it better. No points this time.
+          {fumbled} {possessive(labels[otherSide(pick)].title)} DNA read it better. No points this time.
         </>
       );
   }
   return (
     <div className="v2-body space-y-1.5">
       <p>{text}</p>
-      {kind === "points" && (fan || record) && (
+      {kind === "points" && record && (
         <p className="v2-note">
-          {record && (
-            <>
-              VERSUS record: {record.correct} of {record.picks} called · {formatChog(record.points)} pts ({record.pointsToday}/
-              {record.dailyCap} today).{" "}
-            </>
-          )}
-          {record?.pending ? (
-            // No fan card yet (VERSUS never makes one): the points wait for the first ride or nickname.
-            <>
-              {formatChog(record.pending)} pts move onto a fan card with your first{" "}
-              <Link href="/bell" className="v2-link">
-                Daily Bell ride
-              </Link>
-              .{" "}
-            </>
-          ) : fan ? (
-            <>
-              Fan card: <span className="v2-num text-[var(--v2-kicker)]">{formatChog(fan.points)} pts</span>,{" "}
-              <Link href="/bell" className="v2-link">
-                shared with the Daily Bell
-              </Link>
-              .{" "}
-            </>
-          ) : null}
-          {POINTS_LABEL}.
+          Your record: {formatChog(record.correct)} of {formatChog(record.picks)} called ·{" "}
+          {formatChog(record.points)} {record.points === 1 ? "point" : "points"}.
         </p>
       )}
     </div>
@@ -359,10 +313,10 @@ function ShareButton({ bout, labels }: { bout: VersusBout; labels: Record<Side, 
 
   const share = async () => {
     const link = new URL(boutPath(bout.id), window.location.origin).toString();
-    const text = `${labels.a.title} vs ${labels.b.title}: two Chog trading genomes, 48 hidden hours of real $CHOG history. Who stacks more $CHOG? (Simulated, 1% fee + impact.)`;
+    const text = `${labels.a.title} vs ${labels.b.title}: two Chogs' trading DNA, 48 hidden hours of real $CHOG history. Who stacks more $CHOG? (Simulated, 1% fee + impact.)`;
     try {
       if (typeof navigator.share === "function") {
-        await navigator.share({ title: "Animr VERSUS", text, url: link });
+        await navigator.share({ title: "Animr Versus", text, url: link });
         return;
       }
       await navigator.clipboard.writeText(link);

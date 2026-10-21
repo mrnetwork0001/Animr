@@ -16,20 +16,20 @@ import { usePopulation } from "./api";
 import { ChogThumb } from "./chog-thumb";
 import { EdgeBadge } from "./edge-badge";
 import { TRAIT_FAMILIES, familyMembers } from "./families";
-import { StyleChip } from "./genome-card";
 import { DiceIcon, PlayIcon } from "./icons";
 import type { LeagueIndex } from "./league-index";
 import {
   CHOG_COUNT,
   IN_SAMPLE_NOTE,
-  SIM_LABEL,
   WINDOW_LABEL,
   type WindowKey,
+  chogNumberLabel,
   formatInt,
   parseChogId,
   parseWindow,
   randomChogId,
   signedPct,
+  windowDates,
 } from "./shared";
 import { WindowPicker } from "./window-picker";
 import "./dna.css";
@@ -40,13 +40,13 @@ type Sort = "best" | "worst" | "id";
 const SORT_LABEL: Record<Sort, string> = { best: "Best first", worst: "Most rekt first", id: "Token ID" };
 
 /**
- * The League's three divisions (lib/dna/types.ts PopulationRow): Wild (nobody claimed it: its trait instinct trades),
+ * The League's three divisions (lib/dna/types.ts PopulationRow): Unclaimed (nobody claimed it: its trading DNA trades),
  * Claimed (its holder woke an AI on 0G Compute, paper fills at live prices) and Real wallet (that AI trades the real
  * $CHOG in the Chog's own wallet through AnimrTradeGuard). Every division is ranked by the same genome replay.
  */
 type Division = "wild" | "claimed" | "real";
 const DIVISIONS: { key: Division; label: string; title: string }[] = [
-  { key: "wild", label: "Wild", title: "Nobody claimed it yet: its trait instinct trades" },
+  { key: "wild", label: "Unclaimed", title: "Nobody claimed it yet: it trades on its trading DNA alone" },
   { key: "claimed", label: "Claimed", title: "Its holder woke an AI on 0G Compute (paper fills at live prices)" },
   { key: "real", label: "Real wallet", title: "Its AI trades the real $CHOG in its own wallet through AnimrTradeGuard" },
 ];
@@ -307,17 +307,18 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
     ? Math.max(1, Math.abs(data.rows[0].edgePct), Math.abs(data.rows[data.rows.length - 1].edgePct))
     : 1;
   const divisionEmpty = filters.division !== "" && divisionCounts[filters.division] === 0;
+  // Until a holder claims a Chog, every Chog is unclaimed: the division chips would only show zeros.
+  const showDivisions = divisionCounts.claimed + divisionCounts.real > 0 || filters.division !== "";
 
   return (
     <section aria-labelledby={titleId} className="v2-section">
       <SectionTitle
         id={titleId}
-        kicker="Standings"
         title="Every Chog, ranked"
         description={
           <>
-            {SIM_LABEL}
-            {data && <> · {data.window.label}</>}. {IN_SAMPLE_NOTE}
+            {data && <>{windowDates(data.window)} · </>}hourly CHOG/WMON candles · simulated with the pool&apos;s 1% fee
+            and price impact.
           </>
         }
         action={
@@ -362,26 +363,29 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
-          {/* The three divisions; phones: one row that scrolls sideways. */}
-          <div role="group" aria-label="Division" className="dna-scroll-x -mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-auto sm:px-0">
-            {([{ key: "", label: "All divisions", title: "Every Chog" }, ...DIVISIONS] as const).map((division) => (
-              <button
-                key={division.key || "all"}
-                type="button"
-                title={division.title}
-                aria-pressed={filters.division === division.key}
-                onClick={() => update({ division: division.key })}
-                className="v2-chip h-8 shrink-0 cursor-pointer px-3"
-              >
-                {division.label}
-                {division.key && data && (
-                  <span className="v2-num text-[var(--v2-faint)]">{formatInt(divisionCounts[division.key])}</span>
-                )}
-              </button>
-            ))}
-          </div>
+          {/* The three divisions, once any Chog is claimed (until then every Chog is unclaimed); phones: one row that
+              scrolls sideways. */}
+          {showDivisions && (
+            <div role="group" aria-label="Division" className="dna-scroll-x -mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-auto sm:px-0">
+              {([{ key: "", label: "All divisions", title: "Every Chog" }, ...DIVISIONS] as const).map((division) => (
+                <button
+                  key={division.key || "all"}
+                  type="button"
+                  title={division.title}
+                  aria-pressed={filters.division === division.key}
+                  onClick={() => update({ division: division.key })}
+                  className="v2-chip h-8 shrink-0 cursor-pointer px-3"
+                >
+                  {division.label}
+                  {division.key && data && (
+                    <span className="v2-num text-[var(--v2-faint)]">{formatInt(divisionCounts[division.key])}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
-          <span aria-hidden className="v2-vr hidden h-5 self-center lg:block" />
+          {showDivisions && <span aria-hidden className="v2-vr hidden h-5 self-center lg:block" />}
 
           <div role="group" aria-label="Trading style" className="dna-scroll-x -mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-auto sm:px-0">
             {(["", ...STYLES] as const).map((style) => (
@@ -522,7 +526,7 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
             <div className="v2-table-wrap">
               <table className="v2-table dna-league">
                 <caption className="v2-sr">
-                  Chogs ranked by their genome&apos;s simulated edge versus simply holding $CHOG,{" "}
+                  Chogs ranked by their simulated result versus simply holding $CHOG,{" "}
                   {WINDOW_LABEL[span] === "All" ? "over all history" : `over ${WINDOW_LABEL[span]}`}. Page {current} of {pages}.
                 </caption>
                 <thead>
@@ -544,7 +548,7 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
                     <th scope="col" className="is-num">
                       vs holding
                     </th>
-                    <th scope="col">
+                    <th scope="col" className="w-px">
                       <span className="v2-sr">Time Machine</span>
                     </th>
                   </tr>
@@ -557,12 +561,15 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
                       maxAbs={maxAbs}
                       focused={row.tokenId === filters.focus}
                       mine={mine.has(row.tokenId)}
+                      nameLabel={chogNumberLabel(row.tokenId, index?.metadataIds)}
                     />
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+
+          <p className="v2-note mt-3 px-1">{IN_SAMPLE_NOTE}</p>
 
           {pages > 1 && (
             <nav aria-label="League pages" className="mt-4 flex items-center justify-between gap-3">
@@ -629,11 +636,14 @@ function LeagueRow({
   maxAbs,
   focused = false,
   mine = false,
+  nameLabel,
 }: {
   row: PopulationRow;
   maxAbs: number;
   focused?: boolean;
   mine?: boolean;
+  /** "CHOG #1312": its marketplace name, under its persona name. */
+  nameLabel: string;
 }) {
   return (
     <tr
@@ -659,7 +669,7 @@ function LeagueRow({
             <span className="flex min-w-0 items-center gap-2">
               {/* The name's ::after stretches over the row, so the whole row opens the profile. */}
               <Link href={`/chog/${row.tokenId}`} className="dna-row-link truncate">
-                Chog #{row.tokenId}
+                {row.name}
               </Link>
               {mine && (
                 <Badge tone="teal" className="h-5 px-1.5 text-[10px]">
@@ -681,17 +691,14 @@ function LeagueRow({
                 </span>
               )}
             </span>
-            <span className="mt-0.5 block truncate text-xs font-normal text-[var(--v2-nav)]">
-              {row.archetype}
-              <span className="text-[var(--v2-faint)]"> · {row.name}</span>
+            <span className="mt-0.5 block truncate text-xs font-normal text-[var(--v2-faint)]">
+              {nameLabel} · <span className="text-[var(--v2-nav)]">{row.archetype}</span>
             </span>
           </span>
         </span>
       </td>
 
-      <td className="v2-hide-sm">
-        <StyleChip style={row.style} />
-      </td>
+      <td className="v2-hide-sm v2-muted text-[13.5px] capitalize">{row.style}</td>
 
       <td className="is-num v2-hide-sm text-[var(--v2-nav)]">
         {row.trades}
@@ -710,13 +717,11 @@ function LeagueRow({
       <td className="w-px text-right">
         <Link
           href={`/replay/${row.tokenId}`}
-          aria-label={`Replay Chog #${row.tokenId} in the Time Machine`}
-          className={`${pillClass("glass", "sm")} dna-above h-8 gap-1.5 px-3 max-sm:w-8 max-sm:px-0`}
+          aria-label={`Watch ${row.name} (${nameLabel}) in the Time Machine`}
+          title="Time Machine"
+          className={`${pillClass("glass", "sm")} dna-above size-8 px-0`}
         >
           <PlayIcon className="size-3.5 text-[var(--v2-teal)]" />
-          <span aria-hidden className="max-sm:hidden">
-            Replay
-          </span>
         </Link>
       </td>
     </tr>
@@ -819,7 +824,9 @@ function FieldPanel({ data, span }: { data: PopulationResponse; span: WindowKey 
     <GlassCard feature as="section" aria-label="The field" className="p-5 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div>
-          <p className="v2-kicker">The field · {WINDOW_LABEL[span] === "All" ? "all history" : WINDOW_LABEL[span]}</p>
+          <p className="text-[13.5px] text-[var(--v2-nav)]">
+            {WINDOW_LABEL[span] === "All" ? "All history" : `Last ${WINDOW_LABEL[span]}`}, simulated
+          </p>
           <p className="mt-2 flex items-baseline gap-2.5 text-[var(--v2-nav)]">
             <span className="v2-num text-[length:var(--v2-fs-stat)] leading-none text-[var(--v2-ink)]">{beat}%</span>
             <span className="text-sm">
@@ -884,7 +891,7 @@ function FieldPanel({ data, span }: { data: PopulationResponse; span: WindowKey 
             label: "Top",
             hint: best ? (
               <Link href={`/replay/${best.tokenId}`} className="v2-link font-normal">
-                #{best.tokenId}
+                {best.name}
               </Link>
             ) : undefined,
             value: signedPct(bestEdge),
@@ -895,7 +902,7 @@ function FieldPanel({ data, span }: { data: PopulationResponse; span: WindowKey 
             label: "Most rekt",
             hint: worst ? (
               <Link href={`/replay/${worst.tokenId}`} className="v2-link font-normal">
-                #{worst.tokenId}
+                {worst.name}
               </Link>
             ) : undefined,
             value: signedPct(worstEdge),

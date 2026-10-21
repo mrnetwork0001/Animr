@@ -2,21 +2,10 @@
 
 import { type ReactNode, useCallback, useId } from "react";
 import { useGenome, useStanding } from "@/components/dna/api";
-import { DEFAULT_WINDOW, WINDOW_LABEL } from "@/components/dna/shared";
+import { DEFAULT_WINDOW } from "@/components/dna/shared";
 import type { VersusBoutPreview, VersusFighter } from "@/lib/rewind/types";
 import { Portrait, SIDE_TONE, Skeleton, StyleTag, VsBadge } from "./bits";
-import {
-  DAILY_POINTS_CAP,
-  type FighterLabel,
-  PICK_POINTS,
-  POINTS_LABEL,
-  type Side,
-  VERSUS_SIM_LABEL,
-  formatChog,
-  genomeLine,
-  signedPct,
-  tapeRows,
-} from "./shared";
+import { type FighterLabel, PICK_POINTS, type Side, genomeLine, signedPct, tapeRows } from "./shared";
 
 export type TapeMode =
   /** A bout dealt here (Random bout, Pick two Chogs, a rematch). */
@@ -61,13 +50,9 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
   return (
     <section aria-labelledby={headingId} className="v2-card v2-card--flush vs-stage">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-5 sm:px-8 sm:pt-7">
-        <h2 ref={focusHeading} id={headingId} tabIndex={-1} className="v2-kicker v2-kicker--dot outline-none">
+        <h2 ref={focusHeading} id={headingId} tabIndex={-1} className="v2-kicker outline-none">
           Tale of the tape
         </h2>
-        <p className="flex flex-wrap gap-1.5">
-          <span className="v2-chip">{preview.windowLabel || "48 hours of real $CHOG history"} · dates hidden</span>
-          <span className="v2-chip">Both start with {formatChog(preview.startChog)} $CHOG</span>
-        </p>
       </div>
 
       {/* The two corners, mirrored around the centre hairline. */}
@@ -83,9 +68,8 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
           Who stacks more $CHOG?
         </h3>
         <p className="mx-auto mt-3 max-w-xl text-[length:var(--v2-fs-sm)] leading-relaxed text-pretty text-[var(--v2-nav)]">
-          {mode === "shared" ? "Someone shared this bout with you. " : "Both genomes trade the same hidden 48 hours. "}
-          Call it right for <span className="v2-num text-[var(--v2-kicker)]">+{PICK_POINTS} points</span> (one pick
-          per bout, up to {DAILY_POINTS_CAP} a day). {POINTS_LABEL}.
+          {mode === "shared" ? "Someone shared this bout with you. " : ""}Right call:{" "}
+          <span className="v2-num text-[var(--v2-kicker)]">+{PICK_POINTS} points</span>.
         </p>
 
         <div role="group" aria-labelledby={questionId} className="mx-auto mt-6 grid max-w-2xl grid-cols-2 gap-2 sm:gap-4">
@@ -120,7 +104,7 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
 
       <dl aria-label="Tale of the tape: both genomes, gene by gene" className="vs-tape mx-3 my-5 sm:mx-8 sm:my-7">
         <TapeRow
-          label={`League · ${WINDOW_LABEL[DEFAULT_WINDOW]}`}
+          label="League rank"
           labels={labels}
           a={standingA.data ? <Standing rank={standingA.data.row.rank} edge={standingA.data.row.edgePct} /> : undefined}
           b={standingB.data ? <Standing rank={standingB.data.row.rank} edge={standingB.data.row.edgePct} /> : undefined}
@@ -137,9 +121,6 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
               />
             ))}
       </dl>
-      <p className="v2-note border-t border-[var(--v2-line-soft)] px-4 py-4 text-center sm:px-8">
-        {VERSUS_SIM_LABEL}. Real dates are revealed at the KO.
-      </p>
     </section>
   );
 }
@@ -169,19 +150,11 @@ function Corner({
         large
         alt={`${label.spoken}'s original art`}
       />
-      <p className={`mt-3 text-[10.5px] font-medium tracking-[0.16em] uppercase sm:mt-5 ${SIDE_TONE[side].text}`}>
-        Chog {side.toUpperCase()}
-      </p>
-      <p className="vs-name mt-1 max-w-full break-words">{label.title}</p>
-      {/* "CHOG #1462 · token #1": both names, wrapping between them on narrow screens. */}
-      <p className="mt-1 flex max-w-full flex-wrap justify-center gap-x-1 text-[11px] text-[var(--v2-faint)] sm:text-xs">
-        {label.ids.split(" · ").map((part, i) => (
-          <span key={part} className="whitespace-nowrap">
-            {i > 0 && <span aria-hidden>· </span>}
-            {part}
-          </span>
-        ))}
-      </p>
+      <p className={`vs-name mt-3 max-w-full break-words sm:mt-5 ${SIDE_TONE[side].text}`}>{label.title}</p>
+      {/* Its marketplace name, "CHOG #1462", under its persona name. */}
+      {label.ids !== label.title && (
+        <p className="mt-1 text-[11px] whitespace-nowrap text-[var(--v2-faint)] sm:text-xs">{label.ids}</p>
+      )}
       <p className="mt-3 flex flex-wrap items-center justify-center gap-2">
         <span className="text-[length:var(--v2-fs-sm)] text-balance text-[var(--v2-muted)]">{fighter.archetype}</span>
         <StyleTag style={fighter.style} />
