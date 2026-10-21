@@ -10,10 +10,8 @@ export type HeroLink = { href: string; label: string };
 
 export const heroBrand = {
   name: "Animr",
-  /** The letter on the violet tile. */
-  tile: "A",
-  /** The teal superscript over the wordmark's last letters. */
-  superscript: "AI",
+  /** The Animr lockup (public/brand/animr-header.png, cleaned from the owner's animr-header artwork). */
+  logo: { src: "/brand/animr-header.png", width: 494, height: 132 },
   homeLabel: "Animr home",
   skipLink: "Skip to content",
 } as const;

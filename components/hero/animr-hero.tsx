@@ -101,13 +101,17 @@ export async function AnimrHero({ className = "", children, footer }: AnimrHeroP
         <div className="hx-header-canvas">
           <header className="hx-header">
             <Link href="/" className="hx-brand" aria-label={heroBrand.homeLabel}>
-              <span className="hx-tile" data-hx="head" data-hx-unit="70">
-                {heroBrand.tile}
-              </span>
-              <span className="hx-wordmark" data-hx="head">
-                {heroBrand.name}
-                <span className="hx-ai">{heroBrand.superscript}</span>
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element -- a small static lockup, sized in canvas units */}
+              <img
+                className="hx-logo"
+                data-hx="head"
+                src={heroBrand.logo.src}
+                width={heroBrand.logo.width}
+                height={heroBrand.logo.height}
+                alt={heroBrand.name}
+                decoding="async"
+                fetchPriority="high"
+              />
             </Link>
 
             <nav className="hx-nav" aria-label={heroMenu.label}>

@@ -104,7 +104,7 @@ when you touch them.
 | Area | Classes |
 | --- | --- |
 | Frame | `v2-page`, `v2-main`, `v2-shell` (`--narrow`, `--wide`), `v2-section` (56–88px top rhythm), `v2-stack` (`--lg`), `v2-row`, `v2-grid` (auto-fill 280px), `v2-grid--2`, `--3`, `--4`, `v2-sr`, `v2-skip`, `v2-hide-sm`, `v2-show-sm` |
-| Header and footer | `v2-header`, `v2-header-bar`, `v2-brand`, `v2-brand-tile`, `v2-wordmark`, `v2-wordmark-ai`, `v2-nav`, `v2-nav-list`, `v2-nav-link` (active state from `[aria-current]` or `.is-active`: glass pill and teal tick), `v2-header-actions`, `v2-footer`, `v2-footer-row`, `v2-footer-links`, `v2-footer-link`, `v2-footer-tag`, `v2-footer-note` |
+| Header and footer | `v2-header`, `v2-header-bar`, `v2-brand`, `v2-brand-logo` (the Animr lockup image), `v2-nav`, `v2-nav-list`, `v2-nav-link` (active state from `[aria-current]` or `.is-active`: glass pill and teal tick), `v2-header-actions`, `v2-footer`, `v2-footer-row`, `v2-footer-links`, `v2-footer-link`, `v2-footer-tag`, `v2-footer-note` |
 | Type | `v2-kicker` (`--dot`, live states only), `v2-overline` (13.5px sentence-case label in faint grey), `v2-th` (11px tracked caps: table column headers only, for header cells outside a `v2-table`), `v2-h1` (`--fade`, or a `.v2-ink-fade` child), `v2-h2`, `v2-h3`, `v2-lead`, `v2-body`, `v2-muted`, `v2-faint`, `v2-note`, `v2-num` (DM Sans tabular), `v2-mono`, `v2-up`, `v2-down`, `v2-link` |
 | Headers | `v2-page-header` (`--split`), `-copy`, `-actions`, `-aside`; `v2-section-title`, `-copy` |
 | Glass | `v2-glass`, `v2-glass--strong` (menus, popovers, sticky bars) |

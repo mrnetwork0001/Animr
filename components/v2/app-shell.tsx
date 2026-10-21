@@ -47,17 +47,12 @@ export function AppShell({ children, wallet, footerNote, footerExtra, activeHref
   );
 }
 
-/** The hero's brand: violet "A" tile and the grey wordmark with its teal "AI". Links home. */
+/** The Animr lockup (public/brand/animr-header.png): mark, wordmark and tagline. Links home. */
 export function V2Brand() {
   return (
     <Link href="/" className="v2-brand" aria-label="Animr home">
-      <span className="v2-brand-tile" aria-hidden="true">
-        A
-      </span>
-      <span className="v2-wordmark" aria-hidden="true">
-        Animr
-        <span className="v2-wordmark-ai">AI</span>
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- a small static lockup; next/image adds nothing here */}
+      <img className="v2-brand-logo" src="/brand/animr-header.png" width={494} height={132} alt="Animr" decoding="async" />
     </Link>
   );
 }

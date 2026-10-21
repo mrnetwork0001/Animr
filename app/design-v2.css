@@ -323,46 +323,10 @@
     text-decoration: none;
   }
 
-  .v2-brand-tile {
-    display: inline-grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    flex: none;
-    border-radius: 11px;
-    background: var(--v2-grad-tile);
-    box-shadow:
-      0 0 22px rgb(111 90 220 / 0.45),
-      0 6px 18px -6px rgb(77 25 177 / 0.75),
-      inset 0 1px 0 rgb(255 255 255 / 0.28),
-      inset 0 0 0 1px rgb(255 255 255 / 0.08);
-    color: var(--v2-ink);
-    font-family: var(--v2-font-text);
-    font-size: 21px;
-    font-weight: 760;
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-
-  .v2-wordmark {
-    position: relative;
-    display: inline-block;
-    color: var(--v2-wordmark);
-    font-size: 22px;
-    font-weight: 560;
-    line-height: 1;
-    letter-spacing: -0.02em;
-  }
-  .v2-wordmark-ai {
-    position: absolute;
-    right: -0.1em;
-    bottom: 18px;
-    color: var(--v2-teal);
-    font-size: 8.5px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: 0.06em;
-    text-shadow: 0 0 6px rgb(159 240 236 / 0.45);
+  .v2-brand-logo {
+    display: block;
+    width: auto;
+    height: 42px;
   }
 
   .v2-nav {
@@ -480,17 +444,8 @@
       padding-inline: 8px;
       font-size: 13.5px;
     }
-    .v2-brand-tile {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      font-size: 19px;
-    }
-    .v2-wordmark {
-      font-size: 20px;
-    }
-    .v2-wordmark-ai {
-      bottom: 16px;
+    .v2-brand-logo {
+      height: 36px;
     }
   }
 

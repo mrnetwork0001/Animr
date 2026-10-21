@@ -31,7 +31,6 @@
   --hx-ink: #ffffff;
   --hx-nav: #b9b8bb;
   --hx-muted: #d3d3d7;
-  --hx-wordmark: #bdbdc1;
   --hx-ai: #9ff0ec;
   --hx-kicker: #bdf7ee;
   --hx-logo: #ffffff;
@@ -208,47 +207,13 @@ body:has(.hx-page) {
   text-decoration: none;
 }
 
-.hx-tile {
-  display: inline-grid;
-  place-items: center;
-  width: calc(70 * var(--k));
-  height: calc(69 * var(--k));
-  flex: none;
-  border-radius: calc(19 * var(--k));
-  background: linear-gradient(140deg, var(--hx-violet-a) 0%, var(--hx-violet-b) 100%);
-  box-shadow:
-    0 0 calc(38 * var(--k)) rgb(111 90 220 / 0.5),
-    0 calc(10 * var(--k)) calc(30 * var(--k)) calc(-10 * var(--k)) rgb(77 25 177 / 0.75),
-    inset 0 1px 0 rgb(255 255 255 / 0.28),
-    inset 0 0 0 1px rgb(255 255 255 / 0.08);
-  color: var(--hx-ink);
-  font-size: calc(39 * var(--k));
-  font-weight: 760;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-.hx-wordmark {
-  position: relative;
-  display: inline-block;
-  color: var(--hx-wordmark);
-  font-size: calc(41 * var(--k));
-  font-weight: 560;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-/* "AI" tucked above the wordmark's last letters, where the lowercase leaves room. */
-.hx-ai {
-  position: absolute;
-  right: -0.1em;
-  bottom: calc(33 * var(--k));
-  color: var(--hx-ai);
-  font-size: calc(15 * var(--k));
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.06em;
-  text-shadow: 0 0 calc(10 * var(--k)) rgb(159 240 236 / 0.45);
+/* The Animr lockup (mark, wordmark, tagline): height in canvas units, width follows the artwork. */
+.hx-logo {
+  display: block;
+  width: auto;
+  height: calc(84 * var(--k));
+  max-height: 52px;
+  min-height: 36px;
 }
 
 .hx-nav,
