@@ -10,7 +10,7 @@ import { shortAddress } from "@/lib/format";
 import { walletErrorMessage } from "@/lib/wagmi";
 import { Spinner } from "./onchain/ui";
 import { SparkIcon } from "./v2/icons";
-import { IconTile, pillClass } from "./v2/primitives";
+import { pillClass } from "./v2/primitives";
 
 type ActivateAgentProps = {
   tokenId: string;
@@ -76,7 +76,7 @@ export function ActivateAgent({
       : "Waking the agent…"
     : reactivate
       ? "Sign & reactivate"
-      : "Sign & activate";
+      : "Sign & claim";
 
   const copy = (
     <>
@@ -130,19 +130,11 @@ export function ActivateAgent({
 
   return (
     <section id="wake" aria-labelledby="wake-title" className="v2-card v2-card--feature scroll-mt-28">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-        <IconTile size="lg">
-          <SparkIcon />
-        </IconTile>
-        <div className="min-w-0 flex-1">
-          <p className="v2-kicker">Free · one signature</p>
-          <h2 id="wake-title" className="v2-h3 mt-2">
-            {reactivate ? `Wake Chog #${tokenId}'s AI back up` : `Wake Chog #${tokenId}'s AI`}
-          </h2>
-          <p className="mt-2 max-w-[68ch] text-[15px] leading-relaxed text-[var(--v2-nav)]">{copy}</p>
-          {action}
-        </div>
-      </div>
+      <h2 id="wake-title" className="v2-h3">
+        {reactivate ? "Wake its AI back up" : "Claim its AI"}
+      </h2>
+      <p className="mt-2 max-w-[68ch] text-[15px] leading-relaxed text-[var(--v2-nav)]">{copy}</p>
+      {action}
     </section>
   );
 }

@@ -3,9 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { PulseIcon } from "@/components/v2/icons";
-import { Badge, type BadgeTone, EmptyState, PillLink, StatRow, pillClass } from "@/components/v2/primitives";
-import type { AgentRecord, TradingStyle } from "@/lib/agent/types";
+import { Badge, EmptyState, PillLink, StatRow, pillClass } from "@/components/v2/primitives";
+import type { AgentRecord } from "@/lib/agent/types";
 import { formatAmount, formatPct, formatUsd } from "@/lib/format";
 import { useConnection } from "wagmi";
 import { useIsClient } from "./connect-button";
@@ -14,9 +13,7 @@ import { fetchLeaderboard, leaderboardKey } from "./leaderboard-api";
 import { Callout } from "./onchain/ui";
 import { PnlBadge } from "./pnl-badge";
 
-const STYLE_TONE: Record<TradingStyle, BadgeTone> = { aggressive: "warning", balanced: "violet", cautious: "teal" };
-
-/** Best edge first; the API already sorts, this keeps the ranking honest if it ever doesn't. */
+/** Best result vs holding first; the API already sorts, this keeps the ranking honest if it ever doesn't. */
 function rankAgents(agents: AgentRecord[]): AgentRecord[] {
   const score = (a: AgentRecord) => (Number.isFinite(a.pnlPct) ? a.pnlPct : -Infinity);
   return [...agents].sort((a, b) => score(b) - score(a) || 0);
@@ -34,8 +31,8 @@ function useLeaderboard() {
 }
 
 /**
- * The header's numbers, from the same query (one cache entry): agents awake, the $CHOG-equivalent they manage and the
- * best edge over holding (the real-wallet count sits on the board's filter).
+ * The header's numbers, from the same query (one cache entry): AIs awake, the $CHOG value they manage and the best
+ * result vs holding (the real-wallet count sits on the board's filter). Nothing until there is a claimed AI.
  */
 export function LeaderboardStats() {
   const { data } = useLeaderboard();
@@ -46,18 +43,18 @@ export function LeaderboardStats() {
     (top, a) => (Number.isFinite(a.pnlPct) && (top === null || a.pnlPct > top) ? a.pnlPct : top),
     null,
   );
-  const pending = !data;
+  if (agents.length === 0) return null;
   return (
     <StatRow
       boxed
       size="sm"
       stats={[
-        { key: "awake", label: "Agents awake", value: pending ? "…" : `${awake}`, hint: pending ? undefined : `of ${agents.length}` },
-        { key: "managed", label: "Managed", hint: "$CHOG-eq", value: pending ? "…" : formatAmount(managed, 0) },
+        { key: "awake", label: "AIs awake", value: `${awake}`, hint: `of ${agents.length}` },
+        { key: "managed", label: "Managed", hint: "$CHOG value", value: formatAmount(managed, 0) },
         {
           key: "best",
-          label: "Best edge",
-          value: pending || best === null ? "—" : formatPct(best),
+          label: "Best vs holding",
+          value: best === null ? "—" : formatPct(best),
           tone: best !== null && best >= 0.005 ? "up" : best !== null && best <= -0.005 ? "down" : undefined,
         },
       ]}
@@ -65,8 +62,11 @@ export function LeaderboardStats() {
   );
 }
 
-/** Chogs ranked by their AI's PnL, refreshed every 15s. */
-export function LeaderboardTable() {
+/**
+ * Chogs ranked by their AI's result vs holding, refreshed every 15s. `nameNumbers[id - 1]` is token id's marketplace
+ * number ("CHOG #1462" is token 1), for each row's second line.
+ */
+export function LeaderboardTable({ nameNumbers }: { nameNumbers?: readonly number[] }) {
   const { data, error, isFetching, refetch } = useLeaderboard();
   const [filter, setFilter] = useState<Filter>("all");
   const isClient = useIsClient();
@@ -77,7 +77,7 @@ export function LeaderboardTable() {
   if (!data) {
     if (!error) return <LeaderboardSkeleton />;
     return (
-      <Callout tone="danger" title="Couldn't load the leaderboard">
+      <Callout tone="danger" title="Couldn't load the claimed AIs">
         <span className="v2-mono text-xs break-words">{error.message}</span>
         <span className="mt-3 block">
           <button type="button" onClick={() => refetch()} disabled={isFetching} className={pillClass("glass", "sm")}>
@@ -91,17 +91,10 @@ export function LeaderboardTable() {
   if (data.agents.length === 0) {
     return (
       <EmptyState
-        icon={<PulseIcon />}
-        title="No live agents yet, but every Chog is already trading"
-        body="All 1,969 Chogs trade their trait DNA in the League, simulated on real $CHOG candles. Hold one? Claim it from the dashboard to give it an AI on 0G Compute, and it shows up here right away."
-        actions={
-          <>
-            <PillLink href="/league">Browse the League</PillLink>
-            <PillLink href="/app" variant="glass">
-              Claim yours
-            </PillLink>
-          </>
-        }
+        title="No claimed AIs yet"
+        body="Every Chog already trades its DNA in the League. Hold one? Claim its AI from its profile and it shows up here."
+        // The header already links to the League; the one way on from here is finding your own Chog.
+        actions={<PillLink href="/app">Find your Chog</PillLink>}
       />
     );
   }
@@ -120,11 +113,12 @@ export function LeaderboardTable() {
   return (
     <section aria-labelledby="board-title">
       <h2 id="board-title" className="v2-sr">
-        Live agents, ranked by edge over holding $CHOG
+        Claimed AIs, ranked vs holding $CHOG
       </h2>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="v2-tabs" role="group" aria-label="Filter by trading mode">
-          {FILTERS.map((f) => (
+          {/* "All" always; a mode only once some AI uses it. */}
+          {FILTERS.filter((f) => f.id === "all" || counts[f.id] > 0).map((f) => (
             <button key={f.id} type="button" className="v2-tab" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
               {f.label}
               <span className="v2-tab-count">{counts[f.id]}</span>
@@ -132,13 +126,9 @@ export function LeaderboardTable() {
           ))}
         </div>
         <p className="flex items-center gap-2 text-xs text-[var(--v2-faint)]" aria-live="polite">
-          {error ? (
+          {error && (
             <Badge tone="warning" dot>
               Refresh failed
-            </Badge>
-          ) : (
-            <Badge tone="teal" live>
-              Live
             </Badge>
           )}
           <span>
@@ -150,7 +140,6 @@ export function LeaderboardTable() {
 
       {rows.length === 0 ? (
         <EmptyState
-          icon={<PulseIcon />}
           title={filter === "onchain" ? "No agent trades real $CHOG yet" : "No paper agents right now"}
           body={
             filter === "onchain"
@@ -167,7 +156,7 @@ export function LeaderboardTable() {
         <div className="v2-table-wrap">
           <table className="v2-table">
             <caption className="v2-sr">
-              Claimed Chogs ranked by their AI&apos;s edge over simply holding $CHOG. Refreshes every 15 seconds.
+              Claimed Chogs ranked by their AI&apos;s result vs simply holding $CHOG. Refreshes every 15 seconds.
             </caption>
             <thead>
               <tr>
@@ -180,7 +169,7 @@ export function LeaderboardTable() {
                   Value
                 </th>
                 <th scope="col" className="is-num">
-                  Edge vs hold
+                  vs holding
                 </th>
                 <th scope="col" className="is-num v2-hide-sm">
                   Decisions
@@ -192,15 +181,21 @@ export function LeaderboardTable() {
             </thead>
             <tbody>
               {rows.map(({ agent, rank }) => (
-                <LeaderboardRow key={agent.tokenId} agent={agent} rank={rank} mine={viewer !== undefined && agent.owner.toLowerCase() === viewer} />
+                <LeaderboardRow
+                  key={agent.tokenId}
+                  agent={agent}
+                  rank={rank}
+                  nameNumber={nameNumbers?.[Number(agent.tokenId) - 1] || 0}
+                  mine={viewer !== undefined && agent.owner.toLowerCase() === viewer}
+                />
               ))}
             </tbody>
           </table>
         </div>
       )}
       <p className="v2-note mt-3">
-        Edge = the AI&apos;s portfolio value against simply holding the $CHOG it started with. Paper agents fill at live
-        prices without moving tokens; real-wallet agents trade through AnimrTradeGuard, which can never withdraw.
+        vs holding: the AI&apos;s portfolio value against simply holding the $CHOG it started with. Paper fills move no
+        tokens.
       </p>
     </section>
   );
@@ -230,8 +225,21 @@ function ModeBadge({ agent }: { agent: AgentRecord }) {
   );
 }
 
-/** `mine`: the connected wallet activated this agent (its holder then), highlighted like the League's "yours". */
-function LeaderboardRow({ agent, rank, mine }: { agent: AgentRecord; rank: number; mine: boolean }) {
+/**
+ * `mine`: the connected wallet activated this agent (its holder then), highlighted like the League's "yours".
+ * `nameNumber`: its marketplace number ("CHOG #1462"), 0 when unknown.
+ */
+function LeaderboardRow({
+  agent,
+  rank,
+  nameNumber,
+  mine,
+}: {
+  agent: AgentRecord;
+  rank: number;
+  nameNumber: number;
+  mine: boolean;
+}) {
   return (
     <tr className={mine ? "is-highlight" : undefined}>
       <td className={`is-rank ${rank <= 3 ? "text-[var(--v2-ink)]" : ""}`}>
@@ -243,14 +251,12 @@ function LeaderboardRow({ agent, rank, mine }: { agent: AgentRecord; rank: numbe
           <ChogAvatar src={agent.image} tokenId={agent.tokenId} />
           <span className="min-w-0">
             <span className="block truncate group-hover:text-[var(--v2-kicker)]">
-              Chog #{agent.tokenId}
+              {agent.persona.name}
               {mine && <span className="ml-2 text-xs font-normal text-[var(--v2-teal)]">yours</span>}
             </span>
             <span className="mt-0.5 flex min-w-0 items-center gap-2 text-xs font-normal text-[var(--v2-nav)]">
-              <span className="truncate">{agent.persona.name}</span>
-              <Badge tone={STYLE_TONE[agent.persona.style] ?? "neutral"} className="h-5 px-1.5 text-[10px] max-sm:hidden">
-                {agent.persona.style}
-              </Badge>
+              {nameNumber > 0 && <span className="v2-num whitespace-nowrap">CHOG #{nameNumber}</span>}
+              <span className="v2-muted truncate capitalize max-sm:hidden">{agent.persona.style}</span>
             </span>
             <span className="v2-show-sm mt-1.5">
               <ModeBadge agent={agent} />
@@ -264,7 +270,7 @@ function LeaderboardRow({ agent, rank, mine }: { agent: AgentRecord; rank: numbe
       <td className="is-num v2-hide-sm">
         <span className="block">{formatAmount(agent.lastValueChog, 2)}</span>
         <span className="block font-[var(--v2-font-text)] text-[11px] text-[var(--v2-faint)]">
-          $CHOG-eq · {formatUsd(agent.lastValueUsd)}
+          $CHOG value, {formatUsd(agent.lastValueUsd)}
         </span>
       </td>
       <td className="is-num">
@@ -305,7 +311,7 @@ function ChogAvatar({ src, tokenId }: { src?: string; tokenId: string }) {
 export function LeaderboardSkeleton() {
   return (
     <div role="status">
-      <span className="v2-sr">Loading leaderboard…</span>
+      <span className="v2-sr">Loading the claimed AIs…</span>
       <div aria-hidden className="mb-4 flex items-center justify-between gap-3">
         <span className="v2-skeleton h-11 w-64 rounded-full" />
         <span className="v2-skeleton v2-skeleton--text w-32" />

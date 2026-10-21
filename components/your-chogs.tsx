@@ -8,14 +8,14 @@ import { useConnection } from "wagmi";
 import { shortAddress, timeAgo } from "@/lib/format";
 import type { HolderChog, HoldingsResponse } from "@/lib/holdings";
 import { ConnectButton, useIsClient } from "./connect-button";
-import { ArrowRightIcon, LeagueIcon, WalletIcon } from "@/components/v2/icons";
-import { Badge, Chip, EmptyState, SectionTitle, Skeleton, StatRow, Toast, type V2Stat, pillClass } from "@/components/v2/primitives";
+import { ArrowRightIcon } from "@/components/v2/icons";
+import { Badge, EmptyState, SectionTitle, Skeleton, StatRow, Toast, type V2Stat, pillClass } from "@/components/v2/primitives";
 import { ChogThumb } from "./dna/chog-thumb";
 import { randomChogId } from "./dna/shared";
 import { useHiddenChogs } from "./hidden-chogs";
 
 // "Your Chogs": a connected holder sees every Chog Genesis they hold, best League rank first, each with its art, both
-// numbers, its genome, its League place, its call on the latest Daily Bell and its AI, one tap from Rewind, Versus,
+// numbers, its DNA, its League place, its call on the latest Daily Bell and its AI, one tap from the Time Machine, Versus,
 // its profile and waking its AI. Data: GET /api/holders/[address] (lib/holdings.ts), shared by YourChogs and the
 // header's YourChogsLink through one react-query key.
 
@@ -113,10 +113,10 @@ const bellDay = (day: string) => {
   return Number.isFinite(ms) ? DAY_FMT.format(ms) : day;
 };
 
-/** "CHOG #1462" from "CHOG #1462 · token 1" (a 1:1 keeps its title); "Chog #7" when it has no name. */
-function titleOf(chog: HolderChog): string {
+/** Its marketplace name, "CHOG #1462", from "CHOG #1462 · token 1" (a 1:1 keeps its title); "" when it has none. */
+function marketNameOf(chog: HolderChog): string {
   const cut = chog.label.lastIndexOf(" · token ");
-  return cut > 0 ? chog.label.slice(0, cut) : `Chog #${chog.tokenId}`;
+  return cut > 0 ? chog.label.slice(0, cut) : chog.nameNumber ? `CHOG #${chog.nameNumber}` : "";
 }
 
 /**
@@ -186,7 +186,7 @@ export function YourChogs({
 }
 
 /**
- * For the header: "Your Chogs 3", linking to the dashboard's list, once the connected wallet holds at least one Chog.
+ * For the header: "Your Chogs 3", linking to the list on /app, once the connected wallet holds at least one Chog.
  * Renders nothing otherwise. Shares YourChogs' request.
  */
 export function YourChogsLink({ className = "" }: { className?: string }) {
@@ -204,23 +204,17 @@ export function YourChogsLink({ className = "" }: { className?: string }) {
   );
 }
 
-/** "Your Chogs · 0x12…ab": every state's kicker. */
-function Kicker({ address }: { address?: string }) {
-  return (
-    <>
-      Your Chogs
-      {address && <span className="font-normal text-[var(--v2-faint)]">· {shortAddress(address)}</span>}
-    </>
-  );
+/** "Held by 0x12…ab": the connected states' kicker. */
+function Kicker({ address }: { address: string }) {
+  return <>Held by {shortAddress(address)}</>;
 }
 
 function ConnectPrompt({ className }: { className: string }) {
   const headingId = useId();
   return (
     <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${className}`}>
-      <SectionTitle id={headingId} kicker={<Kicker />} title="Hold a Chog? Watch it trade." />
+      <SectionTitle id={headingId} title="Hold a Chog? Watch it trade." />
       <EmptyState
-        icon={<WalletIcon />}
         title="Connect to see your Chogs"
         body="Every Chog Genesis you hold shows up here, ranked: its League place, its Daily Bell call and its AI."
         actions={<ConnectButton />}
@@ -278,18 +272,17 @@ export function YourChogsPanel({
         title={headline(chogs.length, asleep)}
         description={
           <>
-            {plural ? "Their traits are their strategy" : "Its traits are its strategy"}, and the $CHOG market keeps
-            score: in the{" "}
+            {plural ? "Their traits are their strategy" : "Its traits are its strategy"}, and the{" "}
             <Link href="/league" className="v2-link">
               League
             </Link>{" "}
-            {plural ? "each genome trades" : "its genome trades"} the real chart hour by hour.
+            scores {plural ? "each one" : "it"} on the real $CHOG chart.
             {asleep > 0 &&
               (plural
                 ? asleep === chogs.length
-                  ? " Wake one's AI and it starts trading for that Chog on 0G Compute, at live prices."
-                  : ` ${asleep} of them still ${asleep === 1 ? "has its AI" : "have their AIs"} asleep.`
-                : " Wake its AI and it starts trading for it on 0G Compute, at live prices.")}
+                  ? " Claim one's AI and it trades for that Chog on 0G Compute."
+                  : ` ${asleep} of them still ${asleep === 1 ? "has its AI" : "have their AIs"} unclaimed.`
+                : " Claim its AI and it trades for it on 0G Compute.")}
           </>
         }
         action={
@@ -353,7 +346,7 @@ function Highlights({ holdings, best }: { holdings: HoldingsResponse; best?: Hol
     stats.push({
       key: "best",
       label: ranked.length > 1 ? "Best in the League" : "League rank",
-      hint: ranked.length > 1 ? `of ${fmtInt(league.total)} · ${titleOf(best)}` : `of ${fmtInt(league.total)} Chogs`,
+      hint: ranked.length > 1 ? `of ${fmtInt(league.total)}: ${best.name}` : `of ${fmtInt(league.total)} Chogs`,
       value: `#${fmtInt(best.league.rank)}`,
     });
   }
@@ -368,7 +361,7 @@ function Highlights({ holdings, best }: { holdings: HoldingsResponse; best?: Hol
           }
         : {
             key: "edge",
-            label: ranked.length > 1 ? "Best edge vs holding" : "Edge vs holding $CHOG",
+            label: ranked.length > 1 ? "Best vs holding" : "vs holding $CHOG",
             hint: "League window, simulated",
             value: bestEdge === null ? "—" : signedPct(bestEdge),
             tone: bestEdge === null ? undefined : toneOf(bestEdge),
@@ -378,14 +371,14 @@ function Highlights({ holdings, best }: { holdings: HoldingsResponse; best?: Hol
   stats.push({
     key: "awake",
     label: single ? "Its AI" : "AIs awake",
-    hint: awake > 0 ? "trading on 0G Compute" : single ? "wake it below" : "wake one below",
-    value: single ? (awake ? "Awake" : "Asleep") : `${awake} of ${fmtInt(chogs.length)}`,
+    hint: awake > 0 ? "trading on 0G Compute" : single ? "claim it below" : "claim one below",
+    value: single ? (awake ? "Awake" : "Unclaimed") : `${awake} of ${fmtInt(chogs.length)}`,
   });
   if (bell && calls.length > 0) {
     stats.push({
       key: "bell",
       label: `${bell.kind === "replay" ? "Replayed Bell" : "Bell"} of ${bellDay(bell.day)}`,
-      hint: bell.status === "settled" && settled.length ? `${fmtInt(points)} pts, points only` : "settled by the market in 24h",
+      hint: bell.status === "settled" && settled.length ? `${fmtInt(points)} points` : "settled by the market in 24h",
       value:
         calls.length === 1 ? (
           <Forecast pct={calls[0].forecastPct} />
@@ -457,7 +450,7 @@ function StatusBadge({ agent }: { agent: HolderChog["agent"] }) {
       </Badge>
     );
   }
-  return <Badge>{agent ? "Paused" : "Asleep"}</Badge>;
+  return <Badge>{agent ? "Paused" : "Unclaimed"}</Badge>;
 }
 
 function ChogCard({
@@ -472,7 +465,7 @@ function ChogCard({
   best: boolean;
 }) {
   const { tokenId } = chog;
-  const title = titleOf(chog);
+  const marketName = marketNameOf(chog);
   const profile = `/chog/${tokenId}`;
   const awake = Boolean(chog.agent?.active);
   const rank = chog.league?.rank;
@@ -493,20 +486,22 @@ function ChogCard({
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            {/* Both numbers, always: read as "CHOG #1462 · token 1". */}
+            {/* Its persona name first, then the name marketplaces show: "Silver Whiskers", "CHOG #1312". */}
             <h3 className="m-0 min-w-0 text-[length:var(--v2-fs-h3)] leading-snug font-medium tracking-[-0.012em]">
               <Link href={profile} className="text-[var(--v2-ink)] transition-colors hover:text-[var(--v2-kicker)]">
-                <span className="block truncate">{title}</span>
-                <span className="v2-mono block text-xs font-normal text-[var(--v2-faint)]">
-                  <span className="v2-sr">· </span>token {tokenId}
-                </span>
+                <span className="block truncate">{chog.name}</span>
+                {marketName && (
+                  <span className="v2-num block text-xs font-normal text-[var(--v2-faint)]">
+                    <span className="v2-sr">, </span>
+                    {marketName}
+                  </span>
+                )}
               </Link>
             </h3>
             <StatusBadge agent={chog.agent} />
           </div>
           <div className="mt-2.5 flex flex-wrap gap-1.5">
             {best && <Badge tone="violet">Your best trader</Badge>}
-            {chog.style && <Chip className="capitalize">{chog.style}</Chip>}
             {topPct !== null && topPct <= 25 && <Badge tone="success">Top {topPct}%</Badge>}
             {chog.house && (
               <Link href="/heist" className="v2-badge v2-badge--warning">
@@ -517,10 +512,13 @@ function ChogCard({
           </div>
         </div>
       </div>
-      <p className="m-0 mt-4 text-[length:var(--v2-fs-sm)] leading-snug text-pretty">
-        <span className="font-medium text-[var(--v2-ink)]">{chog.name}</span>
-        {chog.archetype && <span className="text-[var(--v2-nav)]"> · {chog.archetype}</span>}
-      </p>
+      {(chog.archetype || chog.style) && (
+        <p className="m-0 mt-4 text-[length:var(--v2-fs-sm)] leading-snug text-pretty text-[var(--v2-nav)]">
+          {chog.archetype}
+          {chog.archetype && chog.style && <span aria-hidden> · </span>}
+          {chog.style && <span className="v2-muted capitalize">{chog.style}</span>}
+        </p>
+      )}
 
       {chog.hidden ? (
         <p className="v2-note mt-3 text-pretty">
@@ -550,7 +548,7 @@ function ChogCard({
                     <span className="text-xs text-[var(--v2-nav)]">{Math.round(chog.bell.conviction * 100)}% sure</span>
                     {typeof chog.bell.points === "number" && (
                       <span className="v2-num text-xs text-[var(--v2-ink)]">
-                        {fmtInt(chog.bell.points)} pts{chog.bell.hit ? " ✓" : ""}
+                        {fmtInt(chog.bell.points)} points{chog.bell.hit ? " ✓" : ""}
                       </span>
                     )}
                     <span className="text-[11px] text-[var(--v2-faint)]">
@@ -575,7 +573,7 @@ function ChogCard({
             <>
               <span className="text-xs text-[var(--v2-ink)]">Awake · {MODE_LABEL[chog.agent.mode]}</span>
               <span
-                title="AI edge vs. simply holding $CHOG"
+                title="Its AI vs simply holding $CHOG"
                 className={`v2-num text-sm ${toneOf(chog.agent.pnlPct) === "up" ? "v2-up" : toneOf(chog.agent.pnlPct) === "down" ? "v2-down" : "text-[var(--v2-nav)]"}`}
               >
                 {signedPct(chog.agent.pnlPct)}
@@ -583,7 +581,7 @@ function ChogCard({
               </span>
             </>
           ) : (
-            <span className="text-xs text-[var(--v2-nav)]">{chog.agent ? "Paused" : "Asleep"}</span>
+            <span className="text-xs text-[var(--v2-nav)]">{chog.agent ? "Paused" : "Unclaimed"}</span>
           )}
         </dd>
       </dl>
@@ -595,7 +593,7 @@ function ChogCard({
             className={`${pillClass("glass", "sm", true)} border-[var(--v2-line-teal)] text-[var(--v2-kicker)] hover:text-[var(--v2-ink)]`}
             title="Opens its page: sign one free message there and an AI on 0G Compute starts trading for it"
           >
-            {chog.agent ? "Wake its AI back up" : "Wake its AI"}
+            {chog.agent ? "Wake its AI back up" : "Claim its AI"}
             <ArrowRightIcon className="v2-btn-icon size-4" />
           </Link>
         )}
@@ -610,16 +608,16 @@ function ChogCard({
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-2">
-            <Link href={`/replay/${tokenId}`} className={SMALL_BTN} aria-label={`Rewind ${chog.label}: its Time Machine`}>
+            <Link href={`/replay/${tokenId}`} className={SMALL_BTN} aria-label={`${chog.name}: its Time Machine`}>
               <span aria-hidden className="text-[10px]">
                 ▶
               </span>{" "}
-              Rewind
+              Replay
             </Link>
-            <Link href={`/versus?a=${tokenId}`} className={SMALL_BTN} aria-label={`Versus: ${chog.label} against a random rival`}>
+            <Link href={`/versus?a=${tokenId}`} className={SMALL_BTN} aria-label={`Versus: ${chog.name} against a random rival`}>
               Versus
             </Link>
-            <Link href={profile} className={SMALL_BTN} aria-label={`${chog.label}: its profile`}>
+            <Link href={profile} className={SMALL_BTN} aria-label={`${chog.name}: its profile`}>
               Profile
             </Link>
           </div>
@@ -635,12 +633,7 @@ function Footnote({ holdings }: { holdings: HoldingsResponse }) {
   const read = now === null ? null : timeAgo(ownership.at, now);
   return (
     <p className="v2-note mt-6 max-w-[90ch] text-pretty">
-      {league && (
-        <>
-          League place and edge: {league.window.label}, {league.label} (1% fee + impact), not real trades.{" "}
-        </>
-      )}
-      Bell calls score points only.{" "}
+      {league && <>League place: {league.window.label}, simulated. </>}
       {ownership.stale ? (
         <span className="text-[var(--v2-warning)]">
           Monad&apos;s RPC isn&apos;t answering right now: this list was read from the chain {read ?? "earlier"}.
@@ -660,7 +653,6 @@ function EmptyPanel({ address, className }: { address: string; className: string
     <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${className}`}>
       <SectionTitle id={headingId} kicker={<Kicker address={address} />} title="No Chog Genesis in this wallet yet" />
       <EmptyState
-        icon={<LeagueIcon />}
         title="All 1,969 are ranked in the League"
         body="Their traits are their strategy, and the $CHOG market keeps score. Meet a few, race two of them, or ride one at today's Bell. No Chog needed."
         actions={
@@ -674,16 +666,13 @@ function EmptyPanel({ address, className }: { address: string; className: string
               <span aria-hidden className="text-xs">
                 ▶
               </span>
-              Rewind a random Chog
+              Watch a random Chog trade
             </button>
             <Link href="/league" className={pillClass("glass")}>
-              Meet the League
+              Browse the League
             </Link>
-            <Link href="/versus" className={pillClass("glass")}>
+            <Link href="/versus" className={pillClass("ghost")}>
               Race two in Versus
-            </Link>
-            <Link href="/bell" className={pillClass("ghost")}>
-              Ride the Daily Bell
             </Link>
           </>
         }

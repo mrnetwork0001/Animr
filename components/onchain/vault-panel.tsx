@@ -92,12 +92,9 @@ export function VaultPanel({ tba, tokenId, className = "" }: VaultPanelProps) {
   return (
     <section aria-labelledby="vault-title" className={`v2-card ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="v2-kicker">Vault · real $CHOG</p>
-          <h2 id="vault-title" className="v2-h3 mt-1.5">
-            On-chain balances
-          </h2>
-        </div>
+        <h2 id="vault-title" className="v2-h3">
+          Vault balances
+        </h2>
         {explorer && (
           <a href={explorer} target="_blank" rel="noopener noreferrer" className="v2-btn-glass v2-btn--sm h-8 px-3 text-xs">
             Explorer
@@ -144,7 +141,7 @@ export function VaultPanel({ tba, tokenId, className = "" }: VaultPanelProps) {
 
           {trades.length > 0 && (
             <div className="mt-4 border-t border-[var(--v2-line-soft)] pt-4">
-              <h3 className="v2-overline">Recent on-chain trades</h3>
+              <h3 className="text-[13px] font-medium text-[var(--v2-nav)]">Recent on-chain trades</h3>
               <ul className="mt-2.5 space-y-2">
                 {trades.map((d) => {
                   const trade = d.trade!;
@@ -180,10 +177,7 @@ export function VaultPanel({ tba, tokenId, className = "" }: VaultPanelProps) {
         </>
       )}
 
-      <p className="v2-note mt-4">
-        Read on-chain every 20s. Through AnimrTradeGuard the AI can only swap CHOG ⇄ WMON inside this wallet; it can
-        never withdraw.
-      </p>
+      <p className="v2-note mt-4">Read on-chain every 20s.</p>
     </section>
   );
 }

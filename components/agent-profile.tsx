@@ -34,7 +34,7 @@ import { ActivateAgent } from "./activate-agent";
 import { ChogDailyCall } from "./bell/chog-daily-call";
 import { BuyPortfolioButton } from "./buy-portfolio-button";
 import { ConfigNotice } from "./config-notice";
-import { ConnectButton, useIsClient } from "./connect-button";
+import { useIsClient } from "./connect-button";
 import { DecisionFeed, TimeAgo, useNow } from "./decision-feed";
 import { BrainVsInstinct, TimeMachineTeaser, WildChogCard } from "./dna/chog-instinct";
 import { GenomeCard } from "./dna/genome-card";
@@ -46,17 +46,8 @@ import { Callout, Spinner } from "./onchain/ui";
 import { VaultPanel } from "./onchain/vault-panel";
 import { PnlBadge } from "./pnl-badge";
 import { Sparkline } from "./sparkline";
-import { ExternalIcon, RewindIcon, SparkIcon, WalletIcon } from "./v2/icons";
-import {
-  Badge,
-  type BadgeTone,
-  IconTile,
-  PillLink,
-  SectionTitle,
-  StatRow,
-  type V2Stat,
-  pillClass,
-} from "./v2/primitives";
+import { ExternalIcon, RewindIcon, SparkIcon } from "./v2/icons";
+import { Badge, PillLink, SectionTitle, StatRow, type V2Stat, pillClass } from "./v2/primitives";
 
 /** Chog Genesis (ids 1-1969) is the collection the trait DNA, the League and the Daily Bell cover. */
 const HAS_DNA = appConfig.tokenIdRange.max === BigInt(1969);
@@ -87,7 +78,11 @@ async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init });
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
-    const { error, message, retryAfter } = (body ?? {}) as { error?: unknown; message?: unknown; retryAfter?: unknown };
+    const { error, message, retryAfter } = (body ?? {}) as {
+      error?: unknown;
+      message?: unknown;
+      retryAfter?: unknown;
+    };
     const header = Number(res.headers.get("retry-after"));
     const seconds = header > 0 ? header : typeof retryAfter === "number" && retryAfter > 0 ? retryAfter : undefined;
     const text = typeof error === "string" ? error : typeof message === "string" ? message : undefined;
@@ -139,8 +134,8 @@ function valueHistory(agent: AgentRecord, decisions: Decision[]): number[] {
 
 /**
  * Full profile of one Chog: NFT, its ERC-6551 wallet, its trait DNA (genome, Time Machine, Daily Bell
- * call) and, once claimed, its AI agent's performance and thoughts. An unclaimed Chog is "wild": its
- * instinct already trades in the League. `dna`, `metadataName` ("CHOG #1462", from the snapshot), `house`
+ * call) and, once claimed, its AI agent's performance and thoughts. An unclaimed Chog already trades on its DNA
+ * in the League. `dna`, `metadataName` ("CHOG #1462", from the snapshot), `house`
  * (it is the House Chog, HOUSE_CHOG_TOKEN_ID) and `hidden` (its holder hid it: "Hide my Chog", lib/visibility.ts)
  * come from the server. A hidden Chog keeps its wallet, holder and agent here, but its DNA, replays and Bell call
  * give way to a notice.
@@ -189,7 +184,13 @@ export function AgentProfile({
   const owner = useQuery({
     queryKey: ["nft-owner", nft, tokenId],
     queryFn: nft
-      ? () => publicClient.readContract({ address: nft, abi: erc721Abi, functionName: "ownerOf", args: [id] })
+      ? () =>
+          publicClient.readContract({
+            address: nft,
+            abi: erc721Abi,
+            functionName: "ownerOf",
+            args: [id],
+          })
       : skipToken,
     staleTime: 30_000,
     retry: retryTransient,
@@ -223,8 +224,17 @@ export function AgentProfile({
       token && account
         ? async () => {
             const [raw, decimals] = await Promise.all([
-              publicClient.readContract({ address: token, abi: erc20Abi, functionName: "balanceOf", args: [account] }),
-              publicClient.readContract({ address: token, abi: erc20Abi, functionName: "decimals" }),
+              publicClient.readContract({
+                address: token,
+                abi: erc20Abi,
+                functionName: "balanceOf",
+                args: [account],
+              }),
+              publicClient.readContract({
+                address: token,
+                abi: erc20Abi,
+                functionName: "decimals",
+              }),
             ]);
             return formatUnits(raw, decimals);
           }
@@ -242,12 +252,18 @@ export function AgentProfile({
 
   const [throttle, setThrottle] = useState<Throttle | null>(null);
   const tick = useMutation({
-    mutationFn: () => apiFetch<AgentDetailView>(`/api/agents/${tokenId}/tick`, { method: "POST" }),
+    mutationFn: () =>
+      apiFetch<AgentDetailView>(`/api/agents/${tokenId}/tick`, {
+        method: "POST",
+      }),
     onMutate: () => setThrottle(null),
     onSuccess: (data) => refresh(data),
     onError: (error) => {
       if (error instanceof ApiError && error.status === 429 && error.retryAfterSec) {
-        setThrottle({ until: Date.now() + error.retryAfterSec * 1000, seconds: error.retryAfterSec });
+        setThrottle({
+          until: Date.now() + error.retryAfterSec * 1000,
+          seconds: error.retryAfterSec,
+        });
       }
       refresh();
     },
@@ -272,33 +288,25 @@ export function AgentProfile({
     const verdict = traitSafety(key, value);
     return verdict.action === "hide" ? [] : [[key, verdict.display] as const];
   });
-  // An unclaimed Chog's best first move is watching its instinct trade, not leaving for a marketplace.
+  // An unclaimed Chog's best first move is watching its DNA trade, not leaving for a marketplace.
   const wildChog = HAS_DNA && Boolean(detail.data) && !agent && !hidden;
   // Its trait DNA, replays and Bell call, unless its holder hid it from Animr's public pages.
   const dnaShown = HAS_DNA && !hidden;
 
+  // The claim card is the holder's alone; everyone else sees nothing here (the header has Connect).
   let activation: ReactNode = null;
-  if (detail.data && !agent?.active && computedAccount && isClient) {
-    if (!viewer) {
+  if (detail.data && !agent?.active && computedAccount && isClient && viewer) {
+    if (isOwner) {
       activation = (
-        <Hint>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span>Hold {label}? Connect that wallet to claim it and wake its AI.</span>
-            {/* ml-auto keeps the button (and its right-aligned panel) on the right when wrapped. */}
-            <ConnectButton className="ml-auto" />
-          </div>
-        </Hint>
+        <ActivateAgent
+          tokenId={tokenId}
+          account={computedAccount}
+          owner={viewer}
+          reactivate={Boolean(agent)}
+          onActivated={refresh}
+        />
       );
-    } else if (owner.isPending) {
-      activation = <Hint>Checking who holds {label}…</Hint>;
-    } else if (notMinted) {
-      activation = (
-        <Hint>
-          Token {tokenId} hasn&apos;t been minted (<code className="v2-mono">ownerOf</code> reverted), so nobody can
-          activate its AI yet.
-        </Hint>
-      );
-    } else if (owner.isError) {
+    } else if (owner.isError && !notMinted) {
       activation = (
         <Hint>
           <span className="text-[var(--v2-danger)]">
@@ -309,30 +317,19 @@ export function AgentProfile({
           </button>
         </Hint>
       );
-    } else if (!isOwner) {
-      activation = (
-        <Hint>
-          Only the holder of {label} can activate its AI. The connected wallet (
-          <span className="v2-mono text-[var(--v2-ink)]">{shortAddress(viewer)}</span>) doesn&apos;t hold it.
-        </Hint>
-      );
-    } else {
-      activation = (
-        <ActivateAgent
-          tokenId={tokenId}
-          account={computedAccount}
-          owner={viewer}
-          reactivate={Boolean(agent)}
-          onActivated={refresh}
-        />
-      );
     }
   }
 
   const style = agent?.persona.style ?? dna?.style;
   const latestLlm = decisions.find((decision) => decision.decidedBy === "llm");
   const walletChog =
-    !token || !account ? "—" : balance.data !== undefined ? formatAmount(balance.data, 2) : balance.isError ? "Unknown" : "…";
+    !token || !account
+      ? "—"
+      : balance.data !== undefined
+        ? formatAmount(balance.data, 2)
+        : balance.isError
+          ? "Unknown"
+          : "…";
   const accountText = !account
     ? "Not configured"
     : accountStatus.isPending
@@ -344,34 +341,28 @@ export function AgentProfile({
           : accountStatus.data === "uninitialized"
             ? "Needs setup"
             : "Not deployed yet";
-  const stats: V2Stat[] = agent
+  // Claimed Chogs only: an unclaimed one's header and wallet card already say all of it.
+  const stats: V2Stat[] | null = agent
     ? [
-        { key: "value", label: "Portfolio value", hint: "$CHOG-eq", value: formatAmount(agent.lastValueChog, 2) },
+        {
+          key: "wallet",
+          label: "Wallet $CHOG",
+          hint: "on-chain",
+          value: walletChog,
+        },
         {
           key: "edge",
-          label: "Edge vs holding",
+          label: "vs holding",
           value: formatPct(Math.abs(agent.pnlPct) < 0.005 ? 0 : agent.pnlPct),
           tone: agent.pnlPct >= 0.005 ? "up" : agent.pnlPct <= -0.005 ? "down" : undefined,
         },
-        { key: "wallet", label: "Wallet $CHOG", hint: "on-chain", value: walletChog },
-        { key: "decisions", label: "Decisions", value: formatAmount(agent.decisions, 0) },
         {
-          key: "last",
-          label: "Last thought",
-          value: agent.lastDecisionAt ? <TimeAgo iso={agent.lastDecisionAt} /> : "—",
+          key: "decisions",
+          label: "Decisions",
+          value: formatAmount(agent.decisions, 0),
         },
       ]
-    : [
-        { key: "wallet", label: "Wallet $CHOG", hint: "on-chain", value: walletChog },
-        { key: "account", label: "Wallet contract", value: accountText },
-        {
-          key: "brain",
-          label: "Brain",
-          value: detail.isPending ? "…" : HAS_DNA ? "Instinct" : "Asleep",
-          hint: HAS_DNA ? "trait genome" : undefined,
-        },
-        ...(style ? [{ key: "style", label: "Trading style", value: STYLE_LABEL[style] ?? style }] : []),
-      ];
+    : null;
 
   return (
     <div className="space-y-6">
@@ -385,29 +376,32 @@ export function AgentProfile({
         <ChogImage src={image} tokenId={tokenId} alt={label} pending={metadata.isLoading} />
 
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge agent={agent} pending={detail.isPending} failed={detail.isError && !detail.data} wild={HAS_DNA} />
-            {agent?.mode === "onchain" && (
-              <span title="The AI trades the real $CHOG in this Chog's wallet through AnimrTradeGuard, which can never withdraw.">
-                <Badge tone="success" dot>
-                  Real $CHOG · AnimrTradeGuard
-                </Badge>
-              </span>
-            )}
-            {agent?.mode === "paper" && (
-              <span title="Every trade is simulated at live prices, so no tokens move. Its holder can switch it to real trades through AnimrTradeGuard.">
-                <Badge dot>Paper trading</Badge>
-              </span>
-            )}
-            {agent?.mode === "paper" && agent.bankroll !== "wallet" && (
-              <span title="This agent started from a demo bankroll, not from the $CHOG in its wallet.">
-                <Badge tone="warning">Demo bankroll</Badge>
-              </span>
-            )}
-          </div>
+          {/* An unclaimed Chog gets no status badge: the card below says it trades on its DNA. */}
+          {(agent || !HAS_DNA) && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <StatusBadge agent={agent} pending={detail.isPending} failed={detail.isError && !detail.data} />
+              {agent?.mode === "onchain" && (
+                <span title="The AI trades the real $CHOG in this Chog's wallet through AnimrTradeGuard, which can never withdraw.">
+                  <Badge tone="success" dot>
+                    Real $CHOG · AnimrTradeGuard
+                  </Badge>
+                </span>
+              )}
+              {agent?.mode === "paper" && (
+                <span title="Every trade is simulated at live prices, so no tokens move. Its holder can switch it to real trades through AnimrTradeGuard.">
+                  <Badge dot>Paper trading</Badge>
+                </span>
+              )}
+              {agent?.mode === "paper" && agent.bankroll !== "wallet" && (
+                <span title="This agent started from a demo bankroll, not from the $CHOG in its wallet.">
+                  <Badge tone="warning">Demo bankroll</Badge>
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Both numbers, always: "CHOG #1462 · token 1" (marketplaces show the first, the contract uses the second). */}
-          <h1 className="v2-h1 mt-4 flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-[clamp(38px,3.6vw+18px,68px)]">
+          <h1 className="v2-h1 flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-[clamp(38px,3.6vw+18px,68px)]">
             <span className="v2-ink-fade min-w-0 break-words">{heading}</span>
             <span className="v2-num text-[0.42em] tracking-normal whitespace-nowrap text-[var(--v2-faint)]">
               <span aria-hidden>· </span>token {tokenId}
@@ -417,17 +411,11 @@ export function AgentProfile({
           <p className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[length:var(--v2-fs-lead)] text-[var(--v2-nav)]">
             {agent || dna ? (
               <>
-                <span className="text-[var(--v2-faint)]">{agent ? "Its AI" : "Its AI, once woken"}</span>
                 <span className="font-[480] text-[var(--v2-ink)]">{agent?.persona.name ?? dna?.name}</span>
-                {dna && (
-                  <>
-                    <span aria-hidden className="text-[var(--v2-faint)]">
-                      ·
-                    </span>
-                    <span>{dna.archetype}</span>
-                  </>
-                )}
-                {style && <StyleBadge style={style} />}
+                {dna && <Dot />}
+                {dna && <span>{dna.archetype}</span>}
+                {style && <Dot />}
+                {style && <span>{STYLE_LABEL[style] ?? style}</span>}
               </>
             ) : (
               <span>Its trading persona is derived from its traits on activation.</span>
@@ -461,20 +449,22 @@ export function AgentProfile({
               )}
             </div>
           )}
-          {agent && <BrainLine latest={latestLlm} hasDecisions={decisions.length > 0} providers={detail.data?.providers} />}
+          {agent && (
+            <BrainLine latest={latestLlm} hasDecisions={decisions.length > 0} providers={detail.data?.providers} />
+          )}
         </div>
 
         <div className="flex flex-col items-start gap-3 sm:col-span-2 sm:flex-row sm:flex-wrap sm:items-start xl:col-span-1 xl:flex-col xl:items-stretch">
           {wildChog ? (
             <>
-              {/* Its holder's one primary action is waking the AI (the card below), so this one turns glass. */}
-              <PillLink href={`/replay/${tokenId}`} variant={isOwner ? "glass" : "primary"} arrow>
+              {/* Its holder's one primary action is claiming the AI (the card below), so this one turns glass. */}
+              <PillLink href={`/replay/${tokenId}`} variant={isOwner ? "glass" : "hero"} arrow>
                 Watch it trade
               </PillLink>
               <BuyPortfolioButton
                 tokenId={tokenId}
                 variant="secondary"
-                caption="Its trait DNA, wallet and Bell record transfer with the NFT."
+                caption="Its trading DNA, wallet and Bell record go with the NFT."
               />
             </>
           ) : (
@@ -491,7 +481,7 @@ export function AgentProfile({
         </div>
       </header>
 
-      <StatRow stats={stats} size="sm" boxed className="!mt-8" />
+      {stats && <StatRow stats={stats} size="sm" boxed className="!mt-8" />}
 
       {activation}
 
@@ -529,12 +519,11 @@ export function AgentProfile({
             hidden ? (
               <HiddenChogNotice tokenId={chogId} label={label} />
             ) : (
-              <WildChogCard tokenId={chogId} account={account} />
+              <WildChogCard tokenId={chogId} account={account} isOwner={isOwner} />
             )
           ) : (
             <section aria-labelledby="asleep-title" className="v2-card">
-              <p className="v2-kicker">Asleep</p>
-              <h2 id="asleep-title" className="v2-h3 mt-2">
+              <h2 id="asleep-title" className="v2-h3">
                 This Chog&apos;s AI is asleep
               </h2>
               <ol className="mt-4 space-y-3 text-[15px] leading-relaxed text-[var(--v2-nav)]">
@@ -566,7 +555,10 @@ export function AgentProfile({
           )}
         </div>
 
-        <aside aria-label="Wallet, Bell call and traits" className="min-w-0 space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <aside
+          aria-label="Wallet, Bell call and traits"
+          className="min-w-0 space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+        >
           {dnaShown && (
             // A link target: the dashboard's "Its Bell call" goes to /chog/N#bell.
             <div id="bell" className="scroll-mt-28 md:scroll-mt-24">
@@ -575,17 +567,10 @@ export function AgentProfile({
           )}
 
           <section aria-labelledby="wallet-title" className="v2-card">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="v2-kicker">Chog wallet · ERC-6551</p>
-                <h2 id="wallet-title" className="v2-h3 mt-1.5">
-                  Its own wallet
-                </h2>
-              </div>
-              <IconTile size="sm">
-                <WalletIcon />
-              </IconTile>
-            </div>
+            <h2 id="wallet-title" className="v2-h3">
+              Wallet
+            </h2>
+            <p className="v2-note mt-1">ERC-6551 account</p>
             {account ? (
               <>
                 <p className="v2-mono mt-4 rounded-[var(--v2-r-md)] border border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.03)] px-3.5 py-2.5 text-[13px] leading-relaxed break-all text-[var(--v2-ink)]">
@@ -628,8 +613,8 @@ export function AgentProfile({
                       It was created but never initialized, so it can&apos;t be used yet:{" "}
                       <Link href={`/app?id=${tokenId}#lookup`} className="v2-link">
                         finish its setup
-                      </Link>{" "}
-                      from the dashboard.
+                      </Link>
+                      .
                     </>
                   )}
                 </p>
@@ -659,20 +644,20 @@ export function AgentProfile({
 
           {traits.length > 0 && (
             <section aria-labelledby="traits-title" className="v2-card">
-              <p className="v2-kicker">Genome inputs</p>
-              <h2 id="traits-title" className="v2-h3 mt-1.5">
+              <h2 id="traits-title" className="v2-h3">
                 Traits
               </h2>
               <ul className="mt-4 flex flex-wrap gap-1.5">
                 {traits.map(([key, value], i) => (
                   <li key={`${key}-${i}`} className="v2-chip">
-                    <span className="text-[var(--v2-faint)]">{key}</span> <span className="text-[var(--v2-ink)]">{value}</span>
+                    <span className="text-[var(--v2-faint)]">{key}</span>{" "}
+                    <span className="text-[var(--v2-ink)]">{value}</span>
                   </li>
                 ))}
               </ul>
               <p className="v2-note mt-4">
                 {HAS_DNA
-                  ? "These traits compile into its trading genome, so a new holder inherits the same trader."
+                  ? "These traits compile into its trading DNA, so a new holder inherits the same trader."
                   : "The persona is derived from these traits, so a new holder inherits the same trader."}
               </p>
             </section>
@@ -801,14 +786,14 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
   const last = history[history.length - 1];
   const label =
     history.length >= 2
-      ? `Portfolio value in $CHOG-equivalent across ${history.length - 1} decisions, from ${formatAmount(first, 2)} to ${formatAmount(last, 2)}. The dashed line is the starting value.`
-      : "Portfolio value in $CHOG-equivalent across decisions";
+      ? `Portfolio value in $CHOG across ${history.length - 1} decisions, from ${formatAmount(first, 2)} to ${formatAmount(last, 2)}. The dashed line is the starting value.`
+      : "Portfolio value in $CHOG across decisions";
 
   return (
     <section aria-labelledby="performance-title" className="v2-card v2-card--feature v2-card--roomy">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="v2-kicker">Portfolio</p>
+          <p className="v2-kicker">Portfolio value</p>
           <h2 id="performance-title" className="v2-sr">
             Performance
           </h2>
@@ -816,7 +801,7 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
             <span className="v2-num text-[length:var(--v2-fs-stat)] leading-none text-[var(--v2-ink)]">
               {formatAmount(agent.lastValueChog, 2)}
             </span>
-            <span className="text-[15px] text-[var(--v2-nav)]">$CHOG-eq</span>
+            <span className="text-[15px] text-[var(--v2-nav)]">$CHOG value</span>
           </p>
           <p className="mt-2 text-[13px] text-[var(--v2-faint)]">
             ≈ {formatUsd(agent.lastValueUsd)} · started at{" "}
@@ -824,7 +809,7 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
           </p>
         </div>
         <div className="sm:text-right">
-          <p className="text-[13px] text-[var(--v2-nav)]">Edge vs. holding $CHOG</p>
+          <p className="text-[13px] text-[var(--v2-nav)]">vs holding $CHOG</p>
           <PnlBadge pct={agent.pnlPct} size="lg" className="mt-2" />
         </div>
       </div>
@@ -845,10 +830,22 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
         size="sm"
         className="mt-6 border-t border-[var(--v2-line-soft)] pt-5"
         stats={[
-          { key: "chog", label: paper ? "Paper $CHOG" : "$CHOG", value: formatAmount(agent.portfolio.chog, 2) },
+          {
+            key: "chog",
+            label: paper ? "Paper $CHOG" : "$CHOG",
+            value: formatAmount(agent.portfolio.chog, 2),
+          },
           // On-chain the quote leg is WMON (wrapped MON, 1:1), the token AnimrTradeGuard swaps against.
-          { key: "quote", label: paper ? "Paper MON" : "WMON", value: formatAmount(agent.portfolio.quote, 4) },
-          { key: "since", label: "Activated", value: <TimeAgo iso={agent.activatedAt} /> },
+          {
+            key: "quote",
+            label: paper ? "Paper MON" : "WMON",
+            value: formatAmount(agent.portfolio.quote, 4),
+          },
+          {
+            key: "since",
+            label: "Activated",
+            value: <TimeAgo iso={agent.activatedAt} />,
+          },
         ]}
       />
       <p className="v2-note mt-5">
@@ -864,7 +861,7 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
             {agent.modeChangedAt && (
               <>
                 {" "}
-                The edge counts from its switch to on-chain trading, <TimeAgo iso={agent.modeChangedAt} />.
+                The result vs holding counts from its switch to on-chain trading, <TimeAgo iso={agent.modeChangedAt} />.
               </>
             )}
           </>
@@ -891,16 +888,16 @@ function BrainLine({
   if (!latest) {
     return (
       <p className="mt-3 text-[13px] text-[var(--v2-faint)]">
-        <span className="text-[var(--v2-nav)]">Brain:</span> an LLM on 0G Compute
-        {hasDecisions ? " · its recent calls came from its trait instinct (rules) instead" : " · from its first decision"}
+        <span className="text-[var(--v2-nav)]">AI:</span> an LLM on 0G Compute
+        {hasDecisions ? ". Its recent calls came from its trading DNA's rules instead." : ", from its first decision."}
       </p>
     );
   }
   const label = providerLabelOf(providers, latest.zg?.provider);
   const cost = receiptCostUsd(latest);
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-1.5" aria-label="Its brain, from its latest 0G receipt">
-      <span className="v2-overline mr-1">Brain</span>
+    <div className="mt-4 flex flex-wrap items-center gap-1.5" aria-label="Its AI, from its latest 0G receipt">
+      <span className="mr-1 text-[13px] text-[var(--v2-faint)]">AI</span>
       <span className="v2-chip text-[var(--v2-ink)]">
         <SparkIcon aria-hidden className="size-3.5 text-[var(--v2-teal)]" />
         {latest.model ?? "LLM"}
@@ -937,7 +934,7 @@ function PersonaCard({ persona }: { persona: Persona }) {
             {persona.name}
           </h2>
         </div>
-        <StyleBadge style={persona.style} />
+        <span className="text-[13px] text-[var(--v2-nav)]">{STYLE_LABEL[persona.style] ?? persona.style}</span>
       </div>
       <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-nav)]">{persona.description}</p>
       <dl className="v2-kv mt-4 border-t border-[var(--v2-line-soft)] pt-4">
@@ -950,36 +947,25 @@ function PersonaCard({ persona }: { persona: Persona }) {
   );
 }
 
-const STYLE_LABEL: Record<TradingStyle, string> = { aggressive: "Aggressive", balanced: "Balanced", cautious: "Cautious" };
-const STYLE_TONE: Record<TradingStyle, BadgeTone> = { aggressive: "warning", balanced: "violet", cautious: "teal" };
-
-function StyleBadge({ style }: { style: TradingStyle }) {
-  return <Badge tone={STYLE_TONE[style] ?? "neutral"}>{style}</Badge>;
+const STYLE_LABEL: Record<TradingStyle, string> = {
+  aggressive: "Aggressive",
+  balanced: "Balanced",
+  cautious: "Cautious",
+};
+/** The "·" between the header's identity facts. */
+function Dot() {
+  return (
+    <span aria-hidden className="text-[var(--v2-faint)]">
+      ·
+    </span>
+  );
 }
 
-function StatusBadge({
-  agent,
-  pending,
-  failed,
-  wild,
-}: {
-  agent: AgentRecord | null;
-  pending: boolean;
-  failed: boolean;
-  /** Unclaimed Chogs with trait DNA aren't asleep: their instinct trades in the League. */
-  wild: boolean;
-}) {
+/** A claimed Chog's AI (active or paused); without trading DNA, also "Not activated". */
+function StatusBadge({ agent, pending, failed }: { agent: AgentRecord | null; pending: boolean; failed: boolean }) {
   if (pending) return <Badge>Loading…</Badge>;
   if (failed) return <Badge>Status unknown</Badge>;
-  if (!agent) {
-    return wild ? (
-      <Badge tone="violet" dot>
-        Wild · trading on instinct
-      </Badge>
-    ) : (
-      <Badge dot>Not activated</Badge>
-    );
-  }
+  if (!agent) return <Badge dot>Not activated</Badge>;
   return agent.active ? (
     <Badge tone="teal" live>
       AI active
@@ -995,7 +981,8 @@ function StatusBadge({
 function ChogImage({ src, tokenId, alt, pending }: { src?: string; tokenId: string; alt: string; pending: boolean }) {
   const [failed, setFailed] = useState<string[]>([]);
   const current = (src ? [chogThumbUrl(src, 288), src] : []).find((candidate) => !failed.includes(candidate));
-  const frame = "v2-avatar v2-avatar--xl size-32 rounded-[22px] sm:size-[168px] sm:rounded-[26px] xl:size-[212px] xl:rounded-[30px]";
+  const frame =
+    "v2-avatar v2-avatar--xl size-32 rounded-[22px] sm:size-[168px] sm:rounded-[26px] xl:size-[212px] xl:rounded-[30px]";
   return (
     <div className="relative w-fit">
       {/* One soft violet/teal bloom behind the portrait, the hero's colours. */}
@@ -1041,7 +1028,9 @@ function CopyButton({ value }: { value: string }) {
   };
   return (
     <button type="button" onClick={copy} className={`${pillClass("glass", "sm")} h-8 px-3 text-xs`}>
-      <span aria-live="polite">{state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : "Copy address"}</span>
+      <span aria-live="polite">
+        {state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : "Copy address"}
+      </span>
     </button>
   );
 }

@@ -13,8 +13,7 @@ import { Callout, Spinner } from "@/components/onchain/ui";
 import { appConfig } from "@/lib/config";
 import { animrTradeGuardAddress, setBuyOnlyRequest } from "@/lib/contracts/animr-trade-guard";
 import { formatAmount } from "@/lib/format";
-import { MaskIcon } from "./v2/icons";
-import { Badge, IconTile } from "./v2/primitives";
+import { Badge } from "./v2/primitives";
 
 // The House Chog's holder card: its setup at a glance plus the optional buy-only switch (setBuyOnlyRequest). The House
 // Chog trades two-way through the guard (its mandate buys dips and sells only into sharp pumps; lib/agent/engine.ts
@@ -221,12 +220,8 @@ function HouseBuyOnlyCard({
     <section aria-labelledby={headingId} className="v2-card v2-card--roomy">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-4">
-          <IconTile size="lg" tone="violet" className="max-sm:hidden">
-            <MaskIcon />
-          </IconTile>
           <div className="min-w-0">
-            <p className="v2-kicker">House Chog · Rob this Chog</p>
-            <h2 id={headingId} className="v2-h3 mt-2">
+            <h2 id={headingId} className="v2-h3">
               The House vault: two-way, guarded
             </h2>
             <p className={`mt-2 max-w-[62ch] ${muted}`}>

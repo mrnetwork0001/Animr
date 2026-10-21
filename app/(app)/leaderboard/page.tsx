@@ -1,53 +1,41 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { LeaderboardSkeleton, LeaderboardStats, LeaderboardTable } from "@/components/leaderboard-table";
-import { Badge, PageHeader, PillLink, StatRow } from "@/components/v2";
+import { PageHeader, PillLink } from "@/components/v2";
+import { allChogs } from "@/lib/dna/chogs";
 
 export const metadata: Metadata = {
-  title: "Live agents",
+  title: "Claimed AIs",
   description:
-    "Claimed Chog NFTs whose AI on 0G Compute manages the $CHOG in their own wallet, ranked by how much it beats simply holding $CHOG.",
+    "Chogs whose holders claimed their AI on 0G Compute. Each trades the $CHOG in its own wallet, ranked against simply holding $CHOG.",
 };
 
 export const viewport: Viewport = { themeColor: "#0d0c11" };
 
-const STATS_FALLBACK = [
-  { key: "awake", label: "Agents awake", value: "…" },
-  { key: "managed", label: "Managed", hint: "$CHOG-eq", value: "…" },
-  { key: "best", label: "Best edge", value: "…" },
-];
-
-/** Claimed Chogs' live agents (URL kept as /leaderboard); every Chog's genome is ranked in the League. */
+/** Claimed Chogs' AIs (URL kept as /leaderboard); every Chog's trading DNA is ranked in the League. */
 export default function LeaderboardPage() {
+  // Each token's marketplace number ("CHOG #1462" is token 1), so a row can show the name marketplaces use.
+  const nameNumbers = allChogs().map((chog) => Number(chog.metadataId) || 0);
   return (
     <div className="v2-shell flex-1 pb-20 sm:pb-28">
       <PageHeader
-        kicker={
-          <>
-            Live agents · AI on 0G Compute
-            <Badge tone="teal" live className="ml-1">
-              Live
-            </Badge>
-          </>
-        }
-        title="The AIs trading right now"
+        title="Claimed AIs"
         lead={
           <>
-            These Chogs were claimed by their holders: an AI on 0G Compute manages the $CHOG in each one&apos;s own
-            ERC-6551 wallet, with paper fills at live prices or, where the holder opted in, real trades through
-            AnimrTradeGuard. They&apos;re ranked by the AI&apos;s edge over simply holding $CHOG. Like a trader? Buy the
-            Chog: the AI and its portfolio come with it.
+            Chogs whose holders claimed their AI. Each trades the $CHOG in its own wallet, on paper or through
+            AnimrTradeGuard, ranked vs holding.
           </>
         }
-        // Two rankings: this one (live agents) and the League (every Chog's trait genome, simulated).
+        // Two rankings: this one (claimed AIs) and the League (every Chog's trading DNA, simulated).
         actions={
           <PillLink href="/league" variant="glass" arrow>
-            The League · all 1,969 Chogs
+            All 1,969 in the League
           </PillLink>
         }
+        // Client data (react-query) renders behind a boundary so it never blocks the static shell; no numbers until
+        // there is at least one claimed AI.
         aside={
-          // Client data (react-query) renders behind a boundary so it never blocks the static shell.
-          <Suspense fallback={<StatRow boxed size="sm" stats={STATS_FALLBACK} />}>
+          <Suspense fallback={null}>
             <LeaderboardStats />
           </Suspense>
         }
@@ -55,7 +43,7 @@ export default function LeaderboardPage() {
 
       <div className="v2-section">
         <Suspense fallback={<LeaderboardSkeleton />}>
-          <LeaderboardTable />
+          <LeaderboardTable nameNumbers={nameNumbers} />
         </Suspense>
       </div>
     </div>

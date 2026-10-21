@@ -5,25 +5,13 @@ import { type ReactNode, useId } from "react";
 import { useNow } from "@/components/decision-feed";
 import type { BellSummary, ChogBellRecord } from "@/lib/bell/types";
 import { isNotFound, useChogBell, useTodayBell } from "./api";
-import {
-  CallResult,
-  ClaimedBadge,
-  Conviction,
-  Countdown,
-  Forecast,
-  KindBadge,
-  LABEL,
-  LoadError,
-  Skeleton,
-  SourceBadge,
-} from "./bits";
+import { CallResult, Conviction, Countdown, Forecast, LoadError, Skeleton } from "./bits";
 import { RideButton } from "./call-card";
-import { formatDay, formatErrorPts, formatPoints, hitRate, nextBellAt } from "./format";
-import { BellIcon } from "@/components/v2/icons";
+import { formatDay, formatPoints, hitRate, nextBellAt } from "./format";
 
 /**
  * A Chog's Daily Bell card for its profile: this Bell's call (forecast, conviction, thesis and whether
- * its AI on 0G Compute or its trait DNA made it), its forecasting record, and a Ride button.
+ * its AI on 0G Compute or its trading DNA made it), its Bell record, and a Ride button.
  */
 export function ChogDailyCall({ tokenId }: { tokenId: number }) {
   const headingId = useId();
@@ -37,7 +25,7 @@ export function ChogDailyCall({ tokenId }: { tokenId: number }) {
   if (chog.isPending) {
     body = (
       <div role="status" className="mt-4 space-y-3">
-        <span className="v2-sr">Loading Chog #{tokenId}&apos;s call…</span>
+        <span className="v2-sr">Loading this Chog&apos;s call…</span>
         <Skeleton className="h-10 w-32" />
         <Skeleton className="h-4" />
         <Skeleton className="h-9" />
@@ -57,21 +45,13 @@ export function ChogDailyCall({ tokenId }: { tokenId: number }) {
   } else if (call) {
     body = (
       <div className="mt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <Forecast pct={call.forecastPct} size="xl" />
-            <p className="v2-note mt-1.5">
-              {bell?.kind === "replay"
-                ? `Replayed call · $CHOG over the 24h after the Bell of ${formatDay(bell.day)}`
-                : `$CHOG in the next 24h${bell ? ` · Bell of ${formatDay(bell.day)}` : ""}`}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1.5">
-            {bell && <KindBadge kind={bell.kind} />}
-            <SourceBadge source={call.source} />
-            {call.claimed && <ClaimedBadge />}
-          </div>
-        </div>
+        <Forecast pct={call.forecastPct} size="xl" />
+        <p className="v2-note mt-1.5">
+          {bell?.kind === "replay"
+            ? `Replayed call: $CHOG over the 24h after the Bell of ${formatDay(bell.day)}`
+            : `$CHOG in the next 24h${bell ? `, Bell of ${formatDay(bell.day)}` : ""}`}
+          {call.source === "llm" && ". Called by its AI on 0G Compute"}
+        </p>
         <p className="bell-thesis mt-3">“{call.thesis}”</p>
         <div className="mt-3">
           <Conviction value={call.conviction} />
@@ -82,25 +62,20 @@ export function ChogDailyCall({ tokenId }: { tokenId: number }) {
     );
   } else {
     body = (
-      <p className="v2-body mt-4">
-        Chog #{tokenId} hasn&apos;t called this Bell yet. Every Chog calls $CHOG at 15:00 UTC.
-      </p>
+      <p className="v2-body mt-4">This Chog hasn&apos;t called this Bell yet. Every Chog calls $CHOG at 15:00 UTC.</p>
     );
   }
 
   return (
     <section aria-labelledby={headingId} className="v2-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id={headingId} className="flex items-center gap-2.5">
-          <span className="v2-icon-tile v2-icon-tile--sm" aria-hidden>
-            <BellIcon />
-          </span>
-          <span className="v2-kicker">Daily Bell</span>
+        <h2 id={headingId} className="v2-h3">
+          Daily Bell
         </h2>
         <BellClock bell={bell} />
       </div>
       {body}
-      {record && <Record tokenId={tokenId} record={record} />}
+      {record && <Record record={record} />}
       <Link href="/bell" className="v2-link mt-5 inline-flex text-sm">
         See all 1,969 calls at the Bell
       </Link>
@@ -125,17 +100,20 @@ function BellClock({ bell }: { bell?: BellSummary }) {
   );
 }
 
-function Record({ tokenId, record }: { tokenId: number; record: ChogBellRecord }) {
+/** Average miss in percentage points of $CHOG's move, read as "3.5%". */
+const formatMiss = (value: number) => `${value.toFixed(value < 1 ? 2 : value < 10 ? 1 : 0)}%`;
+
+function Record({ record }: { record: ChogBellRecord }) {
   if (record.calls === 0) {
     return (
       <p className="v2-note mt-5 border-t border-[var(--v2-line-soft)] pt-4">
-        No settled calls yet: Chog #{tokenId}&apos;s record starts when its first Bell settles.
+        No settled calls yet: its record starts when its first Bell settles.
       </p>
     );
   }
   return (
     <div className="mt-5 border-t border-[var(--v2-line-soft)] pt-4">
-      <h3 className={LABEL}>Forecasting record · replays included</h3>
+      <h3 className="text-[length:var(--v2-fs-sm)] font-medium text-[var(--v2-ink)]">Bell record</h3>
       <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3">
         <RecordStat label="Hit rate">
           {hitRate(record.hits, record.calls)}%{" "}
@@ -143,14 +121,11 @@ function Record({ tokenId, record }: { tokenId: number; record: ChogBellRecord }
             ({record.hits}/{record.calls})
           </span>
         </RecordStat>
-        <RecordStat label="Oracle wins">{record.oracleWins}</RecordStat>
-        <RecordStat label="Avg error">{formatErrorPts(record.avgErrorPts)}</RecordStat>
+        <RecordStat label="Best calls">{record.oracleWins}</RecordStat>
+        <RecordStat label="Avg miss">{formatMiss(record.avgErrorPts)}</RecordStat>
         <RecordStat label="Points">{formatPoints(record.totalPoints)}</RecordStat>
       </dl>
-      <p className="v2-note mt-3">
-        Counts every settled Bell, including the ones replayed from real past candles. The record belongs to the NFT:
-        whoever holds Chog #{tokenId} inherits it.
-      </p>
+      <p className="v2-note mt-3">The record stays with the NFT.</p>
     </div>
   );
 }

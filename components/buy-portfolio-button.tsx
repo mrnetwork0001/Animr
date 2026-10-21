@@ -3,7 +3,7 @@ import { pillClass } from "@/components/v2/primitives";
 import { appConfig } from "@/lib/config";
 import { marketplaceUrl } from "@/lib/format";
 
-/** Links to the Chog's marketplace listing: buying the NFT buys its AI portfolio. */
+/** Links to the Chog's marketplace listing: buying the NFT buys its trader, its wallet and what is in it. */
 export function BuyPortfolioButton({
   tokenId,
   className = "",
@@ -23,7 +23,7 @@ export function BuyPortfolioButton({
     <div className={className}>
       {href ? (
         <a href={href} target="_blank" rel="noopener noreferrer" className={pill}>
-          Buy this Portfolio
+          Buy this Chog
           <ExternalIcon className="v2-btn-icon" />
           <span className="v2-sr"> (opens the marketplace in a new tab)</span>
         </a>
@@ -37,7 +37,7 @@ export function BuyPortfolioButton({
           }
         >
           <button type="button" disabled className={pillClass("glass")}>
-            Buy this Portfolio
+            Buy this Chog
           </button>
         </span>
       )}

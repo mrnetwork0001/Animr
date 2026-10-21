@@ -1,12 +1,12 @@
 "use client";
 
 import { type UseQueryResult, skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { type ReactNode, useId } from "react";
 import { type Address, erc721Abi, isAddressEqual } from "viem";
 import { useConnection, useSwitchChain } from "wagmi";
 import { ConnectButton, useIsClient } from "@/components/connect-button";
-import { GuardIcon } from "@/components/v2/icons";
-import { Badge, IconTile, Meter } from "@/components/v2/primitives";
+import { Badge, Meter } from "@/components/v2/primitives";
 import type { AgentDetailResponse } from "@/lib/agent/types";
 import { publicClient } from "@/lib/clients";
 import { appConfig } from "@/lib/config";
@@ -15,7 +15,6 @@ import { type TokenBoundAccountParams, computeTokenBoundAccount } from "@/lib/er
 import { shortAddress } from "@/lib/format";
 import { walletErrorMessage } from "@/lib/wagmi";
 import { FundVault } from "./fund-vault";
-import { GuardGuarantees, ShieldIcon } from "./guard-guarantees";
 import { agentKey, fetchAgentDetail, holderKey, onchainKeys, readOnchainSetup, retryTransient } from "./queries";
 import {
   type Ctx,
@@ -61,7 +60,7 @@ export type GuardOnboardingProps = {
  */
 export function GuardOnboarding({ tokenId, tba, owner, buyOnly }: GuardOnboardingProps) {
   const guard = animrTradeGuardAddress;
-  if (!guard) return <OnchainLaunching tokenId={tokenId} />;
+  if (!guard) return <OnchainLaunching />;
   return <GuardSetup tokenId={tokenId} tba={tba} ownerHint={owner} guard={guard} buyOnly={buyOnly} />;
 }
 
@@ -164,8 +163,8 @@ function GuardSetup({
   let body: ReactNode;
   if (tbaMismatch) {
     body = (
-      <Callout tone="danger" title={`This isn't Chog #${tokenId}'s wallet`}>
-        <span className="v2-mono">{tba}</span> differs from the account computed for Chog #{tokenId} (
+      <Callout tone="danger" title="This isn't this Chog's wallet">
+        <span className="v2-mono">{tba}</span> differs from the account computed for token {tokenId} (
         <span className="v2-mono">{expectedTba}</span>). Check NEXT_PUBLIC_TBA_IMPLEMENTATION and
         NEXT_PUBLIC_TBA_SALT.
       </Callout>
@@ -187,7 +186,7 @@ function GuardSetup({
       <StepsSkeleton />
     );
   } else if (state?.kind === "blocked") {
-    body = <BlockedNotice reason={state.reason} tokenId={tokenId} holder={holder} />;
+    body = <BlockedNotice reason={state.reason} holder={holder} />;
   } else if (state) {
     const ctx: Ctx = { tokenId, tba, guard, setup, viewer, canAct, actHint, tx, verify };
     const stops = canStop(setup);
@@ -220,20 +219,17 @@ function GuardSetup({
   return (
     <section aria-labelledby={headingId} className="v2-card v2-card--roomy scroll-mt-28" id="onchain">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-4">
-          <IconTile size="lg" tone="violet" className="max-sm:hidden">
-            <GuardIcon />
-          </IconTile>
-          <div className="min-w-0">
-            <p className="v2-kicker">On-chain trading · AnimrTradeGuard</p>
-            <h2 id={headingId} className="v2-h2 mt-2 text-[clamp(22px,1.2vw+16px,30px)]">
-              Let Chog #{tokenId} trade real $CHOG
-            </h2>
-            <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-[var(--v2-nav)]">
-              Six steps from the holder&apos;s wallet. The AI can then trade this wallet within your limits, but never
-              withdraw from it.
-            </p>
-          </div>
+        <div className="min-w-0">
+          <h2 id={headingId} className="v2-h2 text-[clamp(22px,1.2vw+16px,30px)]">
+            Let it trade real $CHOG
+          </h2>
+          <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-[var(--v2-nav)]">
+            Six steps from your wallet. Through AnimrTradeGuard the AI can then trade this wallet within your limits,
+            but never withdraw from it.{" "}
+            <Link href="/guard" className="v2-link whitespace-nowrap">
+              How the guard works
+            </Link>
+          </p>
         </div>
         <SetupChip state={state} paused={setup?.paused} doneCount={doneCount} total={progress?.length ?? STEP_COUNT} />
       </div>
@@ -252,7 +248,6 @@ function GuardSetup({
       )}
 
       <ViewerBar
-        tokenId={tokenId}
         isClient={isClient}
         viewer={viewer}
         wrongChain={wrongChain}
@@ -262,17 +257,6 @@ function GuardSetup({
       />
 
       <div className="mt-6 space-y-4">{body}</div>
-
-      <details className="group mt-6 rounded-[var(--v2-r-lg)] border border-[var(--v2-line)] bg-[rgb(255_255_255/0.015)] px-4 py-3 sm:px-5">
-        <summary className="flex cursor-pointer list-none items-center gap-2.5 text-sm font-[480] text-[var(--v2-nav)] hover:text-[var(--v2-ink)] [&::-webkit-details-marker]:hidden">
-          <ShieldIcon className="size-4 text-[var(--v2-teal)]" />
-          How the guard protects this wallet
-          <span aria-hidden className="ml-auto text-[var(--v2-faint)] transition-transform group-open:rotate-90">
-            ›
-          </span>
-        </summary>
-        <GuardGuarantees variant="plain" headingLevel="h3" className="mt-4 mb-2" />
-      </details>
     </section>
   );
 }
@@ -358,7 +342,6 @@ function SetupChip({
 }
 
 function ViewerBar({
-  tokenId,
   isClient,
   viewer,
   wrongChain,
@@ -366,7 +349,6 @@ function ViewerBar({
   holderPending,
   isHolder,
 }: {
-  tokenId: number;
   isClient: boolean;
   viewer: Address | undefined;
   wrongChain: boolean;
@@ -381,7 +363,7 @@ function ViewerBar({
     return (
       <div className={`${bar} border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.025)]`}>
         <p className="text-sm text-[var(--v2-nav)]">
-          Hold Chog #{tokenId}? Connect that wallet to set this up. Anyone can follow the setup here.
+          Hold this Chog? Connect that wallet to set this up.
         </p>
         <ConnectButton className="ml-auto" />
       </div>
@@ -405,11 +387,11 @@ function ViewerBar({
       </div>
     );
   }
-  if (holderPending) return <p className="mt-5 text-sm text-[var(--v2-faint)]">Checking who holds Chog #{tokenId}…</p>;
+  if (holderPending) return <p className="mt-5 text-sm text-[var(--v2-faint)]">Checking who holds this Chog…</p>;
   if (!isHolder) {
     return (
       <p className={`${bar} block border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.025)] text-sm text-[var(--v2-nav)]`}>
-        Read-only: Chog #{tokenId} is held by {holder ? <AddressLink address={holder} /> : "another wallet"}. Only the
+        Read-only: this Chog is held by {holder ? <AddressLink address={holder} /> : "another wallet"}. Only the
         holder can change these settings; the connected wallet (
         <span className="v2-mono text-[var(--v2-ink)]">{shortAddress(viewer)}</span>) can follow along.
       </p>
@@ -469,7 +451,7 @@ function Stepper({
               <div
                 className={`min-w-0 flex-1 ${
                   open || optionalOpen
-                    ? "rounded-[var(--v2-r-lg)] border border-[var(--v2-line)] bg-[rgb(255_255_255/0.025)] p-4 shadow-[var(--v2-glass-glow)] sm:p-5"
+                    ? "rounded-[var(--v2-r-lg)] border border-[var(--v2-line)] bg-[rgb(255_255_255/0.025)] p-4 sm:p-5"
                     : "pt-2 pb-3"
                 } ${open ? "border-[rgb(169_155_243/0.4)]" : ""}`}
               >
@@ -513,7 +495,7 @@ function StepTile({ n, status, optional }: { n: number | undefined; status: RowS
     "relative z-10 grid size-9 shrink-0 place-items-center rounded-[10px] border text-[13px] v2-num transition-colors";
   if (status === "done") {
     return (
-      <span aria-hidden className={`v2-icon-tile v2-icon-tile--sm ${base}`}>
+      <span aria-hidden className={`${base} border-[var(--v2-line-teal)] bg-[var(--v2-bg)] text-[var(--v2-teal)]`}>
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m3.5 8.5 3 3 6-7" />
         </svg>
@@ -522,7 +504,7 @@ function StepTile({ n, status, optional }: { n: number | undefined; status: RowS
   }
   if (status === "current" && !optional) {
     return (
-      <span aria-hidden className={`v2-icon-tile v2-icon-tile--sm v2-icon-tile--violet ${base} text-[var(--v2-ink)]`}>
+      <span aria-hidden className={`${base} border-[rgb(169_155_243/0.55)] bg-[rgb(139_120_236/0.14)] text-[var(--v2-ink)]`}>
         {n}
       </span>
     );
@@ -568,11 +550,9 @@ function StepPanel({
 
 function BlockedNotice({
   reason,
-  tokenId,
   holder,
 }: {
   reason: "not-a-chog-account" | "unsupported-owner";
-  tokenId: number;
   holder: Address | undefined;
 }) {
   if (reason === "not-a-chog-account") {
@@ -586,7 +566,7 @@ function BlockedNotice({
   }
   return (
     <Callout tone="warning" title="Held by another token-bound account">
-      Chog #{tokenId} is held by {holder ? <AddressLink address={holder} /> : "an ERC-6551 account"}, which is itself
+      This Chog is held by {holder ? <AddressLink address={holder} /> : "an ERC-6551 account"}, which is itself
       owned by an NFT. The guard refuses nested ownership: selling the NFT above it wouldn&apos;t reset the AI&apos;s
       permission or limits. Move the Chog to a regular wallet to set up on-chain trading. Paper trading still works.
     </Callout>
@@ -607,8 +587,8 @@ function StepsSkeleton() {
   );
 }
 
-/** NEXT_PUBLIC_TRADE_GUARD_ADDRESS is unset: say so plainly, and what the guard will guarantee. */
-function OnchainLaunching({ tokenId }: { tokenId: number }) {
+/** NEXT_PUBLIC_TRADE_GUARD_ADDRESS is unset: say so plainly, and list the steps the holder will take. */
+function OnchainLaunching() {
   const rows = [
     ...SETUP_STEPS.filter((step) => step.id !== "live" && step.id !== "go-onchain"),
     { id: "wake", ...WAKE_ROW },
@@ -616,16 +596,18 @@ function OnchainLaunching({ tokenId }: { tokenId: number }) {
   ];
   return (
     <section className="v2-card v2-card--roomy">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="v2-kicker">On-chain trading</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h2 className="v2-h2 text-[clamp(22px,1.2vw+16px,30px)]">Real trades are coming</h2>
         <Badge tone="warning" dot>
-          Launching
+          Paper trading today
         </Badge>
       </div>
-      <h2 className="v2-h2 mt-2 text-[clamp(22px,1.2vw+16px,30px)]">On-chain mode is launching — paper trading today</h2>
       <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-[var(--v2-nav)]">
-        Chog #{tokenId}&apos;s AI already makes its calls at live prices, but every fill is simulated, so no tokens
-        move. Once AnimrTradeGuard is deployed, the holder can let it trade the real $CHOG in this wallet in six steps:
+        Its AI already makes its calls at live prices, but every fill is simulated, so no tokens move. Once
+        AnimrTradeGuard is deployed, you can let it trade the real $CHOG in this wallet in six steps.{" "}
+        <Link href="/guard" className="v2-link whitespace-nowrap">
+          How the guard works
+        </Link>
       </p>
       <ol className="mt-5 grid gap-2.5 sm:grid-cols-2">
         {rows.map((step, i) => (
@@ -641,12 +623,6 @@ function OnchainLaunching({ tokenId }: { tokenId: number }) {
           </li>
         ))}
       </ol>
-      <GuardGuarantees
-        variant="plain"
-        status="launching"
-        headingLevel="h3"
-        className="mt-6 border-t border-[var(--v2-line-soft)] pt-6"
-      />
     </section>
   );
 }

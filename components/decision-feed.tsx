@@ -62,8 +62,8 @@ export function TimeAgo({ iso, className }: { iso: string; className?: string })
 const ACTION_TONE: Record<AgentAction, BadgeTone> = { buy: "teal", sell: "violet", hold: "neutral" };
 /** The timeline node's colour per action. */
 const NODE_TONE: Record<AgentAction, string> = {
-  buy: "border-[var(--v2-teal)] bg-[rgb(159_240_236/0.25)] shadow-[0_0_10px_rgb(159_240_236/0.55)]",
-  sell: "border-[var(--v2-violet-ink)] bg-[rgb(139_120_236/0.3)] shadow-[0_0_10px_rgb(139_120_236/0.55)]",
+  buy: "border-[var(--v2-teal)] bg-[rgb(159_240_236/0.25)]",
+  sell: "border-[var(--v2-violet-ink)] bg-[rgb(139_120_236/0.3)]",
   hold: "border-[var(--v2-line-strong)] bg-[var(--v2-bg)]",
 };
 
@@ -106,7 +106,7 @@ export function DecisionFeed({ decisions, providers, emptyHint = "No decisions y
   const [limit, setLimit] = useState(PAGE_SIZE);
 
   if (decisions.length === 0) {
-    return <EmptyState icon={<SparkIcon />} title="The AI hasn't decided anything yet" body={emptyHint} />;
+    return <EmptyState title="The AI hasn't decided anything yet" body={emptyHint} />;
   }
 
   const hidden = decisions.length - limit;
@@ -161,8 +161,8 @@ function ReceiptChips({ decision: d, providers }: { decision: Decision; provider
   if (d.decidedBy !== "llm") {
     return (
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="v2-chip" title="This call came from its trait genome's rules, not from the LLM">
-          Trait instinct · rules
+        <span className="v2-chip" title="This call came from its trading DNA's rules, not from the LLM">
+          Trading DNA rules
         </span>
       </div>
     );
@@ -271,7 +271,7 @@ function DecisionRow({ decision: d, providers }: { decision: Decision; providers
         {d.trade && <TradeDetails trade={d.trade} />}
 
         <div className="mt-3 border-t border-[var(--v2-line-soft)] pt-3">
-          <p className="v2-overline mb-2">{d.decidedBy === "llm" ? "0G receipt" : "Decided by"}</p>
+          <p className="mb-2 text-xs text-[var(--v2-faint)]">{d.decidedBy === "llm" ? "0G receipt" : "Decided by"}</p>
           <ReceiptChips decision={d} providers={providers} />
         </div>
 

@@ -15,7 +15,6 @@ import {
   revokeGuardRequest,
 } from "@/lib/contracts/animr-trade-guard";
 import { type TokenBoundAccountParams, createAndInitializeAccountRequest } from "@/lib/erc6551";
-import { Badge } from "@/components/v2/primitives";
 import { formatAmount } from "@/lib/format";
 import { requestAgentMode } from "./agent-mode";
 import { FundVault } from "./fund-vault";
@@ -322,10 +321,7 @@ export function LivePanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQueryR
   return (
     <>
       <div className="rounded-[var(--v2-r-md)] border border-[rgb(98_224_166/0.3)] bg-[rgb(98_224_166/0.05)] p-4">
-        <p className="flex flex-wrap items-center gap-2 text-sm font-[520] text-[var(--v2-success)]">
-          <Badge tone="success" live>
-            Live
-          </Badge>
+        <p className="text-sm font-[520] text-[var(--v2-success)]">
           {agent?.persona.name ?? "The AI"} trades the real $CHOG in this wallet
         </p>
         {limits && <p className="mt-2 text-sm text-[var(--v2-nav)]">{describeLimits(limits)}</p>}
@@ -437,8 +433,7 @@ export function StopControls({ ctx }: { ctx: Ctx }) {
 
   return (
     <div className="rounded-[var(--v2-r-lg)] border border-[var(--v2-line)] p-4 sm:p-5">
-      <p className="v2-overline">Kill switch</p>
-      <h3 className="mt-1.5 text-[15px] font-[520] text-[var(--v2-ink)]">Stop the AI</h3>
+      <h3 className="text-[15px] font-[520] text-[var(--v2-ink)]">Stop the AI</h3>
       <p className="mt-1 text-[13px] leading-relaxed text-[var(--v2-nav)]">
         <span className="text-[var(--v2-ink)]">Disable</span> turns trading off and keeps the guard&apos;s permission (save
         limits again to resume). <span className="text-[var(--v2-ink)]">Revoke</span> removes the guard&apos;s permission
