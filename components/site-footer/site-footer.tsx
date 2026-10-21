@@ -1,11 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { V2Brand } from "@/components/v2/app-shell";
-import { shortAddress } from "@/lib/format";
 import {
   type FooterLink,
   footerColumns,
-  footerContracts,
   footerCopy,
   footerSocials,
 } from "./footer-links";
@@ -13,9 +11,9 @@ import "@/app/design-v2.css";
 import "./site-footer.css";
 
 type SiteFooterProps = {
-  /** Replaces the bottom bar's credit line ("© 2026 Animr · Built for Chogathon 2026 on Monad · Not affiliated with Chog"). */
+  /** Unused since the bottom bar was removed; kept so existing callers still type-check. */
   note?: ReactNode;
-  /** Extra content under the honesty note (rarely needed: the note and contract chips are built in). */
+  /** Extra content under the link columns (rarely needed). */
   extra?: ReactNode;
   /** The column wrapper: "v2-shell" in the app; the landing page passes "lp-shell" to line up with its sections. */
   shellClassName?: string;
@@ -23,11 +21,11 @@ type SiteFooterProps = {
 
 /**
  * The one site footer, for the landing page (components/landing/landing-footer.tsx) and every app page (AppShell):
- * brand lockup, description and icon links on the left; Product, Ecosystem and Resources columns on the right; then
- * the honesty note and a bottom bar with the credit and the contract chips. Server markup, no client code.
+ * brand lockup, description and icon links on the left; Product, Ecosystem and Resources columns on the right.
+ * Server markup, no client code.
  * Data: ./footer-links.ts.
  */
-export function SiteFooter({ note, extra, shellClassName = "v2-shell" }: SiteFooterProps) {
+export function SiteFooter({ extra, shellClassName = "v2-shell" }: SiteFooterProps) {
   return (
     <footer className="sf">
       <div className={shellClassName}>
@@ -73,42 +71,7 @@ export function SiteFooter({ note, extra, shellClassName = "v2-shell" }: SiteFoo
           </div>
         </div>
 
-        <hr className="sf-rule" />
-
-        <p className="sf-honesty">{footerCopy.honesty}</p>
         {extra != null && <div className="sf-extra">{extra}</div>}
-
-        <div className="sf-bottom">
-          <p className="sf-credit">
-            {note ??
-              footerCopy.credit.map((part, i) => (
-                <span key={part} className="sf-credit-part">
-                  {i > 0 && (
-                    <span className="sf-dot" aria-hidden="true">
-                      ·
-                    </span>
-                  )}
-                  {part}
-                </span>
-              ))}
-          </p>
-          {footerContracts.length > 0 && (
-            <ul className="sf-chips" aria-label="Contracts on Monad">
-              {footerContracts.map(({ label, address, href }) => (
-                <li key={label}>
-                  <a href={href} target="_blank" rel="noopener noreferrer" title={address} className="sf-chip">
-                    <span className="sf-chip-label">{label}</span>
-                    <span className="sf-chip-addr">{shortAddress(address)}</span>
-                    <span aria-hidden="true" className="sf-ext">
-                      ↗
-                    </span>
-                    <span className="sr-only"> (opens in a new tab)</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </div>
     </footer>
   );

@@ -1,7 +1,5 @@
 import type { Address } from "viem";
-import { animrTradeGuardAddress } from "@/lib/contracts/animr-trade-guard";
 import { appConfig, trading } from "@/lib/config";
-import { ERC6551_REGISTRY_ADDRESS } from "@/lib/erc6551";
 import { explorerAddressUrl } from "@/lib/format";
 import { HEIST_TITLE } from "@/lib/heist/config";
 
@@ -43,10 +41,6 @@ export const footerCopy = {
   description:
     // A no-break hyphen keeps "ERC-6551" on one line.
     "Every Chog Genesis NFT is a trader with its own ERC\u20116551 wallet on Monad. Its traits are its strategy and the $CHOG market keeps score. An opt-in AI trades through a guard that can never withdraw.",
-  /** The one consolidated honesty note: what is simulated, what is real. */
-  honesty:
-    "Simulated: League, Versus, Time Machine and Daily Bell results replay real hourly $CHOG candles with the pool's 1% fee and price impact. Points have no cash value. Real: every Chog's ERC-6551 wallet and AnimrTradeGuard on Monad mainnet; a Chog's AI trades on-chain only if its holder opts in.",
-  credit: ["© 2026 Animr", "Built for Chogathon 2026 on Monad", "Not affiliated with Chog"],
 } as const;
 
 export const footerSocials: readonly { label: string; href: string; icon: "github" }[] = [
@@ -91,8 +85,3 @@ export const footerColumns: readonly FooterColumn[] = [
   },
 ];
 
-/** The bottom bar's contract chips, each linking to the explorer. */
-export const footerContracts: readonly { label: string; address: Address; href: string }[] = [
-  { label: "ERC-6551 registry", address: ERC6551_REGISTRY_ADDRESS as Address },
-  ...(animrTradeGuardAddress ? [{ label: "AnimrTradeGuard", address: animrTradeGuardAddress }] : []),
-].map((c) => ({ ...c, href: explorerAddressUrl(c.address) ?? `${explorerUrl}/address/${c.address}` }));
