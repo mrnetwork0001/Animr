@@ -5,8 +5,9 @@ import { ERC6551_REGISTRY_ADDRESS } from "@/lib/erc6551";
 import { explorerAddressUrl, shortAddress } from "@/lib/format";
 
 /**
- * The app footer's facts, for AppShell's `footerExtra` slot (app/(app)/layout.tsx and the root 404): the honesty note
- * on what is simulated and what is live, and the contracts with explorer links. Server markup, no client code. The
+ * The app footer's facts, for AppShell's `footerExtra` slot (app/(app)/layout.tsx and the root 404): the app's one
+ * consolidated honesty note (what is simulated, what is real), and the contracts with explorer links. Pages keep at
+ * most a short "Simulated" / "Points only" label and leave the long caveats to this note. Server markup, no client code. The
  * shell's own footer line already carries the build credit and "Not affiliated with Chog".
  */
 export function AppFooterFacts() {
@@ -17,9 +18,9 @@ export function AppFooterFacts() {
   return (
     <>
       <p className="m-0 text-pretty">
-        League, Rewind and Bell numbers are simulated on real $CHOG candles (1% fee + impact); Bell points are never
-        money. Chog wallets and AnimrTradeGuard are live on Monad
-        mainnet: a Chog&apos;s AI trades on-chain only if its holder opts in, and paper-trades at live prices otherwise.
+        Simulated: League, Versus, Time Machine and Daily Bell results replay real hourly $CHOG candles with the
+        pool&apos;s 1% fee and price impact. Points have no cash value. Real: every Chog&apos;s ERC-6551 wallet and
+        AnimrTradeGuard on Monad mainnet; a Chog&apos;s AI trades on-chain only if its holder opts in.
       </p>
       <ul className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
         {contracts.map(({ label, address }) => {

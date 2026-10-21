@@ -46,11 +46,17 @@ import { ConnectButton } from "@/components/connect-button";
   `<Suspense>`, because it suspends while prerendering `/chog/[tokenId]` under Cache Components.
   Sections map to paths like this:
 
-  | Nav item  | Paths       |
-  | --------- | ----------- |
-  | Dashboard | /app, /chog |
-  | League    | /league, /traits |
-  | Rewind    | /versus, /replay |
+  | Nav item (short on phones) | Paths |
+  | --- | --- |
+  | Your Chogs (Chogs) | /app, /chog |
+  | League | /league, /traits, /leaderboard |
+  | Versus | /versus, /replay |
+  | Daily Bell (Bell) | /bell |
+  | Rob this Chog (Heist) | /heist |
+  | Guard | /guard |
+
+  Footer links: Stats, Traits, FAQ (/#faq), How it works (/#how-it-works). The footer note
+  (`components/app-footer.tsx`) is the app's one consolidated honesty statement.
 
 - **Cascade.** Component classes live in `@layer components`, so a Tailwind utility on the same
   element wins (`className="v2-card p-0"` works). Layout helpers (`v2-stack`, `v2-row`, `v2-grid`)
@@ -66,7 +72,7 @@ import { ConnectButton } from "@/components/connect-button";
 | Lines | `line` (white 16%, the hairline), `line-soft` (9%, row separators), `line-strong` (hover), `line-teal` (focus and hover on cards and inputs) |
 | Glass | `glass-fill` (white 2%), `glass-fill-hover`, `glass-filter` (`blur(8px) brightness(1.15) saturate(.8)`), `glass-glow` (inset highlight and faint inner glow) |
 | Gradients | `grad-primary` (violet pill), `grad-primary-hover`, `grad-tile` (logo tile), `grad-title` (h1 ink fade), `grad-meter` (violet to teal) |
-| Shadows | `shadow-card`, `shadow-pop`, `glow-violet`, `glow-teal` |
+| Shadows | `shadow-card`, `shadow-pop`, `glow-violet` (only on `.v2-btn--hero`), `glow-teal` (unused by components) |
 | Charts | `chart-1` (teal, the subject), `chart-2` (violet, the benchmark: hold, opponent), `chart-3` and `chart-4` (neutrals), `chart-up`, `chart-down`, `chart-grid`, `chart-axis`, `chart-area-teal`, `chart-area-violet` |
 | Radii | `r-xs 8`, `r-sm 10`, `r-md 14` (inputs, toasts), `r-lg 18` (cards, tables), `r-xl 24`, `r-pill` |
 | Spacing | `s-1` to `s-20` (4px steps: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80) |
@@ -99,13 +105,13 @@ when you touch them.
 | --- | --- |
 | Frame | `v2-page`, `v2-main`, `v2-shell` (`--narrow`, `--wide`), `v2-section` (56–88px top rhythm), `v2-stack` (`--lg`), `v2-row`, `v2-grid` (auto-fill 280px), `v2-grid--2`, `--3`, `--4`, `v2-sr`, `v2-skip`, `v2-hide-sm`, `v2-show-sm` |
 | Header and footer | `v2-header`, `v2-header-bar`, `v2-brand`, `v2-brand-tile`, `v2-wordmark`, `v2-wordmark-ai`, `v2-nav`, `v2-nav-list`, `v2-nav-link` (active state from `[aria-current]` or `.is-active`: glass pill and teal tick), `v2-header-actions`, `v2-footer`, `v2-footer-row`, `v2-footer-links`, `v2-footer-link`, `v2-footer-tag`, `v2-footer-note` |
-| Type | `v2-kicker` (`--dot`), `v2-overline` (tracked caps, "BUILT ON"), `v2-h1` (`--fade`, or a `.v2-ink-fade` child), `v2-h2`, `v2-h3`, `v2-lead`, `v2-body`, `v2-muted`, `v2-faint`, `v2-note`, `v2-num` (DM Sans tabular), `v2-mono`, `v2-up`, `v2-down`, `v2-link` |
+| Type | `v2-kicker` (`--dot`, live states only), `v2-overline` (13.5px sentence-case label in faint grey), `v2-th` (11px tracked caps: table column headers only, for header cells outside a `v2-table`), `v2-h1` (`--fade`, or a `.v2-ink-fade` child), `v2-h2`, `v2-h3`, `v2-lead`, `v2-body`, `v2-muted`, `v2-faint`, `v2-note`, `v2-num` (DM Sans tabular), `v2-mono`, `v2-up`, `v2-down`, `v2-link` |
 | Headers | `v2-page-header` (`--split`), `-copy`, `-actions`, `-aside`; `v2-section-title`, `-copy` |
 | Glass | `v2-glass`, `v2-glass--strong` (menus, popovers, sticky bars) |
 | Cards | `v2-card` (`--tight`, `--roomy`, `--flush`, `--feature`, `--interactive`; `a.v2-card` lifts and turns teal on hover), `v2-card-head`, `v2-card-title`, `v2-card-body`, `v2-card-foot` |
-| Icons and art | `v2-icon-tile` (`--sm 36`, default 48, `--lg 63`, `--violet`), `v2-avatar` (`--lg 96`, `--xl 168`) |
-| Buttons | `v2-btn-primary`, `v2-btn-glass`, `v2-btn-ghost`, plus `v2-btn--sm 36`, `--lg 56`, `--block`, `--icon`, `v2-btn-icon` (svg inside). `:disabled` and `[aria-disabled]` are handled |
-| Labels | `v2-chip` (`[aria-pressed]` or `.is-active` turns teal), `v2-badge` (`--success`, `--warning`, `--danger`, `--teal`, `--violet`, `--dot`, `--live` pulse) |
+| Icons and art | `v2-icon-tile` (flat: 4% fill and a hairline, no glow; `--sm 36`, default 48, `--lg 63`, `--violet`), `v2-avatar` (`--lg 96`, `--xl 168`) |
+| Buttons | `v2-btn-primary` (flat violet), `v2-btn--hero` (add to `v2-btn-primary` for the violet glow: the page's one main CTA), `v2-btn-glass`, `v2-btn-ghost`, plus `v2-btn--sm 36`, `--lg 56`, `--block`, `--icon`, `v2-btn-icon` (svg inside). `:disabled` and `[aria-disabled]` are handled |
+| Labels | `v2-chip` (`[aria-pressed]` or `.is-active` turns teal), `v2-badge` (sentence case, 12px; `--success`, `--warning`, `--danger`, `--teal`, `--violet`, `--dot`, `--live` pulse) |
 | Data | `v2-stats` (`--sm`, `--boxed`, `--inline`), `v2-stat`, `v2-stat-label`, `v2-stat-value`, `v2-stat-hint`; `v2-meter > span` (`--v2-value: 62%`); `v2-kv` (`<dl>` of `<div><dt><dd>`); `v2-table-wrap`, `v2-table` (`th`/`td.is-num`, `td.is-rank`, `tr.is-highlight`, `v2-table-cell-chog`); `v2-chart` (an svg `.grid` line picks up `chart-grid`, text picks up `chart-axis`), `v2-legend`, `v2-legend-swatch` (`--v2-swatch`) |
 | Forms | `v2-field`, `v2-label`, `v2-help`, `v2-input` (`--lg`, `[aria-invalid]`), `v2-select`, `v2-input-group` (input and button in one pill) |
 | Tabs | `v2-tabs`, `v2-tab` (active: `[aria-selected=true]`, `[aria-current]`, `[aria-pressed=true]` or `.is-active`, which shows the violet pill), `v2-tab-count` |
@@ -121,36 +127,42 @@ All are server-safe; they have no hooks, so they also render inside client compo
 | Component | Props |
 | --- | --- |
 | `AppShell` | `children`, `wallet?`, `footerNote?`, `footerExtra?`, `activeHref?` (preview only). Also exported: `V2Header`, `V2Footer`, `V2Brand`, `V2NavLinks` (client), `v2FontClassName`, `V2_NAV_LINKS`, `V2_FOOTER_LINKS`, `isV2NavActive` |
-| `PageHeader` | `kicker?`, `title`, `lead?`, `actions?`, `aside?` (a right column from 1024px), `fade?` (true). Renders the page's single `<h1>` |
+| `Kicker` | `dot?` (live states only). Sentence case, no dot by default |
+| `PageHeader` | `kicker?` (rendered without a dot), `title`, `lead?`, `actions?`, `aside?` (a right column from 1024px), `fade?` (true). Renders the page's single `<h1>` |
 | `SectionTitle` | `kicker?`, `title`, `description?`, `action?`, `id?`, `as?: "h2" \| "h3"` |
 | `GlassCard` | `href?` (becomes a `Link` that lifts on hover), `as?` (div, section, article, li, aside), `padding?` (tight, default, roomy, flush), `feature?`, `interactive?`, `className?`, `style?`, `id?`, aria labels |
 | `FeatureCard` | The hero card: `icon`, `kicker`, `title`, `body?`, `href?`, `tone?` (teal or violet), `footer?` |
 | `IconTile` | `children` (an icon), `size?` (sm, md, lg), `tone?` |
 | `StatRow` | `stats: { label, value, spoken?, hint?, tone?: "up" \| "down", key? }[]`, `size?` (md or sm), `boxed?`, `inline?` |
 | `Meter` | `value` (0..1), `label` |
-| `PillLink` | `href`, `variant?` (primary, glass, ghost), `size?` (sm, md, lg), `block?`, `arrow?`, `external?` |
+| `PillLink` | `href`, `variant?` (primary, hero, glass, ghost; `hero` = primary + glow, once per page), `size?` (sm, md, lg), `block?`, `arrow?`, `external?` |
 | `PillButton` | `<button>` props plus `variant`, `size`, `block`, `arrow` |
-| `pillClass(variant, size, block)` | The class string for elements these helpers don't render. For example `<RandomChog className={pillClass()}>`, or a form submit button |
-| `Badge` | `tone?` (neutral, success, warning, danger, teal, violet), `dot?`, `live?` |
+| `pillClass(variant, size, block)` | `pillClass("hero")` gives `v2-btn-primary v2-btn--hero`. The class string for elements these helpers don't render. For example `<RandomChog className={pillClass()}>`, or a form submit button |
+| `Badge` | `tone?` (neutral, success, warning, danger, teal, violet), `dot?`, `live?`. Sentence case. Status only: a trading style in a table or list is plain muted text, not a badge |
 | `Chip` | `href?`, `active?` |
 | `TabLinks` | `items: { href, label, count?, active? }[]`, `label` (the nav name). For state tabs, use `.v2-tabs` with `button.v2-tab[role=tab][aria-selected]` |
 | `EmptyState` | `icon?`, `title`, `body?`, `actions?` |
 | `Skeleton` | `variant?` (block, text, title, circle, card), `style`, `className` |
 | `Divider` | `label?` |
 | `Toast` | `title`, `children`, `tone?` (info, success, warning, danger), `action?`. Put toasts in `<div className="v2-toast-region" aria-live="polite">` |
-| Icons | Use these on a 32 grid inside `IconTile`: `GenomeIcon`, `GuardIcon` (from the hero), `LeagueIcon`, `RewindIcon`, `BellIcon`, `MaskIcon`, `PulseIcon`, `WalletIcon`, `ChartIcon`, `SparkIcon`, `SearchIcon`. For inline use (20 grid): `ArrowRightIcon`, `ExternalIcon` |
+| Icons | Icon tiles go only on cards that navigate to a feature (landing verbs, 404 shortcuts); body cards, lists, locks, guarantees and receipts get none. Use these on a 32 grid inside `IconTile`: `GenomeIcon`, `GuardIcon` (from the hero), `LeagueIcon`, `RewindIcon`, `BellIcon`, `MaskIcon`, `PulseIcon`, `WalletIcon`, `ChartIcon`, `SparkIcon`, `SearchIcon`. For inline use (20 grid): `ArrowRightIcon`, `ExternalIcon` |
 
 ## Do and don't
 
 **Do**
 
 - Use one `PageHeader` (one h1) per page.
-- Use teal kickers above every section title.
+- Add a kicker only when it adds information the title doesn't. At most one per section, never a
+  "·" chain, never a restatement of the title. No dot unless the state is genuinely live.
 - Set every number of note in DM Sans: `StatRow`, `v2-num`, `td.is-num`.
 - Keep surfaces to the glass recipe: a 2% fill and a 16% hairline. Depth comes from blur and the
   inner glow, not from drop shadows.
 - Use one primary (violet) pill per view, the action that matters. Everything else is glass or
-  ghost.
+  ghost. Glow belongs only to the page's one main CTA (`variant="hero"`) and the hero art: never on
+  icon tiles, the header wallet button, badges, cards or numerals.
+- Write labels, badges and overlines in sentence case. Tracked capitals are for table column headers
+  only.
+- Say it once: one short "Simulated" / "Points only" label per page; long caveats live in the footer.
 - Colour charts with teal for the subject and violet (dashed) for the benchmark. Grid lines at
   `chart-grid`, axis text in `faint`. Draw at most one glow, on the subject line.
 - Use `.v2-up` and `.v2-down` (green and red) only for signed changes. Teal is not "good".
@@ -161,7 +173,8 @@ All are server-safe; they have no hooks, so they also render inside client compo
 
 **Don't**
 
-- Don't use the old purple background (`#0e0b1e`), Geist for headings, or uppercase tracked eyebrows.
+- Don't use the old purple background (`#0e0b1e`), Geist for headings, or uppercase tracked eyebrows,
+  overlines or badges.
   `.eyebrow` is bridged; replace it with `Kicker`.
 - Don't use bright solid card fills, coloured borders on resting cards, or more than one feature
   card per screen.
@@ -180,7 +193,7 @@ Every page uses the same frame: `AppShell` → `.v2-shell` → `PageHeader` → 
 each with a `SectionTitle`. What makes each page distinct is its signature data visual. The palette
 stays the same everywhere.
 
-### `/app`: Dashboard (Dashboard, Your Chogs, lookup)
+### `/app`: Your Chogs (lookup, Your Chogs)
 
 - **Header:** a `PageHeader` with kicker "Explore any Chog · no wallet needed" and h1 "Find any
   Chog's DNA, wallet and AI".
@@ -228,7 +241,7 @@ stays the same everywhere.
   trade log in `v2-table` with dates in `faint`, amounts `is-num`, and side as a `Badge` (Buy is
   teal, Sell is violet).
 
-### `/versus` and `/versus/[id]`: Rewind
+### `/versus` and `/versus/[id]`: Versus
 
 - **Header:** kicker "Rewind", h1 "Two Chogs. One chart. Who wins?".
 - **Pick two:** two glass slots with a "VS" between them, set in DM Sans 380 at about 64px in
@@ -287,7 +300,7 @@ stays the same everywhere.
   - Guard limits go in `v2-field`/`v2-input` pairs.
   - Transaction progress and errors appear as `Toast`s.
 
-### `/leaderboard`: Live agents
+### `/leaderboard`: Claimed AIs (a League tab, not in the main nav)
 
 - **Header:** kicker "Live agents" with `Badge live` "On-chain". The h1 is "The AIs trading right
   now". The aside is a boxed `StatRow` (agents live, $CHOG under management, 24h trades).
@@ -321,11 +334,11 @@ stays the same everywhere.
 
 - Wrap the page in `v2-page ${v2FontClassName}`, using `V2Header` without a wallet and
   `V2Footer`. It must not import wagmi.
-- Inside `v2-shell--narrow`: a big `v2-num` "404" in `faint` at about 120px, with the grid behind
-  it.
-- An h1 "This page isn't on the chart", a lead, and pills "Dashboard" (primary) and "Random Chog"
-  (glass).
-- Then a `v2-grid--3` of `FeatureCard` shortcuts: League, Rewind, Daily Bell.
+- Inside `v2-shell--narrow`: a big solid `v2-num` "404" in `faint` at about 120px (no gradient, no
+  glow), with the grid behind it.
+- An h1 "This page isn't on the chart", a lead, and pills "Look up a Chog" (primary) and "Random
+  Chog" (glass).
+- Then a `v2-grid--3` of `FeatureCard` shortcuts: League, Versus, Daily Bell.
 
 ## Charts: quick recipe
 

@@ -12,7 +12,10 @@ function cx(...parts: (string | false | null | undefined)[]): string {
 
 /* ----------------------------------------------------------------------------- type */
 
-/** The teal label above a title (the hero's "Trading DNA"). `dot` adds a glowing point. */
+/**
+ * A short sentence-case teal label above a title. Use one only when it adds information the title doesn't
+ * (never a "·" chain, never a restatement of the title). `dot` adds a flat point: genuinely live states only.
+ */
 export function Kicker({ children, dot, className }: { children: ReactNode; dot?: boolean; className?: string }) {
   return <p className={cx("v2-kicker", dot && "v2-kicker--dot", className)}>{children}</p>;
 }
@@ -35,7 +38,7 @@ export function PageHeader({ kicker, title, lead, actions, aside, fade = true, c
   return (
     <header className={cx("v2-page-header", aside != null && "v2-page-header--split", className)}>
       <div className="v2-page-header-copy">
-        {kicker != null && <Kicker dot>{kicker}</Kicker>}
+        {kicker != null && <Kicker>{kicker}</Kicker>}
         <h1 className={cx("v2-h1", fade && "v2-h1--fade")}>{title}</h1>
         {lead != null && <p className="v2-lead">{lead}</p>}
         {actions != null && <div className="v2-page-header-actions">{actions}</div>}
@@ -82,7 +85,7 @@ type IconTileProps = {
   className?: string;
 };
 
-/** The hero cards' glowing square for a glyph from components/v2/icons.tsx. Decorative. */
+/** A flat hairline square for a glyph from components/v2/icons.tsx. Decorative; only on cards that navigate to a feature. */
 export function IconTile({ children, size = "md", tone = "teal", className }: IconTileProps) {
   return (
     <span
@@ -160,7 +163,7 @@ type FeatureCardProps = {
   className?: string;
 };
 
-/** The hero's card, reusable: icon tile + teal kicker, then a title and optional body/footer. */
+/** A navigational feature card: icon tile + label, then a title and optional body/footer. */
 export function FeatureCard({ icon, kicker, title, body, href, tone, footer, className }: FeatureCardProps) {
   return (
     <GlassCard href={href} className={className}>
@@ -254,12 +257,20 @@ export function Meter({ value, label, className }: { value: number; label: strin
 
 /* ----------------------------------------------------------------------------- buttons */
 
-export type PillVariant = "primary" | "glass" | "ghost";
+/**
+ * `primary` is the violet pill (one per view). `hero` is the same pill with the violet glow: the one main CTA
+ * of a page. `glass` and `ghost` are everything else.
+ */
+export type PillVariant = "primary" | "hero" | "glass" | "ghost";
 export type PillSize = "sm" | "md" | "lg";
 
 /** The class string for a pill, for elements these helpers don't render (RandomChog, a form's submit). */
 export function pillClass(variant: PillVariant = "primary", size: PillSize = "md", block = false): string {
-  return cx(`v2-btn-${variant}`, size !== "md" && `v2-btn--${size}`, block && "v2-btn--block");
+  return cx(
+    variant === "hero" ? "v2-btn-primary v2-btn--hero" : `v2-btn-${variant}`,
+    size !== "md" && `v2-btn--${size}`,
+    block && "v2-btn--block",
+  );
 }
 
 type PillLinkProps = {
@@ -276,7 +287,7 @@ type PillLinkProps = {
   "aria-label"?: string;
 };
 
-/** A pill-shaped link: violet gradient (primary), dark glass (glass) or bare (ghost). */
+/** A pill-shaped link: violet gradient (primary; hero adds the glow), dark glass (glass) or bare (ghost). */
 export function PillLink({ href, children, variant, size, block, arrow, external, className, ...rest }: PillLinkProps) {
   const classes = cx(pillClass(variant, size, block), className);
   const content = (
@@ -320,7 +331,7 @@ export function PillButton({ variant, size, block, arrow, className, children, t
 
 export type BadgeTone = "neutral" | "success" | "warning" | "danger" | "teal" | "violet";
 
-/** Small status capsule (uppercase). `dot` adds a glowing point; `live` makes it pulse (motion-safe). */
+/** Small status capsule (sentence case). `dot` adds a flat point; `live` makes it pulse (motion-safe). */
 export function Badge({
   children,
   tone = "neutral",
@@ -403,7 +414,7 @@ type EmptyStateProps = {
   className?: string;
 };
 
-/** Nothing here yet: dashed glass, a teal icon tile, one sentence and the way forward. */
+/** Nothing here yet: dashed glass, an optional icon tile, one sentence and the way forward. */
 export function EmptyState({ icon, title, body, actions, className }: EmptyStateProps) {
   return (
     <div className={cx("v2-empty", className)}>
@@ -434,7 +445,7 @@ export function Skeleton({
   );
 }
 
-/** A faded hairline; with `label`, the hero's tracked-caps "BUILT ON" style label in the middle. */
+/** A faded hairline; with `label`, a small sentence-case label in the middle. */
 export function Divider({ label, className }: { label?: ReactNode; className?: string }) {
   if (label != null) {
     return (

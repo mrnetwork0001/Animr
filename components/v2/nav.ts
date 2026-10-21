@@ -13,21 +13,22 @@ export type V2NavLink = {
 };
 
 export const V2_NAV_LINKS: readonly V2NavLink[] = [
-  // A Chog's own page (/chog/N) is where the dashboard lookup leads.
-  { href: "/app", label: "Dashboard", short: "Dashboard", match: ["/app", "/chog"] },
-  { href: "/league", label: "League", short: "League", match: ["/league", "/traits"] },
-  // Rewind = Versus, with the one-Chog Time Machine at /replay.
-  { href: "/versus", label: "Rewind", short: "Rewind", match: ["/versus", "/replay"] },
+  // A Chog's own page (/chog/N) is where the lookup leads.
+  { href: "/app", label: "Your Chogs", short: "Chogs", match: ["/app", "/chog"] },
+  // Traits and the claimed-AI board (/leaderboard) are League tabs.
+  { href: "/league", label: "League", short: "League", match: ["/league", "/traits", "/leaderboard"] },
+  // Two-Chog races, plus the one-Chog Time Machine at /replay.
+  { href: "/versus", label: "Versus", short: "Versus", match: ["/versus", "/replay"] },
   { href: "/bell", label: "Daily Bell", short: "Bell", match: ["/bell"] },
-  { href: "/heist", label: HEIST_TITLE, short: HEIST_TITLE.split(" ")[0], match: ["/heist"] },
-  { href: "/leaderboard", label: "Live agents", short: "Agents", match: ["/leaderboard"] },
+  { href: "/heist", label: HEIST_TITLE, short: "Heist", match: ["/heist"] },
+  { href: "/guard", label: "Guard", short: "Guard", match: ["/guard"] },
 ];
 
 export const V2_FOOTER_LINKS: readonly { href: string; label: string }[] = [
   { href: "/stats", label: "Stats" },
   { href: "/traits", label: "Traits" },
-  { href: "/guard", label: "Guard" },
-  { href: "/", label: "About" },
+  { href: "/#faq", label: "FAQ" },
+  { href: "/#how-it-works", label: "How it works" },
 ];
 
 /** Whether `pathname` is inside the link's section (whole segments: "/app" isn't active on "/apple"). */

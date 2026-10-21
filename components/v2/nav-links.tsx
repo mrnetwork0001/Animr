@@ -33,7 +33,7 @@ function Links({ pathname }: { pathname: string | null }) {
             <Link
               href={link.href}
               className="v2-nav-link"
-              // "page" on the section's own page, "true" on its sub-pages (a replay is part of Rewind).
+              // "page" on the section's own page, "true" on its sub-pages (a replay is part of Versus).
               aria-current={active ? (pathname === link.href ? "page" : "true") : undefined}
             >
               {link.label === link.short ? (

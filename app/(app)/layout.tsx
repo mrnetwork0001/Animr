@@ -12,7 +12,7 @@ export const viewport: Viewport = {
 };
 
 /**
- * Chrome for the app: /app (dashboard), /leaderboard, /chog/[tokenId] and the rest of the app. The
+ * Chrome for the app: /app (Your Chogs), /league, /chog/[tokenId] and the rest of the app. The
  * landing page at / lives in app/(site) with its own header and footer; both groups share the root
  * layout, so moving between them stays a client-side navigation.
  *
