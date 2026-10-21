@@ -1,0 +1,68 @@
+import { type Address, getAddress } from "viem";
+import { MAINNET_TRADE_GUARD } from "@/lib/contracts/animr-trade-guard";
+import { chogLabel } from "@/lib/chog-id";
+import { appConfig, trading } from "@/lib/config";
+import { getChog } from "@/lib/dna/chogs";
+import { chogGenome, chogName } from "@/lib/dna/population";
+import {
+  ERC6551_REGISTRY_ADDRESS,
+  MULTICALL3_ADDRESS,
+  TOKENBOUND_ACCOUNT_V3_IMPLEMENTATION,
+  computeTokenBoundAccount,
+} from "@/lib/erc6551";
+
+// Public facts the docs quote, read from the code wherever the code holds them (lib/config.ts, lib/erc6551.ts,
+// lib/contracts/animr-trade-guard.ts) so the docs can't drift from the app. Server-only (data/chogs.json).
+// Addresses that live only in deployment records are written here once, each with where it was checked.
+
+export const LINKS = {
+  app: "https://useanimr.vercel.app",
+  repo: "https://github.com/mrnetwork0001/Animr",
+  explorer: appConfig.chain.blockExplorers?.default.url ?? "https://monadscan.com",
+  explorerName: appConfig.chain.blockExplorers?.default.name ?? "Monadscan",
+} as const;
+
+/** Tokenbound v0.3.1 AccountProxy: the implementation every Chog wallet address is derived from (lib/config.ts). */
+const ACCOUNT_PROXY: Address = "0x55266d75D1a14E4572138116aF39863Ed6596E7F";
+
+export const ADDR = {
+  chogNft: appConfig.chogNft ?? getAddress("0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763"),
+  chogToken: appConfig.chogToken ?? getAddress("0x350035555E10d9AfAF1566AaebfCeD5BA6C27777"),
+  wmon: trading?.wmon ?? getAddress("0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A"),
+  pool: trading?.pool ?? getAddress("0x116e7D070f1888B81E1E0324F56d6746B2D7d8f1"),
+  swapRouter: trading?.swapRouter ?? getAddress("0xdac97b6a3951641B177283028A8f428332333071"),
+  quoterV2: trading?.quoterV2 ?? getAddress("0xB430EDD2b54cdB3B25703fb3342ca3a88663A04D"),
+  registry: ERC6551_REGISTRY_ADDRESS as Address,
+  accountProxy: ACCOUNT_PROXY,
+  accountV3: TOKENBOUND_ACCOUNT_V3_IMPLEMENTATION as Address,
+  multicall3: MULTICALL3_ADDRESS as Address,
+  guard: MAINNET_TRADE_GUARD,
+  /** AnimrTrophies on Monad mainnet: name() = "Animr Trophies", minter() = the operator (eth_call, Oct 21 2026). */
+  trophies: getAddress("0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d"),
+  /** The AI operator key's public address: guard.operator() and trophies.minter() (eth_call, Oct 21 2026). */
+  operator: getAddress("0x2523bBdD941783C4E565180D2a1b18DE86319cC2"),
+  /** The guard's admin, the team's main wallet: guard.admin() (eth_call, Oct 21 2026). */
+  admin: getAddress("0xc742AdA2872a042dD36D2E706907b4036968960C"),
+  /** The House key (scripts only): deployed the contracts, pays Oracle Purses, owns AnimrTrophies (.env.example). */
+  houseKey: getAddress("0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259"),
+} as const;
+
+/** The House Chog's token id (HOUSE_CHOG_TOKEN_ID in production, submission/DEPLOY.md). */
+export const HOUSE_TOKEN_ID = 1399;
+
+const houseSnapshot = getChog(HOUSE_TOKEN_ID);
+
+export const HOUSE = {
+  tokenId: HOUSE_TOKEN_ID,
+  /** "CHOG #891 · token 1399". */
+  label: chogLabel(HOUSE_TOKEN_ID, { metadataName: houseSnapshot?.name }),
+  /** Persona name, as every page shows it first. */
+  name: houseSnapshot ? chogName(houseSnapshot) : null,
+  archetype: houseSnapshot ? chogGenome(houseSnapshot).archetype : null,
+  wallet: computeTokenBoundAccount({
+    implementation: ACCOUNT_PROXY,
+    tokenContract: getAddress("0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763"),
+    tokenId: BigInt(HOUSE_TOKEN_ID),
+    chainId: 143,
+  }),
+} as const;
