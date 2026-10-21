@@ -12,6 +12,7 @@ flowchart LR
     TBA["Chog wallet<br/>Tokenbound AccountProxy → AccountV3"]
     GUARD["AnimrTradeGuard<br/>trade() only"]
     POOL["Capricorn CL CHOG/WMON 1%<br/>(nad.fun's Uniswap v3 fork)"]
+    TROPHY["AnimrTrophies<br/>soulbound ERC-1155"]
   end
 
   subgraph Data["Data"]
@@ -47,6 +48,9 @@ flowchart LR
   GUARD -- "approve · swap · approve 0" --> TBA
   TBA <--> POOL
   HEIST -. "eth_call only, never broadcast" .-> TBA
+  BELL -- "award (operator key)" --> TROPHY
+  EXEC -- "first trade" --> TROPHY
+  TROPHY -- "mints into" --> TBA
   BELL --> KV
   EXEC --> KV
   HEIST --> KV
@@ -103,7 +107,7 @@ flowchart LR
 - **Windows.** 30d, 45d (the default) and max. Windows start at a UTC midnight, so they move once a day; the end moves every hour.
 - **League and Trait Alpha.** All 1,969 genomes are replayed over the same candles. Results are cached per *(genome version, window, last candle)*.
   - Trait Alpha is the median edge per trait value, for values carried by at least 10 Chogs.
-  - A snapshot from Oct 19 at 15:03 UTC (45d window, Sep 4 – Oct 19, 1,095 hourly candles): 39% of Chogs beat holding, the median edge was −8.9% and the best was +87.7%. These numbers move hourly (`GET /api/dna/population`).
+  - A snapshot from Oct 21 at 13:06 UTC (45d window, Sep 6 – Oct 21, 1,093 hourly candles): 38.1% of Chogs beat holding, the median edge was −4.0% and the best was +55.3%. These numbers move hourly: `GET /api/dna/population` returns them as `stats.beatHoldPct`, `stats.medianEdgePct` and `stats.bestEdgePct`, with the window in `window.label`.
   - The League can be filtered to claimed Chogs. An unclaimed Chog's own page shows it as *Wild · trading on instinct*.
 - **Versus** (`lib/rewind/*`, `app/api/versus/*`, `/versus`; the API contract is in `lib/rewind/types.ts`).
   - `GET /api/versus/random` picks a random pair and a drama-ranked 48-hour window; `GET /api/versus/new?a=&b=` lets a visitor choose the Chogs.
@@ -239,7 +243,7 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
 
 **Oracle hardening.** `GrowPoolOracle.s.sol` grows the pool's observation ring to 1,801 slots, so bursts of swaps can't push the 30-minute TWAP out of reach. It takes three permissionless transactions, about 30.7M gas in total. Done on mainnet on Oct 19: `observationCardinalityNext` is 1,801. The new slots fill as the ring wraps.
 
-**Tests.** There are 37 Foundry tests: happy path, every limit, sandwich and spot manipulation, TWAP fail-closed and the grown oracle, pause, disable, Tokenbound lock, NFT sale dormancy, nested ownership, the optional buy-only mode (including a fuzz test that every sale from a buy-only vault is refused), a fuzz test that a trade only moves tokens between the TBA and the pool, lying routers, approval reset, ceilings and gas. They run against live Monad mainnet state: `forge test --fork-url https://rpc.monad.xyz`. Against today's state all 37 pass. The pool's oracle was grown to 1,801 slots on Oct 19, so `test_TwapUnavailableFailsClosed` undoes the pending growth on its fork to prove an ungrown pool fails closed, and `test_GrownOracleKeepsTheTwapThroughBursts` checks the grown ring keeps the TWAP through a burst.
+**Tests.** There are 37 Foundry tests: happy path, every limit, sandwich and spot manipulation, TWAP fail-closed and the grown oracle, pause, disable, Tokenbound lock, NFT sale dormancy, nested ownership, the optional buy-only mode (including a fuzz test that every sale from a buy-only vault is refused), a fuzz test that a trade only moves tokens between the TBA and the pool, lying routers, approval reset, ceilings and gas. They run against live Monad mainnet state: `forge test --fork-url https://rpc.monad.xyz` (this also runs AnimrTrophies' 12 tests, §14). On Oct 19 all 37 passed. Against Oct 21 state there are 0 failures: 36 pass and `test_TwapUnavailableFailsClosed` skips by design. That test proves an ungrown pool fails closed, so it skips itself once the live pool's ring is past 256 slots, which it now is since the growth on Oct 19. `test_GrownOracleKeepsTheTwapThroughBursts` checks the grown ring keeps the TWAP through a burst.
 
 ## 9. Security model
 
@@ -249,6 +253,7 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
 | **Guard admin** (the team's main wallet `0xc742…960C`, handed over in two steps from the deployer key) | Pause all trading, rotate the operator, hand over admin in two steps | Move funds, trade, change limits, become the operator |
 | **NFT owner** | Everything on its wallet (Tokenbound), plus grant or revoke the guard, configure, disable and the optional buy-only mode | Act on someone else's Chog. Its settings stop applying the moment it sells. |
 | **Buyer of a Chog** | Receives the wallet and all its tokens, and signs to take over the AI | Inherit the seller's guard permissions or limits. They are dormant and must be re-enabled. |
+| **Trophy minter** (the same AI operator key) | `AnimrTrophies.award()`: one trophy of an enabled kind into a Chog's canonical Tokenbound wallet, once per award key | Mint anywhere else (the contract derives the wallet itself), mint a key twice, enable kinds, change the metadata URI, or move a trophy. Trophies are soulbound. |
 | **Heist visitor** | Chat with the defender and run the read-only proof | Cause any transaction. The defender has no tools or keys, and the proof is `eth_call` only. |
 | **The app server** | Run brains, ring and settle Bells, simulate | Sign as any NFT owner. Owner actions need the owner's own signature or transaction. |
 
@@ -281,7 +286,7 @@ There is no AI-generated Chog art.
 
 ## 12. Share cards and /stats
 
-- **Share cards** are `opengraph-image` routes rendered with `lib/og/*`: a Chog, today's Bell and each past Bell, the League, a replay and a Versus bout. They show the collection's own art.
+- **Share cards** are `opengraph-image` routes rendered with `lib/og/*`: a Chog, today's Bell and each past Bell, a Bell recap, the League, a replay and a Versus bout, plus a Breed card (`/api/breed/og`) and the Farcaster embed image (§15). They show the collection's own art.
 - **`/stats`** (`GET /api/stats`) shows live usage: Bells (live, settled, replayed), rides and riders, next-day return (D1) and streaks, fans and points, Versus bouts and picks, heist attempts, caves and refusals, claimed agents and decisions, 0G spend from receipts, and opt-outs.
 
 ## 13. Costs
@@ -295,4 +300,40 @@ There is no AI-generated Chog art.
 | `trade()` gas | Needs about 383k–455k gas. Monad charges the gas limit (500k–800k), so the operator wallet is budgeted at about 3 MON. |
 | Oracle growth | About 30.7M gas once (≈ 3.1 MON at 100 gwei), paid on Oct 19 |
 | Oracle Purse | `ORACLE_PURSE_CHOG` $CHOG (default 5,000) per settled live Bell, bought by the team, plus one ERC-20 transfer's gas from the House key |
+| Bell recap | One LLM call per settled Bell, written once and stored (template fallback) |
+| Ask this Chog | At most `CHOG_CHAT_DAILY_CALLS` 0G calls per day across all visitors (default 1,500, about $3); template answers beyond that |
+| Trophy mints | One `award()` per trophy from the operator key, with the gas limit set to the estimate + 10% |
 | Hosting | Vercel (daily crons on Hobby, so add an external hourly pulse), Upstash Redis, public Monad RPC, public GeckoTerminal and DexScreener APIs |
+
+## 14. Trophy cabinet: AnimrTrophies
+
+**Files:** `contracts/src/AnimrTrophies.sol`, `contracts/test/AnimrTrophies.t.sol`, `contracts/script/DeployTrophies.s.sol`, `lib/trophies/*`, `components/trophies/cabinet.tsx`, `app/api/trophies/*`. Deployed on Monad mainnet on Oct 21 at [`0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`](https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d). `minter()` is the AI operator key `0x2523…9cC2`.
+
+- **What it is.** A minimal, soulbound ERC-1155 ("Animr Trophies", `ANIMR-TROPHY`). The token ID is the trophy kind, and a balance counts how often a Chog won it. Trophies are minted into the Chog's own ERC-6551 wallet, so a Chog's history moves with the NFT.
+- **Kinds and triggers** (`lib/trophies/hooks.ts`):
+
+  | ID | Trophy | Awarded | How often |
+  | --- | --- | --- | --- |
+  | 1 | Best call | The Oracle of the Day of a settled **live** Bell (replayed Bells never award) | Once per UTC day |
+  | 2 | Most rekt | The furthest call of a settled live Bell | Once per UTC day |
+  | 3 | Survived a heist | To the House Chog, when its AI said yes and the mainnet proof showed the transfer refused | Once per UTC day |
+  | 4 | First real trade | A Chog's first trade through AnimrTradeGuard | Once per Chog |
+
+- **Only real Chog wallets.** `award(chogId, kind, context)` derives the canonical Tokenbound address itself (registry v0.3.1, AccountProxy, salt 0, this chain), so the minter can't mint anywhere else. The wallet doesn't have to exist yet: a counterfactual address holds the balance. An account that was created but not initialized is refused.
+- **Once per key.** The idempotency key is `keccak256(abi.encode(kind, context))`, where context is the UTC day as `YYYYMMDD` for daily kinds and the token ID for First real trade. The app checks `awarded` before sending, never throws, and retries a failed mint after a cool-down.
+- **Roles.** The owner (two-step transfer) enables kinds, sets the metadata URI and rotates the minter. The minter can only award. They can never be the same address.
+- **Metadata.** `/api/trophies/meta/{id}` serves ERC-1155 JSON and `/api/trophies/art/{id}` the badge art. The cabinet on each `/chog` page reads every kind in one `balanceOfBatch` call.
+- **Tests.** 12 Foundry tests fork live Monad mainnet (`forge test --match-contract AnimrTrophies --fork-url https://rpc.monad.xyz`): awards to counterfactual and deployed wallets, uninitialized and nonexistent Chogs, one mint per key, no transfers or approvals, trophies following the NFT on a sale, minter-only awards, owner admin, two-step ownership, the deployer-is-minter guard and metadata. 12 of 12 pass against Oct 21 state.
+- **Off switch.** With `NEXT_PUBLIC_TROPHIES_ADDRESS` unset, the cabinet and all awards are off. Minting also needs `OPERATOR_PRIVATE_KEY`.
+
+## 15. More surfaces
+
+- **Judge tour** (`/tour`, `components/tour/*`): nine steps, each opening a real page (a random brand-safe Chog, the League and Traits, the Time Machine, Versus, Breed, the Bell, the heist, the guard) with one line on why the NFT matters there. Links carry `?tour=N`, so each page offers the way back. Progress is a per-browser convenience only.
+- **Breed** (`/breed`, `lib/breed/*`): the child takes each of the 13 traits from one parent, chosen deterministically per pair (the same pair in either order makes the same child). Its genome comes from the same compiler (`lib/dna/genome.ts`), and parents and child replay the same real candles with the same engine. Simulated: nothing is minted or traded.
+- **Daily Bell recap** (`/bell/[day]/recap`, `GET /api/bell/recap/[day]`, `lib/bell/recap.ts`): a short write-up of a settled Bell in the Chogs' voices. The first request writes it once on 0G Compute (a deterministic template if the model fails, rewritten later), behind a KV lock, and stores it. Only Bells that really settled get one; a replayed Bell's recap says so.
+- **Ask this Chog** (on `/chog/[id]`, `POST /api/chog/[tokenId]/ask`, `lib/chog-chat/*`): one question at a time to a Chog's AI about its trades, its DNA and its record. It answers in text only and has no tools. 0G Compute up to `CHOG_CHAT_DAILY_CALLS` per day (default 1,500), then answers built from its stats. Per-IP limits: 12 per 10 minutes and 40 per day.
+- **Best traders for sale** (`/market`, `lib/market/*`): active Chog Genesis listings from OpenSea's API v2 (`OPENSEA_API_KEY`, or a free short-lived agent key requested on first use), cached for 5 minutes, joined with the League's simulated edge and rank, with a link to each listing. Hidden Chogs are left out.
+- **Docs** (`/docs`, `components/docs/*`): 19 pages in five groups (Getting started, Play, Own a Chog, Tech, Trust). Addresses and limits are read from the code (`components/docs/facts.ts`), so the docs can't drift from the app.
+- **Farcaster Mini App** (`app/.well-known/farcaster.json`, `lib/farcaster/embed.ts`, `components/farcaster/miniapp-ready.tsx`, `submission/FARCASTER.md`): every page carries `fc:miniapp` embed tags with today's Bell card and a **Ride a Chog** button that opens `/bell` inside the client. The manifest's account association comes from `FARCASTER_HEADER`, `FARCASTER_PAYLOAD` and `FARCASTER_SIGNATURE`.
+- **Log in** (`lib/privy.ts`, `components/privy/*`): Privy offers a wallet, email, Google, X or Discord, and creates an embedded wallet for users without one. A bridge keeps every wagmi hook working unchanged. Without `NEXT_PUBLIC_PRIVY_APP_ID` the header falls back to a plain wallet menu.
+- **Game-HUD header** (`components/v2/nav*.ts*`): a glyph per section plus live badges from real data: the countdown to the Bell's ride-window close or next ring, today's heist attempts, and how many Chogs the logged-in wallet holds. Badges load after hydration and pause while the tab is hidden.
