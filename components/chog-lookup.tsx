@@ -45,6 +45,7 @@ import { ConfigNotice } from "./config-notice";
 import { useIsClient } from "./connect-button";
 import { LookupDna } from "./dna/lookup-dna";
 import { chogThumbUrl } from "./dna/thumb-url";
+import { useHiddenChogs } from "./hidden-chogs";
 import { fetchLeaderboard, leaderboardKey } from "./leaderboard-api";
 
 const chainId = appConfig.chain.id;
@@ -153,7 +154,16 @@ const HEADER_CLASS = "lg:items-center";
  * It renders the page's header (one h1, from `header`) with the search box as its aside, then the result under it:
  * the input and the result share state, so both live in this one client component.
  */
-export function ChogLookup({ metadataIds, header }: { metadataIds?: readonly number[]; header: LookupHeader }) {
+export function ChogLookup({
+  metadataIds,
+  header,
+  examples = [],
+}: {
+  metadataIds?: readonly number[];
+  header: LookupHeader;
+  /** Featured Chogs to try, with their persona names computed on the server (flagged art already left out). */
+  examples?: readonly ExampleChog[];
+}) {
   const searchParams = useSearchParams();
   const [input, setInput] = useState(() => searchParams.get("id") ?? "");
   const parsed = parseLookup(input, metadataIds);
@@ -196,7 +206,7 @@ export function ChogLookup({ metadataIds, header }: { metadataIds?: readonly num
                   </button>
                   .
                 </p>
-                <ExampleChogs onPick={setInput} metadataIds={metadataIds} />
+                <ExampleChogs examples={examples} onPick={setInput} metadataIds={metadataIds} />
                 <AwakeNow metadataIds={metadataIds} />
               </>
             )}
@@ -228,17 +238,10 @@ export function ChogLookup({ metadataIds, header }: { metadataIds?: readonly num
 }
 
 /**
- * The Chogs the landing page features (components/landing/content.ts), one tap away, so a first
- * visit doesn't start from a blank form. Names are their AI names (stable: lib/agent/persona.ts).
- * Chog Genesis only: the caller shows them for the bounded collection.
+ * A Chog to try, one tap away, so a first visit doesn't start from a blank form: the page passes the landing page's
+ * featured Chogs with their persona names (lib/agent/persona.ts personaName). Chog Genesis only.
  */
-const EXAMPLE_CHOGS = [
-  { id: "1820", name: "Silver Whiskers" },
-  { id: "1342", name: "Clever Ears" },
-  { id: "241", name: "Clever Snout" },
-  { id: "255", name: "Sleepy Purr" },
-  { id: "45", name: "Diamond Mane" },
-] as const;
+export type ExampleChog = { id: string; name: string };
 
 /** Its marketplace name, "CHOG #1469", when the name number is known; "" otherwise. */
 const marketNameOf = (tokenId: string | number, metadataIds?: readonly number[]) => {
@@ -246,12 +249,24 @@ const marketNameOf = (tokenId: string | number, metadataIds?: readonly number[])
   return number ? `CHOG #${number}` : "";
 };
 
-function ExampleChogs({ onPick, metadataIds }: { onPick: (id: string) => void; metadataIds?: readonly number[] }) {
+function ExampleChogs({
+  examples,
+  onPick,
+  metadataIds,
+}: {
+  examples: readonly ExampleChog[];
+  onPick: (id: string) => void;
+  metadataIds?: readonly number[];
+}) {
+  // Holders can hide their Chog ("Hide my Chog"): never suggest one that is hidden.
+  const hidden = useHiddenChogs();
+  const shown = examples.filter((chog) => !hidden.has(Number(chog.id)));
+  if (shown.length === 0) return null;
   return (
     <div className="mt-5">
       <p className="m-0 text-[length:var(--v2-fs-sm)] text-[var(--v2-faint)]">Try</p>
       <ul className="m-0 mt-2 list-none divide-y divide-[var(--v2-line-soft)] p-0">
-        {EXAMPLE_CHOGS.map((chog) => (
+        {shown.map((chog) => (
           <li key={chog.id}>
             <button
               type="button"

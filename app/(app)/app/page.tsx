@@ -2,9 +2,12 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { BellStrip } from "@/components/bell/bell-strip";
-import { ChogLookup, ChogLookupSkeleton, type LookupHeader } from "@/components/chog-lookup";
+import { ChogLookup, ChogLookupSkeleton, type ExampleChog, type LookupHeader } from "@/components/chog-lookup";
+import { showcaseIds } from "@/components/landing/content";
 import { YourChogs } from "@/components/your-chogs";
-import { allChogs } from "@/lib/dna/chogs";
+import { personaName, sanitizeTraits } from "@/lib/agent/persona";
+import { FLAGGED_TOKEN_IDS } from "@/lib/brand-safety";
+import { allChogs, getChog } from "@/lib/dna/chogs";
 
 export const metadata: Metadata = {
   title: "Find a Chog",
@@ -38,12 +41,20 @@ const HEADER: LookupHeader = {
 export default function FindChogPage() {
   // Each token's marketplace number ("CHOG #1462" is token #1), so the lookup can point from one to the other.
   const metadataIds = allChogs().map((chog) => Number(chog.metadataId) || 0);
+  // The landing page's featured Chogs, named by the same persona code as everywhere else (never a hard-coded name).
+  const featured = [showcaseIds.hero, showcaseIds.dnaExample, ...showcaseIds.cards];
+  const examples: ExampleChog[] = featured.flatMap((tokenId) => {
+    const chog = getChog(tokenId);
+    return chog && !FLAGGED_TOKEN_IDS.has(tokenId)
+      ? [{ id: String(tokenId), name: personaName(String(tokenId), sanitizeTraits(chog.traits)) }]
+      : [];
+  });
   return (
     <div className="v2-shell">
       {/* The header with its search box, then the result. ChogLookup reads ?id= (useSearchParams), so it streams in
           behind this boundary; the fallback carries the same h1. */}
       <Suspense fallback={<ChogLookupSkeleton header={HEADER} />}>
-        <ChogLookup metadataIds={metadataIds} header={HEADER} />
+        <ChogLookup metadataIds={metadataIds} header={HEADER} examples={examples} />
       </Suspense>
 
       {/* Today's Bell: rides-open or next-Bell countdown and yesterday's best call, linking to /bell. */}
