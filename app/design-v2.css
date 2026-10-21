@@ -397,52 +397,135 @@
   }
 
   /* Phones and tablets: the links get their own row under the brand, a scrollable glass rail. */
+  /* The hamburger and its panel: phones and tablets only. */
+  .v2-menu {
+    display: none;
+  }
+  .v2-menu-button {
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--v2-line);
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.04);
+    color: var(--v2-ink);
+    cursor: pointer;
+    transition: background-color var(--v2-dur) ease, border-color var(--v2-dur) ease;
+  }
+  .v2-menu-button:hover,
+  .v2-menu-button[aria-expanded="true"] {
+    border-color: rgb(255 255 255 / 0.16);
+    background: rgb(255 255 255 / 0.08);
+  }
+  .v2-menu-button:focus-visible {
+    outline: 2px solid var(--v2-teal);
+    outline-offset: 2px;
+  }
+  .v2-menu-icon {
+    position: relative;
+    display: block;
+    width: 18px;
+    height: 12px;
+  }
+  .v2-menu-icon > span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.6px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform 180ms ease, opacity 180ms ease, top 180ms ease;
+  }
+  .v2-menu-icon > span:nth-child(1) {
+    top: 0;
+  }
+  .v2-menu-icon > span:nth-child(2) {
+    top: 5.2px;
+  }
+  .v2-menu-icon > span:nth-child(3) {
+    top: 10.4px;
+  }
+  .v2-menu-icon[data-open] > span:nth-child(1) {
+    top: 5.2px;
+    transform: rotate(45deg);
+  }
+  .v2-menu-icon[data-open] > span:nth-child(2) {
+    opacity: 0;
+  }
+  .v2-menu-icon[data-open] > span:nth-child(3) {
+    top: 5.2px;
+    transform: rotate(-45deg);
+  }
+  .v2-menu-panel {
+    position: absolute;
+    top: calc(100% + 1px);
+    right: 0;
+    left: 0;
+    z-index: 40;
+    padding: 10px var(--v2-gutter) 16px;
+    border-bottom: 1px solid var(--v2-line-soft);
+    /* Solid: a translucent panel inside the blurred header let the page show through. */
+    background-color: #0d0c11;
+    box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.8);
+  }
+  .v2-menu-panel[hidden] {
+    display: none;
+  }
+  .v2-menu-list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .v2-menu-link {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding-inline: 12px;
+    border-radius: 12px;
+    color: var(--v2-nav);
+    font-size: 16px;
+    text-decoration: none;
+    transition: background-color var(--v2-dur) ease, color var(--v2-dur) ease;
+  }
+  .v2-menu-link:hover {
+    color: var(--v2-ink);
+    background: rgb(255 255 255 / 0.04);
+  }
+  .v2-menu-link[aria-current] {
+    color: var(--v2-ink);
+    background: rgb(255 255 255 / 0.05);
+    box-shadow: inset 2px 0 0 var(--v2-teal);
+  }
+  .v2-menu-wallet {
+    display: flex;
+    margin-top: 10px;
+    padding-top: 14px;
+    border-top: 1px solid var(--v2-line-soft);
+  }
+
+  /* Phones and tablets: brand on the left, the hamburger on the right; links and wallet in its panel. */
   @media (max-width: 1099.98px) {
     .v2-header-bar {
+      position: relative;
       grid-template-columns: auto 1fr;
-      row-gap: 0;
-      padding-top: 10px;
     }
-    .v2-header-actions {
-      grid-column: 2;
-      grid-row: 1;
-    }
-    .v2-nav {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      margin-inline: calc(-1 * var(--v2-gutter));
-      padding: 8px var(--v2-gutter) 10px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--v2-gutter), #000 calc(100% - 24px), transparent);
-      mask-image: linear-gradient(90deg, transparent 0, #000 var(--v2-gutter), #000 calc(100% - 24px), transparent);
-    }
-    .v2-nav::-webkit-scrollbar {
+    .v2-nav,
+    .v2-header-wallet {
       display: none;
     }
-    .v2-nav-list {
-      justify-content: flex-start;
+    .v2-menu {
+      display: block;
     }
-    .v2-nav-link {
-      height: 34px;
-      padding-inline: 12px;
-      font-size: 14px;
+    /* The panel spans the header's full width (the bar's shell sets the containing block). */
+    .v2-header-bar > .v2-header-actions {
+      position: static;
     }
   }
   @media (max-width: 559.98px) {
     .v2-header-bar {
       --v2-header-h: 58px;
-    }
-    .v2-nav-full {
-      display: none;
-    }
-    .v2-nav-short {
-      display: inline;
-    }
-    /* Tight enough that all six short labels fit a 360px phone without scrolling. */
-    .v2-nav-link {
-      padding-inline: 8px;
-      font-size: 13.5px;
     }
     .v2-brand-logo {
       height: 36px;

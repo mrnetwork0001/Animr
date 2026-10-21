@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { heroDisplayFont, heroTextFont } from "@/components/hero/fonts";
 import { V2_FOOTER_LINKS } from "./nav";
+import { V2HeaderActions } from "./mobile-menu";
 import { V2NavLinks } from "./nav-links";
 import "@/app/design-v2.css";
 
@@ -62,11 +63,11 @@ export function V2Header({ wallet, activeHref }: { wallet?: ReactNode; activeHre
     <header className="v2-header">
       <div className="v2-shell v2-header-bar">
         <V2Brand />
-        {/* From 1100px inline between brand and wallet; below that, its own scrollable row. */}
+        {/* From 1100px inline between brand and wallet; below that, inside the hamburger panel. */}
         <nav className="v2-nav" aria-label="Main">
           <V2NavLinks activeHref={activeHref} />
         </nav>
-        <div className="v2-header-actions">{wallet}</div>
+        <V2HeaderActions wallet={wallet} />
       </div>
     </header>
   );
