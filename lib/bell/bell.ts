@@ -10,6 +10,7 @@ import { GENOME_VERSION, deriveGenome, genomeForecast } from "../dna/genome";
 import { type Candle, type CandleSeries, getCandleSeries, snapshotAt } from "../dna/history";
 import type { ChogSnapshot, Genome } from "../dna/types";
 import { getKv } from "../kv";
+import { awardBellTrophies } from "../trophies/hooks";
 import { loadVisibility } from "../visibility";
 import { BellError, streakEndingAt, topFans, withFanLock } from "./fans";
 import { bellPurse } from "./purse";
@@ -647,6 +648,9 @@ export async function maintainBells(options: { now?: number; deadline?: number }
         await writeSummary(rung);
       }
     }
+    // Trophies (lib/trophies): the winners of recent settled live Bells get theirs minted into their own wallets.
+    // Idempotent and never throws; a no-op until NEXT_PUBLIC_TROPHIES_ADDRESS is set.
+    await awardBellTrophies();
     return result;
   } finally {
     await kv.releaseLock(MAINTAIN_LOCK, token).catch(() => {});

@@ -8,6 +8,7 @@ import { addressIn, moderateNickname, redactAddresses, wallProblem } from "./mod
 import { operatorFromEnv } from "./operator";
 import { buildPersona, defenderProfile } from "./persona";
 import { busyProof, runHeistProof } from "./proof";
+import { scheduleHeistTrophy } from "../trophies/hooks";
 import {
   type DayStats,
   type HeistSession,
@@ -222,6 +223,9 @@ async function answerTurn(
     };
   }
   await saveSession(session);
+  // The AI said yes and Monad refused: the House Chog earns "Survived a heist" (lib/trophies, once a day, after the
+  // response; never throws).
+  if (refused) scheduleHeistTrophy(session.tokenId, now);
 
   const done = caved || turn >= session.patience;
   const totals = {
