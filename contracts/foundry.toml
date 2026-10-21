@@ -1,0 +1,31 @@
+# Animr on-chain contracts (Monad mainnet, chain 143).
+#
+#   forge build
+#   forge test --fork-url https://rpc.monad.xyz -vv     # fork tests against live Monad state
+#   OPERATOR_ADDRESS=0x... ADMIN_ADDRESS=0x... forge script script/DeployAnimrTradeGuard.s.sol --rpc-url monad \
+#     --sender <deployer>                               # dry run (no --broadcast)
+#   forge script script/GrowPoolOracle.s.sol --rpc-url monad --sender <any>   # dry run of the oracle hardening
+#
+# The public RPC keeps no deep history, so tests fork the latest block.
+
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+remappings = ["forge-std/=lib/forge-std/src/"]
+solc_version = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+
+[fuzz]
+runs = 32
+
+[rpc_endpoints]
+monad = "https://rpc.monad.xyz"
+monad2 = "https://rpc2.monad.xyz"
+
+[lint]
+lint_on_build = false

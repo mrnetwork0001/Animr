@@ -1,0 +1,7 @@
+# Foundry build output and caches
+out/
+cache/
+broadcast/
+
+# Local secrets (forge loads .env automatically)
+.env
