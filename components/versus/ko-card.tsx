@@ -164,7 +164,7 @@ export function KoCard({
                 label: "vs holding",
                 cell: (side: Side) => <span className={edgeTone(stats[side].edge)}>{signedPct(stats[side].edge)}</span>,
               },
-              { label: "Final $CHOG", cell: (side: Side) => formatChog(stats[side].stack) },
+              { label: `Final, per ${formatChog(startChog)} $CHOG (simulated)`, cell: (side: Side) => formatChog(stats[side].stack) },
               { label: "Fees, $CHOG", cell: (side: Side) => formatFee(stats[side].fees) },
               { label: "Trades", cell: (side: Side) => stats[side].trades },
             ].map((row) => (

@@ -4,7 +4,7 @@ import { getVersusCounts } from "@/lib/rewind/counters";
 import type { VersusStats } from "@/lib/rewind/types";
 import { CACHE_STATS, LIMITS, json, versusErrorResponse } from "../http";
 
-/** VERSUS totals for /stats: fresh bouts dealt and first picks recorded, across every server. */
+/** VERSUS totals for /stats: bouts someone picked a winner in, and first picks recorded, across every server. */
 export async function GET(request: Request) {
   await connection();
   const limited = await rateLimit(request, "versus-stats", LIMITS.stats);

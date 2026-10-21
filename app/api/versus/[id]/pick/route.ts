@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { fanIdentity, jsonBody, rateLimit } from "@/lib/bell/http";
 import { DAY_MS } from "@/lib/bell/rules";
 import { getShownBout } from "@/lib/rewind/bout";
-import { countVersus } from "@/lib/rewind/counters";
+import { countPickedBout, countVersus } from "@/lib/rewind/counters";
 import { VersusError } from "@/lib/rewind/errors";
 import { isBoutId } from "@/lib/rewind/id";
 import { getVersusRecord, recordPick } from "@/lib/rewind/picks";
@@ -34,7 +34,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/versus/[id]
       if (capped) return capped;
     }
     const { first, response } = await recordPick(fanId, bout, fighter);
-    if (first) after(() => countVersus("picks"));
+    if (first) after(() => Promise.all([countVersus("picks"), countPickedBout(id)]));
     return json(response satisfies VersusPickResponse, NO_STORE);
   } catch (error) {
     return versusErrorResponse(error, "Couldn't record your pick. Try again.");

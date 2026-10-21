@@ -2,17 +2,20 @@ import { randomUUID } from "node:crypto";
 import { getKv } from "../kv";
 import type { VersusStats } from "./types";
 
-// VERSUS totals for /stats, in lib/kv.ts (Redis stores them as animr:<namespace>:versus:count:*):
-//   animr:versus:count:bouts   hash  server instance id -> fresh bouts that instance dealt (/random, /new)
+// VERSUS totals for /stats, in lib/kv.ts (Redis stores them as animr:<namespace>:versus:*):
+//   animr:versus:picked        hash  bout id -> 1, once anyone picked a winner in it (HSETNX: each bout counts once)
 //   animr:versus:count:picks   hash  server instance id -> first picks that instance recorded
-// Each instance only ever writes its own field (its running total), so concurrent instances never lose each
-// other's counts without needing INCRBY (lib/kv.ts counters are in-memory in the file backend). The total is
-// the sum of the fields: read it with getVersusCounts() (or GET /api/versus/stats).
+// Only picked bouts count as bouts: dealing one (/random, /new) is a GET that bots and prefetches also make.
+// For picks, each instance only ever writes its own field (its running total), so concurrent instances never lose
+// each other's counts without needing INCRBY (lib/kv.ts counters are in-memory in the file backend). The total is
+// the sum of the fields: read both with getVersusCounts() (or GET /api/versus/stats).
 
 export const VERSUS_COUNT_KEYS = {
-  bouts: "animr:versus:count:bouts",
   picks: "animr:versus:count:picks",
 } as const;
+
+/** Bouts someone picked a winner in (field = bout id). */
+export const VERSUS_PICKED_KEY = "animr:versus:picked";
 
 export type VersusCounter = keyof typeof VERSUS_COUNT_KEYS;
 
@@ -30,9 +33,9 @@ const globalForCounts = globalThis as typeof globalThis & { __animrVersusCounts?
 function local(): Local {
   return (globalForCounts.__animrVersusCounts ??= {
     instance: randomUUID(),
-    totals: { bouts: 0, picks: 0 },
+    totals: { picks: 0 },
     inflight: {},
-    dirty: { bouts: false, picks: false },
+    dirty: { picks: false },
   });
 }
 
@@ -60,7 +63,16 @@ export function countVersus(counter: VersusCounter): Promise<void> {
   return run;
 }
 
-/** Bouts dealt and picks recorded, summed over every server instance. */
+/** Marks `boutId` as picked (a no-op after its first pick). Never throws; call it from after(). */
+export async function countPickedBout(boutId: string): Promise<void> {
+  try {
+    await getKv().hsetnx(VERSUS_PICKED_KEY, boutId, 1);
+  } catch (error) {
+    console.warn("[animr] VERSUS: couldn't mark a picked bout:", (error as Error).message);
+  }
+}
+
+/** Picked bouts, and first picks recorded summed over every server instance. */
 export async function getVersusCounts(): Promise<VersusStats> {
   const kv = getKv();
   const mine = local();
@@ -74,6 +86,6 @@ export async function getVersusCounts(): Promise<VersusStats> {
     }
     return total;
   };
-  const [bouts, picks] = await Promise.all([sum("bouts"), sum("picks")]);
+  const [bouts, picks] = await Promise.all([kv.hlen(VERSUS_PICKED_KEY), sum("picks")]);
   return { bouts, picks };
 }

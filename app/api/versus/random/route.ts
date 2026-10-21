@@ -1,7 +1,6 @@
-import { after, connection } from "next/server";
+import { connection } from "next/server";
 import { rateLimit } from "@/lib/bell/http";
 import { randomBoutPreview } from "@/lib/rewind/bout";
-import { countVersus } from "@/lib/rewind/counters";
 import type { VersusBoutPreview } from "@/lib/rewind/types";
 import { loadVisibility } from "@/lib/visibility";
 import { LIMITS, NO_STORE, json, versusErrorResponse } from "../http";
@@ -16,7 +15,6 @@ export async function GET(request: Request) {
   if (limited) return limited;
   try {
     const preview = await randomBoutPreview(Math.random, (await loadVisibility()).hidden);
-    after(() => countVersus("bouts"));
     return json(preview satisfies VersusBoutPreview, NO_STORE);
   } catch (error) {
     return versusErrorResponse(error, "Couldn't set up a bout. Try again.");

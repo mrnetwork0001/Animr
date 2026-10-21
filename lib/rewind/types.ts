@@ -114,7 +114,7 @@ export type VersusPickResponse = {
 
 /** GET /api/versus/stats: totals across all servers. */
 export type VersusStats = {
-  /** Fresh bouts dealt by /random and /new. */
+  /** Bouts someone picked a winner in (each counted once). */
   bouts: number;
   /** First picks recorded. */
   picks: number;
