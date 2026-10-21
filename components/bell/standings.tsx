@@ -7,6 +7,7 @@ import { useFan, useStandings } from "./api";
 import { ChogAvatar, LoadError, SectionTitle, Skeleton } from "./bits";
 import { fanName, formatErrorPts, formatPoints, hitRate } from "./format";
 import { FlameIcon } from "./icons";
+import { useChogTag } from "./names";
 
 /** The podium in teal, then neutrals. */
 const RANK_TONE = ["text-[var(--v2-teal)]", "text-[var(--v2-kicker)]", "text-[var(--v2-violet-ink)]"];
@@ -22,8 +23,7 @@ export function SeasonStandings() {
     <section aria-label="Season standings">
       <SectionTitle
         compact
-        kicker="Season"
-        title="Standings"
+        title="Season standings"
         hint={tab === "chogs" ? "Chogs score every settled Bell, replays included." : "Fans score the Chogs they ride."}
       />
       <div className="v2-card v2-card--flush overflow-hidden">
@@ -87,29 +87,39 @@ function ChogTable({ rows }: { rows: ChogBellStanding[] }) {
   return (
     <ol>
       {rows.slice(0, TOP).map((row, i) => (
-        <li key={row.tokenId} className="border-b border-[var(--v2-line-soft)] last:border-0">
-          <Link
-            href={`/chog/${row.tokenId}`}
-            className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[rgb(255_255_255/0.03)]"
-          >
-            <Rank rank={row.rank ?? i + 1} />
-            <ChogAvatar src={row.image} tokenId={row.tokenId} className="size-9 rounded-[9px]" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-[var(--v2-ink)]">Chog #{row.tokenId}</span>
-              <span
-                className="block truncate text-[11px] text-[var(--v2-faint)]"
-                title={`${row.hits} of ${row.calls} calls hit · average error ${formatErrorPts(row.avgErrorPts)}`}
-              >
-                {hitRate(row.hits, row.calls)}% hits
-                {row.oracleWins > 0 && ` · ${row.oracleWins} Oracle ${row.oracleWins === 1 ? "win" : "wins"}`} · off{" "}
-                {formatErrorPts(row.avgErrorPts)}
-              </span>
-            </span>
-            <Points value={row.totalPoints} />
-          </Link>
-        </li>
+        <ChogRow key={row.tokenId} row={row} rank={row.rank ?? i + 1} />
       ))}
     </ol>
+  );
+}
+
+function ChogRow({ row, rank }: { row: ChogBellStanding; rank: number }) {
+  const tag = useChogTag(row.tokenId);
+  return (
+    <li className="border-b border-[var(--v2-line-soft)] last:border-0">
+      <Link
+        href={`/chog/${row.tokenId}`}
+        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[rgb(255_255_255/0.03)]"
+      >
+        <Rank rank={rank} />
+        <ChogAvatar src={row.image} tokenId={row.tokenId} className="size-9 rounded-[9px]" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium text-[var(--v2-ink)]">
+            {row.name || tag}
+            {row.name && tag && <span className="font-normal text-[var(--v2-faint)]"> · {tag}</span>}
+          </span>
+          <span
+            className="block truncate text-[11px] text-[var(--v2-faint)]"
+            title={`${row.hits} of ${row.calls} calls got the direction right${
+              row.oracleWins > 0 ? `; best call of the day ${row.oracleWins} ${row.oracleWins === 1 ? "time" : "times"}` : ""
+            }`}
+          >
+            {hitRate(row.hits, row.calls)}% hit rate · avg miss {formatErrorPts(row.avgErrorPts)}
+          </span>
+        </span>
+        <Points value={row.totalPoints} />
+      </Link>
+    </li>
   );
 }
 

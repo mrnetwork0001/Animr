@@ -5,12 +5,10 @@ import { type FormEvent, type ReactNode, useId, useState } from "react";
 import { useNow } from "@/components/decision-feed";
 import type { BellSummaryResponse, FanResponse, FanState } from "@/lib/bell/types";
 import { useChogBell, useFan, useSetNickname } from "./api";
-import { ChogAvatar, Countdown, Forecast, LABEL, LoadError, PointsNote, Skeleton, useBefore } from "./bits";
+import { ChogAvatar, Countdown, Forecast, LABEL, LoadError, Skeleton, useBefore } from "./bits";
 import { bellRingsAt, bellWhen, fanName, formatDay, formatPoints, formatUtcTime, parseDay } from "./format";
 import { FlameIcon } from "./icons";
-
-/** Where the "Replay a past Bell" mini-game sits on /bell (the fan card links to it when rides are closed). */
-export const REPLAY_GAME_ID = "replay-game";
+import { useChogTag, useChogTitle } from "./names";
 
 /** The visitor's fan card: a cookie identity (no wallet), points, streak and this Bell's ride. */
 export function FanPanel({ bell }: { bell?: BellSummaryResponse }) {
@@ -64,32 +62,36 @@ export function FanPanel({ bell }: { bell?: BellSummaryResponse }) {
         <div className="mt-6 border-t border-[var(--v2-line-soft)] pt-4">
           <h3 className={LABEL}>Your recent rides</h3>
           <ol className="mt-3 flex flex-wrap gap-2">
-            {history.map((ride) => {
-              // A ride booked on a Bell that hasn't rung yet has no page of its own.
-              const booked = ride.day === me.next?.day;
-              return (
-                <li key={ride.day}>
-                  <Link
-                    href={booked ? "/bell" : `/bell/${ride.day}`}
-                    className="v2-chip"
-                  >
-                    {formatDay(ride.day)} · Chog #{ride.tokenId} ·{" "}
-                    {typeof ride.points === "number" ? (
-                      <span className="v2-num text-[var(--v2-kicker)]">+{formatPoints(ride.points)} pts</span>
-                    ) : booked ? (
-                      <span className="text-[var(--v2-kicker)]">next Bell</span>
-                    ) : (
-                      <span className="text-[var(--v2-faint)]">settling</span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
+            {history.map((ride) => (
+              <RideChip key={ride.day} ride={ride} booked={ride.day === me.next?.day} />
+            ))}
           </ol>
         </div>
       )}
-      <PointsNote className="mt-5" />
     </section>
+  );
+}
+
+/** One past ride: its day, its Chog ("CHOG #1312") and the points it scored. */
+function RideChip({ ride, booked }: { ride: FanState["history"][number]; booked: boolean }) {
+  const tag = useChogTag(ride.tokenId);
+  return (
+    <li>
+      {/* A ride booked on a Bell that hasn't rung yet has no page of its own. */}
+      <Link href={booked ? "/bell" : `/bell/${ride.day}`} className="v2-chip">
+        {formatDay(ride.day)}
+        {tag && <span className="text-[var(--v2-nav)]">{tag}</span>}
+        {typeof ride.points === "number" ? (
+          <span className="text-[var(--v2-kicker)]">
+            <span className="v2-num">+{formatPoints(ride.points)}</span> points
+          </span>
+        ) : booked ? (
+          <span className="text-[var(--v2-kicker)]">next Bell</span>
+        ) : (
+          <span className="text-[var(--v2-faint)]">settling</span>
+        )}
+      </Link>
+    </li>
   );
 }
 
@@ -160,7 +162,9 @@ function Nickname({ fan }: { fan: FanState }) {
     <div className="min-w-0">
       <p className={LABEL}>Fan</p>
       <p className="mt-2 flex flex-wrap items-center gap-x-2">
-        <span className="v2-h3 truncate">{fanName(fan)}</span>
+        <span className="v2-h3 truncate" title="No wallet needed: this browser is your fan card.">
+          {fanName(fan)}
+        </span>
         <button
           type="button"
           onClick={() => {
@@ -172,31 +176,24 @@ function Nickname({ fan }: { fan: FanState }) {
           {fan.nickname ? "Rename" : "Pick a nickname"}
         </button>
       </p>
-      <p className="v2-note mt-1">No wallet needed: this browser is your fan card.</p>
     </div>
   );
 }
 
-function PlayPastBell() {
-  return (
-    <a href={`#${REPLAY_GAME_ID}`} className="v2-link">
-      Play a past Bell now ↓
-    </a>
-  );
-}
-
-/** A ride booked on the next Bell: "You're riding Chog #N at tomorrow's Bell", and when it rings. */
+/** A ride booked on the next Bell: "You're riding Silver Whiskers · CHOG #1312 at tomorrow's Bell", and when it rings. */
 function NextRide({ next, className = "" }: { next: NonNullable<FanState["next"]>; className?: string }) {
   const now = useNow();
   const ringsAt = bellRingsAt(next.day);
+  const call = useChogBell(next.tokenId).data?.today;
+  const title = useChogTitle(next.tokenId, call?.name);
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      <ChogAvatar tokenId={next.tokenId} className="size-10 rounded-xl" />
+      <ChogAvatar src={call?.image} tokenId={next.tokenId} className="size-10 rounded-xl" />
       <div className="min-w-0 text-sm text-[var(--v2-muted)]">
         <p>
           You&apos;re riding{" "}
           <Link href={`/chog/${next.tokenId}`} className="font-medium text-[var(--v2-ink)] hover:text-[var(--v2-kicker)]">
-            Chog #{next.tokenId}
+            {title}
           </Link>{" "}
           at {bellWhen(next.day, now)}.
         </p>
@@ -207,7 +204,7 @@ function NextRide({ next, className = "" }: { next: NonNullable<FanState["next"]
               the ring.
             </>
           ) : (
-            "Ding! It's ringing now: the calls land any minute."
+            "It's ringing now: the calls land any minute."
           )}
         </p>
       </div>
@@ -221,6 +218,7 @@ function ThisBell({ bell, fan }: { bell: BellSummaryResponse; fan: FanState }) {
   const riding = bell.kind === "live" && fan.ride?.day === bell.day ? fan.ride.tokenId : undefined;
   const chog = useChogBell(riding);
   const call = chog.data?.today;
+  const title = useChogTitle(riding ?? 0, call?.name);
   const ridesOpen = bell.kind === "live" && bell.status === "open" && beforeClose !== false;
 
   if (riding === undefined && !ridesOpen) {
@@ -231,19 +229,14 @@ function ThisBell({ bell, fan }: { bell: BellSummaryResponse; fan: FanState }) {
         {fan.next ? (
           <NextRide next={fan.next} className="mt-2" />
         ) : (
-          <p className="v2-body mt-2">
-            {bell.kind === "live"
-              ? "This Bell's rides are locked in. Pick a Chog below and it rides the next Bell (15:00 UTC)."
-              : "Live Bells ring at 15:00 UTC. Pick a Chog below and it rides the next one."}{" "}
-            Meanwhile: <PlayPastBell />
-          </p>
+          <p className="v2-body mt-2">No ride yet. Pick a Chog below and it rides the next Bell at 15:00 UTC.</p>
         )}
       </div>
     );
   }
   return (
     <div className="min-w-0 flex-1 basis-64">
-      <p className={LABEL}>Your ride · Bell of {formatDay(bell.day)}</p>
+      <p className={LABEL}>Your ride, Bell of {formatDay(bell.day)}</p>
       {riding !== undefined ? (
         <div className="mt-2 flex items-center gap-3">
           <ChogAvatar src={call?.image} tokenId={riding} className="size-10 rounded-xl" />
@@ -251,7 +244,7 @@ function ThisBell({ bell, fan }: { bell: BellSummaryResponse; fan: FanState }) {
             <p className="flex flex-wrap items-center gap-x-1.5">
               Riding
               <Link href={`/chog/${riding}`} className="font-medium text-[var(--v2-ink)] hover:text-[var(--v2-kicker)]">
-                Chog #{riding}
+                {title}
               </Link>
               {call && (
                 <>

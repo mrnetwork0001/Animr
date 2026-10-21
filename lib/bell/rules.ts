@@ -29,15 +29,14 @@ export const DAY_MS = 24 * HOUR_MS;
 export const BELL_COPY = {
   points: "Points only: a game score, never money.",
   settle: "Every call is settled by the real CHOG/WMON price 24h after the Bell.",
-  replay: "Replayed Bell: genome calls rebuilt from real $CHOG candles.",
-  genome: "Called by its trait genome.",
-  llm: "Called by its AI brain on 0G Compute.",
-  live: "Provisional: the Bell settles on the hourly close at its horizon.",
+  replay: "Replayed Bell: calls rebuilt from real past $CHOG candles.",
+  genome: "Called by its Trading DNA.",
+  llm: "Called by its AI agent on 0G Compute.",
+  live: "Provisional until the hourly close at the Bell's settlement.",
   scoring: "Points = max(0, 100 − 4 × miss in % points) + 20 for the right direction.",
-  ride: "Your ride counts from the first hourly close after you pick: its call is scored against $CHOG's move from then to the Bell's settlement.",
-  book: "Rides are never closed: once a Bell's ride window shuts, your pick rides the next Bell and counts from its ring.",
+  ride: "Your ride counts from the first hourly close after you pick, and scores when the call settles.",
   purse:
-    "Oracle Purse: after each live Bell settles, the team sends real $CHOG into the Oracle of the Day's own wallet. The purse belongs to the Chog, not to a fan.",
+    "After each live Bell settles, the team sends real $CHOG into the Best call's own wallet. The purse belongs to the Chog, not to a fan.",
 } as const;
 
 export function round(value: number, digits = 2): number {
@@ -159,7 +158,7 @@ export function boldest(calls: BellCall[], day: string, limit = 8, skip?: (token
 }
 
 /**
- * Oracle of the Day (closest call) and Most Rekt (furthest; the more confident, the more rekt), among
+ * Best call (closest) and Most Rekt (furthest; the more confident, the more rekt), among
  * the Chogs `skip` doesn't leave out (everyone when that leaves nobody).
  */
 export function extremes(calls: BellCall[], day: string, skip?: (tokenId: number) => boolean): { oracle?: BellCall; mostRekt?: BellCall } {

@@ -58,12 +58,10 @@
     border-radius: var(--v2-r-pill);
   }
   .bell-bull {
-    background: linear-gradient(90deg, rgb(159 240 236 / 0.55), var(--v2-teal));
-    box-shadow: 0 0 14px rgb(159 240 236 / 0.35);
+    background: rgb(159 240 236 / 0.75);
   }
   .bell-bear {
-    background: linear-gradient(90deg, var(--v2-violet-b), rgb(111 90 220 / 0.6));
-    box-shadow: 0 0 14px rgb(111 90 220 / 0.45);
+    background: rgb(139 120 236 / 0.75);
   }
   .bell-herd-count {
     font-family: var(--v2-font-display);
@@ -94,7 +92,7 @@
     line-height: 1.55;
     text-wrap: pretty;
   }
-  /* The Oracle / Most Rekt cards: a corner light in their tone, no coloured border. */
+  /* The Best call / Most Rekt cards: a corner light in their tone, no coloured border. */
   .bell-honour {
     position: relative;
     isolation: isolate;
@@ -150,19 +148,24 @@
     }
   }
 
-  /* HIT / MISS. */
-  .bell-stamp-mark {
-    display: inline-flex;
-    align-items: center;
-    height: 22px;
-    padding-inline: 8px;
-    border: 1px solid currentColor;
-    border-radius: 6px;
+  /* Hit / Miss: coloured text, no box. */
+  .bell-result {
     font-family: var(--v2-font-text);
-    font-size: 11px;
+    font-size: 12.5px;
     font-weight: 560;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+  }
+
+  /* A settled call's list row: avatar, name and quote, then the call and its Ride button on the right. */
+  .bell-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px 14px;
+    align-items: start;
+  }
+  .bell-row-side {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
   }
 }
 
@@ -171,11 +174,6 @@
   .bell-swing {
     transform-origin: 50% 10%;
     animation: bell-swing 2.6s ease-in-out infinite;
-  }
-
-  /* HIT / MISS stamps land with a thud. */
-  .bell-stamp {
-    animation: bell-stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
   }
 
   /* Histogram bars grow from the baseline. */
@@ -207,17 +205,6 @@
   }
   40% {
     transform: rotate(-4deg);
-  }
-}
-
-@keyframes bell-stamp {
-  from {
-    opacity: 0;
-    transform: scale(1.9) rotate(-14deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(-6deg);
   }
 }
 

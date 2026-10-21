@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChartIcon, FeatureCard, GlassCard, GuardIcon, SectionTitle, SparkIcon, WalletIcon } from "@/components/v2";
+import { GlassCard, SectionTitle } from "@/components/v2";
 import { GUARD_LIMIT_CEILINGS } from "@/lib/contracts/animr-trade-guard";
 import "./guard.css";
 
@@ -17,7 +17,7 @@ const CANNOT = [
   "Exceed the per-trade cap, daily budget or pace the holder set",
 ] as const;
 
-/** The four guarantees as hero-style cards. */
+/** The four guarantees: a title and a body each (no icons, no kickers: the title says it). */
 export function GuardGuarantees() {
   const { maxTradeBps, maxDailyBps, maxSlippageBps } = GUARD_LIMIT_CEILINGS;
   return (
@@ -29,28 +29,19 @@ export function GuardGuarantees() {
         description="The AI never holds the keys to a Chog's wallet. The holder grants one contract, AnimrTradeGuard, and that contract can only make bounded swaps whose output lands back in the same wallet."
       />
       <div className="v2-grid v2-grid--2">
-        <FeatureCard
-          icon={<GuardIcon />}
-          kicker="Trades, never withdraws"
+        <Guarantee
           title="No recipient, no token, no calldata"
           body="trade() takes none of them: every swap is CHOG ⇄ WMON on one fixed pool, and the output lands back in the same Chog wallet."
         />
-        <FeatureCard
-          icon={<ChartIcon />}
-          kicker="Bounded"
+        <Guarantee
           title="The holder's limits, under hard ceilings"
           body={`Each holder sets a per-trade cap, a daily budget and a pace. The contract caps them at ${pct(maxTradeBps)} of a balance per trade, ${pct(maxDailyBps)} of the vault per day and ${pct(maxSlippageBps)} slippage. Trading runs both ways; buy-only is an optional holder switch, off by default.`}
         />
-        <FeatureCard
-          icon={<SparkIcon />}
-          tone="violet"
-          kicker="Sandwich-resistant"
+        <Guarantee
           title="Every fill clears a TWAP floor"
           body="Each swap must clear a minimum output from the pool's 30-minute TWAP, so a sandwich can't drain a trade."
         />
-        <FeatureCard
-          icon={<WalletIcon />}
-          kicker="The holder stays in charge"
+        <Guarantee
           title="Off in one transaction, dormant on sale"
           body="The holder can disable the AI or revoke the guard at any time. Sell the Chog and the permission goes dormant: the buyer opts in under their own limits."
         />
@@ -86,6 +77,15 @@ export function GuardGuarantees() {
         </p>
       </GlassCard>
     </section>
+  );
+}
+
+function Guarantee({ title, body }: { title: string; body: string }) {
+  return (
+    <GlassCard>
+      <h3 className="v2-card-title">{title}</h3>
+      <p className="v2-card-body text-pretty">{body}</p>
+    </GlassCard>
   );
 }
 
@@ -126,7 +126,7 @@ const FLOW: { title: string; body: ReactNode }[] = [
 export function GuardFlow() {
   return (
     <section aria-labelledby="guard-flow" className="v2-section">
-      <SectionTitle id="guard-flow" kicker="How it works" title="From a decision to a swap" />
+      <SectionTitle id="guard-flow" title="From a decision to a swap" />
       <ol className="guard-flow">
         {FLOW.map((step, i) => (
           <li key={step.title}>

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useAccount } from "wagmi";
-import { EmptyState, MaskIcon, PillButton, Skeleton } from "@/components/v2";
+import { EmptyState, PillButton, Skeleton } from "@/components/v2";
 import type { HeistProof } from "@/lib/heist/types";
 import { useHeistState } from "./api";
 import { Chat, type WallTicket } from "./chat";
@@ -26,7 +26,6 @@ export function HeistRoom() {
     return (
       <div role="alert" className="v2-section">
         <EmptyState
-          icon={<MaskIcon />}
           title="Couldn't reach the House Chog."
           body="The vault is fine; the page just couldn't load. Try again in a moment."
           actions={

@@ -20,11 +20,6 @@
     gap: 8px;
     max-width: 220px;
   }
-  @media (max-width: 639.98px) {
-    .guard-strip > .v2-icon-tile {
-      display: none;
-    }
-  }
 
   /* Key/value rows whose label carries a short note under it. */
   .guard-facts > div {
@@ -140,7 +135,6 @@
     border: 1px solid var(--v2-line-teal);
     border-radius: 50%;
     background: var(--v2-bg);
-    box-shadow: 0 0 14px rgb(159 240 236 / 0.15);
     color: var(--v2-teal);
     font-size: 15px;
   }

@@ -5,6 +5,7 @@ import type { BellCall, BellSummary } from "@/lib/bell/types";
 import { useBells } from "./api";
 import { Forecast, LABEL, SectionTitle, Skeleton, Stamp } from "./bits";
 import { CallCard } from "./call-card";
+import { useChogTitle } from "./names";
 import { errorOf, formatDay, formatErrorPts, formatPoints, formatPrice, herdLine, hitOf, signedPct } from "./format";
 import { BullBearBar, HerdHistogram, sharePastError } from "./herd";
 
@@ -30,8 +31,8 @@ const closeness = (call: BellCall, actualPct: number) => errorOf(call, actualPct
 const randomItem = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 
 /**
- * "Replay a past Bell": pick a settled day, read that day's calls without the answer, ride one,
- * and the real result is revealed at once from the settled data. Just for fun: nothing is saved.
+ * Practice on a past Bell: pick a settled day, read that day's calls without the answer, ride one, and the real
+ * result is revealed at once from the settled data. Just for fun: nothing is saved.
  */
 export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
   const bells = useBells(days);
@@ -68,16 +69,17 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
   };
 
   return (
-    <section id={id} aria-label="Replay a past Bell" className="scroll-mt-28 md:scroll-mt-24">
+    <section id={id} aria-label="Practice on a past Bell" className="scroll-mt-28 md:scroll-mt-24">
       <SectionTitle
-        kicker="Practice"
-        title="Replay a past Bell"
-        hint="Practice mini-game: see a past Bell's calls without the answer, ride one, get the real result at once. Nothing is saved."
+        title="Practice on a past Bell"
+        hint="Read a past Bell's calls without the answer, ride one, and see the real result at once. Nothing is saved."
         action={
           session.rounds > 0 && (
-            <span className="v2-chip" title="Practice: these points aren't saved to your fan card">
-              Practice · not saved: {session.rounds} {session.rounds === 1 ? "replay" : "replays"} ·{" "}
-              <span className="v2-num text-[var(--v2-kicker)]">{formatPoints(session.points)} pts</span>
+            <span className="v2-chip" title="Practice points aren't saved to your fan card">
+              {session.rounds} {session.rounds === 1 ? "round" : "rounds"},{" "}
+              <span className="text-[var(--v2-kicker)]">
+                <span className="v2-num">{formatPoints(session.points)}</span> practice points
+              </span>
             </span>
           )
         }
@@ -99,7 +101,7 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
         ) : (
           <>
             <div>
-              <h3 className={LABEL}>1 · Pick a day</h3>
+              <h3 className={LABEL}>Pick a day</h3>
               <div role="group" aria-label="Past Bells to replay" className="mt-3 flex flex-wrap gap-2">
                 {[...playable].reverse().map((b) => (
                   <button
@@ -110,7 +112,7 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
                     className="v2-chip"
                   >
                     {formatDay(b.day)}
-                    {b.kind === "replay" && <span className="opacity-60">· replay</span>}
+                    {b.kind === "replay" && <span className="opacity-60">replay</span>}
                   </button>
                 ))}
                 {playable.length > 1 && (
@@ -122,7 +124,7 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
             </div>
 
             <div className="mt-7">
-              <h3 className={LABEL}>2 · The herd at the Bell of {formatDay(bell.day)}</h3>
+              <h3 className={LABEL}>All calls at the Bell of {formatDay(bell.day)}</h3>
               <HerdHistogram
                 bell={bell}
                 className="mt-3"
@@ -144,7 +146,7 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
 
             <p role="status" className="v2-sr">
               {picked && bell.actualPct !== null
-                ? `$CHOG really moved ${signedPct(bell.actualPct)}. Chog #${picked.tokenId} called ${signedPct(picked.forecastPct)}${
+                ? `$CHOG really moved ${signedPct(bell.actualPct)}. ${picked.name} called ${signedPct(picked.forecastPct)}${
                     typeof picked.points === "number" ? ` and scored ${formatPoints(picked.points)} points` : ""
                   }.`
                 : ""}
@@ -159,7 +161,7 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
               />
             )}
 
-            <h3 className={`${LABEL} mt-8`}>3 · Ride one</h3>
+            <h3 className={`${LABEL} mt-8`}>Ride one: each card shows its 24h call</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {candidates.map((call) => {
                 const mine = call.tokenId === pick;
@@ -169,13 +171,13 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
                     call={call}
                     bell={bell}
                     reveal={Boolean(picked)}
-                    className={mine ? "border-[var(--v2-line-teal)] shadow-[var(--v2-glass-glow),var(--v2-glow-teal)]" : ""}
+                    className={mine ? "border-[var(--v2-line-teal)] shadow-[var(--v2-glass-glow)]" : ""}
                     action={
                       picked ? (
-                        mine && <p className="v2-kicker justify-center">Your pick</p>
+                        mine && <p className="text-center text-[13.5px] font-medium text-[var(--v2-teal)]">Your pick</p>
                       ) : (
                         <button type="button" onClick={() => ride(call)} className="v2-btn-glass v2-btn--block">
-                          Ride Chog #{call.tokenId}
+                          Ride {call.name}
                         </button>
                       )
                     }
@@ -216,6 +218,7 @@ function Reveal({
   const place = ranked.findIndex((call) => call.tokenId === picked.tokenId) + 1;
   const best = ranked[0];
   const beat = error === null ? null : sharePastError(bell.histogram, actualPct, error);
+  const pickedTitle = useChogTitle(picked.tokenId, picked.name);
 
   return (
     <div
@@ -230,23 +233,22 @@ function Reveal({
         <div className="min-w-0 flex-1 basis-60 text-sm">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-[var(--v2-ink)]">
             {hit !== null && <Stamp hit={hit} />}
-            Chog #{picked.tokenId} called <Forecast pct={picked.forecastPct} size="sm" />
+            {pickedTitle} called <Forecast pct={picked.forecastPct} size="sm" />
           </p>
           <p className="mt-1.5 text-[var(--v2-muted)]">
-            {error !== null && <>Off by {formatErrorPts(error)}. </>}
+            {error !== null && <>Missed by {formatErrorPts(error)}. </>}
             {typeof picked.points === "number" && (
               <>
-                It scored <span className="v2-num text-[var(--v2-kicker)]">+{formatPoints(picked.points)} pts</span>
-                :{" "}
+                It scored <span className="v2-num text-[var(--v2-kicker)]">+{formatPoints(picked.points)}</span> points:{" "}
               </>
             )}
             #{place} of {candidates.length} here
-            {beat !== null && <>, closer than about {Math.round(beat)}% of the herd</>}.
+            {beat !== null && <>, closer than about {Math.round(beat)}% of all calls</>}.
           </p>
           <p className="v2-note mt-1.5">
             {herdLine(bell, actualPct)}{" "}
-            {best && best.tokenId !== picked.tokenId ? `Best pick here: Chog #${best.tokenId}.` : "You found the best pick here."}
-            {bell.oracle && ` Oracle of the Day: Chog #${bell.oracle.tokenId}.`}
+            {best && best.tokenId !== picked.tokenId ? `Best pick here: ${best.name}.` : "You found the best pick here."}
+            {bell.oracle && ` Best call of the day: ${bell.oracle.name}.`}
           </p>
         </div>
         <button type="button" onClick={next.onClick} className="v2-btn-primary">

@@ -178,19 +178,14 @@
     background: rgb(159 240 236 / 0.12);
     box-shadow: inset 0 0 0 1px var(--v2-teal);
   }
-  .stats-bell--latest {
-    box-shadow: 0 0 10px rgb(159 240 236 / 0.5);
-  }
   .stats-bell--settled.stats-bell--latest {
     background: var(--v2-teal);
   }
   .stats-bell--open.stats-bell--latest {
-    box-shadow:
-      inset 0 0 0 1px var(--v2-teal),
-      0 0 10px rgb(159 240 236 / 0.5);
+    box-shadow: inset 0 0 0 1px var(--v2-teal);
   }
 
-  /* Spark bars: teal at 70%, the latest full teal with a glow, empty days as a baseline tick. */
+  /* Spark bars: teal at 70%, the latest full teal, empty days as a baseline tick. */
   .stats-spark {
     position: relative;
     display: flex;
@@ -218,7 +213,6 @@
   }
   .stats-spark-bar.is-latest {
     background: var(--v2-teal);
-    box-shadow: 0 0 12px rgb(159 240 236 / 0.45);
   }
   .stats-spark-bar.is-active {
     background: var(--v2-teal);

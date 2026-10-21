@@ -695,14 +695,29 @@ type ForecastVoice = {
   call: string;
   /** Who noticed: "My Side Eye", "My Purple Laser eyes" (the trait behind its signal gene), else "I". */
   who: string;
+  /** The sign of the move it saw (1 up, -1 down, 0 flat or unknown), so a drop is never called a breakout. */
+  dir: -1 | 0 | 1;
 };
 
-/** A few phrasings per signal; each Bell picks one per Chog (past tense keeps "My … eyes saw" and "I saw" both right). */
-const FORECAST_LINES: Record<SignalMode, ((v: ForecastVoice) => string)[]> = {
+type ForecastLine = (v: ForecastVoice) => string;
+
+/**
+ * A few phrasings per signal; each Bell picks one per Chog (past tense keeps "My … eyes saw" and "I saw" both right).
+ * Lines that name the move's direction read `v.dir`: "the breakout" only on a rise, "the breakdown" on a drop.
+ */
+const FORECAST_LINES: Record<SignalMode, ForecastLine[]> = {
   momentum: [
     (v) => `${v.Move} and the trend is my friend. Calling ${v.call} by tomorrow.`,
-    (v) => `${v.who} saw the breakout: ${v.move}. Chasing it to ${v.call}.`,
-    (v) => `Strength begets strength. ${v.Move}, so I'm calling ${v.call}.`,
+    (v) =>
+      v.dir > 0
+        ? `${v.who} saw the breakout: ${v.move}. Chasing it to ${v.call}.`
+        : v.dir < 0
+          ? `${v.who} saw the breakdown: ${v.move}. Riding it to ${v.call}.`
+          : `${v.who} saw ${v.move}. Waiting for a push: ${v.call}.`,
+    (v) =>
+      v.dir < 0
+        ? `Weakness begets weakness. ${v.Move}, so I'm calling ${v.call}.`
+        : `Strength begets strength. ${v.Move}, so I'm calling ${v.call}.`,
     (v) => `${v.Move}. Not fighting the tape: ${v.call} by tomorrow.`,
   ],
   contrarian: [
@@ -724,7 +739,12 @@ const FORECAST_LINES: Record<SignalMode, ((v: ForecastVoice) => string)[]> = {
   ],
   trend: [
     (v) => `${v.Move}. I go where the trend goes: ${v.call}.`,
-    (v) => `${v.who} saw ${v.move}. Following the trend: ${v.call}.`,
+    (v) =>
+      v.dir > 0
+        ? `${v.who} saw ${v.move}. Following the uptrend: ${v.call}.`
+        : v.dir < 0
+          ? `${v.who} saw ${v.move}. Following the downtrend: ${v.call}.`
+          : `${v.who} saw ${v.move}. Following the trend: ${v.call}.`,
     (v) => `The trend is the call. ${v.Move}, so ${v.call}.`,
   ],
   steady: [
@@ -733,23 +753,43 @@ const FORECAST_LINES: Record<SignalMode, ((v: ForecastVoice) => string)[]> = {
     (v) => `Steady paws. ${v.Move}. Calling ${v.call}.`,
   ],
   dip: [
-    (v) => `${v.Move}. Every dip is a gift. Calling ${v.call}.`,
+    (v) =>
+      v.dir > 0
+        ? `${v.Move}. No dip to buy today, still a believer: ${v.call}.`
+        : `${v.Move}. Every dip is a gift. Calling ${v.call}.`,
     (v) => `${v.who} saw ${v.move} and fell in love again. ${v.call}.`,
-    (v) => `${v.Move}. Buy low, love high: ${v.call}.`,
+    (v) => (v.dir > 0 ? `${v.Move}. Love only goes up: ${v.call}.` : `${v.Move}. Buy low, love high: ${v.call}.`),
   ],
   chaos: [
     (v) => `Consulted the vibes. They say ${v.call}.`,
     (v) => `${v.who} spun around twice and landed on ${v.call}.`,
     (v) => `Flipped a coin, then another. Final answer: ${v.call}.`,
     (v) => `No chart, just vibes: ${v.call}.`,
+    (v) => `Read it in the clouds this morning. ${v.call}.`,
+    (v) => `Asked my tail which way to wag. It said ${v.call}.`,
+    (v) => `Charts are for cowards. ${v.call}, no notes.`,
   ],
 };
 
 /** A sleeper that a huge move woke up (its big fading call) doesn't talk like one still napping. */
-const SLEEPER_AWAKE_LINES: ((v: ForecastVoice) => string)[] = [
+const SLEEPER_AWAKE_LINES: ForecastLine[] = [
   (v) => `${v.Move}?! That woke me up. Fading it: ${v.call}.`,
   (v) => `${v.who} snapped open at ${v.move}. Calling ${v.call}, then back to sleep.`,
 ];
+
+/** The number behind seen()'s text: the move whose sign the voice names. */
+function seenPct(p: GenomeParams, s: Moves): number | null {
+  const { change1hPct: r1, change24hPct: r24 } = s;
+  if (p.mode === "steady" && r1 !== null && r24 !== null) return r24;
+  if (p.view === "1h" && r1 !== null) return r1;
+  return r24 ?? r1;
+}
+
+/** 1 / -1 when the move reads as a rise or a drop at seen()'s one decimal, else 0. */
+function moveDir(pct: number | null): -1 | 0 | 1 {
+  if (pct === null || Math.abs(pct) < 0.05) return 0;
+  return pct > 0 ? 1 : -1;
+}
 
 /** "My Side Eye" / "My Purple Laser eyes" from the signal gene's trait (brand-safe names), else "I". */
 function forecastWho(genome: Genome): string {
@@ -809,6 +849,12 @@ export function genomeForecast(genome: Genome, market: MarketSnapshot): { pct: n
   const move = seen(p, { change1hPct: r1, change24hPct: r24 });
   const lines = p.mode === "sleeper" && Math.abs(signal) >= 2 * theta ? SLEEPER_AWAKE_LINES : FORECAST_LINES[p.mode];
   const line = lines[Math.floor(hash01(seed ^ 0x5bd1e995, dayIndex) * lines.length) % lines.length];
-  const thesis = line({ Move: move.charAt(0).toUpperCase() + move.slice(1), move, call: signed(pct), who: forecastWho(genome) });
+  const thesis = line({
+    Move: move.charAt(0).toUpperCase() + move.slice(1),
+    move,
+    call: signed(pct),
+    who: forecastWho(genome),
+    dir: moveDir(seenPct(p, { change1hPct: r1, change24hPct: r24 })),
+  });
   return { pct, conviction, thesis };
 }

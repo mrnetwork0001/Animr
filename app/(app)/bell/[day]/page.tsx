@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BellDaySkeleton, BellDayView } from "@/components/bell/bell-day-view";
 import { formatDay, formatLongDay, parseDay } from "@/components/bell/format";
+import { ChogNamesProvider } from "@/components/bell/names";
 import { PageHeader, Skeleton } from "@/components/v2";
+import { allChogs } from "@/lib/dna/chogs";
 
 export const viewport: Viewport = { themeColor: "#0d0c11" };
 
@@ -48,18 +50,17 @@ async function Day({ params }: Pick<PageProps<"/bell/[day]">, "params">) {
     <>
       <PageHeader
         kicker={
-          <>
-            <Link href="/bell" className="hover:text-[var(--v2-ink)]">
-              Daily Bell
-            </Link>
-            <span>· 15:00 UTC · points only</span>
-          </>
+          <Link href="/bell" className="hover:text-[var(--v2-ink)]">
+            ← Daily Bell
+          </Link>
         }
         title={`The Bell of ${formatLongDay(day)}`}
-        lead="Every Chog's 24-hour $CHOG call from this ring, read-only, and how the real CHOG/WMON market settled them."
+        lead="Every Chog's 24-hour $CHOG call from this ring, and how the real CHOG/WMON market settled them. Points only."
       />
       <div className="v2-section">
-        <BellDayView day={day} />
+        <ChogNamesProvider nameNumbers={allChogs().map((chog) => Number(chog.metadataId) || 0)}>
+          <BellDayView day={day} />
+        </ChogNamesProvider>
       </div>
     </>
   );

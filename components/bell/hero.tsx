@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useNow } from "@/components/decision-feed";
-import { BELL_COPY } from "@/lib/bell/rules";
 import type { BellSummaryResponse } from "@/lib/bell/types";
-import { BellIcon as V2BellIcon } from "@/components/v2/icons";
-import { useTodayBell } from "./api";
-import { Countdown, Forecast, KindBadge, Skeleton, useBefore } from "./bits";
-import { RIDE_WINDOW_HOURS, formatDay, formatPrice, formatUtcTime, nextBellAt, ringOverdue, signedPct } from "./format";
+import { Countdown, Forecast, LABEL, Skeleton, useBefore } from "./bits";
+import { formatDay, formatPrice, formatUtcTime, nextBellAt, ringOverdue, shiftDay, signedPct } from "./format";
 import { BullBearBar, HerdHistogram, herdAverage } from "./herd";
+
+/** The practice game's anchor on a past Bell's page (bell-day-view.tsx). */
+export const PRACTICE_ID = "practice";
 
 /** "(17:00 your time)" for a UTC time, after mount only (the server doesn't know the visitor's zone). */
 function LocalTime({ at }: { at: number | null }) {
@@ -20,62 +20,10 @@ function LocalTime({ at }: { at: number | null }) {
 }
 
 /**
- * The page header's aside: while rides are open, the big countdown to their close; otherwise to the next 15:00 UTC
- * ring (browser clock only, so the server and hydration render "--:--:--"). Reads the same cached Bell as the
- * dashboard below it.
- */
-export function BellClock() {
-  const today = useTodayBell();
-  const bell = today.data;
-  const now = useNow();
-  const beforeClose = useBefore(bell ? Date.parse(bell.rideWindowClosesAt) : Number.NaN);
-  const overdue = Boolean(bell && now !== null && ringOverdue(bell.day, now));
-  const ridesOpen = Boolean(bell?.kind === "live" && bell.status === "open" && beforeClose);
-  const nextRing = now === null ? null : nextBellAt(now);
-
-  return (
-    <section aria-label="Bell clock" className="v2-card v2-card--flush bell-clock">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex items-center gap-2.5">
-          <span className="v2-icon-tile v2-icon-tile--sm" aria-hidden>
-            <V2BellIcon className={ridesOpen || overdue ? "bell-swing" : undefined} />
-          </span>
-          <span className="v2-overline">{ridesOpen && bell ? `Bell of ${formatDay(bell.day)}` : "Next Bell · 15:00 UTC"}</span>
-        </span>
-        {overdue ? (
-          <span className="v2-badge v2-badge--teal v2-badge--live v2-badge--dot">Ringing</span>
-        ) : ridesOpen ? (
-          <span className="v2-badge v2-badge--teal v2-badge--live v2-badge--dot">Rides open</span>
-        ) : (
-          <span className="v2-badge v2-badge--dot">Rides book the next Bell</span>
-        )}
-      </div>
-      {ridesOpen && bell ? (
-        <>
-          <Countdown to={Date.parse(bell.rideWindowClosesAt)} className="bell-countdown" />
-          <p className="m-0 text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">
-            left to ride, until {formatUtcTime(bell.rideWindowClosesAt)}
-            <LocalTime at={now === null ? null : Date.parse(bell.rideWindowClosesAt)} />. One Chog per Bell, no wallet
-            needed.
-          </p>
-        </>
-      ) : (
-        <>
-          <Countdown to={nextRing} className="bell-countdown" />
-          <p className="m-0 text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">
-            until the next ring
-            <LocalTime at={nextRing} />. Pick a Chog now and it rides that Bell; rides stay open for {RIDE_WINDOW_HOURS}{" "}
-            hours after each ring.
-          </p>
-        </>
-      )}
-    </section>
-  );
-}
-
-/**
- * The Bell's status card on /bell: where the latest Bell stands (open, locked in, settled, ringing), its entry
- * price, and its herd: every call bucketed, and the symmetric bull/bear split.
+ * The Bell's one status card on /bell: a single countdown (to the ride window's close while rides are open, else to
+ * the next 15:00 UTC ring, which is also when today's calls settle), one status sentence, $CHOG's move so far, and the
+ * crowd: every call bucketed, with the symmetric bull/bear split. The clock is the browser's, so the server and
+ * hydration render "--:--:--".
  */
 export function BellHero({ bell, pending }: { bell?: BellSummaryResponse; pending: boolean }) {
   const now = useNow();
@@ -87,39 +35,32 @@ export function BellHero({ bell, pending }: { bell?: BellSummaryResponse; pendin
     <section aria-label="Today's Bell" className="v2-card v2-card--feature v2-card--roomy">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-12">
         <div className="grid content-start gap-4">
-          {overdue ? (
-            <p className="flex items-center gap-2.5 text-[length:var(--v2-fs-base)] text-[var(--v2-kicker)]">
-              <span aria-hidden className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Ding! The Bell is ringing. Fresh calls land any minute.
-            </p>
-          ) : bell ? (
-            <BellStatus bell={bell} ridesOpen={ridesOpen} />
-          ) : pending ? (
+          {pending && !bell ? (
             <div role="status" className="grid gap-3">
               <span className="v2-sr">Loading the Bell…</span>
               <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-10 w-48" />
-              <Skeleton className="h-16" />
+              <Skeleton className="h-16 w-64" />
+              <Skeleton className="h-10" />
             </div>
           ) : (
-            <p className="v2-body m-0">The first Bell hasn&apos;t rung yet. Be here at 15:00 UTC.</p>
+            <Clock bell={bell} ridesOpen={ridesOpen} overdue={overdue} now={now} />
           )}
         </div>
 
         <div className="min-w-0">
           {bell ? (
-            <Herd bell={bell} />
+            <Crowd bell={bell} />
           ) : pending ? (
             <div role="status" className="space-y-3">
-              <span className="v2-sr">Loading the herd…</span>
+              <span className="v2-sr">Loading all calls…</span>
               <Skeleton className="h-5 w-40" />
               <Skeleton className="h-40" />
               <Skeleton className="h-3" />
             </div>
           ) : (
             <div className="v2-empty">
-              <p className="v2-empty-title">The herd shows up here</p>
-              <p className="v2-empty-body">once the first calls are in.</p>
+              <p className="v2-empty-title">Every call shows up here</p>
+              <p className="v2-empty-body">once the first Bell rings.</p>
             </div>
           )}
         </div>
@@ -128,72 +69,67 @@ export function BellHero({ bell, pending }: { bell?: BellSummaryResponse; pendin
   );
 }
 
-function BellStatus({ bell, ridesOpen }: { bell: BellSummaryResponse; ridesOpen: boolean }) {
-  const entry = (
-    <div className="grid gap-2 border-t border-[var(--v2-line-soft)] pt-4">
-      {bell.live && (
-        <p className="m-0 flex flex-wrap items-baseline gap-x-2 text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">
-          So far: $CHOG <Forecast pct={bell.live.movePct} size="md" /> since the ring
-          <span className="v2-note">(provisional: the Bell settles on the hourly close)</span>
-        </p>
-      )}
-      <p className="v2-note">
-        Entry price <span className="v2-num text-[var(--v2-muted)]">{formatPrice(bell.entryPrice)}</span> WMON per
-        $CHOG, from the real CHOG/WMON pool.
-      </p>
-    </div>
-  );
-  if (bell.status === "settled") {
-    return (
-      <>
-        <p className="v2-kicker v2-kicker--dot">{bell.kind === "replay" ? "Latest replay · settled" : "Settled"}</p>
-        <div>
-          <p className="v2-overline">$CHOG moved</p>
-          <Forecast pct={bell.actualPct} size="xl" className="mt-2" />
-        </div>
-        <p className="v2-note">
-          <span className="v2-num text-[var(--v2-muted)]">{formatPrice(bell.entryPrice)}</span> →{" "}
-          <span className="v2-num text-[var(--v2-muted)]">{formatPrice(bell.settlePrice)}</span> WMON per $CHOG over 24h.
-        </p>
-        <p className="v2-body m-0">
-          {bell.kind === "replay"
-            ? "Live Bells start at the next ring. Until then, replays rebuilt from real candles show how the herd calls."
-            : "The next Bell rings at 15:00 UTC."}{" "}
-          Pick a Chog now to ride it there.
-        </p>
-      </>
-    );
-  }
-  if (ridesOpen) {
-    return (
-      <>
-        <p className="v2-kicker v2-kicker--dot">Rides are open</p>
-        <h2 className="v2-h2">Pick one Chog. Ride its call.</h2>
-        <p className="v2-body m-0">
-          Pick one Chog to ride before {formatUtcTime(bell.rideWindowClosesAt)}. You score when its call settles.
-        </p>
-        <p className="v2-note">{BELL_COPY.ride}</p>
-        {entry}
-      </>
-    );
-  }
+function Clock({
+  bell,
+  ridesOpen,
+  overdue,
+  now,
+}: {
+  bell?: BellSummaryResponse;
+  ridesOpen: boolean;
+  overdue: boolean;
+  now: number | null;
+}) {
+  const closesAt = bell ? Date.parse(bell.rideWindowClosesAt) : null;
+  const nextRing = now === null ? null : nextBellAt(now);
+  const target = ridesOpen ? closesAt : nextRing;
+  // The newest settled Bell: the practice game sits on its page.
+  const practiceDay = bell ? (bell.status === "settled" ? bell.day : shiftDay(bell.day, -1)) : null;
+
+  let status: string;
+  if (!bell) status = "The first Bell hasn't rung yet. Pick a Chog at 15:00 UTC.";
+  else if (ridesOpen) status = "Rides are open: pick one Chog below. Your ride counts from the next hourly close.";
+  else if (bell.kind === "replay")
+    status = "Today's calls are a replay rebuilt from real candles; the next live Bell rings at 15:00 UTC.";
+  else if (bell.status === "settled") status = `The Bell of ${formatDay(bell.day)} has settled. A Chog you pick now rides the next one.`;
+  else status = "This Bell's rides are locked in and its calls settle at the next ring. A Chog you pick now rides that Bell.";
+
   return (
     <>
-      <p className="v2-kicker v2-kicker--dot">{bell.kind === "replay" ? "A replay is settling" : "Rides locked in"}</p>
-      <h2 className="v2-h2">
-        Settles in <Countdown to={Date.parse(bell.horizonAt)} />
-      </h2>
-      <p className="v2-body m-0">
-        Every call settles at {formatUtcTime(bell.horizonAt)}.
-        {bell.kind === "replay" && " Replays are rebuilt from real candles and take no rides."}
-      </p>
-      <p className="v2-note">{BELL_COPY.book}</p>
-      {entry}
+      {overdue ? (
+        <p className="flex items-center gap-2.5 text-[length:var(--v2-fs-base)] text-[var(--v2-kicker)]">
+          <span aria-hidden className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          The Bell is ringing. Fresh calls land any minute.
+        </p>
+      ) : (
+        <div>
+          <p className={LABEL}>{ridesOpen ? "Rides close in" : "Next Bell in"}</p>
+          <Countdown to={target} className="bell-countdown mt-2" />
+          <p className="v2-note mt-2">
+            {ridesOpen && bell ? formatUtcTime(bell.rideWindowClosesAt) : "15:00 UTC"}
+            <LocalTime at={target} />
+          </p>
+        </div>
+      )}
+      <p className="v2-body m-0 text-pretty">{status}</p>
+      {bell?.live && bell.status === "open" && (
+        <p
+          className="m-0 flex flex-wrap items-baseline gap-x-2 text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]"
+          title={`From the entry price, ${formatPrice(bell.entryPrice)} WMON per $CHOG on the real CHOG/WMON pool`}
+        >
+          So far: $CHOG <Forecast pct={bell.live.movePct} size="md" /> since the ring
+        </p>
+      )}
+      {practiceDay && (
+        <Link href={`/bell/${practiceDay}#${PRACTICE_ID}`} className="v2-link text-[length:var(--v2-fs-sm)]">
+          Practice on a past Bell →
+        </Link>
+      )}
     </>
   );
 }
 
-function Herd({ bell }: { bell: BellSummaryResponse }) {
+function Crowd({ bell }: { bell: BellSummaryResponse }) {
   const average = herdAverage(bell.histogram);
   const marks =
     bell.status === "settled" && bell.actualPct !== null
@@ -203,9 +139,9 @@ function Herd({ bell }: { bell: BellSummaryResponse }) {
         : [];
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="v2-overline">The herd · Bell of {formatDay(bell.day)}</h2>
-        <KindBadge kind={bell.kind} />
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-[15px] font-medium text-[var(--v2-ink)]">All calls</h2>
+        <span className="text-xs text-[var(--v2-faint)]">Bell of {formatDay(bell.day)}</span>
       </div>
       <HerdHistogram bell={bell} marks={marks} />
       <BullBearBar bell={bell} className="mt-6" />
@@ -215,7 +151,7 @@ function Herd({ bell }: { bell: BellSummaryResponse }) {
         </span>
         {average !== null && (
           <span>
-            Herd average ≈ <span className="v2-num text-[var(--v2-muted)]">{signedPct(average)}</span>
+            Average call ≈ <span className="v2-num text-[var(--v2-muted)]">{signedPct(average)}</span>
           </span>
         )}
         <Link href={`/bell/${bell.day}`} className="v2-link ml-auto">

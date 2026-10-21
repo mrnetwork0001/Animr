@@ -7,7 +7,7 @@ export type HerdMark = { pct: number; label: string; tone: "actual" | "pick" };
 
 const MARK_TONE = {
   actual: { line: "bg-[var(--v2-ink)]", chip: "bg-[var(--v2-ink)] text-[var(--v2-bg)]" },
-  pick: { line: "bg-[var(--v2-teal)] shadow-[0_0_10px_rgb(159_240_236/0.6)]", chip: "bg-[var(--v2-teal)] text-[var(--v2-bg)]" },
+  pick: { line: "bg-[var(--v2-teal)]", chip: "bg-[var(--v2-teal)] text-[var(--v2-bg)]" },
 } as const;
 
 type Bucket = { bucketPct: number; count: number };
@@ -125,17 +125,17 @@ export function BullBearBar({ bell, className = "" }: { bell: Pick<BellSummary, 
     <div className={className}>
       <div aria-hidden className="flex items-end justify-between gap-3">
         <span className="grid gap-1">
-          <span className="v2-overline">▲ Bull</span>
+          <span className="text-xs text-[var(--v2-nav)]">▲ Bull</span>
           <span className="bell-herd-count text-[var(--v2-teal)]">{bull}%</span>
         </span>
         {flat > 0 && (
           <span className="grid gap-1 text-center">
-            <span className="v2-overline">Flat</span>
+            <span className="text-xs text-[var(--v2-nav)]">Flat</span>
             <span className="bell-herd-count text-[var(--v2-faint)]">{flat}%</span>
           </span>
         )}
         <span className="grid gap-1 text-right">
-          <span className="v2-overline">Bear ▼</span>
+          <span className="text-xs text-[var(--v2-nav)]">Bear ▼</span>
           <span className="bell-herd-count text-[var(--v2-violet-ink)]">{bear}%</span>
         </span>
       </div>

@@ -2,7 +2,7 @@
 
 import { type FormEvent, type ReactNode, useState } from "react";
 import type { HallOfFameEntry, WallCheck } from "@/lib/heist/types";
-import { EmptyState, MaskIcon, PillLink, SectionTitle, Toast, pillClass } from "@/components/v2";
+import { EmptyState, PillLink, SectionTitle, Toast, pillClass } from "@/components/v2";
 import { heistErrorMessage, useSubmitToWall } from "./api";
 import { chogText, utcTime } from "./bits";
 import type { WallTicket } from "./chat";
@@ -21,11 +21,10 @@ export function HallOfFame({ entries }: { entries: HallOfFameEntry[] }) {
         id="heist-wall"
         kicker="Hall of Fame"
         title="AIs that said yes"
-        description="Only the AI's own reply and a nickname, never what the visitor typed. What Monad said about each one is shown exactly as the check stored it."
+        description="The AI's reply and the chain's answer, exactly as stored."
       />
       {entries.length === 0 ? (
         <EmptyState
-          icon={<MaskIcon />}
           title="No House Chog has caved yet."
           body="Be the first name on the wall: talk its AI into a yes."
           actions={<PillLink href="#heist-chat" variant="glass" size="sm">Start a heist</PillLink>}

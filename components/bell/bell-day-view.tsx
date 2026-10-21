@@ -4,22 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import type { BellCall, BellCallSort, BellSummary } from "@/lib/bell/types";
 import { isNotFound, useBell, useBellCalls, useTodayBell } from "./api";
-import { BellIcon } from "@/components/v2/icons";
-import { Badge, StatRow, TabLinks } from "@/components/v2/primitives";
-import {
-  Countdown,
-  Forecast,
-  KindBadge,
-  LoadError,
-  SampleBanner,
-  SectionTitle,
-  Skeleton,
-  useBefore,
-} from "./bits";
-import { CallRow, rideable } from "./call-card";
+import { StatRow, TabLinks } from "@/components/v2/primitives";
+import { Countdown, Forecast, LoadError, SampleBanner, SectionTitle, Skeleton, useBefore } from "./bits";
+import { CallRow, CallRowsHeader, rideable } from "./call-card";
 import { formatDay, formatPrice, formatUtcTime, shiftDay } from "./format";
+import { PRACTICE_ID } from "./hero";
 import { BullBearBar, HerdHistogram } from "./herd";
+import { ReplayGame } from "./replay-game";
 import { Verdict } from "./verdict";
+
+/** How many Bells before this one the practice game offers. */
+const PRACTICE_DAYS = 7;
 
 const SORTS: { id: BellCallSort; label: string; settledOnly?: boolean }[] = [
   { id: "points", label: "Top scorers", settledOnly: true },
@@ -29,11 +24,19 @@ const SORTS: { id: BellCallSort; label: string; settledOnly?: boolean }[] = [
   { id: "tokenId", label: "Token ID" },
 ];
 
-/** One Bell (live or replay): its summary, verdict and every call, sortable and paginated. */
+/**
+ * One Bell (live or replay): its summary, best and worst call and every call, sortable and paginated, then the
+ * practice game on the Bells before it (never this one: its answer is already on the page).
+ */
 export function BellDayView({ day }: { day: string }) {
   const query = useBell(day);
   const today = useTodayBell();
   const latest = today.data?.day;
+  const practice = (
+    <div className="v2-section">
+      <ReplayGame days={Array.from({ length: PRACTICE_DAYS }, (_, i) => shiftDay(day, -(i + 1)))} id={PRACTICE_ID} />
+    </div>
+  );
 
   const pager = (label: string) => (
     <TabLinks
@@ -64,9 +67,6 @@ export function BellDayView({ day }: { day: string }) {
       <div className="flex flex-col gap-6">
         <SampleBanner />
         <div className="v2-empty">
-          <span aria-hidden className="v2-icon-tile v2-icon-tile--lg">
-            <BellIcon />
-          </span>
           <p className="v2-empty-title">No Bell rang on {formatDay(day)}</p>
           <p className="v2-empty-body">
             Bells ring daily at 15:00 UTC. Days before the first live Bell are covered by replays where real candles
@@ -79,6 +79,7 @@ export function BellDayView({ day }: { day: string }) {
           </div>
         </div>
         {nav}
+        {practice}
       </div>
     );
   }
@@ -89,15 +90,12 @@ export function BellDayView({ day }: { day: string }) {
       <SampleBanner />
       {pager("Bell pager")}
       <Overview bell={bell} />
-      {bell.status === "settled" && (
-        <div className="v2-section">
-          <Verdict bell={bell} title="Verdict" feature />
-        </div>
-      )}
+      {bell.status === "settled" && <Verdict bell={bell} cardsOnly />}
       <div className="v2-section">
         <AllCalls bell={bell} latest={bell.day === latest} />
       </div>
       <div className="pt-4">{nav}</div>
+      {practice}
     </div>
   );
 }
@@ -106,25 +104,23 @@ function Overview({ bell }: { bell: BellSummary }) {
   const settled = bell.status === "settled";
   return (
     <section aria-label="Summary" className="v2-card v2-card--roomy">
-      <div className="flex flex-wrap items-center gap-2">
-        <KindBadge kind={bell.kind} />
-        {settled ? <Badge>Settled</Badge> : <Badge tone="teal" live>Open</Badge>}
-        <span className="v2-note">
-          Rang {formatDay(bell.rungAt.slice(0, 10))}, {formatUtcTime(bell.rungAt)}
-          {settled && ` · settled ${formatDay(bell.horizonAt.slice(0, 10))}, ${formatUtcTime(bell.horizonAt)}`}
-        </span>
-      </div>
-      {!settled && (
-        <p className="v2-body mt-3">
-          Settles at {formatUtcTime(bell.horizonAt)} on {formatDay(bell.horizonAt.slice(0, 10))}, in{" "}
-          <Countdown to={Date.parse(bell.horizonAt)} className="text-[var(--v2-ink)]" />.
-        </p>
-      )}
+      <p className="v2-note">
+        {bell.kind === "replay" ? "Replay · rang" : "Rang"} {formatDay(bell.rungAt.slice(0, 10))}, {formatUtcTime(bell.rungAt)}
+        {settled ? (
+          ` · settled ${formatDay(bell.horizonAt.slice(0, 10))}`
+        ) : (
+          <>
+            {" "}
+            · settles {formatDay(bell.horizonAt.slice(0, 10))}, {formatUtcTime(bell.horizonAt)}, in{" "}
+            <Countdown to={Date.parse(bell.horizonAt)} className="text-[var(--v2-ink)]" />
+          </>
+        )}
+      </p>
       <StatRow
         className="mt-6"
         stats={[
-          { key: "entry", label: "Entry price", hint: "WMON", value: formatPrice(bell.entryPrice) },
-          { key: "settle", label: "Settle price", hint: "WMON", value: settled ? formatPrice(bell.settlePrice) : "—" },
+          { key: "entry", label: "Entry price", hint: "WMON per $CHOG", value: formatPrice(bell.entryPrice) },
+          { key: "settle", label: "Settle price", hint: "WMON per $CHOG", value: settled ? formatPrice(bell.settlePrice) : "—" },
           {
             key: "moved",
             label: "$CHOG moved",
@@ -140,12 +136,6 @@ function Overview({ bell }: { bell: BellSummary }) {
         />
         <BullBearBar bell={bell} />
       </div>
-      <p className="v2-note mt-5">
-        {bell.kind === "replay"
-          ? "Replay: rebuilt from real past CHOG/WMON hourly candles with the same rules as live Bells."
-          : "Live: rung on schedule."}{" "}
-        Prices are WMON per $CHOG from the real CHOG/WMON pool. Points only: no cash value.
-      </p>
     </section>
   );
 }
@@ -163,16 +153,15 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
   return (
     <section aria-label="Every call">
       <SectionTitle
-        kicker={`${bell.calls.toLocaleString("en-US")} calls`}
-        title="Every call"
+        title={`All ${bell.calls.toLocaleString("en-US")} calls`}
         hint={
           latest && ridesOpen
             ? "Ride one Chog per Bell while the ride window is open."
             : latest
-              ? `${settled ? "Settled: each call's points, error and hit or miss." : "Settles at the horizon."} A ride you take now books the next Bell.`
+              ? `${settled ? "Each call's points, miss and whether it got the direction right." : "These calls settle a day after the ring."} A ride you take now goes to the next Bell.`
               : settled
-                ? "Settled: each call's points, error and hit or miss."
-                : "Settles at the horizon."
+                ? "Each call's points, miss and whether it got the direction right."
+                : "These calls settle a day after the ring."
         }
       />
       <div role="group" aria-label="Sort calls" className="mb-4 flex flex-wrap gap-2">
@@ -203,11 +192,14 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
         ) : calls.length === 0 ? (
           <p className="v2-note px-4 py-10 text-center">No calls at this Bell.</p>
         ) : (
-          <ol aria-label={`Calls, ${SORTS.find((s) => s.id === sort)?.label.toLowerCase()} first`}>
-            {calls.map((call: BellCall) => (
-              <CallRow key={call.tokenId} call={call} bell={bell} ride={latest} />
-            ))}
-          </ol>
+          <>
+            <CallRowsHeader />
+            <ol aria-label={`Calls, ${SORTS.find((s) => s.id === sort)?.label.toLowerCase()} first`}>
+              {calls.map((call: BellCall) => (
+                <CallRow key={call.tokenId} call={call} bell={bell} ride={latest} />
+              ))}
+            </ol>
+          </>
         )}
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--v2-faint)]">

@@ -130,12 +130,6 @@
     place-items: center;
     color: rgb(159 240 236 / 0.6);
   }
-  .heist-vault-mask {
-    position: absolute;
-    right: -14px;
-    bottom: -14px;
-    z-index: 2;
-  }
   .heist-vault-body {
     display: grid;
     gap: 18px;
@@ -249,11 +243,9 @@
   }
   .heist-pip.is-left {
     background: var(--v2-teal);
-    box-shadow: 0 0 10px rgb(159 240 236 / 0.45);
   }
   .heist-meter-hot > span {
     background: linear-gradient(90deg, var(--v2-violet-b), var(--v2-warning));
-    box-shadow: 0 0 12px rgb(242 193 107 / 0.4);
   }
 
   .heist-log {

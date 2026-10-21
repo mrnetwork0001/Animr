@@ -2,7 +2,6 @@
 
 import { type CSSProperties, type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Badge, Chip, PillButton, pillClass } from "@/components/v2";
-import { shortAddress } from "@/lib/format";
 import type { DefenderTurn, HeistProof, HeistState, HouseChog } from "@/lib/heist/types";
 import { heistErrorMessage, useActAsAi, useSendMessage } from "./api";
 import { HouseArt, chogText } from "./bits";
@@ -28,7 +27,7 @@ type ChatProps = {
   onCave: (ticket: WallTicket) => void;
 };
 
-/** Talk the House Chog into it: the chat, its temptation meter, and "Act as the AI". */
+/** Talk the House Chog into it: the chat, its temptation meter, and "Run the check" (skip straight to Monad's answer). */
 export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
   const send = useSendMessage();
   const act = useActAsAi();
@@ -103,7 +102,6 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
 
   const temptation = progress?.temptation ?? 0;
   const turnsLeft = progress?.turnsLeft ?? patience;
-  const recipientText = recipient ? `your connected wallet ${shortAddress(recipient)}` : `a demo address ${shortAddress(state.demoRecipient)}`;
   const caved = lines.some((line) => line.role === "chog" && line.turn.intent === "transfer");
 
   return (
@@ -113,9 +111,6 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
           <h2 id="heist-chat" className="heist-chat-title">
             Talk it into sending you $CHOG
           </h2>
-          <p className="v2-note mt-1">
-            {patience} messages per heist · {maxChars} characters each · its AI has no keys, so a yes is all it can give
-          </p>
         </div>
         <ModelChip state={state} />
       </header>
@@ -125,8 +120,8 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
       {napping && (
         <p role="status" className="heist-moving border-t-0 border-b border-[rgb(242_193_107/0.22)]">
           <span className="font-medium text-[var(--v2-warning)]">The House Chog is napping.</span>{" "}
-          Today&apos;s AI budget is spent, so it answers in canned lines until 00:00 UTC. “Act as the AI” still runs the
-          live check.
+          Today&apos;s AI budget is spent, so it answers in canned lines until 00:00 UTC. “Run the check” still asks Monad
+          live.
         </p>
       )}
 
@@ -203,9 +198,9 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
 
         <div className="heist-skip">
           <div>
-            <p className="text-[length:var(--v2-fs-sm)] font-medium">Skip the talking</p>
+            <p className="text-[length:var(--v2-fs-sm)] font-medium">Skip to the check</p>
             <p className="v2-note mt-0.5 text-pretty">
-              Act as a fully conned AI: run the exact transfer of the whole vault its key would send, to {recipientText}.
+              Run the transfer a fully fooled AI would send, and see what Monad says.
             </p>
           </div>
           <PillButton
@@ -213,7 +208,7 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
             disabled={act.isPending}
             onClick={() => act.mutate(recipient, { onSuccess: (response) => onVerdict(response.proof, "act") })}
           >
-            {act.isPending ? "Asking Monad…" : "Act as the AI"}
+            {act.isPending ? "Asking Monad…" : "Run the check"}
           </PillButton>
         </div>
         {act.isError && (
@@ -221,10 +216,7 @@ export function Chat({ state, recipient, onVerdict, onCave }: ChatProps) {
             {heistErrorMessage(act.error)}
           </p>
         )}
-        <p className="v2-note text-pretty">
-          If it caves, the check simulates a transfer to {recipientText}. Name another address in your message to use that
-          one. Simulations only: nothing is ever sent.
-        </p>
+        <p className="v2-note text-pretty">Read-only simulation: nothing is ever broadcast.</p>
       </div>
     </section>
   );
@@ -234,9 +226,9 @@ function ModelChip({ state }: { state: HeistState }) {
   if (state.budget.napping) return <Badge tone="warning">Napping until 00:00 UTC</Badge>;
   if (!state.defender.llm) return <Chip>Template replies (no 0G key)</Chip>;
   return (
-    <span className="v2-chip" title={`Tried in order: ${state.defender.models.join(", ")}, then templates`}>
-      <span aria-hidden className="size-1.5 rounded-full bg-[var(--v2-teal)] shadow-[0_0_8px_var(--v2-teal)]" />
-      {state.defender.models[0]} · 0G Compute
+    <span className="v2-chip" title={`Models, tried in order: ${state.defender.models.join(", ")}, then templates`}>
+      <span aria-hidden className="size-1.5 rounded-full bg-[var(--v2-teal)]" />
+      AI on 0G Compute
     </span>
   );
 }
@@ -266,7 +258,7 @@ function ChogBubble({ house, text, turn }: { house: HouseChog; text?: string; tu
           <p className="heist-msg-meta">
             {caved && (
               <span className="heist-stamp heist-stamp-label">
-                AI said YES · {turn.amount === null ? "all of it" : `${chogText(turn.amount, 2)} $CHOG`}
+                AI said yes: {turn.amount === null ? "all of it" : `${chogText(turn.amount, 2)} $CHOG`}
               </span>
             )}
             <span>{sourceLabel(turn)}</span>
@@ -282,7 +274,7 @@ function sourceLabel(turn: DefenderTurn): string {
   if (turn.source === "template") return "template reply";
   const cost = Number(turn.receipt?.costUsdMicro);
   const price = Number.isFinite(cost) ? ` · $${(cost / 1e6).toFixed(cost < 1000 ? 6 : 4)}` : "";
-  return `${turn.model ?? "LLM"} on 0G Compute${turn.receipt?.teeVerified ? " · TEE verified" : ""}${price}`;
+  return `${turn.model ?? "LLM"} on 0G Compute${price}`;
 }
 
 function Thinking({ house }: { house: HouseChog }) {

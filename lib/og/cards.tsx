@@ -288,14 +288,14 @@ function SpotBox({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** "0.02 pts", "2.1 pts", "11 pts" (components/bell/format.ts formatErrorPts). */
-const pts = (value: number) => `${value.toFixed(value < 1 ? 2 : value < 10 ? 1 : 0)} pts`;
+/** "0.02%", "2.1%", "11%" (components/bell/format.ts formatErrorPts). */
+const pts = (value: number) => `${value.toFixed(value < 1 ? 2 : value < 10 ? 1 : 0)}%`;
 
 function OracleBox({ oracle, sameBell }: { oracle: BellOracle; sameBell: boolean }) {
   const title = sameBell
     ? "ORACLE OF THE DAY"
     : `LAST ORACLE · ${upper(shortDay(oracle.day))}${oracle.kind === "replay" ? " · REPLAY" : ""}`;
-  const off = oracle.errorPts === null ? "" : ` · off by ${pts(oracle.errorPts)}`;
+  const off = oracle.errorPts === null ? "" : ` · missed by ${pts(oracle.errorPts)}`;
   return (
     <SpotBox title={title}>
       <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 16 }}>
@@ -317,7 +317,7 @@ function OracleBox({ oracle, sameBell }: { oracle: BellOracle; sameBell: boolean
           <ChogFace art={oracle.rekt.art} tokenId={oracle.rekt.tokenId} size={58} radius={12} border={2} />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 14, fontWeight: 600, letterSpacing: 2, color: C.warning }}>
-              {oracle.rekt.errorPts === null ? "MOST REKT" : `MOST REKT · OFF BY ${upper(pts(oracle.rekt.errorPts))}`}
+              {oracle.rekt.errorPts === null ? "MOST REKT" : `MOST REKT · MISSED BY ${upper(pts(oracle.rekt.errorPts))}`}
             </div>
             <div style={{ display: "flex", gap: 8, fontSize: 19, marginTop: 2 }}>
               <div style={{ display: "flex", color: C.fg }}>{`Chog #${oracle.rekt.tokenId} called`}</div>

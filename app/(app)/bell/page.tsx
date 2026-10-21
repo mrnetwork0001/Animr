@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { BellDashboard } from "@/components/bell/bell-dashboard";
-import { BellClock } from "@/components/bell/hero";
+import { ChogNamesProvider } from "@/components/bell/names";
 import { PageHeader } from "@/components/v2";
+import { allChogs } from "@/lib/dna/chogs";
 
 export const metadata: Metadata = {
   title: "Daily Bell",
@@ -16,14 +17,14 @@ export default function BellPage() {
   return (
     <div className="v2-shell pb-20">
       <PageHeader
-        kicker="Daily Bell · 15:00 UTC · points only"
         title="Every Chog calls $CHOG. The market settles it."
-        lead="Once a day at the Bell, each of the 1,969 Chogs publishes a 24-hour $CHOG forecast in its own voice: claimed Chogs think with their AI agent on 0G Compute, the rest call from their trait DNA. A day later the real CHOG/WMON price settles every call. Ride the Chog you trust and score when it lands. No wallet, no money, just points."
-        aside={<BellClock />}
+        lead="Every day at 15:00 UTC, all 1,969 Chogs predict $CHOG's next 24 hours. Ride the Chog you trust; the real price settles every call a day later. Points only."
       />
       {/* Client data (react-query); it streams in under the static header. */}
       <div className="v2-section">
-        <BellDashboard />
+        <ChogNamesProvider nameNumbers={allChogs().map((chog) => Number(chog.metadataId) || 0)}>
+          <BellDashboard />
+        </ChogNamesProvider>
       </div>
     </div>
   );

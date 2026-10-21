@@ -12,19 +12,19 @@ import "./bell.css";
 
 // Small building blocks shared by every Daily Bell view.
 
-/** Tracked caps for small labels (the v2 overline). */
-export const LABEL = "v2-overline";
+/** Small sentence-case labels above a value or a list (tracked caps are kept for table headers). */
+export const LABEL = "text-[13.5px] font-medium text-[var(--v2-muted)]";
 
 /**
- * A Chog's face over a "#id" placeholder: a small resized copy (the originals are 1000×1000, ~300 KB),
+ * A Chog's face over a soft gradient placeholder: a small resized copy (the originals are 1000×1000, ~300 KB),
  * then the original, then the placeholder when the gateway fails.
  */
 export function ChogAvatar({
   src,
-  tokenId,
   className = "size-11 rounded-xl",
 }: {
   src?: string;
+  /** Kept for callers; the placeholder no longer prints it. */
   tokenId: number;
   className?: string;
 }) {
@@ -36,9 +36,6 @@ export function ChogAvatar({
     <span
       className={`relative block shrink-0 overflow-hidden border border-[var(--v2-line)] bg-[radial-gradient(circle_at_30%_20%,rgb(159_240_236/0.16),transparent_60%),radial-gradient(circle_at_80%_90%,rgb(111_90_220/0.3),transparent_60%),var(--v2-bg-raised)] ${className}`}
     >
-      <span aria-hidden className="absolute inset-0 flex items-center justify-center text-[10px] text-[var(--v2-nav)]">
-        #{tokenId}
-      </span>
       {current && (
         // eslint-disable-next-line @next/next/no-img-element -- Chog images live on IPFS gateways and the resizer
         <img
@@ -58,14 +55,12 @@ export function ChogAvatar({
   );
 }
 
+/** "AI" on the exception: a call its claimed AI agent made on 0G Compute. Calls from Trading DNA carry no chip. */
 export function SourceBadge({ source }: { source: BellCall["source"] }) {
-  return source === "llm" ? (
-    <span className="v2-badge v2-badge--teal" title="Called by this Chog's live AI agent: an LLM running on 0G Compute">
-      0G Compute
-    </span>
-  ) : (
-    <span className="v2-badge" title="Called by this Chog's trait DNA: its 13 traits compiled into a trading genome">
-      Trait DNA
+  if (source !== "llm") return null;
+  return (
+    <span className="v2-badge v2-badge--teal" title="Called by this Chog's AI agent, an LLM on 0G Compute">
+      AI
     </span>
   );
 }
@@ -78,13 +73,11 @@ export function ClaimedBadge() {
   );
 }
 
+/** Marks only the exception: a replayed Bell gets a muted "Replay"; a live Bell needs no label. */
 export function KindBadge({ kind }: { kind: BellSummary["kind"] }) {
-  return kind === "live" ? (
-    <span className="v2-badge v2-badge--success v2-badge--dot" title="Rung on schedule at 15:00 UTC">
-      Live
-    </span>
-  ) : (
-    <span className="v2-badge v2-badge--violet" title="Reconstructed from real past CHOG/WMON hourly candles">
+  if (kind === "live") return null;
+  return (
+    <span className="text-xs text-[var(--v2-faint)]" title="Rebuilt from real past CHOG/WMON hourly candles">
       Replay
     </span>
   );
@@ -134,14 +127,9 @@ export function Conviction({ value }: { value: number }) {
   );
 }
 
+/** "Hit" or "Miss" in its colour: did the call get the direction right. */
 export function Stamp({ hit, className = "" }: { hit: boolean; className?: string }) {
-  return (
-    <span
-      className={`bell-stamp bell-stamp-mark ${hit ? "v2-up" : "v2-down"} ${className}`}
-    >
-      {hit ? "Hit" : "Miss"}
-    </span>
-  );
+  return <span className={`bell-result ${hit ? "v2-up" : "v2-down"} ${className}`}>{hit ? "Hit" : "Miss"}</span>;
 }
 
 /** A settled call: hit or miss, its error and the points it earned. */
@@ -153,11 +141,13 @@ export function CallResult({ call, actualPct, className = "" }: { call: BellCall
       {hit !== null && <Stamp hit={hit} />}
       {error !== null && (
         <span>
-          off by <span className="v2-num text-[var(--v2-ink)]">{formatErrorPts(error)}</span>
+          missed by <span className="v2-num text-[var(--v2-ink)]">{formatErrorPts(error)}</span>
         </span>
       )}
       {typeof call.points === "number" && (
-        <span className="v2-num text-[13px] text-[var(--v2-kicker)]">+{formatPoints(call.points)} pts</span>
+        <span className="text-[13px] text-[var(--v2-kicker)]">
+          <span className="v2-num">+{formatPoints(call.points)}</span> points
+        </span>
       )}
     </div>
   );
@@ -213,14 +203,6 @@ export function SampleBanner() {
   );
 }
 
-export function PointsNote({ className = "" }: { className?: string }) {
-  return (
-    <p className={`v2-note ${className}`}>
-      Points only: bragging rights, no cash value. Nothing to pay in, nothing to cash out.
-    </p>
-  );
-}
-
 export function LoadError({
   title,
   error,
@@ -248,7 +230,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
 }
 
 /**
- * A section's heading row on the v2 pattern: teal kicker, DM Sans h2 (or the smaller h3 look for side columns,
+ * A section's heading row on the v2 pattern: an optional kicker (only when it adds information), DM Sans h2 (or the smaller h3 look for side columns,
  * still an h2 element), a faint hint and a right-hand action.
  */
 export function SectionTitle({

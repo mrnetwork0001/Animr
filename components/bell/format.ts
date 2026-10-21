@@ -108,8 +108,8 @@ export function signedPct(value: number | null | undefined, digits = 1): string 
   return formatPct(Math.abs(value) < 0.5 * 10 ** -digits ? 0 : value, digits);
 }
 
-/** Percentage points of error: "0.02 pts", "2.1 pts", "11 pts". */
-export const formatErrorPts = (value: number) => `${value.toFixed(value < 1 ? 2 : value < 10 ? 1 : 0)} pts`;
+/** A call's miss, in percentage points of $CHOG's move, read as a %: "0.02%", "2.1%", "11%" ("missed by 2.1%"). */
+export const formatErrorPts = (value: number) => `${value.toFixed(value < 1 ? 2 : value < 10 ? 1 : 0)}%`;
 
 export const formatPoints = (value: number) => new Intl.NumberFormat("en-US").format(Math.round(value));
 
@@ -146,19 +146,19 @@ function hash(text: string): number {
 type Line = (v: { call: string; actual: string; err: string; conviction: string }) => string;
 
 const ORACLE_LINES: Line[] = [
-  (v) => `Called ${v.call}. The candle printed ${v.actual}. Off by ${v.err}. Bow.`,
-  (v) => `Off by ${v.err}. I don't predict the market, I schedule it.`,
-  (v) => `The herd guessed. I knew. ${v.call} called, ${v.actual} delivered.`,
+  (v) => `Called ${v.call}. The candle printed ${v.actual}. Missed by ${v.err}. Bow.`,
+  (v) => `Missed by ${v.err}. I don't predict the market, I schedule it.`,
+  (v) => `The crowd guessed. I knew. ${v.call} called, ${v.actual} delivered.`,
   (v) => `${v.call} at the Bell, ${v.actual} at the close. Screenshot this.`,
-  (v) => `Off by ${v.err}. Somebody frame this call.`,
+  (v) => `Only ${v.err} off the real move. Somebody frame this call.`,
 ];
 
 const REKT_LINES: Line[] = [
   (v) => `I called ${v.call}. $CHOG did ${v.actual}. I am a clown in a nice hat.`,
-  (v) => `Off by ${v.err}. My crystal ball was a gold tooth.`,
+  (v) => `Missed by ${v.err}. My crystal ball was a gold tooth.`,
   (v) => `${v.call} at ${v.conviction} conviction. The conviction was the problem.`,
   (v) => `The candle said ${v.actual}. I said ${v.call}. We are no longer speaking.`,
-  (v) => `Off by ${v.err}. Rebooting my brain. See you at the next Bell.`,
+  (v) => `Missed by ${v.err}. Rebooting my brain. See you at the next Bell.`,
 ];
 
 function line(lines: Line[], call: BellCall, actualPct: number, day: string): string {
@@ -171,7 +171,7 @@ function line(lines: Line[], call: BellCall, actualPct: number, day: string): st
   });
 }
 
-/** The Oracle of the Day's gloat, in the first person (deterministic per day and Chog). */
+/** The Best call's gloat, in the first person (deterministic per day and Chog). */
 export const oracleLine = (call: BellCall, actualPct: number, day: string) => line(ORACLE_LINES, call, actualPct, day);
 /** The Most Rekt Chog roasting itself. */
 export const rektLine = (call: BellCall, actualPct: number, day: string) => line(REKT_LINES, call, actualPct, day);

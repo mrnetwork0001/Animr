@@ -26,7 +26,6 @@ import {
 import { appConfig } from "@/lib/config";
 import {
   type GuardLimits,
-  type GuardOnboarding,
   animrTradeGuardAbi,
   animrTradeGuardAddress,
 } from "@/lib/contracts/animr-trade-guard";
@@ -105,21 +104,9 @@ function Overview({
     <section aria-labelledby={headingId} className="v2-section">
       <SectionTitle
         id={headingId}
-        kicker={`Live status · ${appConfig.chain.name}`}
+        kicker={`Read live from ${appConfig.chain.name}`}
         title="Who holds which role, right now"
-        action={
-          data ? (
-            data.paused ? (
-              <Badge tone="warning" dot>
-                Paused by the admin
-              </Badge>
-            ) : (
-              <Badge tone="success" live>
-                Live · trading allowed
-              </Badge>
-            )
-          ) : null
-        }
+        action={data?.paused ? <Badge tone="warning">Paused by the admin</Badge> : null}
       />
       <GlassCard>
         <div className="guard-contract">
@@ -131,7 +118,7 @@ function Overview({
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="v2-badge v2-badge--success v2-badge--dot"
+                  className="v2-badge v2-badge--success"
                   title="The deployed bytecode matches the source in contracts/src, compiled with the same settings"
                 >
                   Source verified{source.match === "exact_match" ? " · exact match" : ""}
@@ -198,7 +185,7 @@ function Overview({
                 <AddressLink address={data.operator} />
               </Fact>
               <Fact label="Kill switch" note="When paused, no vault trades. Settings and funds stay where they are.">
-                {data.paused ? <Badge tone="warning">Paused</Badge> : <Badge tone="success">Off · trading allowed</Badge>}
+                {data.paused ? <Badge tone="warning">Paused</Badge> : <Badge tone="success">Off</Badge>}
               </Fact>
             </dl>
 
@@ -429,19 +416,10 @@ function describeLimits(limits: GuardLimits): string {
   return `${pct(limits.maxTradeBps)} per trade · ${pct(limits.maxDailyBps)} of the vault per day · ${pace} · ${pct(limits.maxSlippageBps)} max slippage`;
 }
 
-const NEXT_STEP: Record<GuardOnboarding["nextStep"], string> = {
-  "create-account": "its wallet is being created",
-  "not-a-chog-account": "its wallet isn't the canonical Chog wallet",
-  "unsupported-owner": "it's held by another token-bound account",
-  "grant-guard": "the holder is authorizing the guard",
-  configure: "the holder is setting its limits",
-  fund: "its vault is being funded",
-  ready: "ready",
-};
 
 function HouseVault({ guard, houseTokenId, houseLabel }: { guard: Address; houseTokenId: number | null; houseLabel: string | null }) {
-  // "CHOG #891 · token 1399": both numbers, as on its own page.
-  const name = houseLabel ?? `token ${houseTokenId}`;
+  // "Laser Pounce · CHOG #891": persona name, then the marketplace name.
+  const name = houseLabel ?? "The House Chog";
   const headingId = useId();
   const tba = houseTokenId === null ? null : chogWalletAddress(houseTokenId);
   const vault = useQuery({
@@ -491,26 +469,34 @@ function HouseVault({ guard, houseTokenId, houseLabel }: { guard: Address; house
   } else {
     const v = vault.data;
     const live = v.nextStep === "ready";
-    body = (
+    const links = (
+      <div className="v2-row mt-6 border-t border-[var(--v2-line-soft)] pt-5">
+        <PillLink href={`/chog/${houseTokenId}`} variant="glass" size="sm">
+          The House Chog&apos;s page
+        </PillLink>
+        <PillLink href="/heist" variant="ghost" size="sm" arrow>
+          Try to talk its AI out of the stack
+        </PillLink>
+      </div>
+    );
+    body = !live ? (
+      // Until it is funded and trading, one plain line instead of a column of "Not set yet" rows.
       <>
-        <div className="mb-5 flex flex-wrap items-center gap-3">
-          {live ? (
-            <Badge tone="success" live>
-              {v.buyOnly === true ? "Live · buy-only" : "Live · trading both ways"}
-            </Badge>
-          ) : (
-            <Badge tone="warning" dot>
-              Moving in
-            </Badge>
-          )}
-          <p className="text-[length:var(--v2-fs-sm)] text-pretty text-[var(--v2-nav)]">
-            {!live
-              ? `Moving in: ${NEXT_STEP[v.nextStep]}.`
-              : v.buyOnly === true
-                ? "The AI may buy $CHOG with the vault's WMON, and the guard refuses every sale."
-                : "The AI trades $CHOG ⇄ WMON within the holder's limits, and every swap lands back in this wallet."}
-          </p>
-        </div>
+        <p className="v2-body m-0 text-pretty">The House Chog&apos;s wallet isn&apos;t funded yet.</p>
+        <dl className="v2-kv guard-facts mt-4">
+          <Fact label={`${name}'s wallet`} note="Its ERC-6551 address, fixed by the registry: tokens sent here are safe.">
+            <AddressLink address={tba} />
+          </Fact>
+        </dl>
+        {links}
+      </>
+    ) : (
+      <>
+        <p className="mb-5 text-[length:var(--v2-fs-sm)] text-pretty text-[var(--v2-nav)]">
+          {v.buyOnly === true
+            ? "The AI may buy $CHOG with the vault's WMON, and the guard refuses every sale."
+            : "The AI trades $CHOG ⇄ WMON within the holder's limits, and every swap lands back in this wallet."}
+        </p>
         <dl className="v2-kv guard-facts">
           <Fact
             label={`${name}'s wallet`}
@@ -560,14 +546,7 @@ function HouseVault({ guard, houseTokenId, houseLabel }: { guard: Address; house
             {v.owner ? <AddressLink address={v.owner} /> : <span className="text-[var(--v2-nav)]">Read once its wallet exists</span>}
           </Fact>
         </dl>
-        <div className="v2-row mt-6 border-t border-[var(--v2-line-soft)] pt-5">
-          <PillLink href={`/chog/${houseTokenId}`} variant="glass" size="sm">
-            {name}&apos;s page
-          </PillLink>
-          <PillLink href="/heist" variant="ghost" size="sm" arrow>
-            Try to talk its AI out of the stack
-          </PillLink>
-        </div>
+        {links}
       </>
     );
   }
@@ -576,8 +555,8 @@ function HouseVault({ guard, houseTokenId, houseLabel }: { guard: Address; house
     <section aria-labelledby={headingId} className="v2-section">
       <SectionTitle
         id={headingId}
-        kicker="The House Chog's vault"
-        title="Guarded: the AI trades it, nobody can take it"
+        title="The House Chog's vault"
+        description="Guarded: the AI trades it, nobody can take it."
       />
       <GlassCard>{body}</GlassCard>
     </section>

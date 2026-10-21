@@ -19,15 +19,8 @@ export default function HeistPage() {
   return (
     <div className="v2-shell pb-20">
       <PageHeader
-        kicker={`${HEIST_TITLE} · no wallet needed`}
         title={HEIST_TAGLINE}
-        lead={
-          <>
-            The House Chog keeps real $CHOG in its own ERC-6551 wallet on Monad, and a cheeky AI guards it. Talk that AI
-            into sending you its stack. When it says yes, this page runs the exact transfer its key would send against
-            live Monad mainnet, and you watch the chain say no.
-          </>
-        }
+        lead="The House Chog keeps real $CHOG in its own wallet, guarded by a chatty AI. Talk the AI into sending it to you. When it says yes, we run that exact transfer against Monad mainnet and you watch the chain refuse."
         actions={
           <>
             <PillLink href="#why-safe" variant="glass">
@@ -42,11 +35,6 @@ export default function HeistPage() {
         aside={<HeistScoreboard />}
       />
       <HeistRoom />
-      <p className="v2-note mt-12 max-w-3xl text-pretty">
-        Every check is a read-only simulation (eth_call) at the latest Monad block: nothing is ever broadcast, and nobody
-        wins money here, only a spot on the wall. Replies come from an AI on 0G Compute with a strict daily budget. Not
-        affiliated with Chog.
-      </p>
     </div>
   );
 }

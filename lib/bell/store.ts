@@ -78,7 +78,12 @@ export function chogCard(tokenId: number): { name: string; image: string } {
  * Old genome wording in stored theses, shown in today's words. A Bell keeps the calls it rang with, so lines the
  * genome has since reworded (lib/dna/genome.ts: no wagering words) are updated as they are read, not rewritten.
  */
-const REWORDED: readonly [RegExp, string][] = [[/\bso I bet the other way\b/g, "so I trade the other way"]];
+const REWORDED: readonly [RegExp, string][] = [
+  [/\bso I bet the other way\b/g, "so I trade the other way"],
+  // Bells stored before the voice lines read the move's sign: a drop is a breakdown, not a breakout.
+  [/saw the breakout: (-[\d.]+% (?:on the day|this hour))\. Chasing it to/g, "saw the breakdown: $1. Riding it to"],
+  [/Strength begets strength\. (-[\d.]+%)/g, "Weakness begets weakness. $1"],
+];
 
 function shownThesis(thesis: string): string {
   return REWORDED.reduce((text, [from, to]) => text.replace(from, to), thesis);

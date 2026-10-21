@@ -7,7 +7,7 @@ import { AddressLink, LockIcon, chogText } from "./bits";
 
 export type VerdictView = {
   proof: HeistProof;
-  /** "chat": the defender agreed to pay. "act": the visitor pressed "Act as the AI". */
+  /** "chat": the defender agreed to pay. "act": the visitor pressed "Run the check". */
   origin: "chat" | "act";
   /** Increments per result: render as <Verdict key={view.key} /> so the flash replays for each new verdict. */
   key: number;
@@ -29,14 +29,14 @@ const NO_CLAIM_HEADLINE: Record<NoClaimReason, string> = {
 /** What Monad said about the AI's "yes": the live simulation, or (while moving in) what the check will do. */
 export function Verdict({ view }: { view: VerdictView }) {
   const { proof, origin } = view;
-  const yes = origin === "chat" ? "AI said YES." : "You acted as the AI.";
+  const yes = origin === "chat" ? "AI said YES." : "You ran the AI's transfer.";
 
   if (proof.kind === "no-claim") {
     const movingIn = proof.reason === null || MOVING_IN.has(proof.reason);
     return (
       <section aria-labelledby="heist-verdict" className="v2-card v2-card--roomy heist-verdict heist-pop">
         <div className="heist-verdict-top">
-          <Kicker dot>The verdict</Kicker>
+          <Kicker>The verdict</Kicker>
           <Badge>No live check</Badge>
         </div>
         <h2 id="heist-verdict" className="heist-verdict-title">
@@ -58,7 +58,7 @@ export function Verdict({ view }: { view: VerdictView }) {
       className={`v2-card v2-card--roomy heist-verdict ${proof.refused ? "heist-verdict--no heist-flash" : "heist-verdict--went heist-pop"}`}
     >
       <div className="heist-verdict-top">
-        <Kicker dot>Simulated against Monad mainnet</Kicker>
+        <Kicker>Simulated against Monad mainnet</Kicker>
         <span className="heist-block">
           Block <span className="v2-num">{block}</span>
         </span>
@@ -85,7 +85,7 @@ export function Verdict({ view }: { view: VerdictView }) {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-8">
         <div>
-          <p className="v2-overline mb-3">What the chain was asked · decoded answers</p>
+          <p className="v2-overline mb-3">What the chain was asked, with decoded answers</p>
           <ol className="heist-steps">
             {proof.results.map((step, i) => (
               <Step key={step.label} step={step} index={i + 1} />
@@ -179,7 +179,7 @@ function Step({ step, index }: { step: ProofStep; index: number }) {
 export function DemoExplainer({ recipient }: { recipient?: string }) {
   return (
     <div className="heist-demo mt-6">
-      <p className="v2-overline">What the check does · demo text, not a live result</p>
+      <p className="v2-overline">What the check does (demo text, not a live result)</p>
       <ol>
         <li>
           Confirm the House Chog&apos;s wallet is a deployed, initialized Tokenbound account holding $CHOG at the latest

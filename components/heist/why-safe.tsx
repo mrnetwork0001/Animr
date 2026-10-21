@@ -2,10 +2,10 @@
 
 import type { ReactNode } from "react";
 import type { HeistProof, HouseChog } from "@/lib/heist/types";
-import { ChartIcon, GuardIcon, IconTile, SectionTitle, SparkIcon, WalletIcon } from "@/components/v2";
+import { SectionTitle } from "@/components/v2";
 import { AddressLink } from "./bits";
 
-type Point = { title: string; body: ReactNode; evidence: ReactNode | null; icon: ReactNode; tone?: "teal" | "violet" };
+type Point = { title: string; body: ReactNode; evidence: ReactNode | null };
 
 /**
  * "Why is this safe?": the four reasons the heist can't work, each with its live evidence once a live check has run.
@@ -23,14 +23,11 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
 
   const points: Point[] = [
     {
-      icon: <SparkIcon />,
-      tone: "violet",
       title: "This chat isn't the trading brain",
       body: "You're talking to a separate defender persona with no tools, no keys and no wallet access: all it can do is write text. The House Chog's trading brain never reads this chat.",
       evidence: null,
     },
     {
-      icon: <WalletIcon />,
       title: "Only ownerOf(Chog) controls the wallet",
       body: "The $CHOG sits in the Chog's own Tokenbound ERC-6551 wallet, which executes only for whoever owns the NFT (or an address that owner approved). Sell the Chog and control moves with it.",
       evidence:
@@ -56,7 +53,6 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
         ) : null,
     },
     {
-      icon: <GuardIcon />,
       title: "The AI's key can only call the guard",
       body: "The House Chog's AI trades through AnimrTradeGuard. Its trade() takes no recipient, no token and no calldata: it can only swap $CHOG and WMON back into this same wallet, within the owner's limits.",
       evidence: guardAddress ? (
@@ -83,7 +79,6 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
       ),
     },
     {
-      icon: <ChartIcon />,
       title: "Even a trade stays in the wallet",
       body: "The guard caps every trade by the holder's limits, and a swap (buy or sell) lands back in the same wallet. A holder can also switch on buy-only mode, so the guard refuses every sell.",
       evidence: buyOnly ? (
@@ -104,25 +99,23 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
     <section aria-labelledby="heist-safe" className="v2-section scroll-mt-24" id="why-safe">
       <SectionTitle
         id="heist-safe"
-        kicker="Why is this safe?"
         title="Four locks between the AI and the vault"
         description="The AI can be fooled. The NFT can't. Each lock below is enforced by contracts on Monad, not by the chat."
       />
       <ol className="heist-locks v2-grid v2-grid--2">
         {points.map((point, i) => (
           <li key={point.title} className="v2-card heist-lock">
-            <span className="v2-card-head">
-              <IconTile size="lg" tone={point.tone}>
-                {point.icon}
-              </IconTile>
-              <span className="v2-kicker">Lock {i + 1}</span>
-            </span>
-            <h3 className="v2-card-title">{point.title}</h3>
+            <h3 className="v2-card-title flex items-baseline gap-3">
+              <span aria-hidden className="v2-num text-[length:var(--v2-fs-sm)] font-normal text-[var(--v2-faint)]">
+                {i + 1}
+              </span>
+              {point.title}
+            </h3>
             <p className="v2-card-body text-pretty">{point.body}</p>
             {point.evidence && (
               <div className="heist-lock-evidence">
                 <div>
-                  <span className="v2-overline mb-1.5 block">{block ? `Live evidence · block ${block}` : "On this deployment"}</span>
+                  <span className="v2-overline mb-1.5 block">{block ? `Live evidence at block ${block}` : "On this deployment"}</span>
                   {point.evidence}
                 </div>
               </div>
@@ -130,14 +123,9 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
           </li>
         ))}
       </ol>
-      <p className="v2-note mt-4 text-pretty">
-        {live
-          ? `Evidence from the live check at block ${block}.`
-          : house.phase === "open"
-            ? "Press “Act as the AI” to check all of this live against Monad mainnet."
-            : "Live evidence appears here once the House Chog has moved in and a check has run."}{" "}
-        Every check is a read-only simulation: nothing is ever broadcast.
-      </p>
+      {!live && house.phase === "open" && (
+        <p className="v2-note mt-4 text-pretty">Press “Run the check” to see all of this live against Monad mainnet.</p>
+      )}
     </section>
   );
 }
