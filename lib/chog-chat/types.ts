@@ -8,6 +8,9 @@ export const ASK_LIMITS = {
   maxTurns: 4,
 } as const;
 
+/** 0G models the chat tries in order before its templates (lib/chog-chat/service.ts; the docs list them). */
+export const CHAT_MODELS = ["0gm-1.0-35b-a3b", "glm-5.3"] as const;
+
 /** POST body. No sessionId starts a new conversation. */
 export type AskRequest = {
   sessionId?: string;

@@ -173,7 +173,7 @@ export const howItWorks: DocContent = {
               title: "Traits become a genome",
               body: (
                 <p>
-                  A committed snapshot (<Code>data/chogs.json</Code>) holds all {supply} Chogs and their 13 traits, read from
+                  A committed snapshot (<Code>data/chogs.json</Code>) holds all {supply} Chogs and their on-chain traits (up to 13), read from
                   each token&apos;s on-chain metadata. The genome compiler turns those traits into 8 genes: signal, horizon,
                   trigger, size, exit, bias, tempo and nerve.
                 </p>
@@ -249,7 +249,7 @@ export const howItWorks: DocContent = {
             caption="How the pieces connect"
             head={["Piece", "Feeds", "Notes"]}
             rows={[
-              ["Chog NFT", "Genome, wallet, authority", "13 traits; the token ID derives the wallet; ownerOf gates every holder action"],
+              ["Chog NFT", "Genome, wallet, authority", "Up to 13 traits; the token ID derives the wallet; ownerOf gates every holder action"],
               ["Genome", "Replays, Bell calls, the AI's character sheet", "One genome drives the rules brain, the LLM prompt and the Bell forecast"],
               ["Hourly candles", "League, Time Machine, Versus, Breed, Bell settlement", "GeckoTerminal for the CHOG/WMON pool, with a committed history file"],
               ["AI brain", "Decisions with 0G receipts", "LLM on 0G Compute; the genome's rules decide if the model fails"],

@@ -9,7 +9,7 @@ import {
   STREAK_BONUS_PER_DAY,
 } from "@/lib/bell/rules";
 import { TRAIT_TYPES } from "@/lib/breed/genetics";
-import { ASK_LIMITS } from "@/lib/chog-chat/types";
+import { ASK_LIMITS, CHAT_MODELS } from "@/lib/chog-chat/types";
 import { CHOG_SUPPLY } from "@/lib/chog-id";
 import { DEFAULT_WINDOW, REPLAY_WINDOWS } from "@/lib/dna/backtest";
 import { GENOME_VERSION, REPLAY } from "@/lib/dna/genome";
@@ -703,7 +703,13 @@ export const askThisChog: DocContent = {
         <>
           <P>
             The chat has no tools, no keys and no wallet access: the model can only produce text. It runs on 0G Compute (
-            <Code>0gm-1.0-35b-a3b</Code>, then <Code>glm-5.3</Code>). When 0G isn&apos;t available or the
+            {CHAT_MODELS.map((model, i) => (
+              <span key={model}>
+                {i > 0 && ", then "}
+                <Code>{model}</Code>
+              </span>
+            ))}
+            ). When 0G isn&apos;t available or the
             daily cap is spent, it answers from its stats with templates, and the reply says so. Replies are moderated, and a
             Chog its holder hid doesn&apos;t answer.
           </P>

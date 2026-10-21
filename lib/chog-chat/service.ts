@@ -10,7 +10,7 @@ import { hashIp, hitLimit, sharedStateMissing, utcDay } from "../heist/store";
 import { isHiddenChog } from "../visibility";
 import { type ChogFacts, factsText, loadChogFacts } from "./context";
 import { templateAnswer } from "./templates";
-import { ASK_LIMITS, type AskResponse } from "./types";
+import { ASK_LIMITS, type AskResponse, CHAT_MODELS } from "./types";
 
 // "Ask this Chog": one question to a Chog's AI, answered in its own voice from its real (and clearly simulated)
 // record. Read-only by construction: no tools, no keys, no wallet access; the model can only produce text.
@@ -24,7 +24,7 @@ import { ASK_LIMITS, type AskResponse } from "./types";
 // limit counters under animr:heist:rl:chogchat-*.
 
 /** 0G models, tried in order, then the templates. */
-const MODELS = ["0gm-1.0-35b-a3b", "glm-5.3"] as const;
+const MODELS = CHAT_MODELS;
 const TIMEOUT_MS = 15_000;
 const SESSION_TTL_MS = 60 * 60_000;
 const REPLY_MAX_CHARS = 520;

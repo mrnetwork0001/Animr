@@ -3,6 +3,9 @@ import { MAINNET_TRADE_GUARD } from "@/lib/contracts/animr-trade-guard";
 import { chogLabel } from "@/lib/chog-id";
 import { appConfig, trading } from "@/lib/config";
 import { getChog } from "@/lib/dna/chogs";
+import { siteOrigin } from "@/lib/farcaster/embed";
+import { houseChogTokenId } from "@/lib/heist/config";
+import { trophiesAddress } from "@/lib/trophies/config";
 import { chogGenome, chogName } from "@/lib/dna/population";
 import {
   ERC6551_REGISTRY_ADDRESS,
@@ -15,8 +18,11 @@ import {
 // lib/contracts/animr-trade-guard.ts) so the docs can't drift from the app. Server-only (data/chogs.json).
 // Addresses that live only in deployment records are written here once, each with where it was checked.
 
+/** This deployment's origin (NEXT_PUBLIC_SITE_URL, else Vercel's production URL); the public app off Vercel. */
+const ORIGIN = siteOrigin();
+
 export const LINKS = {
-  app: "https://useanimr.vercel.app",
+  app: ORIGIN.startsWith("http://localhost") ? "https://useanimr.vercel.app" : ORIGIN,
   explorer: appConfig.chain.blockExplorers?.default.url ?? "https://monadscan.com",
   explorerName: appConfig.chain.blockExplorers?.default.name ?? "Monadscan",
 } as const;
@@ -36,8 +42,11 @@ export const ADDR = {
   accountV3: TOKENBOUND_ACCOUNT_V3_IMPLEMENTATION as Address,
   multicall3: MULTICALL3_ADDRESS as Address,
   guard: MAINNET_TRADE_GUARD,
-  /** AnimrTrophies on Monad mainnet: name() = "Animr Trophies", minter() = the operator (eth_call, Oct 21 2026). */
-  trophies: getAddress("0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d"),
+  /**
+   * AnimrTrophies on Monad mainnet (NEXT_PUBLIC_TROPHIES_ADDRESS): name() = "Animr Trophies", minter() = the operator
+   * (eth_call, Oct 21 2026). The literal is the deployed address, for builds without the env var.
+   */
+  trophies: trophiesAddress ?? getAddress("0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d"),
   /** The AI operator key's public address: guard.operator() and trophies.minter() (eth_call, Oct 21 2026). */
   operator: getAddress("0x2523bBdD941783C4E565180D2a1b18DE86319cC2"),
   /** The guard's admin, the team's main wallet: guard.admin() (eth_call, Oct 21 2026). */
@@ -46,8 +55,8 @@ export const ADDR = {
   houseKey: getAddress("0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259"),
 } as const;
 
-/** The House Chog's token id (HOUSE_CHOG_TOKEN_ID in production, submission/DEPLOY.md). */
-export const HOUSE_TOKEN_ID = 1399;
+/** The House Chog's token id: HOUSE_CHOG_TOKEN_ID (lib/heist/config.ts), else production's 1399 (submission/DEPLOY.md). */
+export const HOUSE_TOKEN_ID = houseChogTokenId() ?? 1399;
 
 const houseSnapshot = getChog(HOUSE_TOKEN_ID);
 

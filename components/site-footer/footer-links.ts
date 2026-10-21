@@ -2,6 +2,7 @@ import type { Address } from "viem";
 import { appConfig, trading } from "@/lib/config";
 import { explorerAddressUrl } from "@/lib/format";
 import { HEIST_TITLE } from "@/lib/heist/config";
+import { trophiesAddress } from "@/lib/trophies/config";
 
 // The site footer's data (components/site-footer/site-footer.tsx), shared by the landing page and every app page.
 // Every link here is real: internal hrefs are app routes, external ones were checked to load (October 2026).
@@ -29,8 +30,8 @@ const OPENSEA_COLLECTION = "https://opensea.io/collection/chog-genesis";
 const CHOG_POOL = trading?.pool ?? "0x116e7D070f1888B81E1E0324F56d6746B2D7d8f1";
 const CHOG_CHART = `https://www.geckoterminal.com/monad/pools/${CHOG_POOL}`;
 
-/** AnimrTrophies on Monad mainnet (components/docs/facts.ts: name() = "Animr Trophies"). */
-const TROPHIES: Address = "0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d";
+/** AnimrTrophies on Monad mainnet (NEXT_PUBLIC_TROPHIES_ADDRESS; the literal is the deployed address, name() = "Animr Trophies"). */
+const TROPHIES: Address = trophiesAddress ?? "0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d";
 
 function contractLink(label: string, address: Address): FooterLink {
   return { label, href: explorerAddressUrl(address) ?? `${explorerUrl}/address/${address}`, external: true, title: address };
