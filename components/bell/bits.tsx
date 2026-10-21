@@ -5,7 +5,6 @@ import { useNow } from "@/components/decision-feed";
 import { chogThumbUrl } from "@/components/dna/thumb-url";
 import type { BellCall, BellSummary } from "@/lib/bell/types";
 import { resolveUri } from "@/lib/nft";
-import { useSampleMode } from "./api";
 import { errorOf, formatCountdown, formatErrorPts, formatPoints, hitOf, signedPct, spokenDuration } from "./format";
 import "@/app/design-v2.css";
 import "./bell.css";
@@ -189,18 +188,12 @@ export function Countdown({ to, className = "" }: { to: number | null; className
   );
 }
 
+/**
+ * Deprecated: the Bell no longer falls back to sample data (a failed request shows its error state), so this renders
+ * nothing. Kept only until bell-dashboard.tsx and bell-day-view.tsx drop their <SampleBanner /> (phase 2).
+ */
 export function SampleBanner() {
-  const sample = useSampleMode();
-  if (!sample) return null;
-  return (
-    <div role="note" className="v2-toast v2-toast--warning">
-      <div>
-        <span className="v2-toast-title">Sample data, dev only</span>
-        The Bell API isn&apos;t answering on this server yet, so these calls, results and points are made up.
-      </div>
-      <span />
-    </div>
-  );
+  return null;
 }
 
 export function LoadError({

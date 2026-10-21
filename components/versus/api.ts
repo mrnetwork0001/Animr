@@ -24,43 +24,13 @@ export class VersusApiError extends Error {
 export const retryVersus = (failures: number, error: Error) =>
   failures < 2 && !(error instanceof VersusApiError && error.status >= 400 && error.status < 500);
 
-// Dev only: until the VERSUS routes exist, a missing route (Next's HTML 404) falls back to the sample
-// bouts in fixtures.ts and the arena shows a "sample data" banner. Production never does this.
-let sampleMode = false;
-const sampleListeners = new Set<() => void>();
-
-/** True once any VERSUS request was answered with dev sample data. */
-export function useVersusSampleMode(): boolean {
-  return useSyncExternalStore(
-    (listener) => {
-      sampleListeners.add(listener);
-      return () => sampleListeners.delete(listener);
-    },
-    () => sampleMode,
-    () => false,
-  );
-}
-
-type Fixtures = typeof import("./fixtures");
-
-async function request<T>(
-  url: string,
-  init: RequestInit | undefined,
-  sample: (fixtures: Fixtures) => Promise<T>,
-  valid: (body: unknown) => boolean,
-): Promise<T> {
+/** One JSON request; any failure (including a missing route) throws a VersusApiError for the arena's error state. */
+async function request<T>(url: string, init: RequestInit | undefined, valid: (body: unknown) => boolean): Promise<T> {
   let res: Response;
   try {
     res = await fetch(url, { cache: "no-store", ...init });
   } catch {
     throw new VersusApiError("Couldn't reach Animr. Check your connection and try again.", 0);
-  }
-  if (process.env.NODE_ENV !== "production" && res.status === 404 && !res.headers.get("content-type")?.includes("json")) {
-    if (!sampleMode) {
-      sampleMode = true;
-      sampleListeners.forEach((notify) => notify());
-    }
-    return sample(await import("./fixtures"));
   }
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
@@ -92,34 +62,33 @@ const boutUrl = (id: string) => `/api/versus/${encodeURIComponent(id)}`;
 
 /** A random pair on a random drama-ranked window (no result yet). */
 export const fetchRandomBout = () =>
-  request<VersusBoutPreview>("/api/versus/random", undefined, (f) => f.sampleRandom(), isBoutPreview);
+  request<VersusBoutPreview>("/api/versus/random", undefined, isBoutPreview);
 
 /** A chosen pair (token ids 1–1969) on a random window; leave one side null for a random rival. */
 export function fetchPairBout(a: number | null, b: number | null) {
   const query = new URLSearchParams();
   if (a !== null) query.set("a", String(a));
   if (b !== null) query.set("b", String(b));
-  return request<VersusBoutPreview>(`/api/versus/new?${query}`, undefined, (f) => f.samplePair(a, b), isBoutPreview);
+  return request<VersusBoutPreview>(`/api/versus/new?${query}`, undefined, isBoutPreview);
 }
 
 /** A shared bout before the pick: fighters only, no spoilers. */
 export const fetchBoutPreview = (id: string) =>
-  request<VersusBoutPreview>(boutUrl(id), undefined, (f) => f.samplePreview(id), isBoutPreview);
+  request<VersusBoutPreview>(boutUrl(id), undefined, isBoutPreview);
 
 /** The whole bout without picking: no points. */
 export const fetchSpectate = (id: string) =>
-  request<VersusBout>(`${boutUrl(id)}?spectate=1`, undefined, (f) => f.sampleBout(id), isBout);
+  request<VersusBout>(`${boutUrl(id)}?spectate=1`, undefined, isBout);
 
 /** Records the visitor's pick (cookie fan); a repeat answers correct: null and `pick` = the first pick. */
 export const postPick = (id: string, fighter: Side) =>
   request<VersusPickResponse>(
     `${boutUrl(id)}/pick`,
     { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fighter }) },
-    (f) => f.samplePick(id, fighter),
     isPickResponse,
   );
 
-/** Bouts dealt and picks made so far, for a little social proof (hidden until there are some). */
+/** Picked bouts and picks made so far, for a little social proof (hidden until there are some). */
 export function useVersusStats() {
   return useQuery({
     queryKey: ["versus", "stats"],
@@ -127,7 +96,6 @@ export function useVersusStats() {
       request<VersusStats>(
         "/api/versus/stats",
         undefined,
-        (f) => f.sampleStats(),
         (b) => isObject(b) && typeof b.bouts === "number" && typeof b.picks === "number",
       ),
     staleTime: 60_000,

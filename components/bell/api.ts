@@ -6,7 +6,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useSyncExternalStore } from "react";
 import type {
   BellCallSort,
   BellCallsResponse,
@@ -30,39 +29,9 @@ export class BellApiError extends Error {
 export const isNotFound = (error: unknown) => error instanceof BellApiError && error.status === 404;
 const retryUnlessNotFound = (failures: number, error: Error) => failures < 2 && !isNotFound(error);
 
-// Dev only: until the Bell routes exist, a missing route (Next's HTML 404) falls back to the sample
-// data in fixtures.ts and every Bell view shows a "sample data" banner. Production never does this.
-let sampleMode = false;
-const sampleListeners = new Set<() => void>();
-
-/** True once any Bell request was answered with dev sample data. */
-export function useSampleMode(): boolean {
-  return useSyncExternalStore(
-    (listener) => {
-      sampleListeners.add(listener);
-      return () => sampleListeners.delete(listener);
-    },
-    () => sampleMode,
-    () => false,
-  );
-}
-
-type Fixtures = typeof import("./fixtures");
-
-async function request<T>(
-  url: string,
-  init: RequestInit | undefined,
-  sample: (fixtures: Fixtures) => T,
-  valid: (body: unknown) => boolean,
-): Promise<T> {
+/** One JSON request; any failure (including a missing route) throws a BellApiError for the view's error state. */
+async function request<T>(url: string, init: RequestInit | undefined, valid: (body: unknown) => boolean): Promise<T> {
   const res = await fetch(url, { cache: "no-store", ...init });
-  if (process.env.NODE_ENV !== "production" && res.status === 404 && !res.headers.get("content-type")?.includes("json")) {
-    if (!sampleMode) {
-      sampleMode = true;
-      sampleListeners.forEach((notify) => notify());
-    }
-    return sample(await import("./fixtures"));
-  }
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const { error, message } = (body ?? {}) as { error?: unknown; message?: unknown };
@@ -84,17 +53,16 @@ const postJson = (body: unknown): RequestInit => ({
 
 /** The latest Bell, with `live` (the provisional move since the ring) while it is open. */
 export const fetchToday = () =>
-  request<BellSummaryResponse>("/api/bell/today", undefined, (f) => f.sampleToday(), isSummary);
+  request<BellSummaryResponse>("/api/bell/today", undefined, isSummary);
 
 export const fetchBell = (day: string) =>
-  request<BellSummaryResponse>(`/api/bell/${day}`, undefined, (f) => f.sampleBell(day), isSummary);
+  request<BellSummaryResponse>(`/api/bell/${day}`, undefined, isSummary);
 
 export function fetchCalls(day: string, sort: BellCallSort, cursor?: string) {
   const query = new URLSearchParams(cursor ? { sort, cursor } : { sort });
   return request<BellCallsResponse>(
     `/api/bell/${day}/calls?${query}`,
     undefined,
-    (f) => f.sampleCalls(day, sort, cursor),
     (b) => isObject(b) && Array.isArray(b.calls),
   );
 }
@@ -103,7 +71,6 @@ export const fetchChogBell = (tokenId: number) =>
   request<ChogBellResponse>(
     `/api/bell/chog/${tokenId}`,
     undefined,
-    (f) => f.sampleChog(tokenId),
     (b) => isObject(b) && isObject(b.record),
   );
 
@@ -111,11 +78,10 @@ export const fetchStandings = () =>
   request<BellStandingsResponse>(
     "/api/bell/standings",
     undefined,
-    (f) => f.sampleStandings(),
     (b) => isObject(b) && Array.isArray(b.chogs) && Array.isArray(b.fans),
   );
 
-export const fetchFan = () => request<FanResponse>("/api/fan", undefined, (f) => f.sampleFan(), isFan);
+export const fetchFan = () => request<FanResponse>("/api/fan", undefined, isFan);
 
 export const bellKeys = {
   today: ["bell", "today"] as const,
@@ -189,7 +155,7 @@ export function useRide() {
     mutationFn: async (tokenId: number) => {
       // A ride belongs to the fan cookie, which GET /api/fan sets on a first visit.
       await queryClient.ensureQueryData({ queryKey: bellKeys.fan, queryFn: fetchFan });
-      return request<FanResponse>("/api/bell/ride", postJson({ tokenId }), (f) => f.sampleRide(tokenId), isFan);
+      return request<FanResponse>("/api/bell/ride", postJson({ tokenId }), isFan);
     },
     onSuccess: (fan) => queryClient.setQueryData(bellKeys.fan, fan),
     onError: () => {
@@ -203,7 +169,7 @@ export function useSetNickname() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (nickname: string) =>
-      request<FanResponse>("/api/fan", postJson({ nickname }), (f) => f.sampleNickname(nickname), isFan),
+      request<FanResponse>("/api/fan", postJson({ nickname }), isFan),
     onSuccess: (fan) => {
       queryClient.setQueryData(bellKeys.fan, fan);
       void queryClient.invalidateQueries({ queryKey: bellKeys.standings });

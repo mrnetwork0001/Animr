@@ -17,7 +17,6 @@ import {
   rememberWatch,
   retryVersus,
   useRememberedPick,
-  useVersusSampleMode,
 } from "./api";
 import { RewindIcon } from "@/components/v2/icons";
 import { pillClass } from "@/components/v2/primitives";
@@ -102,7 +101,6 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
   const [formOpen, setFormOpen] = useState(false);
   /** The bout on screen was dealt by a click (not the page load): its tape takes focus when it appears. */
   const [dealtByClick, setDealtByClick] = useState(false);
-  const sample = useVersusSampleMode();
 
   const dealt = useQuery({
     queryKey: ["versus", "deal", source],
@@ -228,17 +226,6 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
 
   return (
     <div ref={rootRef} className="scroll-mt-28 space-y-5 md:scroll-mt-24">
-      {sample && (
-        <div role="status" className="v2-toast v2-toast--warning">
-          <div>
-            <span className="v2-toast-title">Sample data</span>
-            The Versus engine isn&apos;t answering on this server yet, so these races are a synthetic stand-in
-            (development only).
-          </div>
-          <span />
-        </div>
-      )}
-
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={randomBout} className={pillClass("glass")}>
           <DiceIcon /> Random bout
