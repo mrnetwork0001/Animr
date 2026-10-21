@@ -97,9 +97,9 @@ export const heroBuiltOn: { label: string; marks: readonly HeroBuiltOnMark[] } =
   label: "Built on",
   marks: [
     { kind: "logo", key: "monad", name: "Monad", src: "/landing/logos/monad.svg", width: 423, height: 80 },
-    { kind: "logo", key: "0g", name: "0G", src: "/landing/logos/0g.svg", width: 248, height: 120 },
     { kind: "text", key: "erc6551", name: "ERC-6551" },
     { kind: "logo", key: "tokenbound", name: "Tokenbound", src: "/landing/logos/tokenbound.svg", width: 401, height: 51 },
+    { kind: "logo", key: "0g", name: "0G", src: "/landing/logos/0g.svg", width: 248, height: 120 },
   ],
 };
 
