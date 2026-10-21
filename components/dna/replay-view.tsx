@@ -15,6 +15,7 @@ import { ArrowLeftIcon, DiceIcon } from "./icons";
 import {
   CHOG_COUNT,
   DEFAULT_WINDOW,
+  WINDOW_LABEL,
   type WindowKey,
   chogNumberLabel,
   formatInt,
@@ -47,6 +48,15 @@ function resultTitle(r: ReplayResult) {
       </>
     );
   return <>Matched just holding{on}</>;
+}
+
+/**
+ * "Replaying 45 days of real $CHOG, trade by trade…": the title while the replay loads (no numbers yet), as long as
+ * the result's so the header keeps its height on every width.
+ */
+function loadingTitle(span: WindowKey): string {
+  const what = span === "max" ? "the whole real $CHOG chart" : `${WINDOW_LABEL[span]} of real $CHOG`;
+  return `Replaying ${what}, trade by trade…`;
 }
 
 /** /replay/<id>, with ?vs= for a race and ?window= when it isn't the default window. */
@@ -98,12 +108,11 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
           r ? (
             resultTitle(r)
           ) : (
-            // Until the replay loads, a hidden line as long as the result's holds its height (no jump when it lands).
+            // Until the replay loads: a plain loading line (never a placeholder verdict), about as long as the
+            // result's so the header keeps its height, with the Chog's name read out ahead of it.
             <>
-              <span className="v2-sr">{name}</span>
-              <span aria-hidden className="invisible">
-                Trailed holding by 00.0% on 45 days of real $CHOG
-              </span>
+              <span className="v2-sr">{name}: </span>
+              {loadingTitle(span)}
             </>
           )
         }

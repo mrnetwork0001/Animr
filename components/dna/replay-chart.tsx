@@ -347,8 +347,9 @@ export function SpeechBubble({ series, g, width, now }: { series: Series; g: Geo
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute z-10"
-      style={{ left: x, top: y, transform: `translate(${shift}, ${below ? "14px" : "calc(-100% - 14px)"})` }}
+      className="pointer-events-none absolute top-0 left-0 z-10"
+      // Placed with transforms only (never left/top): a moving bubble is then no layout shift.
+      style={{ transform: `translate(${x}px, ${y}px) translate(${shift}, ${below ? "14px" : "calc(-100% - 14px)"})` }}
     >
       <div
         key={moment.t}

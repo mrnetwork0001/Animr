@@ -258,16 +258,29 @@ function Player({
               >
                 {signedPct(s.edge)}
               </span>
+              {/* Each piece keeps its width as the numbers run (no reflow, so no layout shifts while it plays). */}
               <span className="text-[13px] text-[var(--v2-nav)]">
                 {solo ? (
                   <>
-                    vs holding · <span className="v2-num text-[var(--v2-ink)]">{formatAmount(s.value, 0)}</span> $CHOG (from{" "}
-                    {formatAmount(s.result.startChog, 0)})
+                    <span className="whitespace-nowrap">
+                      vs holding ·{" "}
+                      <span
+                        className="v2-num inline-block text-right text-[var(--v2-ink)]"
+                        style={{ minWidth: `${formatAmount(s.result.startChog, 0).length + 1}ch` }}
+                      >
+                        {formatAmount(s.value, 0)}
+                      </span>{" "}
+                      $CHOG
+                    </span>{" "}
+                    <span className="whitespace-nowrap">(from {formatAmount(s.result.startChog, 0)})</span>
                   </>
                 ) : (
                   labelOf(s.tokenId)
                 )}{" "}
-                · {s.trades} {s.trades === 1 ? "trade" : "trades"}
+                <span className="whitespace-nowrap">
+                  · <span className="v2-num inline-block min-w-[3ch] text-right">{s.trades}</span>{" "}
+                  {s.trades === 1 ? "trade" : "trades"}
+                </span>
               </span>
             </p>
           ))}
@@ -552,9 +565,13 @@ export function TradeLog({ trades }: { trades: readonly ReplayTrade[] }) {
   );
 }
 
+/**
+ * The chart's room while the replay loads. Standalone, it is as tall as the player it stands in for (counter, chart,
+ * controls: 490 px on a phone, 573 px from `sm`), so the page doesn't move when the replay lands.
+ */
 function ChartSkeleton({ bare = false }: { bare?: boolean }) {
   return (
-    <div role="status" className={`overflow-hidden ${bare ? "absolute inset-0" : "relative h-[330px] sm:h-[480px]"}`}>
+    <div role="status" className={`overflow-hidden ${bare ? "absolute inset-0" : "relative h-[490px] sm:h-[573px]"}`}>
       <span className="v2-sr">Loading the replay…</span>
       <span aria-hidden className="v2-skeleton absolute inset-x-2 top-6 bottom-[38%]" />
       <span aria-hidden className="v2-skeleton absolute inset-x-2 bottom-8 h-[22%] opacity-60" />
