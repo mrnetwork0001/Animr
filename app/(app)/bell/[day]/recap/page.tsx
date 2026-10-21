@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { formatDay, formatLongDay, parseDay } from "@/components/bell/format";
-import { BellRecapCard } from "@/components/bell/recap";
+import { BellRecapCard, RecapSkeleton } from "@/components/bell/recap";
 import { PageHeader, PillLink, Skeleton } from "@/components/v2";
 import { bellKindOf } from "@/lib/bell/meta";
 
@@ -25,10 +25,22 @@ export default function BellRecapPage({ params }: PageProps<"/bell/[day]/recap">
     <div className="v2-shell v2-shell--narrow pb-20">
       <Suspense
         fallback={
-          <div className="v2-page-header">
-            <Skeleton variant="text" style={{ width: 180 }} />
-            <Skeleton variant="title" style={{ width: "min(560px, 90%)" }} />
-          </div>
+          // The page's own shape (header, the recap card, its two buttons), so nothing moves when it streams in.
+          <>
+            <div className="v2-page-header">
+              <Skeleton variant="text" style={{ width: 180 }} />
+              <Skeleton variant="title" style={{ width: "min(560px, 90%)" }} />
+              <Skeleton variant="text" style={{ width: "min(720px, 100%)" }} />
+              <Skeleton variant="text" style={{ width: "min(320px, 80%)" }} />
+            </div>
+            <div className="v2-section flex flex-col gap-6">
+              <RecapSkeleton />
+              <div className="flex flex-wrap gap-3">
+                <Skeleton className="h-[46px] w-64 rounded-full" />
+                <Skeleton className="h-[46px] w-48 rounded-full" />
+              </div>
+            </div>
+          </>
         }
       >
         <Recap params={params} />

@@ -57,7 +57,7 @@ async function Day({ params }: Pick<PageProps<"/bell/[day]">, "params">) {
           </Link>
         }
         title={`The Bell of ${formatLongDay(day)}`}
-        lead="Every Chog's 24-hour $CHOG call from this ring, and how the real CHOG/WMON market settled them. Points only."
+        lead="Every Chog's 24-hour $CHOG call from this ring, and how the real CHOG/WMON market settles them. Points only."
       />
       <div className="v2-section">
         <ChogNamesProvider nameNumbers={allChogs().map((chog) => Number(chog.metadataId) || 0)}>

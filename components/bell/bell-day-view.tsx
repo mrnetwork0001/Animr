@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { bellTime } from "@/lib/bell/rules";
 import type { BellCall, BellCallSort, BellSummary } from "@/lib/bell/types";
 import { isNotFound, useBell, useBellCalls, useTodayBell } from "./api";
 import { StatRow, TabLinks } from "@/components/v2/primitives";
@@ -33,6 +34,8 @@ export function BellDayView({ day }: { day: string }) {
   const query = useBell(day);
   const today = useTodayBell();
   const latest = today.data?.day;
+  // Today's Bell before 15:00 UTC (later days are a 404 in proxy.ts): it hasn't rung yet, so no past tense.
+  const upcoming = useBefore(bellTime(day)) === true;
   const practice = (
     <div className="v2-section">
       <ReplayGame days={Array.from({ length: PRACTICE_DAYS }, (_, i) => shiftDay(day, -(i + 1)))} id={PRACTICE_ID} />
@@ -67,11 +70,22 @@ export function BellDayView({ day }: { day: string }) {
     return (
       <div className="flex flex-col gap-6">
         <div className="v2-empty">
-          <p className="v2-empty-title">No Bell rang on {formatDay(day)}</p>
-          <p className="v2-empty-body">
-            Bells ring daily at 15:00 UTC. Days before the first live Bell are covered by replays where real candles
-            exist.
-          </p>
+          {upcoming ? (
+            <>
+              <p className="v2-empty-title">This Bell hasn&apos;t rung yet</p>
+              <p className="v2-empty-body">
+                It rings at 15:00 UTC, in <Countdown to={bellTime(day)} className="text-[var(--v2-ink)]" />.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="v2-empty-title">No Bell rang on {formatDay(day)}</p>
+              <p className="v2-empty-body">
+                Bells ring daily at 15:00 UTC. Days before the first live Bell are covered by replays where real candles
+                exist.
+              </p>
+            </>
+          )}
           <div className="v2-empty-actions">
             <Link href="/bell" className="v2-btn-primary">
               Go to today&apos;s Bell
