@@ -1,3 +1,4 @@
+import { isProductionRuntime } from "../runtime-env";
 import { type Address, type Hex, BaseError, ContractFunctionRevertedError } from "viem";
 import { getOperatorWallet, withOperatorLock } from "../agent/onchain";
 import { publicClient } from "../clients";
@@ -46,7 +47,7 @@ function isAwarded(key: Hex): Promise<boolean> {
 
 /** Whether trophies can be minted here: the contract and the operator key are both configured. */
 export function isTrophyMintingConfigured(): boolean {
-  return Boolean(trophiesAddress && getOperatorWallet());
+  return Boolean(trophiesAddress && getOperatorWallet()) && isProductionRuntime();
 }
 
 /**

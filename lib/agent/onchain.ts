@@ -1,3 +1,4 @@
+import { isProductionRuntime } from "../runtime-env";
 import {
   type Address,
   type Hex,
@@ -167,6 +168,10 @@ export async function executeOnchainTrade(
   market: MarketSnapshot,
 ): Promise<OnchainFill | TradeHold> {
   if (decision.action === "hold") throw new Error("A hold decision has nothing to execute");
+  // Never from a laptop or a preview that holds the operator key: only the production deployment trades.
+  if (!isProductionRuntime()) {
+    throw new Error("On-chain trades execute only on the production deployment (ANIMR_ENV or VERCEL_ENV = production).");
+  }
   const guard = animrTradeGuardAddress;
   const operator = getOperator();
   if (!guard || !operator) {

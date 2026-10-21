@@ -111,6 +111,8 @@ Keys are stored as `animr:<namespace>:…`. The namespace is `production` on Ver
 
 ### 3C. If you chose 3A: point your local scripts at it
 
+> **Stop the local dev server first** (`next dev`). While `.env.local` points at the production database, a running dev server would read and write production Bells and agents. Guarded trades and trophy mints are refused outside production (`ANIMR_ENV`/`VERCEL_ENV`), but the Bell maintenance itself is not.
+
 The Purse script reads Redis from `.env.local`, where the `UPSTASH_REDIS_REST_*` lines (your old database) win.
 
 - Before Thu 15:10, change those two lines in `.env.local`. Keep the names and paste the values of the Marketplace database's `KV_REST_API_URL` and `KV_REST_API_TOKEN`, copied from Vercel.
