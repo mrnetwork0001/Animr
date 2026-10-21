@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { connection } from "next/server";
 import { BellCard } from "@/lib/og/cards";
 import { hiddenKey, loadBellCard } from "@/lib/og/data";
 import { ogOptions } from "@/lib/og/theme";
@@ -15,6 +16,8 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
+  // Request-time only: prerendering it at build raced its storage reads ("use cache called after prerender ended").
+  await connection();
   const { hidden } = await loadVisibility();
   return new ImageResponse(<BellCard data={await loadBellCard(null, hiddenKey(hidden))} latest />, ogOptions(60));
 }
