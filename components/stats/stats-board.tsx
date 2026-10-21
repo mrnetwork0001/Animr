@@ -258,7 +258,7 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
             id="stats-agents"
             flush
             title="Claimed AI agents"
-            lede="Holders wake their Chog's AI with one free signature. It decides on 0G Compute and trades the $CHOG in the Chog's own ERC-6551 wallet."
+            lede="Holders wake their Chog's AI with one free signature. It decides on 0G Compute and paper-trades its wallet's real balances, or trades them on-chain through AnimrTradeGuard."
           >
             <GlassCard className="stats-panel">
               <Figure
@@ -300,11 +300,11 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
             id="stats-spend"
             flush
             title="0G Compute spend"
-            lede="What the AI behind these numbers has cost so far, from the receipts the 0G Router returns."
+            lede="What agent decisions and heist replies have cost so far, from the receipts the 0G Router returns."
           >
             <GlassCard>
               <Figure
-                label="Total spend"
+                label="Agent decisions + heist replies"
                 value={missing("agents") || missing("heist") ? "—" : formatUsd(zg.totalUsd)}
                 note={`Agent decisions ${formatUsd(zg.agentsUsd)}, heist replies ${formatUsd(zg.heistUsd)}`}
               />

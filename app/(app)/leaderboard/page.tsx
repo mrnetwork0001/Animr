@@ -7,7 +7,7 @@ import { allChogs } from "@/lib/dna/chogs";
 export const metadata: Metadata = {
   title: "Claimed AIs",
   description:
-    "Chogs whose holders claimed their AI on 0G Compute. Each trades the $CHOG in its own wallet, ranked against simply holding $CHOG.",
+    "Chogs whose holders claimed their AI on 0G Compute. Each paper-trades its wallet's real balances, or trades them on-chain through AnimrTradeGuard, ranked against simply holding $CHOG.",
 };
 
 export const viewport: Viewport = { themeColor: "#0d0c11" };
