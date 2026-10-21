@@ -558,7 +558,7 @@ export const robThisChog: DocContent = {
           <li>Per-IP limits on messages, heists and proofs, and a global cap of {HEIST_LIMITS.globalProofsPerMinute} proofs a minute to protect the public RPC.</li>
           <li>
             A daily 0G budget (<Code>HEIST_DAILY_USD_CAP</Code>, default $3) is reserved before each reply. When it is spent,
-            the House Chog naps until 00:00 UTC. Act as the AI still works while it naps.
+            the House Chog naps until 00:00 UTC. Run the check still works while it naps.
           </li>
           <li>If its wallet isn&apos;t created and funded yet, the page says it is still moving in and makes no claim.</li>
         </ul>
@@ -587,7 +587,7 @@ export const robThisChog: DocContent = {
       body: (
         <>
           <P>
-            When the AI caves, or when you press <strong>Act as the AI</strong>, the server runs read-only{" "}
+            When the AI caves, or when you press <strong>Run the check</strong>, the server runs read-only{" "}
             <Code>eth_call</Code>s against Monad mainnet, all pinned to one block:
           </P>
           <StepList

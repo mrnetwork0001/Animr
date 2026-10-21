@@ -185,7 +185,7 @@ export const contractsAndApi: DocContent = {
               ["/api/fan", "GET, POST", "Your fan card; POST { nickname } sets a nickname"],
               ["/api/heist", "GET", "The heist page's data"],
               ["/api/heist/chat", "POST", "Body { sessionId?, message, recipient? }: one message to the defender"],
-              ["/api/heist/proof", "POST", "Body { recipient? }: Act as the AI, the read-only mainnet simulation"],
+              ["/api/heist/proof", "POST", "Body { recipient? }: Run the check, the read-only mainnet simulation"],
               [<span key="h">/api/heist/hall-of-fame {admin}</span>, "GET, POST, PATCH, DELETE", "The wall; POST adds your caving reply; PATCH and DELETE moderate"],
               ["/api/chog/[tokenId]/ask", "POST", "Body { sessionId?, message, viewer? }: Ask this Chog"],
               ["/api/agents/[tokenId]", "GET", "A Chog's agent and its newest decisions"],

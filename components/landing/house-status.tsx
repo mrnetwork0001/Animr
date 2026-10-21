@@ -9,7 +9,7 @@ import { StatusBadge } from "./primitives";
 
 // The House Chog's live state on the static landing page. The page is prerendered, so HOUSE_CHOG_TOKEN_ID only says
 // which Chog the team picked, never that its vault is live: that is read in the browser once the page is idle, from
-// GET /api/heist (the same read /heist and its "Act as the AI" check use) and GET /api/agents/<id>. Until the heist
+// GET /api/heist (the same read /heist and its "Run the check" check use) and GET /api/agents/<id>. Until the heist
 // answers "open" (its wallet is deployed, initialized and holds $CHOG), the landing shows no House Chog card at all;
 // it says the House Chog trades only while its agent is awake in on-chain mode (trading through AnimrTradeGuard).
 

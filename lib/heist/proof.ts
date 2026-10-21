@@ -80,7 +80,7 @@ export type ProofInput = {
 export function busyProof(input: ProofInput): HeistProof {
   return startProof(input).noClaim(
     "busy",
-    "Monad checks are busy right now, so this one didn't run and no claim is made. Try “Act as the AI” in a minute.",
+    "Monad checks are busy right now, so this one didn't run and no claim is made. Try “Run the check” in a minute.",
   );
 }
 

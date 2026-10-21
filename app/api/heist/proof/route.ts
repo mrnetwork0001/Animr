@@ -3,7 +3,7 @@ import { actAsAi } from "@/lib/heist/service";
 import type { ProofResponse } from "@/lib/heist/types";
 
 /**
- * "Act as the AI". JSON body { recipient? } ({} for the demo address): simulates the House Chog's AI key sending the
+ * "Run the check". JSON body { recipient? } ({} for the demo address): simulates the House Chog's AI key sending the
  * whole vault to the recipient against Monad mainnet at the latest block. Read-only: nothing is ever broadcast. A JSON
  * body is required, so a cross-site form post can't spend the proof budget.
  */

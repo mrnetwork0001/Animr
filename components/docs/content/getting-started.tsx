@@ -306,7 +306,7 @@ export const judgeQuickStart: DocContent = {
               title: <DocLink href="/heist">Rob this Chog</DocLink>,
               body: (
                 <p>
-                  Press <strong>Act as the AI</strong>. Monad mainnet refuses the AI key&apos;s transfer of the House
+                  Press <strong>Run the check</strong>. Monad mainnet refuses the AI key&apos;s transfer of the House
                   Chog&apos;s $CHOG out of its wallet: Tokenbound answers <Code>NotAuthorized()</Code>, and the same call
                   from the real owner goes through. Nothing is broadcast.
                 </p>
@@ -337,7 +337,7 @@ export const judgeQuickStart: DocContent = {
             ["Rewind", <DocLink key="3" href="/replay/1820">/replay/1820</DocLink>, "Press play. Switch windows (30d, 45d, max) or race a rival."],
             ["Versus", <DocLink key="4" href="/versus">/versus</DocLink>, `Call the Chog that stacks more $CHOG over a hidden ${VERSUS_HOURS} hours. A correct call adds ${VERSUS_POINTS_PER_WIN} points, up to ${VERSUS_DAILY_POINTS_CAP} a day.`],
             ["Ride", <DocLink key="5" href="/bell">/bell</DocLink>, "Pick a Chog to ride. Past Bells are under /bell/<YYYY-MM-DD>."],
-            ["Rob", <DocLink key="6" href="/heist">/heist</DocLink>, "Chat with the House Chog, or press Act as the AI to run the mainnet check directly."],
+            ["Rob", <DocLink key="6" href="/heist">/heist</DocLink>, "Chat with the House Chog, or press Run the check to run the mainnet check directly."],
             ["Guard", <DocLink key="7" href="/guard">/guard</DocLink>, "Reads AnimrTradeGuard's roles, pause switch and the House Chog's vault live from the chain."],
             ["Numbers", <DocLink key="8" href="/stats">/stats</DocLink>, "Live usage: fans, rides, Versus picks, heist attempts, claimed agents and 0G spend."],
           ]}
@@ -387,7 +387,7 @@ export const judgeQuickStart: DocContent = {
           </li>
           <li>
             <strong>The House Chog is napping.</strong> The heist&apos;s daily 0G budget is spent; it resets at 00:00 UTC.
-            Act as the AI still runs the full mainnet check.
+            Run the check still runs the full mainnet check.
           </li>
           <li>
             <strong>Think now refuses.</strong> Each Chog can think on demand once every {MANUAL_RUN_INTERVAL_MS / 60_000}{" "}

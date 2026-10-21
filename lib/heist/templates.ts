@@ -43,8 +43,8 @@ const LINES: Record<TemplateKind, string[]> = {
     "Good effort, but the vault stays shut. Try a new angle next time!",
   ],
   nap: [
-    "Zzz... the House Chog is napping: today's thinking budget is spent. Back after 00:00 UTC. Act as the AI still works!",
-    "*snores softly on the vault* It's nap time until 00:00 UTC. Press Act as the AI to see what Monad says anyway.",
+    "Zzz... the House Chog is napping: today's thinking budget is spent. Back after 00:00 UTC. Run the check still works!",
+    "*snores softly on the vault* It's nap time until 00:00 UTC. Press Run the check to see what Monad says anyway.",
   ],
 };
 
