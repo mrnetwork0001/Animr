@@ -178,7 +178,6 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `NEXT_PUBLIC_RPC_URL` | `https://rpc.monad.xyz` | **Ships to every browser.** Set it only for rate-limit trouble (troubleshooting), then redeploy. |
 | `NEXT_PUBLIC_IPFS_GATEWAY` | `https://ipfs.filebase.io/ipfs/` | Needs a trailing slash. |
 | `NEXT_PUBLIC_MARKETPLACE_URL_TEMPLATE` | OpenSea item page | `{contract}` and `{tokenId}` are substituted. |
-| `ANIMR_PAPER_START_CHOG` | `1000` | The demo bankroll for a new paper agent whose wallet is empty. |
 | `ANIMR_MANUAL_RUNS_PER_DAY` | `400` | The global daily cap on "Think now" runs, each one 0G call (about $0.002). |
 | `NEXT_PUBLIC_CHOG_NFT_ADDRESS`, `NEXT_PUBLIC_CHOG_TOKEN_ADDRESS`, `NEXT_PUBLIC_TBA_IMPLEMENTATION`, `NEXT_PUBLIC_TBA_SALT` | Chog Genesis, $CHOG, Tokenbound AccountProxy, zero salt | **Never change these.** A different value moves every Chog's wallet address or breaks the guard's fixed wiring. |
 
@@ -189,7 +188,6 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `HOUSE_PRIVATE_KEY` | The House hot key. Only `scripts/send-oracle-purse.mts` reads it, and you pass it to the Foundry scripts on the command line, all on your laptop. The app never reads it. |
 | `HOUSE_ADDRESS`, `ADMIN_ADDRESS` | Script inputs: the Purse script and `contracts/script/DeployAnimrTradeGuard.s.sol`. |
 | `ANIMR_ENV` | Vercel already namespaces Redis by `VERCEL_ENV`. If you set it (to `production`, say), preview deployments would write production data. Use it only on your laptop, for the Purse script. |
-| `ANIMR_MOCK_MARKET` | It replaces real prices with a simulated random walk, for demos only. |
 | `ANIMR_DATA_DIR` | The local file store only. |
 | `JITI_TSCONFIG_PATHS` | A command-line flag for running the scripts with jiti. |
 | Any key or token with a `NEXT_PUBLIC_` prefix | It would ship to every visitor's browser. |

@@ -13,11 +13,6 @@ const UNAVAILABLE_TTL_MS = 10_000;
 const FETCH_TIMEOUT_MS = 8_000;
 const MON_SYMBOLS = new Set(["MON", "WMON"]);
 
-/** ANIMR_MOCK_MARKET=1 swaps live data for a deterministic, time-based random walk (demos without liquidity). */
-export function isMockMarket(): boolean {
-  return process.env.ANIMR_MOCK_MARKET === "1" || process.env.ANIMR_MOCK_MARKET === "true";
-}
-
 const cache = new Map<string, { expires: number; snapshot: MarketSnapshot }>();
 const inflight = new Map<string, Promise<MarketSnapshot>>();
 
@@ -29,7 +24,6 @@ export async function getMarketSnapshot(
   chogToken: Address | undefined = appConfig.chogToken,
 ): Promise<MarketSnapshot> {
   const now = Date.now();
-  if (isMockMarket()) return mockSnapshot(now);
   if (!chogToken) return unavailable(now);
 
   const key = `${appConfig.network}:${chogToken.toLowerCase()}`;
@@ -163,64 +157,5 @@ async function fromGeckoTerminal(token: Address): Promise<MarketSnapshot | null>
     liquidityUsd: num(attributes.reserve_in_usd),
     source: "geckoterminal",
     fetchedAt: new Date().toISOString(),
-  };
-}
-
-// --- Mock market: smooth value noise at several time scales around the real
-// pool's levels (Oct 2026: ~0.0735 MON per $CHOG, MON ~ $0.0214, ~$95k liquidity).
-const MOCK_PRICE_QUOTE = 0.0735;
-const MOCK_MON_USD = 0.0214;
-const MOCK_LIQUIDITY_USD = 95_000;
-const MOCK_VOLUME_USD = 8_000;
-const HOUR_MS = 3_600_000;
-const OCTAVES = [
-  { periodMs: HOUR_MS / 4, amplitude: 0.012 },
-  { periodMs: 2 * HOUR_MS, amplitude: 0.03 },
-  { periodMs: 12 * HOUR_MS, amplitude: 0.06 },
-  { periodMs: 72 * HOUR_MS, amplitude: 0.1 },
-];
-
-/** Deterministic hash of an integer to [0, 1). */
-function hash01(n: number, seed: number): number {
-  let h = Math.imul(n ^ seed, 0x9e3779b1);
-  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
-  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
-
-/** Smoothly interpolated noise in [-1, 1]. */
-function valueNoise(x: number, seed: number): number {
-  const i = Math.floor(x);
-  const f = x - i;
-  const a = hash01(i, seed) * 2 - 1;
-  const b = hash01(i + 1, seed) * 2 - 1;
-  return a + (b - a) * f * f * (3 - 2 * f);
-}
-
-function mockPriceQuote(time: number): number {
-  const logReturn = OCTAVES.reduce(
-    (sum, { periodMs, amplitude }, k) => sum + amplitude * valueNoise(time / periodMs, 0x5eed + k * 7919),
-    0,
-  );
-  return MOCK_PRICE_QUOTE * Math.exp(logReturn);
-}
-
-function round(value: number, significant = 6): number {
-  return Number(value.toPrecision(significant));
-}
-
-function mockSnapshot(now: number): MarketSnapshot {
-  const priceQuote = mockPriceQuote(now);
-  const change1h = (priceQuote / mockPriceQuote(now - HOUR_MS) - 1) * 100;
-  const change24h = (priceQuote / mockPriceQuote(now - 24 * HOUR_MS) - 1) * 100;
-  return {
-    priceUsd: round(priceQuote * MOCK_MON_USD),
-    priceQuote: round(priceQuote),
-    change1hPct: round(change1h, 3),
-    change24hPct: round(change24h, 3),
-    volume24hUsd: Math.round(MOCK_VOLUME_USD * (1 + Math.abs(change24h) / 5)),
-    liquidityUsd: Math.round(MOCK_LIQUIDITY_USD * (1 + 0.1 * valueNoise(now / (6 * HOUR_MS), 0xbeef))),
-    source: "mock",
-    fetchedAt: new Date(now).toISOString(),
   };
 }
