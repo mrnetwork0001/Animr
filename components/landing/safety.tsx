@@ -1,30 +1,27 @@
 import Link from "next/link";
-import { ArrowRightIcon, ExternalIcon, GuardIcon, IconTile, StatRow } from "@/components/v2";
+import { ArrowRightIcon, ExternalIcon, StatRow } from "@/components/v2";
 import { labels, links, safety } from "./content";
 import { FlowDiagram } from "./flow-diagram";
 import { HouseChogCard } from "./house-status";
-import { Icon } from "./icons";
 import { Section, StatusBadge } from "./primitives";
-import { Rich } from "./rich";
 import { type GuardLink, guardLink, houseChog } from "./showcase";
 
-/** AnimrTradeGuard, live on Monad: the deployment, the House Chog (live state read in the browser), real vs simulated, and the rules. */
-export function Safety({ index }: { index?: number }) {
+/**
+ * AnimrTradeGuard, live on Monad: the deployment, the House Chog (only once its vault is open, read in the browser),
+ * what's real and what's simulated, and the flow. The guard's full rule list lives on /guard.
+ */
+export function Safety() {
   const guard = guardLink();
   const house = houseChog();
   return (
-    <Section id={safety.id} index={index} kicker={safety.eyebrow} title={safety.title} lede={safety.lede}>
-      <div className="lp-grid-2">
+    <Section id={safety.id} title={safety.title} lede={safety.lede}>
+      {/* The guard card spans the row on its own until the House Chog card renders beside it (landing.css). */}
+      <div className="lp-grid-2 lp-safety-cards">
         <Deployed guard={guard} />
-        <HouseChogCard house={house && { label: house.label, name: house.archetype }} />
+        <HouseChogCard house={house && { label: house.label, name: house.name }} />
       </div>
 
       <RealVsSimulated />
-
-      <div className="lp-rules-row">
-        <Permissions />
-        <Checklist guard={guard} />
-      </div>
 
       <FlowDiagram />
     </Section>
@@ -39,17 +36,9 @@ function Deployed({ guard }: { guard: GuardLink | null }) {
         <StatusBadge status="live" label={deployed.label} />
         <span className="lp-card-status-note">{deployed.network}</span>
       </div>
-      <div className="lp-card-titlerow">
-        <IconTile size="lg">
-          <GuardIcon />
-        </IconTile>
-        <div>
-          <p className="v2-kicker">AnimrTradeGuard</p>
-          <h3 id="guard-deployed-title" className="lp-card-h3">
-            {deployed.title}
-          </h3>
-        </div>
-      </div>
+      <h3 id="guard-deployed-title" className="lp-card-h3 lp-card-title">
+        {deployed.title}
+      </h3>
       <p className="lp-card-p">{deployed.text}</p>
       <StatRow size="sm" inline className="lp-house-limits" stats={deployed.facts} />
       {guard && (
@@ -106,70 +95,6 @@ function RealVsSimulated() {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-/** What the AI's key can and can't do through the guard. */
-function Permissions() {
-  return (
-    <div className="v2-card lp-perms lp-reveal">
-      <h3 className="lp-perms-title lp-perms-title--can">{safety.can.title}</h3>
-      <ul className="lp-perm-list">
-        {safety.can.items.map((item) => (
-          <li key={item}>
-            <span className="lp-perm-mark lp-perm-mark--can">
-              <Icon name="check" className="lp-perm-icon" strokeWidth={2.5} />
-            </span>
-            {item}
-          </li>
-        ))}
-      </ul>
-      <h3 className="lp-perms-title lp-perms-title--cannot">{safety.cannot.title}</h3>
-      <ul className="lp-perm-list lp-perm-list--muted">
-        {safety.cannot.items.map((item) => (
-          <li key={item}>
-            <span className="lp-perm-mark lp-perm-mark--cannot">
-              <Icon name="x" className="lp-perm-icon" strokeWidth={2.5} />
-            </span>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-/** The rules AnimrTradeGuard enforces on-chain. */
-function Checklist({ guard }: { guard: GuardLink | null }) {
-  return (
-    <div className="v2-card lp-checklist lp-reveal">
-      <div className="lp-checklist-head">
-        <h3 className="lp-card-h3">{safety.checklistTitle}</h3>
-        <StatusBadge status="live" />
-      </div>
-      <ol className="lp-numbered">
-        {safety.checklist.map((item) => (
-          <li key={item}>
-            <span>
-              <Rich text={item} />
-            </span>
-          </li>
-        ))}
-      </ol>
-      {guard && (
-        <p className="lp-checklist-foot">
-          <Icon name="check" className="lp-check-icon" strokeWidth={2.5} />
-          AnimrTradeGuard on Monad mainnet:
-          {guard.href ? (
-            <a href={guard.href} target="_blank" rel="noopener noreferrer" title={guard.address} className="lp-mono-link">
-              {guard.short} ↗<span className="v2-sr"> ({labels.explorerHint})</span>
-            </a>
-          ) : (
-            <span className="v2-mono">{guard.short}</span>
-          )}
-        </p>
-      )}
     </div>
   );
 }

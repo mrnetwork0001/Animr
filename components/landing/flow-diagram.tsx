@@ -16,7 +16,6 @@ export function FlowDiagram() {
   return (
     <figure className="v2-card v2-card--roomy lp-flowfig lp-reveal">
       <figcaption className="lp-flowfig-cap">
-        <p className="v2-kicker">{diagram.eyebrow}</p>
         <h3 className="lp-h3-lg">{diagram.title}</h3>
         <p className="lp-card-p">
           {/* Who trades for real stands out from the caption: only Chogs whose holder opted in. */}
@@ -89,8 +88,8 @@ function NodeIcon({ node, x, y }: { node: Node; x: number; y: number }) {
   );
 }
 
-/** Badge width for its label (9px caps with 0.12em tracking ≈ 6.8px a letter, plus padding), so it clears the titles. */
-const BADGE_W = Math.round(16 + diagram.badge.length * 6.8);
+/** Badge width for its label (10px sentence case ≈ 6px a letter, plus padding), so it clears the titles. */
+const BADGE_W = Math.round(18 + diagram.badge.length * 6);
 
 function Badge({ x, y }: { x: number; y: number }) {
   return (

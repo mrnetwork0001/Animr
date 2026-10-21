@@ -121,19 +121,6 @@ html:has(.lp-root) {
   padding-top: 22px;
   border-top: 1px solid var(--v2-line-soft);
 }
-.lp-head-meta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.lp-index {
-  min-width: 2ch;
-  color: var(--v2-faint);
-  font-family: var(--v2-font-display);
-  font-size: 13.5px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
-}
 .lp-h2 {
   margin: 0;
   font-family: var(--v2-font-display);
@@ -142,11 +129,7 @@ html:has(.lp-root) {
   line-height: 1.06;
   letter-spacing: -0.026em;
   text-wrap: balance;
-  background-image: linear-gradient(90deg, #ffffff 0%, #ffffff 45%, #b4b3bb 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: var(--v2-ink);
 }
 .lp-lead {
   max-width: 60ch;
@@ -161,9 +144,6 @@ html:has(.lp-root) {
   .lp-head {
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     align-items: end;
-  }
-  .lp-head-meta {
-    grid-column: 1 / -1;
   }
   .lp-head .lp-lead {
     justify-self: end;
@@ -210,9 +190,6 @@ html:has(.lp-root) {
   line-height: 1.6;
   text-wrap: pretty;
 }
-.lp-card-p--ink {
-  color: var(--v2-muted);
-}
 .lp-card-note {
   margin: 0;
   color: var(--v2-faint);
@@ -237,12 +214,6 @@ html:has(.lp-root) {
 }
 .lp-tone-neutral {
   color: var(--v2-muted);
-}
-
-/* Icons from components/landing/icons.tsx inside a v2 icon tile. */
-.v2-icon-tile > .lp-glyph {
-  width: 54%;
-  height: 54%;
 }
 
 .lp-avatar {
@@ -352,7 +323,7 @@ html:has(.lp-root) {
   }
 }
 
-/* ============================================================================ 01 · four verbs */
+/* ============================================================================ four verbs */
 
 .lp-verbs {
   display: grid;
@@ -379,39 +350,14 @@ html:has(.lp-root) {
 .lp-verb:hover {
   border-color: var(--v2-line-strong);
 }
-.lp-verb-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.lp-verb-step {
-  color: rgb(255 255 255 / 0.14);
-  font-family: var(--v2-font-display);
-  font-size: 44px;
-  font-weight: 300;
-  line-height: 0.9;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-}
-.lp-verb-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 28px;
-}
-.lp-time {
-  font-family: var(--v2-font-display);
-  font-variant-numeric: tabular-nums;
-}
-.lp-time-icon {
-  width: 13px;
-  height: 13px;
-  color: var(--v2-faint);
+.lp-verb-name {
+  margin: 28px 0 0;
+  color: var(--v2-kicker);
+  font-size: var(--v2-fs-sm);
+  font-weight: 500;
 }
 .lp-verb-title {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   color: var(--v2-ink);
   font-size: var(--v2-fs-h3);
   font-weight: 500;
@@ -433,91 +379,7 @@ html:has(.lp-root) {
   flex: 1 0 auto;
 }
 
-/* The Rob card's House Chog note. */
-.lp-note {
-  margin: 16px 0 0;
-  padding: 10px 12px;
-  border: 1px solid var(--v2-line);
-  border-radius: 12px;
-  background: rgb(255 255 255 / 0.025);
-  color: var(--v2-nav);
-  font-size: 12.5px;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
-.lp-note--warning {
-  border-color: rgb(242 193 107 / 0.26);
-  background: rgb(242 193 107 / 0.05);
-}
-.lp-note--warning .lp-strong {
-  color: var(--v2-warning);
-}
-
-/* The one score. */
-.lp-score {
-  display: grid;
-  gap: 16px 48px;
-  align-items: center;
-  margin-top: 16px;
-}
-.lp-score-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.lp-formula {
-  margin: 0;
-  color: var(--v2-ink);
-  font-family: var(--v2-font-display);
-  font-size: clamp(19px, 0.8vw + 14px, 26px);
-  font-weight: var(--v2-fw-display);
-  line-height: 1.3;
-  letter-spacing: -0.012em;  text-wrap: balance;
-}
-.lp-score-body {
-  margin: 0;
-  color: var(--v2-nav);
-  font-size: var(--v2-fs-sm);
-  line-height: 1.6;
-  text-wrap: pretty;
-}
-@media (min-width: 1024px) {
-  .lp-score {
-    grid-template-columns: auto minmax(0, 1.25fr) minmax(0, 1fr);
-    padding-block: 22px;
-  }
-  .lp-score-head {
-    padding-right: 32px;
-    border-right: 1px solid var(--v2-line-soft);
-    align-self: stretch;
-  }
-}
-
-/* ============================================================================ 02 · the NFT is the app */
-
-.lp-pillar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.lp-pillar .lp-card-h3 {
-  margin-top: 12px;
-}
-.lp-struck {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-  align-self: flex-start;
-}
-.lp-strike {
-  position: absolute;
-  width: 46px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--v2-danger);
-  box-shadow: 0 0 10px rgb(255 122 138 / 0.55);
-  rotate: -45deg;
-}
+/* ============================================================================ the NFT is the app */
 
 .lp-handover {
   display: grid;
@@ -699,7 +561,7 @@ html:has(.lp-root) {
   color: var(--v2-success);
 }
 
-/* ============================================================================ 03 · trait DNA */
+/* ============================================================================ trait DNA */
 
 .lp-dna {
   display: grid;
@@ -723,16 +585,12 @@ html:has(.lp-root) {
   list-style: none;
 }
 .lp-rules > li {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--v2-line);
   color: var(--v2-nav);
   font-size: var(--v2-fs-base);
   line-height: 1.6;
   text-wrap: pretty;
-}
-.lp-rules .v2-icon-tile {
-  margin-top: -4px;
 }
 
 .lp-dna-compile {
@@ -862,13 +720,16 @@ html:has(.lp-root) {
   align-self: center;
   min-width: 0;
 }
-.lp-persona-titlerow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 10px;
-  margin-top: 4px;
+.lp-persona-who {
+  margin: 4px 0 0;
+  font-size: var(--v2-fs-sm);
+}
+.lp-set-by {
+  margin: 0;
+  color: var(--v2-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 .lp-persona-body {
   display: flex;
@@ -939,7 +800,7 @@ html:has(.lp-root) {
   letter-spacing: -0.01em;
 }
 
-/* ============================================================================ 04 · safety */
+/* ============================================================================ safety */
 
 .lp-card-status {
   display: flex;
@@ -953,22 +814,20 @@ html:has(.lp-root) {
   font-family: var(--v2-font-mono);
   font-size: 11.5px;
 }
-.lp-card-titlerow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.lp-card-titlerow > div {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
 .lp-card-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: auto;
   padding-top: 4px;
+}
+
+/* The guard card spans the row until the House Chog card (house-status.tsx) renders beside it. */
+.lp-safety-cards > :only-child {
+  grid-column: 1 / -1;
+}
+.lp-card-title {
+  margin-top: -4px;
 }
 
 .lp-deployed,
@@ -1065,129 +924,9 @@ html:has(.lp-root) {
 }
 .lp-dot--live::before {
   background: var(--v2-success);
-  box-shadow: 0 0 8px rgb(98 224 166 / 0.6);
 }
 .lp-dot--sim::before {
   background: var(--v2-violet-ink);
-  box-shadow: 0 0 8px rgb(169 155 243 / 0.6);
-}
-
-.lp-rules-row {
-  display: grid;
-  gap: 16px;
-  margin-top: 16px;
-}
-@media (min-width: 1024px) {
-  .lp-rules-row {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  }
-}
-
-.lp-perms-title {
-  margin: 0;
-  font-size: var(--v2-fs-sm);
-  font-weight: 520;
-  letter-spacing: 0.01em;
-}
-.lp-perms-title--can {
-  color: var(--v2-success);
-}
-.lp-perms-title--cannot {
-  margin-top: 28px;
-  color: var(--v2-danger);
-}
-.lp-perm-list {
-  display: grid;
-  gap: 12px;
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.lp-perm-list > li {
-  display: flex;
-  gap: 12px;
-  color: var(--v2-muted);
-  font-size: var(--v2-fs-base);
-  line-height: 1.5;
-}
-.lp-perm-list--muted > li {
-  color: var(--v2-nav);
-}
-.lp-perm-mark {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  flex: none;
-  margin-top: 1px;
-  border-radius: 50%;
-}
-.lp-perm-mark--can {
-  border: 1px solid rgb(98 224 166 / 0.32);
-  background: rgb(98 224 166 / 0.1);
-  color: var(--v2-success);
-}
-.lp-perm-mark--cannot {
-  border: 1px solid rgb(255 122 138 / 0.32);
-  background: rgb(255 122 138 / 0.08);
-  color: var(--v2-danger);
-}
-.lp-perm-icon {
-  width: 13px;
-  height: 13px;
-}
-
-.lp-checklist {
-  display: flex;
-  flex-direction: column;
-}
-.lp-checklist-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.lp-numbered {
-  display: grid;
-  gap: 12px;
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: lp-rule;
-}
-.lp-numbered > li {
-  display: flex;
-  gap: 14px;
-  color: var(--v2-nav);
-  font-size: var(--v2-fs-sm);
-  line-height: 1.6;
-  text-wrap: pretty;
-  counter-increment: lp-rule;
-}
-.lp-numbered > li::before {
-  content: counter(lp-rule, decimal-leading-zero);
-  flex: none;
-  width: 22px;
-  padding-top: 1px;
-  color: var(--v2-teal);
-  font-family: var(--v2-font-display);
-  font-size: 12.5px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-}
-.lp-checklist-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  margin: 20px 0 0;
-  padding: 12px 14px;
-  border: 1px solid var(--v2-line-soft);
-  border-radius: var(--v2-r-md);
-  background: rgb(0 0 0 / 0.2);
-  color: var(--v2-muted);
-  font-size: var(--v2-fs-sm);
 }
 
 /* The flow diagram (flow-diagram.tsx): teal = always on, dashed violet = the holder's opt-in. */
@@ -1277,9 +1016,8 @@ html:has(.lp-root) {
 }
 .lp-optin-badge-text {
   fill: #cfc6ff;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-size: 10px;
+  font-weight: 500;
 }
 .lp-svg-title {
   fill: var(--v2-ink);
@@ -1311,7 +1049,7 @@ html:has(.lp-root) {
   stroke-dasharray: 6 7;
 }
 
-/* ============================================================================ 05 · 0G receipts */
+/* ============================================================================ 0G receipts */
 
 .lp-receipts {
   display: grid;
@@ -1332,8 +1070,6 @@ html:has(.lp-root) {
   list-style: none;
 }
 .lp-points > li {
-  display: flex;
-  gap: 16px;
   padding-block: 20px;
   border-top: 1px solid var(--v2-line-soft);
 }
@@ -1486,55 +1222,13 @@ html:has(.lp-root) {
   color: var(--v2-nav);
   font-style: italic;
 }
-.lp-decision-note {
-  margin-top: 12px;
-}
 @media (max-width: 419.98px) {
   .lp-hide-xs {
     display: none;
   }
 }
 
-.lp-built {
-  margin-top: clamp(48px, 5vw, 72px);
-}
-.lp-built-title {
-  margin-bottom: 16px;
-}
-.lp-built-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--v2-line);
-  border-radius: var(--v2-r-lg);
-  overflow: hidden;
-  list-style: none;
-  background-color: var(--v2-glass-fill);
-  box-shadow: var(--v2-glass-glow);
-}
-.lp-built-list > li {
-  padding: 18px 20px;
-  box-shadow:
-    -1px 0 0 var(--v2-line-soft),
-    0 -1px 0 var(--v2-line-soft);
-}
-.lp-built-name {
-  margin: 0;
-  color: var(--v2-ink);
-  font-family: var(--v2-font-display);
-  font-size: 17px;
-  font-weight: 450;
-  letter-spacing: -0.01em;
-}
-.lp-built-role {
-  margin: 4px 0 0;
-  color: var(--v2-faint);
-  font-size: var(--v2-fs-xs);
-  line-height: 1.45;
-}
-
-/* ============================================================================ 06 · FAQ */
+/* ============================================================================ FAQ */
 
 @media (min-width: 1024px) {
   .lp-faq {
@@ -1640,15 +1334,10 @@ html:has(.lp-root) {
   padding: clamp(36px, 6vw, 88px) clamp(20px, 5vw, 72px);
   border: 1px solid var(--v2-line);
   border-radius: 28px;
-  background:
-    radial-gradient(70% 90% at 0% 0%, rgb(111 90 220 / 0.2), transparent 60%),
-    radial-gradient(60% 80% at 100% 100%, rgb(159 240 236 / 0.08), transparent 60%),
-    var(--v2-bg);
-  box-shadow:
-    var(--v2-glass-glow),
-    0 40px 120px -60px rgb(111 90 220 / 0.6);
+  background: var(--v2-bg);
+  box-shadow: var(--v2-glass-glow);
 }
-/* The hero's grid inside the panel, fading toward the copy. */
+/* The hero's grid inside the panel, fading out toward the edges. */
 .lp-cta::before {
   content: "";
   position: absolute;
@@ -1660,40 +1349,17 @@ html:has(.lp-root) {
     linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
   background-size: var(--lp-cell) var(--lp-cell);
   background-position: 50% 0;
-  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 70% 50%, #000 10%, transparent 85%);
-  mask-image: radial-gradient(ellipse 70% 80% at 70% 50%, #000 10%, transparent 85%);
-}
-.lp-cta-art {
-  position: absolute;
-  z-index: -1;
-  top: 50%;
-  right: -6%;
-  width: min(720px, 60%);
-  aspect-ratio: 1;
-  translate: 0 -50%;
-  pointer-events: none;
-  mix-blend-mode: lighten;
-  opacity: 0.9;
-  -webkit-mask-image: radial-gradient(closest-side, #000 62%, rgb(0 0 0 / 0.45) 82%, transparent 100%);
-  mask-image: radial-gradient(closest-side, #000 62%, rgb(0 0 0 / 0.45) 82%, transparent 100%);
-}
-.lp-cta-art > img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 50%, #000 10%, transparent 85%);
+  mask-image: radial-gradient(ellipse 70% 80% at 50% 50%, #000 10%, transparent 85%);
 }
 .lp-cta-copy {
   position: relative;
   display: grid;
-  justify-items: start;
+  justify-items: center;
   gap: 18px;
-  max-width: 600px;
-}
-@media (min-width: 880px) {
-  .lp-cta-copy {
-    max-width: min(600px, 52%);
-  }
+  max-width: 640px;
+  margin-inline: auto;
+  text-align: center;
 }
 .lp-cta-title {
   margin: 0;
@@ -1703,15 +1369,12 @@ html:has(.lp-root) {
   line-height: 1.04;
   letter-spacing: -0.028em;
   text-wrap: balance;
-  background-image: linear-gradient(90deg, #ffffff 0%, #ffffff 40%, #a9a8b1 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  color: var(--v2-ink);
 }
 .lp-cta-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-top: 10px;
 }
@@ -1738,20 +1401,9 @@ html:has(.lp-root) {
 .is-raised .lp-lineup-art {
   width: 64px;
   border-radius: 18px;
-  box-shadow:
-    0 0 0 4px var(--v2-bg),
-    0 0 32px rgb(111 90 220 / 0.45);
+  box-shadow: 0 0 0 4px var(--v2-bg);
 }
-/* Phones: the art sits behind the copy, fainter. */
 @media (max-width: 879.98px) {
-  .lp-cta-art {
-    top: auto;
-    right: -30%;
-    bottom: -18%;
-    width: 110%;
-    translate: none;
-    opacity: 0.4;
-  }
   .lp-cta-actions > * {
     flex: 1 1 auto;
   }

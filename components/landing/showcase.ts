@@ -2,7 +2,7 @@ import candleFile from "@/data/chog-ohlcv-1h.json";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
 import type { TradingStyle } from "@/lib/agent/types";
 import { FLAGGED_TOKEN_IDS, displayTraitValue, scrubTraitText, traitSafety } from "@/lib/brand-safety";
-import { chogLabel } from "@/lib/chog-id";
+import { nameNumberOf } from "@/lib/chog-id";
 import { appConfig } from "@/lib/config";
 import { animrTradeGuardAddress } from "@/lib/contracts/animr-trade-guard";
 import { DEFAULT_WINDOW, type ReplaySeries, prepareSeries, replay, replayStats } from "@/lib/dna/backtest";
@@ -39,7 +39,7 @@ export type ShowcaseGene = {
 
 export type ShowcaseChog = {
   tokenId: number;
-  /** Both numbers, the marketplace name first: "CHOG #1312 · token 1820" (lib/chog-id.ts). */
+  /** Its marketplace name, "CHOG #1312" (the token id only on the profile, the wallet card and lookups). */
   label: string;
   /** Its persona name (lib/agent/persona.ts), the same name its agent and League row carry. */
   name: string;
@@ -70,6 +70,12 @@ export function showcaseChog(tokenId: number): ShowcaseChog | null {
 /** The showcase Chogs that exist and are brand-safe, in the given order. */
 export function showcaseChogs(tokenIds: readonly number[]): ShowcaseChog[] {
   return tokenIds.flatMap((tokenId) => showcaseChog(tokenId) ?? []);
+}
+
+/** "CHOG #1312" (or a 1:1's own title) from the metadata name; "token 1820" only when the name carries no number. */
+function marketName(tokenId: number, metadataName: string | undefined): string {
+  const title = metadataName?.trim();
+  return title && nameNumberOf(title) !== null ? title : `token ${tokenId}`;
 }
 
 /** The persona name every Chog keeps (same inputs as the League's chogName). */
@@ -117,7 +123,7 @@ function buildShowcase(tokenId: number): ShowcaseChog | null {
   const signalGene = gene("signal");
   return {
     tokenId,
-    label: chogLabel(tokenId, { metadataName: chog.name }),
+    label: marketName(tokenId, chog.name),
     name: nameOf(chog),
     archetype: genome.archetype,
     style: genome.style,
@@ -343,6 +349,6 @@ export function houseChog(): HouseShowcase | null {
   const tokenId = houseChogTokenId();
   const chog = tokenId === null ? undefined : getChog(tokenId);
   return tokenId !== null && chog
-    ? { tokenId, label: chogLabel(tokenId, { metadataName: chog.name }), name: nameOf(chog), archetype: genomeOf(chog).archetype }
+    ? { tokenId, label: marketName(tokenId, chog.name), name: nameOf(chog), archetype: genomeOf(chog).archetype }
     : null;
 }

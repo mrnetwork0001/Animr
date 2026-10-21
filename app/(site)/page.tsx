@@ -38,8 +38,8 @@ export const viewport: Viewport = {
 };
 
 /**
- * The landing page: the approved hero (components/hero) as the first screen, then the four verbs
- * (Meet, Rewind, Ride, Rob), why the NFT is the app, Trait DNA, safety, 0G receipts, the FAQ and the
+ * The landing page: the approved hero (components/hero) as the first screen, then the four ways in
+ * (League, Versus, Daily Bell, Rob this Chog), why the NFT is the app, Trading DNA, safety, 0G receipts, the FAQ and the
  * final call, all in the v2 language (app/design-v2.css + components/landing/landing.css) on the
  * hero's near-black and grid. Static and server-rendered: every Chog, name and League number on it is
  * computed from committed data when the page is built (components/landing/showcase.ts). The client code
@@ -49,12 +49,12 @@ export default function LandingPage() {
   return (
     <AnimrHero className="v2-page lp-root" footer={<LandingFooter />}>
       <div className="lp-body">
-        <Verbs index={1} />
-        <Gate index={2} />
-        <Minds index={3} />
-        <Safety index={4} />
-        <Receipts index={5} />
-        <Faq index={6} />
+        <Verbs />
+        <Gate />
+        <Minds />
+        <Safety />
+        <Receipts />
+        <Faq />
         <FinalCta />
       </div>
     </AnimrHero>

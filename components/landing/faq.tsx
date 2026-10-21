@@ -3,11 +3,11 @@ import { SectionHead, Shell } from "./primitives";
 import { Rich } from "./rich";
 
 /** Native <details> disclosures: keyboard and screen-reader friendly with no JavaScript. */
-export function Faq({ index }: { index?: number }) {
+export function Faq() {
   return (
     <section id={faq.id} aria-labelledby={`${faq.id}-title`} className="lp-section">
       <Shell className="lp-faq">
-        <SectionHead id={faq.id} index={index} kicker={faq.eyebrow} title={faq.title} className="lp-faq-head" />
+        <SectionHead id={faq.id} title={faq.title} className="lp-faq-head" />
         <div className="lp-faq-list">
           {faq.items.map((item) => (
             <details key={item.q} className="lp-faq-item">

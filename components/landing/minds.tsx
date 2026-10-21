@@ -1,22 +1,21 @@
 import Link from "next/link";
-import { ArrowRightIcon, IconTile, RewindIcon } from "@/components/v2";
+import { ArrowRightIcon, RewindIcon } from "@/components/v2";
 import { ChogImage } from "./chog-image";
-import { ctas, links, minds, showcaseIds } from "./content";
-import { Icon } from "./icons";
+import { ctas, links, minds, showcaseIds, styles as styleCopy } from "./content";
 import { STYLE_TEXT, Section, StyleBadge } from "./primitives";
 import { Rich } from "./rich";
 import { type ShowcaseChog, showcaseChog, showcaseChogs } from "./showcase";
 
 /**
- * Trait DNA: how a Chog's on-chain traits compile into its trading genome, with real examples. Every
+ * Trading DNA: how a Chog's on-chain traits compile into its genome, with real examples. Every
  * Chog here is compiled at build time from its frozen on-chain traits by the app's own engine
  * (showcase.ts), so this section can never drift from what the Chog actually trades.
  */
-export function Minds({ index }: { index?: number }) {
+export function Minds() {
   const example = showcaseChog(showcaseIds.dnaExample);
   const cards = showcaseChogs(showcaseIds.cards);
   return (
-    <Section id={minds.id} index={index} kicker={minds.eyebrow} title={minds.title} lede={minds.lede}>
+    <Section id={minds.id} title={minds.title} lede={minds.lede}>
       {example && <DnaStrip chog={example} />}
       <ul className="lp-grid-3 lp-personas">
         {cards.map((chog) => (
@@ -37,12 +36,7 @@ function DnaStrip({ chog }: { chog: ShowcaseChog }) {
         <ul className="lp-rules">
           {dna.rules.map((rule) => (
             <li key={rule}>
-              <IconTile size="sm">
-                <Icon name="dna" className="lp-glyph" strokeWidth={1.4} />
-              </IconTile>
-              <span>
-                <Rich text={rule} />
-              </span>
+              <Rich text={rule} />
             </li>
           ))}
         </ul>
@@ -50,7 +44,7 @@ function DnaStrip({ chog }: { chog: ShowcaseChog }) {
 
       <div className="lp-dna-compile">
         <p className="lp-mono-label">
-          {chog.label} · {chog.name} · {dna.traitsNote}
+          {chog.name} · {chog.label} <span className="lp-faint">· {dna.traitsNote}</span>
         </p>
         <ul className="lp-traits">
           {chog.traits.map((trait) => (
@@ -97,9 +91,9 @@ function DnaStrip({ chog }: { chog: ShowcaseChog }) {
           </div>
         </div>
         <p className="lp-dna-foot">
-          <span>{minds.genomeNote(chog.genomeVersion)}</span>
+          <span>{minds.genomeNote}</span>
           <Link href={links.replay(chog.tokenId)} className="lp-go lp-go--inline">
-            {ctas.rewindIt}
+            {ctas.watchIt}
             <span className="v2-sr">: {chog.name}</span>
             <ArrowRightIcon className="lp-go-arrow" />
           </Link>
@@ -129,23 +123,18 @@ function PersonaCard({ chog }: { chog: ShowcaseChog }) {
         className="lp-persona-art"
       />
       <div className="lp-persona-id">
-        <p className="lp-mono-label">
-          {chog.label} · {chog.name}
+        <h3 className="lp-card-h3">{chog.archetype}</h3>
+        {/* In a list the style is plain muted text, not a badge. */}
+        <p className="lp-persona-who v2-muted">
+          {chog.name} · {chog.label} · {styleCopy[chog.style].label}
         </p>
-        <div className="lp-persona-titlerow">
-          <h3 className="lp-card-h3">{chog.archetype}</h3>
-          <StyleBadge style={chog.style} />
-        </div>
       </div>
 
       <div className="lp-persona-body">
         <p className="lp-card-p">{chog.signal}</p>
         {chog.setters.length > 0 && (
-          <p className="lp-card-note">
-            {minds.setBy}{" "}
-            <span className={STYLE_TEXT[chog.style]}>
-              {chog.setters.map((trait) => `${trait.type}: ${trait.value}`).join(" · ")}
-            </span>
+          <p className="lp-set-by">
+            {minds.setBy} {chog.setters.map((trait) => `${trait.type}: ${trait.value}`).join(" · ")}
           </p>
         )}
         <dl className="lp-mini-stats">
@@ -159,7 +148,7 @@ function PersonaCard({ chog }: { chog: ShowcaseChog }) {
         <Link href={links.replay(chog.tokenId)} className="lp-go">
           <span className="lp-go-lead">
             <RewindIcon className="lp-go-glyph" />
-            {ctas.rewindIt}
+            {ctas.watchIt}
             <span className="v2-sr">: {chog.name}</span>
           </span>
           <ArrowRightIcon className="lp-go-arrow" />

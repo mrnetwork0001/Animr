@@ -1,36 +1,14 @@
-import type { ReactNode } from "react";
-import { GenomeIcon, IconTile, WalletIcon } from "@/components/v2";
 import { ChogImage } from "./chog-image";
 import { gate, showcaseIds } from "./content";
 import { Icon } from "./icons";
 import { Section, StyleBadge } from "./primitives";
 import { type ShowcaseChog, showcaseChog } from "./showcase";
 
-const PILLAR_ICONS: Record<(typeof gate.pillars)[number]["icon"], ReactNode> = {
-  dna: <GenomeIcon />,
-  wallet: <WalletIcon />,
-  key: <Icon name="key" className="lp-glyph" strokeWidth={1.3} />,
-};
-
 /** The pass/fail gate, answered head-on: without the NFT there is no trader, no wallet and no authority. */
-export function Gate({ index }: { index?: number }) {
+export function Gate() {
   const chog = showcaseChog(showcaseIds.handover);
   return (
-    <Section id={gate.id} index={index} kicker={gate.eyebrow} title={gate.title} lede={gate.lede}>
-      <ul className="lp-grid-3">
-        {gate.pillars.map((pillar) => (
-          <li key={pillar.without} className="v2-card lp-pillar lp-reveal">
-            <span className="lp-struck">
-              <IconTile size="lg">{PILLAR_ICONS[pillar.icon]}</IconTile>
-              {/* A strike through the icon: take the NFT away and this piece is gone. */}
-              <span aria-hidden="true" className="lp-strike" />
-            </span>
-            <h3 className="lp-card-h3">{pillar.without}</h3>
-            <p className="lp-card-p">{pillar.body}</p>
-          </li>
-        ))}
-      </ul>
-
+    <Section id={gate.id} title={gate.title} lede={gate.lede}>
       <Handover chog={chog} />
     </Section>
   );
@@ -61,8 +39,8 @@ function Handover({ chog }: { chog: ShowcaseChog | null }) {
                 className="lp-avatar"
               />
               <div className="lp-min0">
-                <p className="lp-mono-label">{chog.label}</p>
                 <p className="lp-bundle-name">{chog.name}</p>
+                <p className="lp-mono-label">{chog.label}</p>
                 <StyleBadge style={chog.style} />
               </div>
             </div>

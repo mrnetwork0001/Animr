@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { Badge, type BadgeTone, Kicker } from "@/components/v2/primitives";
+import { Badge, type BadgeTone } from "@/components/v2/primitives";
 import type { TradingStyle } from "@/lib/agent/types";
 import { styles as styleCopy } from "./content";
 import { Rich } from "./rich";
@@ -23,27 +23,16 @@ export function AnyLink({ href, ...props }: Omit<ComponentProps<"a">, "href"> & 
 
 type SectionHeadProps = {
   id: string;
-  /** Its place on the page: 1 → "01". */
-  index?: number;
-  kicker: string;
   title: string;
   /** May use **bold** / `code` (see rich.tsx). */
   lede?: string;
   className?: string;
 };
 
-/** A section's head: a hairline, the index and teal kicker, then the DM Sans title with the lede beside it. */
-export function SectionHead({ id, index, kicker, title, lede, className = "" }: SectionHeadProps) {
+/** A section's head: a hairline, then the DM Sans title with the lede beside it. */
+export function SectionHead({ id, title, lede, className = "" }: SectionHeadProps) {
   return (
     <header className={`lp-head lp-reveal ${className}`}>
-      <div className="lp-head-meta">
-        {index != null && (
-          <span className="lp-index" aria-hidden="true">
-            {String(index).padStart(2, "0")}
-          </span>
-        )}
-        <Kicker dot>{kicker}</Kicker>
-      </div>
       <h2 id={`${id}-title`} className="lp-h2">
         {title}
       </h2>
@@ -62,11 +51,11 @@ type SectionProps = Omit<SectionHeadProps, "className"> & {
 };
 
 /** A titled page section: anchor target, landmark labelled by its heading, the landing's rhythm. */
-export function Section({ id, index, kicker, title, lede, children, className = "" }: SectionProps) {
+export function Section({ id, title, lede, children, className = "" }: SectionProps) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={`lp-section ${className}`}>
       <Shell>
-        <SectionHead id={id} index={index} kicker={kicker} title={title} lede={lede} />
+        <SectionHead id={id} title={title} lede={lede} />
         {children}
       </Shell>
     </section>
@@ -96,16 +85,15 @@ export function StyleBadge({ style, className = "" }: { style: TradingStyle; cla
   );
 }
 
-/** live: on Monad mainnet today. simulated: replayed on real data. moving: the House Chog isn't in yet. */
-export type Status = "live" | "simulated" | "moving";
+/** live: on Monad mainnet today. simulated: replayed on real data. */
+export type Status = "live" | "simulated";
 
 const STATUS: Record<Status, { tone: BadgeTone; label: string; live?: boolean }> = {
   live: { tone: "success", label: "Live", live: true },
   simulated: { tone: "violet", label: "Simulated" },
-  moving: { tone: "warning", label: "Moving in" },
 };
 
-/** A status capsule: "Live" (pulsing), "Simulated" or "Moving in", or a custom label in that tone. */
+/** A status capsule: "Live" (pulsing) or "Simulated", or a custom label in that tone. */
 export function StatusBadge({ status, label, className = "" }: { status: Status; label?: string; className?: string }) {
   const { tone, label: fallback, live } = STATUS[status];
   return (
