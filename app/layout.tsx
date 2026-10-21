@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { MiniAppReady } from "@/components/farcaster/miniapp-ready";
 import { meta } from "@/components/landing/content";
+import { miniAppEmbed } from "@/lib/farcaster/embed";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,6 +49,9 @@ export const metadata: Metadata = {
     images: [meta.ogImage],
   },
   icons: { icon: { url: "/animr.svg", type: "image/svg+xml" } },
+  // Farcaster Mini App embed (fc:miniapp + legacy fc:frame): a cast of any Animr link shows today's Bell card
+  // with "Ride a Chog", opening /bell inside the client. A page that sets its own `other` replaces this.
+  other: miniAppEmbed(),
 };
 
 export const viewport: Viewport = {
@@ -69,7 +74,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       {/* Flex column: a group layout's header, <main className="flex-1"> and footer pin the footer down. */}
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        {/* Hides the splash inside Farcaster clients; a no-op (no SDK download) everywhere else. */}
+        <MiniAppReady />
+      </body>
     </html>
   );
 }
