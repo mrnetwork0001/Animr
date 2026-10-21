@@ -102,6 +102,7 @@ export function TimeMachine({
             series={series}
             autoPlay={autoPlay}
             labelOf={labelOf}
+            span={span}
           />
         ) : error ? (
           <div role="alert" className="flex h-[300px] flex-col items-center justify-center px-6 text-center sm:h-[440px]">
@@ -144,7 +145,17 @@ export function useReducedMotion(): boolean {
   );
 }
 
-function Player({ series, autoPlay, labelOf }: { series: Series[]; autoPlay: boolean; labelOf: Labeler }) {
+function Player({
+  series,
+  autoPlay,
+  labelOf,
+  span,
+}: {
+  series: Series[];
+  autoPlay: boolean;
+  labelOf: Labeler;
+  span: WindowKey;
+}) {
   const reducedMotion = useReducedMotion();
   const [progress, setProgress] = useState(() => (autoPlay && !reducedMotion ? 0 : 1));
   const [playing, setPlaying] = useState(false);
@@ -298,7 +309,7 @@ function Player({ series, autoPlay, labelOf }: { series: Series[]; autoPlay: boo
       <Legend ids={series.map((s) => s.tokenId)} labelOf={labelOf} />
 
       {/* The verdict sits under the chart, never over it: the finished chart stays readable. */}
-      {finished && !playing && <Verdict series={series} labelOf={labelOf} onReplay={restart} />}
+      {finished && !playing && <Verdict series={series} labelOf={labelOf} span={span} onReplay={restart} />}
     </div>
   );
 }
@@ -315,7 +326,17 @@ function verdictLine(series: Series[], labelOf: Labeler): string {
   return r.verdict || `${signedPct(r.edgePct)} vs holding`;
 }
 
-function Verdict({ series, labelOf, onReplay }: { series: Series[]; labelOf: Labeler; onReplay: () => void }) {
+function Verdict({
+  series,
+  labelOf,
+  span,
+  onReplay,
+}: {
+  series: Series[];
+  labelOf: Labeler;
+  span: WindowKey;
+  onReplay: () => void;
+}) {
   const [shared, setShared] = useState<"idle" | "copied" | "failed">("idle");
   const solo = series.length === 1;
   const r = series[0].result;
@@ -327,7 +348,11 @@ function Verdict({ series, labelOf, onReplay }: { series: Series[]; labelOf: Lab
   const stampTone: BadgeTone = { win: "success", loss: "danger", rekt: "danger", duel: "violet" }[tone] as BadgeTone;
 
   const share = async () => {
-    const url = window.location.href;
+    // The link opens on the window being shown (?window=30d; the default one needs no parameter).
+    const link = new URL(window.location.href);
+    if (span === DEFAULT_WINDOW) link.searchParams.delete("window");
+    else link.searchParams.set("window", span);
+    const url = link.toString();
     const text = solo
       ? `${labelOf(series[0].tokenId)}: its trading DNA, simulated on real $CHOG candles (1% fee + impact): ${line}`
       : `${line} (simulated on real $CHOG candles, 1% fee + impact)`;

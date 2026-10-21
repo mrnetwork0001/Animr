@@ -83,7 +83,13 @@ function readFilters(params: URLSearchParams): Filters {
 }
 
 /** The query string for a view; the URL mirrors it. */
-function queryOf(filters: Filters, span: WindowKey): string {
+/** ?page=N (1-based; anything else is page 1), so Back from a Chog returns to the same page. */
+function readPage(params: URLSearchParams): number {
+  const page = Number(params.get("page"));
+  return Number.isInteger(page) && page > 1 && page <= 1000 ? page : 1;
+}
+
+function queryOf(filters: Filters, span: WindowKey, page: number): string {
   const next = new URLSearchParams();
   if (filters.focus !== null) next.set("id", String(filters.focus));
   if (filters.q.trim()) next.set("q", filters.q.trim());
@@ -93,6 +99,8 @@ function queryOf(filters: Filters, span: WindowKey): string {
   if (filters.division) next.set("division", filters.division);
   if (filters.sort !== "best") next.set("sort", filters.sort);
   if (span !== "45d") next.set("window", span);
+  // ?id= opens its own page; otherwise the page past the first is part of the view.
+  if (filters.focus === null && page > 1) next.set("page", String(page));
   return next.toString();
 }
 
@@ -161,7 +169,7 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
   const params = useSearchParams();
   const [span, setSpan] = useState<WindowKey>(() => parseWindow(params.get("window")));
   const [filters, setFilters] = useState<Filters>(() => readFilters(params));
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => readPage(params));
   const population = usePopulation(span);
   const { error, isFetching, refetch } = population;
   // The server renders the loading state; the field above may have filled the shared query before this boundary
@@ -180,19 +188,19 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
   const [seenKey, setSeenKey] = useState(paramsKey);
   if (paramsKey !== seenKey) {
     setSeenKey(paramsKey);
-    if (paramsKey !== queryOf(filters, span)) {
+    if (paramsKey !== queryOf(filters, span, page)) {
       setFilters(readFilters(params));
       setSpan(parseWindow(params.get("window")));
-      setPage(1);
+      setPage(readPage(params));
     }
   }
 
   // Mirror the view into the URL (replaceState keeps it out of the history stack).
   useEffect(() => {
-    const qs = queryOf(filters, span);
+    const qs = queryOf(filters, span, page);
     if (qs === new URLSearchParams(window.location.search).toString()) return;
     window.history.replaceState(window.history.state, "", qs ? `?${qs}` : window.location.pathname);
-  }, [filters, span]);
+  }, [filters, span, page]);
 
   const goTo = (next: number) => {
     setPage(next);

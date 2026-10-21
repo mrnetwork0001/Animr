@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode, useId, useMemo, useState } from "react";
+import { type ReactNode, useId, useMemo, useState, useSyncExternalStore } from "react";
 import { GenomeIcon, PulseIcon } from "@/components/v2/icons";
 import { EmptyState, GlassCard, PageHeader, SectionTitle, pillClass } from "@/components/v2/primitives";
 import { displayTraitValue } from "@/lib/brand-safety";
@@ -11,7 +11,7 @@ import { usePopulation, useTraitAlpha } from "./api";
 import { EdgeBadge } from "./edge-badge";
 import { type FamilyStats, familyStats } from "./families";
 import type { LeagueIndex } from "./league-index";
-import { DEFAULT_WINDOW, type WindowKey, formatInt, windowDates } from "./shared";
+import { DEFAULT_WINDOW, type WindowKey, formatInt, parseWindow, windowDates } from "./shared";
 import { WindowPicker } from "./window-picker";
 import "./dna.css";
 
@@ -77,6 +77,33 @@ function findHeadline(contenders: Contender[]) {
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** The page's title block, from the server (the board renders it so the headline can sit beside it). */
+// The window lives in the URL (?window=30d), so a shared /traits link opens on it. Read on the client only (the board's
+// data shows after hydration anyway), so the page stays static; a switch replaces the history entry, never adds one.
+const urlWindowListeners = new Set<() => void>();
+
+function subscribeUrlWindow(listener: () => void) {
+  urlWindowListeners.add(listener);
+  window.addEventListener("popstate", listener);
+  return () => {
+    urlWindowListeners.delete(listener);
+    window.removeEventListener("popstate", listener);
+  };
+}
+
+const urlWindow = () => parseWindow(new URLSearchParams(window.location.search).get("window"));
+
+function useUrlWindow(): [WindowKey, (next: WindowKey) => void] {
+  const span = useSyncExternalStore(subscribeUrlWindow, urlWindow, () => DEFAULT_WINDOW);
+  const setSpan = (next: WindowKey) => {
+    const url = new URL(window.location.href);
+    if (next === DEFAULT_WINDOW) url.searchParams.delete("window");
+    else url.searchParams.set("window", next);
+    window.history.replaceState(window.history.state, "", url);
+    for (const listener of urlWindowListeners) listener();
+  };
+  return [span, setSpan];
+}
+
 export type TraitAlphaHeader = { title: ReactNode; lead: ReactNode; actions?: ReactNode };
 
 /**
@@ -85,7 +112,7 @@ export type TraitAlphaHeader = { title: ReactNode; lead: ReactNode; actions?: Re
  * With `header`, it renders the page header too, with this window's headline as its aside.
  */
 export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header?: TraitAlphaHeader }) {
-  const [span, setSpan] = useState<WindowKey>(DEFAULT_WINDOW);
+  const [span, setSpan] = useUrlWindow();
   /** The trait type shown in the full index; "" is every type. */
   const [type, setType] = useState(DEFAULT_TYPE);
   const [minCount, setMinCount] = useState<number>(10);
