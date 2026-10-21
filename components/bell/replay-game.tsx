@@ -34,12 +34,13 @@ const randomItem = <T,>(items: T[]): T => items[Math.floor(Math.random() * items
  * Practice on a past Bell: pick a settled day, read that day's calls without the answer, ride one, and the real
  * result is revealed at once from the settled data. Just for fun: nothing is saved.
  */
-export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
+export function ReplayGame({ days, loading: loadingDays = false, id }: { days: string[]; loading?: boolean; id?: string }) {
   const bells = useBells(days);
   const playable = bells
     .map((query) => query.data)
     .filter((b): b is BellSummary => b?.status === "settled" && b.actualPct !== null && b.calls > 0);
-  const loading = bells.some((query) => query.isPending);
+  // `loadingDays`: the list of days itself (the Bell index) is still on its way.
+  const loading = loadingDays || bells.some((query) => query.isPending);
   const [chosenDay, setChosenDay] = useState<string | null>(null);
   const [pick, setPick] = useState<number | null>(null);
   const [session, setSession] = useState({ rounds: 0, points: 0 });

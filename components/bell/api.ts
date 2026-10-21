@@ -9,6 +9,7 @@ import {
 import type {
   BellCallSort,
   BellCallsResponse,
+  BellDaysResponse,
   BellStandingsResponse,
   BellSummaryResponse,
   ChogBellResponse,
@@ -45,6 +46,7 @@ async function request<T>(url: string, init: RequestInit | undefined, valid: (bo
 const isObject = (body: unknown): body is Record<string, unknown> => typeof body === "object" && body !== null;
 const isSummary = (b: unknown) => isObject(b) && typeof b.day === "string" && Array.isArray(b.histogram);
 const isFan = (b: unknown) => isObject(b) && typeof b.fanId === "string";
+const isDays = (b: unknown) => isObject(b) && Array.isArray(b.days);
 const postJson = (body: unknown): RequestInit => ({
   method: "POST",
   headers: { "content-type": "application/json" },
@@ -57,6 +59,9 @@ export const fetchToday = () =>
 
 export const fetchBell = (day: string) =>
   request<BellSummaryResponse>(`/api/bell/${day}`, undefined, isSummary);
+
+/** Every day with a Bell, oldest first: read before asking for a day, so no page requests a day without one. */
+export const fetchDays = () => request<BellDaysResponse>("/api/bell/days", undefined, isDays);
 
 export function fetchCalls(day: string, sort: BellCallSort, cursor?: string) {
   const query = new URLSearchParams(cursor ? { sort, cursor } : { sort });
@@ -89,8 +94,14 @@ export const bellKeys = {
   calls: (day: string, sort: BellCallSort) => ["bell", "calls", day, sort] as const,
   chog: (tokenId: number) => ["bell", "chog", tokenId] as const,
   standings: ["bell", "standings"] as const,
+  days: ["bell", "days"] as const,
   fan: ["fan"] as const,
 };
+
+/** The Bell index: every day with a Bell, oldest first. */
+export function useBellDays() {
+  return useQuery({ queryKey: bellKeys.days, queryFn: fetchDays, staleTime: 5 * 60_000 });
+}
 
 /** The latest rung Bell; polls faster while a scheduled ring is overdue (cron jitter). */
 export function useTodayBell() {

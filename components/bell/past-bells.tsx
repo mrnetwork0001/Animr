@@ -6,8 +6,14 @@ import { isNotFound, useBells } from "./api";
 import { Forecast, KindBadge, SectionTitle, Skeleton } from "./bits";
 import { formatDay } from "./format";
 
-/** Links to recent Bells with their real move and Best call; days without a Bell are left out. */
-export function PastBells({ days }: { days: string[] }) {
+/** How many tiles hold the room while the Bell index loads (the index gives up to PAST_DAYS). */
+const PLACEHOLDER_TILES = 6;
+
+/**
+ * Links to recent Bells with their real move and Best call. `days` come from the Bell index (only days with a
+ * Bell); `pending` while that index loads, so the tiles hold their room instead of arriving later.
+ */
+export function PastBells({ days, pending = false }: { days: string[]; pending?: boolean }) {
   const bells = useBells(days);
   const rows = days
     .map((day, i) => ({ day, query: bells[i] }))
@@ -16,7 +22,17 @@ export function PastBells({ days }: { days: string[] }) {
   return (
     <section aria-label="Past Bells">
       <SectionTitle compact title="Past Bells" hint="Replays are rebuilt from real past $CHOG candles." />
-      {rows.length === 0 ? (
+      {rows.length === 0 && pending ? (
+        <ol role="status" aria-label="Loading past Bells" className="grid grid-cols-2 gap-2.5">
+          {Array.from({ length: PLACEHOLDER_TILES }, (_, i) => (
+            <li key={i} aria-hidden className="bell-day-tile">
+              <Skeleton className="h-[18px] w-20" />
+              <Skeleton className="h-7 w-16" />
+              <Skeleton className="h-[14px] w-24" />
+            </li>
+          ))}
+        </ol>
+      ) : rows.length === 0 ? (
         <div className="v2-empty">
           <p className="v2-empty-title">No past Bells yet</p>
           <p className="v2-empty-body">The first one settles 24 hours after it rings.</p>

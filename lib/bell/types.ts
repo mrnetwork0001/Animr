@@ -145,6 +145,9 @@ export type BellStandingsResponse = {
 /** GET/POST /api/fan and POST /api/bell/ride: the fan plus their rank among fans who have ridden. */
 export type FanResponse = FanState & { rank?: number; fans: number };
 
+/** GET /api/bell/days: every day with a Bell (rung live or replayed), YYYY-MM-DD, oldest first. */
+export type BellDaysResponse = { days: string[] };
+
 /** GET /api/bell/cron; `settled` lists days comma-separated, `replayed` counts Bells rebuilt from candles. */
 export type BellCronResponse = { settled?: string; rung?: string; replayed?: number };
 

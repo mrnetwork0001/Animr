@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { bellTime } from "@/lib/bell/rules";
 import type { BellCall, BellCallSort, BellSummary } from "@/lib/bell/types";
-import { isNotFound, useBell, useBellCalls, useTodayBell } from "./api";
+import { isNotFound, useBell, useBellCalls, useBellDays, useTodayBell } from "./api";
 import { StatRow, TabLinks } from "@/components/v2/primitives";
 import { Countdown, Forecast, LoadError, SectionTitle, Skeleton, useBefore } from "./bits";
 import { CallRow, CallRowsHeader, rideable } from "./call-card";
@@ -33,12 +33,15 @@ const SORTS: { id: BellCallSort; label: string; settledOnly?: boolean }[] = [
 export function BellDayView({ day }: { day: string }) {
   const query = useBell(day);
   const today = useTodayBell();
+  const index = useBellDays();
   const latest = today.data?.day;
   // Today's Bell before 15:00 UTC (later days are a 404 in proxy.ts): it hasn't rung yet, so no past tense.
   const upcoming = useBefore(bellTime(day)) === true;
+  // The Bells before this one, from the index (never a request for a day without a Bell), newest first.
+  const practiceDays = index.data ? index.data.days.filter((d) => d < day).slice(-PRACTICE_DAYS).reverse() : [];
   const practice = (
     <div className="v2-section">
-      <ReplayGame days={Array.from({ length: PRACTICE_DAYS }, (_, i) => shiftDay(day, -(i + 1)))} id={PRACTICE_ID} />
+      <ReplayGame days={practiceDays} loading={index.isPending} id={PRACTICE_ID} />
     </div>
   );
 

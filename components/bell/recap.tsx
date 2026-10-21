@@ -141,7 +141,11 @@ function ShareRecap({ recap }: { recap: BellRecap }) {
   );
 }
 
-/** The recap card's frame with the same rows and spacing as the card, so the recap lands without moving the page. */
+/**
+ * The recap card's frame with the same rows and spacing as the card, so the recap lands without moving the page.
+ * Sized like a written recap at each width: on a phone the share buttons wrap under the label, the headline and
+ * each line take two lines and a quote three; from `sm` up, one line each (a quote, two).
+ */
 export function RecapSkeleton() {
   const quote = (
     <div className="flex flex-col gap-3">
@@ -152,20 +156,24 @@ export function RecapSkeleton() {
           <Skeleton className="h-3.5 w-40" />
         </span>
       </div>
-      <Skeleton className="h-[46px] w-full" />
+      <Skeleton className="h-[70px] w-full sm:h-[47px]" />
     </div>
   );
   return (
     <div role="status" className="v2-card flex flex-col gap-5">
       <span className="v2-sr">Loading the recap…</span>
-      <div className="flex min-h-9 items-center">
-        <Skeleton className="h-4 w-40" />
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <Skeleton className="h-5 w-44" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-[94px] rounded-full" />
+          <Skeleton className="h-9 w-[98px] rounded-full" />
+        </div>
       </div>
       <div>
-        <Skeleton className="h-7 w-3/4" />
+        <Skeleton className="h-[45px] w-full sm:h-7 sm:w-3/4" />
         <div className="mt-3 grid gap-1.5">
           {["w-full", "w-5/6", "w-4/6"].map((width) => (
-            <Skeleton key={width} className={`h-5 ${width}`} />
+            <Skeleton key={width} className={`h-[41px] sm:h-5 ${width}`} />
           ))}
         </div>
       </div>
@@ -173,7 +181,7 @@ export function RecapSkeleton() {
         {quote}
         {quote}
       </div>
-      <Skeleton className="h-4 w-56" />
+      <Skeleton className="h-9 w-56 sm:h-[18px]" />
     </div>
   );
 }

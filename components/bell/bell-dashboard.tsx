@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useNow } from "@/components/decision-feed";
 import type { BellSummary } from "@/lib/bell/types";
-import { isNotFound, useBell, useTodayBell } from "./api";
+import { isNotFound, useBell, useBellDays, useTodayBell } from "./api";
 import { LABEL, LoadError, SectionTitle, useBefore } from "./bits";
 import { CallRow, CallRowsHeader, rideable } from "./call-card";
 import { FanPanel } from "./fan-panel";
-import { scheduledDay, shiftDay } from "./format";
 import { BellHero } from "./hero";
 import { PastBells } from "./past-bells";
 import { BellRecapCard } from "./recap";
@@ -20,14 +18,11 @@ const PAST_DAYS = 7;
 /** Everything on /bell below the page header. All data is fetched client-side from /api/bell and /api/fan. */
 export function BellDashboard() {
   const today = useTodayBell();
-  const now = useNow();
+  const index = useBellDays();
   const bell = today.data;
   const noBellYet = today.isError && isNotFound(today.error);
-  // Before the first live Bell, past (replayed) Bells are counted back from the clock.
-  const anchor = bell?.day ?? (noBellYet && now !== null ? scheduledDay(now) : null);
-  const pastDays = anchor
-    ? Array.from({ length: PAST_DAYS }, (_, i) => shiftDay(anchor, bell ? -(i + 1) : -i))
-    : [];
+  // The Bells before this one, newest first, from the index: never a request for a day without a Bell.
+  const pastDays = bell && index.data ? index.data.days.filter((day) => day < bell.day).slice(-PAST_DAYS).reverse() : [];
   const previous = useBell(bell?.status === "settled" ? null : pastDays[0]);
   const verdict = bell?.status === "settled" ? bell : previous.data;
 
@@ -55,7 +50,7 @@ export function BellDashboard() {
         </div>
         <aside className="min-w-0 space-y-12 lg:sticky lg:top-[calc(var(--v2-header-h)+24px)]">
           <SeasonStandings />
-          {pastDays.length > 0 && <PastBells days={pastDays} />}
+          {(pastDays.length > 0 || (bell && index.isPending)) && <PastBells days={pastDays} pending={index.isPending} />}
         </aside>
       </div>
     </div>
