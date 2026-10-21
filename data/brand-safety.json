@@ -1,0 +1,2197 @@
+{
+  "version": 1,
+  "values": [
+    {
+      "type": "Accessory",
+      "value": "Cigar",
+      "action": "ok",
+      "reason": "cartoon prop"
+    },
+    {
+      "type": "Accessory",
+      "value": "Coin",
+      "action": "ok",
+      "reason": "coin prop"
+    },
+    {
+      "type": "Accessory",
+      "value": "Fwog",
+      "action": "ok",
+      "reason": "memecoin mascot"
+    },
+    {
+      "type": "Accessory",
+      "value": "Green Candle",
+      "action": "ok",
+      "reason": "trading candle"
+    },
+    {
+      "type": "Accessory",
+      "value": "Heart",
+      "action": "ok",
+      "reason": "heart prop"
+    },
+    {
+      "type": "Accessory",
+      "value": "Knife",
+      "action": "ok",
+      "reason": "cartoon prop"
+    },
+    {
+      "type": "Accessory",
+      "value": "PEPE",
+      "action": "ok",
+      "reason": "memecoin mascot"
+    },
+    {
+      "type": "Accessory",
+      "value": "Red Candle",
+      "action": "ok",
+      "reason": "trading candle"
+    },
+    {
+      "type": "Accessory",
+      "value": "SB",
+      "action": "ok",
+      "reason": "coffee cup"
+    },
+    {
+      "type": "Aura",
+      "value": "Aqua Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Burning Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Clean",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Cool Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Electric Shock",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Fiery Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Fire",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Green Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Light Purple",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Mint",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Pink Mist",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Purple",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Rose Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Rose Scent",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Royal Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Royal Blue",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Royal Blue Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Smoke",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Violet",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "White Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Wind",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Aura",
+      "value": "Yellow Aura",
+      "action": "ok",
+      "reason": "aura color or effect"
+    },
+    {
+      "type": "Background",
+      "value": "Afternoon Orange",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Aqua",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Aqua Blue",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Aqua Mint",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Blood Red",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Bright Yellow",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Coral Pink",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Deep Aqua",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Deep Blue",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Deep Purple",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Fresh Green",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Gold",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Lemon",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Lemon Yellow",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Light Magenta",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Light Purple",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Lime Green",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Magenta",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Mint",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Mon",
+      "action": "ok",
+      "reason": "Monad purple"
+    },
+    {
+      "type": "Background",
+      "value": "Noble Blue",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Peach Pink",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Radioactive",
+      "action": "ok",
+      "reason": "glow effect"
+    },
+    {
+      "type": "Background",
+      "value": "Red Sky",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Rose Pink",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Rosie",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Rosy Pink",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Royal Blue",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Sky Blue",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Soft Lavender",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Sunlight",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Background",
+      "value": "Supreme Purple",
+      "action": "ok",
+      "reason": "background color"
+    },
+    {
+      "type": "Base",
+      "value": "1:1",
+      "action": "ok",
+      "reason": "one-of-one art"
+    },
+    {
+      "type": "Base",
+      "value": "Origin",
+      "action": "ok",
+      "reason": "base art layer"
+    },
+    {
+      "type": "Base",
+      "value": "Radioactive",
+      "action": "ok",
+      "reason": "glow art"
+    },
+    {
+      "type": "Base",
+      "value": "Skull",
+      "action": "ok",
+      "reason": "skeleton art"
+    },
+    {
+      "type": "Body",
+      "value": "Aqua Tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Army Vest",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Astro Suit",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Banana suit",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "BBC",
+      "action": "rename",
+      "display": "Blue Slogan Tee",
+      "reason": "acronym widely read as a racialized porn term; part of the same sexual-slogan tee set"
+    },
+    {
+      "type": "Body",
+      "value": "Black Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Black Trackset",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Black Vest",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Blue 143 Jersey",
+      "action": "ok",
+      "reason": "Monad '143' jersey"
+    },
+    {
+      "type": "Body",
+      "value": "Blue Chinese",
+      "action": "ok",
+      "reason": "jacket with Chinese toggle buttons; a dated ethnic label for a garment (reviewed; owner kept as-is, 2026-10-19)"
+    },
+    {
+      "type": "Body",
+      "value": "Blue Holed Jacket",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Blue Homeless Shirt",
+      "action": "ok",
+      "reason": "ragged patched shirt; ordinary word (reviewed, kept)"
+    },
+    {
+      "type": "Body",
+      "value": "Blue jacket",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Blue Mafia",
+      "action": "ok",
+      "reason": "costume"
+    },
+    {
+      "type": "Body",
+      "value": "Blue Sleeveless",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "blue tee",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Blue tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Boner",
+      "action": "rename",
+      "display": "Bones Tee",
+      "reason": "sexual slang (a pun on the skeleton tee)"
+    },
+    {
+      "type": "Body",
+      "value": "Brown Homeless Shirt",
+      "action": "ok",
+      "reason": "ragged patched shirt; ordinary word (reviewed, kept)"
+    },
+    {
+      "type": "Body",
+      "value": "CEO Vest",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Chug Life",
+      "action": "ok",
+      "reason": "pun on 'Thug Life'"
+    },
+    {
+      "type": "Body",
+      "value": "Cream Tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "CWO",
+      "action": "ok",
+      "reason": "text tee"
+    },
+    {
+      "type": "Body",
+      "value": "Cyan Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Cyan tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "dark jacket",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "dark tee",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "dark vest",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Dragon suit",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Duck Float",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Electro Hoodie",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Farmer Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Fire Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Gangster suit",
+      "action": "ok",
+      "reason": "costume"
+    },
+    {
+      "type": "Body",
+      "value": "Glitch Hoodie",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Gojo",
+      "action": "ok",
+      "reason": "anime-parody costume"
+    },
+    {
+      "type": "Body",
+      "value": "Golden Armor",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Grey Homeless Shirt",
+      "action": "ok",
+      "reason": "ragged patched shirt; ordinary word (reviewed, kept)"
+    },
+    {
+      "type": "Body",
+      "value": "Grey Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Guko",
+      "action": "ok",
+      "reason": "anime-parody costume"
+    },
+    {
+      "type": "Body",
+      "value": "Hawaiian Polo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Inmate",
+      "action": "ok",
+      "reason": "costume"
+    },
+    {
+      "type": "Body",
+      "value": "Jesus",
+      "action": "ok",
+      "reason": "robe costume of a religious figure; not a slur or sexual (reviewed, kept)"
+    },
+    {
+      "type": "Body",
+      "value": "Jesus Robe",
+      "action": "ok",
+      "reason": "robe costume of a religious figure; not a slur or sexual (reviewed, kept)"
+    },
+    {
+      "type": "Body",
+      "value": "Kings Robe",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "MILF Lover",
+      "action": "rename",
+      "display": "Heart Tee",
+      "reason": "sexual slang printed on a light-blue tee next to a red heart"
+    },
+    {
+      "type": "Body",
+      "value": "Mon Hoodie",
+      "action": "ok",
+      "reason": "Monad hoodie"
+    },
+    {
+      "type": "Body",
+      "value": "Mummy",
+      "action": "ok",
+      "reason": "costume"
+    },
+    {
+      "type": "Body",
+      "value": "Orange Holed Jacket",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Orange Hoodie",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Orange Sleeveless",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Peach Hoodie",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Pink Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Pink Tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "pink vest",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Prisoner",
+      "action": "ok",
+      "reason": "costume"
+    },
+    {
+      "type": "Body",
+      "value": "Purple Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Purple Tank",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "purple vest",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Red 143 Jersey",
+      "action": "ok",
+      "reason": "Monad '143' jersey"
+    },
+    {
+      "type": "Body",
+      "value": "Red Chinese",
+      "action": "ok",
+      "reason": "jacket with Chinese toggle buttons; a dated ethnic label for a garment (reviewed; owner kept as-is, 2026-10-19)"
+    },
+    {
+      "type": "Body",
+      "value": "Red jacket",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Red shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Red Sleeveless",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "red tee",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Red Trackset",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Red Tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Sci Fi",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Shark Suit",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Six Seven",
+      "action": "ok",
+      "reason": "'67' meme jersey"
+    },
+    {
+      "type": "Body",
+      "value": "Sky Hoodie",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Squid Game",
+      "action": "ok",
+      "reason": "TV-show costume"
+    },
+    {
+      "type": "Body",
+      "value": "Squid Game Guard",
+      "action": "ok",
+      "reason": "TV-show costume"
+    },
+    {
+      "type": "Body",
+      "value": "Stripe Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Stripe shirts",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Stripes",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Tank Top",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "toad blue suit",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Toad green Suit",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Toad pink suit",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Virgin",
+      "action": "rename",
+      "display": "Orange Slogan Tee",
+      "reason": "sexual-status slogan used as an insult, from the same tee set as the MILF/Boner tees (most debatable flag)"
+    },
+    {
+      "type": "Body",
+      "value": "White Pure Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "White Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "White Sleeveless",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "White Tank",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "white tee",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "White tuxedo",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "White Yukata",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Wizard",
+      "action": "ok",
+      "reason": "costume"
+    },
+    {
+      "type": "Body",
+      "value": "Wizard Cape",
+      "action": "ok",
+      "reason": "costume"
+    },
+    {
+      "type": "Body",
+      "value": "Yellow 143 Jersey",
+      "action": "ok",
+      "reason": "Monad '143' jersey"
+    },
+    {
+      "type": "Body",
+      "value": "Yellow Hoodie",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Yellow Shirt",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Yellow Yukata",
+      "action": "ok",
+      "reason": "outfit"
+    },
+    {
+      "type": "Body",
+      "value": "Zero THOTS",
+      "action": "rename",
+      "display": "Zero Thoughts Tee",
+      "reason": "misogynistic sexual slur in the slogan; display keeps the harmless 'zero thoughts' reading"
+    },
+    {
+      "type": "Eyes",
+      "value": "3D Glass",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Angry",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Anime Glass",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Base",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Blue Flat",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Blue Happy",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Blue Retard",
+      "action": "rename",
+      "display": "Blue Googly",
+      "reason": "ableist slur; blue variant of the googly eyes"
+    },
+    {
+      "type": "Eyes",
+      "value": "Blue Round Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Blue Smirk",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "BTC Glass",
+      "action": "ok",
+      "reason": "Bitcoin glasses"
+    },
+    {
+      "type": "Eyes",
+      "value": "Chog Viper",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Classic VR",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Closed Eye Crying",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Clown Eye",
+      "action": "ok",
+      "reason": "clown makeup"
+    },
+    {
+      "type": "Eyes",
+      "value": "Clown Eye Mix",
+      "action": "ok",
+      "reason": "clown makeup"
+    },
+    {
+      "type": "Eyes",
+      "value": "cyan laser",
+      "action": "ok",
+      "reason": "laser eyes (crypto meme)"
+    },
+    {
+      "type": "Eyes",
+      "value": "Dead",
+      "action": "ok",
+      "reason": "cartoon X eyes"
+    },
+    {
+      "type": "Eyes",
+      "value": "fire laser",
+      "action": "ok",
+      "reason": "laser eyes (crypto meme)"
+    },
+    {
+      "type": "Eyes",
+      "value": "Flat",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Frog",
+      "action": "ok",
+      "reason": "frog eyes"
+    },
+    {
+      "type": "Eyes",
+      "value": "Gradient visor",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Green Happy",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Green laser",
+      "action": "ok",
+      "reason": "laser eyes (crypto meme)"
+    },
+    {
+      "type": "Eyes",
+      "value": "Green Retard",
+      "action": "rename",
+      "display": "Green Googly",
+      "reason": "ableist slur; green variant of the googly eyes"
+    },
+    {
+      "type": "Eyes",
+      "value": "Green Round Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Green Side Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Green Smirk",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Happy",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Heart",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Mixed Happy",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Mixed Retard",
+      "action": "rename",
+      "display": "Mixed Googly",
+      "reason": "ableist slur; mixed-color variant of the googly eyes"
+    },
+    {
+      "type": "Eyes",
+      "value": "Mixed Round Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Mixed Side Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Modern VR",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "MOG",
+      "action": "ok",
+      "reason": "crypto meme slang"
+    },
+    {
+      "type": "Eyes",
+      "value": "Normal",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Normal Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Plasma visor",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Purple laser",
+      "action": "ok",
+      "reason": "laser eyes (crypto meme)"
+    },
+    {
+      "type": "Eyes",
+      "value": "Red Flat",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Red Retard",
+      "action": "rename",
+      "display": "Red Googly",
+      "reason": "ableist slur; red variant of the googly eyes"
+    },
+    {
+      "type": "Eyes",
+      "value": "Red Round Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Retard",
+      "action": "rename",
+      "display": "Googly",
+      "reason": "ableist slur; renamed for what the art shows (mismatched googly eyes)"
+    },
+    {
+      "type": "Eyes",
+      "value": "Retro Glass",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Round",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Round Crying",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Round Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Round Tear",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Side Eye",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Smirk",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Sunset visor",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Teary",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Thug",
+      "action": "ok",
+      "reason": "'Thug Life' pixel shades meme (reviewed, kept)"
+    },
+    {
+      "type": "Eyes",
+      "value": "Tired",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Up",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Vertical",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "Worried",
+      "action": "ok",
+      "reason": "eye style"
+    },
+    {
+      "type": "Eyes",
+      "value": "XD",
+      "action": "ok",
+      "reason": "emoticon"
+    },
+    {
+      "type": "Form",
+      "value": "Chog",
+      "action": "ok",
+      "reason": "body form"
+    },
+    {
+      "type": "Form",
+      "value": "Skull",
+      "action": "ok",
+      "reason": "body form"
+    },
+    {
+      "type": "Head",
+      "value": "10k TPS Cap",
+      "action": "ok",
+      "reason": "Monad speed slogan"
+    },
+    {
+      "type": "Head",
+      "value": "3rd Eye",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "8 Ball Beanie",
+      "action": "ok",
+      "reason": "billiards 8-ball"
+    },
+    {
+      "type": "Head",
+      "value": "Balls Cap",
+      "action": "ok",
+      "reason": "baseball-stitch emblem, mild pun; no sexual text (reviewed, kept)"
+    },
+    {
+      "type": "Head",
+      "value": "Blue Bucket Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Blue Laser",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Bob Hair",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Boob Cap",
+      "action": "rename",
+      "display": "Orange Slogan Cap",
+      "reason": "sexual slang printed on an orange cap (last letter drawn as a Bitcoin B)"
+    },
+    {
+      "type": "Head",
+      "value": "BOOB Cap",
+      "action": "rename",
+      "display": "Orange Slogan Cap",
+      "reason": "Skull-base variant of the same orange cap; sexual slang printed on it"
+    },
+    {
+      "type": "Head",
+      "value": "BTC Beanie",
+      "action": "ok",
+      "reason": "crypto logo"
+    },
+    {
+      "type": "Head",
+      "value": "BTC Cap",
+      "action": "ok",
+      "reason": "crypto logo"
+    },
+    {
+      "type": "Head",
+      "value": "Buttcoin Cap",
+      "action": "ok",
+      "reason": "long-running crypto-skeptic meme (reviewed, kept)"
+    },
+    {
+      "type": "Head",
+      "value": "Chog Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Choggie Beanie",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Choggie Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Cloud Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Clown Nose",
+      "action": "ok",
+      "reason": "clown costume"
+    },
+    {
+      "type": "Head",
+      "value": "Crown",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Demon Horn",
+      "action": "ok",
+      "reason": "costume horns"
+    },
+    {
+      "type": "Head",
+      "value": "devil horn",
+      "action": "ok",
+      "reason": "costume horns"
+    },
+    {
+      "type": "Head",
+      "value": "Diamond",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Dollar Cap",
+      "action": "ok",
+      "reason": "currency logo"
+    },
+    {
+      "type": "Head",
+      "value": "Durag",
+      "action": "ok",
+      "reason": "ordinary headwear"
+    },
+    {
+      "type": "Head",
+      "value": "ETH Cap",
+      "action": "ok",
+      "reason": "crypto logo"
+    },
+    {
+      "type": "Head",
+      "value": "Gold Thorn",
+      "action": "ok",
+      "reason": "thorn crown"
+    },
+    {
+      "type": "Head",
+      "value": "Gray Bucket Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Head Wrap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Holy Seal",
+      "action": "ok",
+      "reason": "glowing seal"
+    },
+    {
+      "type": "Head",
+      "value": "Horny Cap",
+      "action": "rename",
+      "display": "Blue Slogan Cap",
+      "reason": "sexual slang printed on a blue hat (no horns in the art)"
+    },
+    {
+      "type": "Head",
+      "value": "Japan Headband",
+      "action": "ok",
+      "reason": "hachimaki with a red sun disc"
+    },
+    {
+      "type": "Head",
+      "value": "Jeet Cap",
+      "action": "ok",
+      "reason": "crypto slang for selling too early, also read as an anti-South-Asian slur (reviewed; owner kept as-is, 2026-10-19)"
+    },
+    {
+      "type": "Head",
+      "value": "JEET Cap",
+      "action": "ok",
+      "reason": "crypto slang for selling too early, also read as an anti-South-Asian slur (reviewed; owner kept as-is, 2026-10-19)"
+    },
+    {
+      "type": "Head",
+      "value": "Mafia Hat",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "MCGA",
+      "action": "ok",
+      "reason": "'Make Chog Great Again' parody slogan"
+    },
+    {
+      "type": "Head",
+      "value": "MCGA Cap",
+      "action": "ok",
+      "reason": "'Make Chog Great Again' parody slogan"
+    },
+    {
+      "type": "Head",
+      "value": "MEGA Chog",
+      "action": "ok",
+      "reason": "parody slogan"
+    },
+    {
+      "type": "Head",
+      "value": "MMGA Cap",
+      "action": "ok",
+      "reason": "'Make Monad Great Again' parody slogan"
+    },
+    {
+      "type": "Head",
+      "value": "Mon Beanie",
+      "action": "ok",
+      "reason": "Monad logo"
+    },
+    {
+      "type": "Head",
+      "value": "Mon Cap",
+      "action": "ok",
+      "reason": "Monad logo"
+    },
+    {
+      "type": "Head",
+      "value": "NEET",
+      "action": "ok",
+      "reason": "internet slang for not in work or school (reviewed, kept)"
+    },
+    {
+      "type": "Head",
+      "value": "Orange Bucket Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Peace Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Peace hat",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Plumber",
+      "action": "ok",
+      "reason": "plumber costume"
+    },
+    {
+      "type": "Head",
+      "value": "Poison Shroom",
+      "action": "ok",
+      "reason": "cartoon mushroom"
+    },
+    {
+      "type": "Head",
+      "value": "Purple Horn",
+      "action": "ok",
+      "reason": "costume horns"
+    },
+    {
+      "type": "Head",
+      "value": "Rainbow Wig",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Red Bandana",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Red Headband",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Red Horn",
+      "action": "ok",
+      "reason": "costume horns"
+    },
+    {
+      "type": "Head",
+      "value": "Red Peace Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "RETARD Cap",
+      "action": "rename",
+      "display": "Purple Slogan Cap",
+      "reason": "ableist slur printed on a purple cap"
+    },
+    {
+      "type": "Head",
+      "value": "RH Beanie",
+      "action": "ok",
+      "reason": "Robin Hood beanie"
+    },
+    {
+      "type": "Head",
+      "value": "Robber",
+      "action": "ok",
+      "reason": "balaclava costume"
+    },
+    {
+      "type": "Head",
+      "value": "Russian Hat",
+      "action": "ok",
+      "reason": "ushanka"
+    },
+    {
+      "type": "Head",
+      "value": "Silver Thorn",
+      "action": "ok",
+      "reason": "thorn crown"
+    },
+    {
+      "type": "Head",
+      "value": "Silver wreath",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Spartan Helmet",
+      "action": "ok",
+      "reason": "costume helmet"
+    },
+    {
+      "type": "Head",
+      "value": "Star Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Taped Banana",
+      "action": "ok",
+      "reason": "art meme"
+    },
+    {
+      "type": "Head",
+      "value": "Thunder Cap",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "TISM Cap",
+      "action": "ok",
+      "reason": "crypto-meme slang for autism; not a slur, kept under the slang rule (reviewed; owner kept as-is, 2026-10-19)"
+    },
+    {
+      "type": "Head",
+      "value": "Void Horn",
+      "action": "ok",
+      "reason": "costume horns"
+    },
+    {
+      "type": "Head",
+      "value": "WAGMI Cap",
+      "action": "ok",
+      "reason": "crypto slang"
+    },
+    {
+      "type": "Head",
+      "value": "Wizard Beanie",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Head",
+      "value": "Wizard Hat",
+      "action": "ok",
+      "reason": "headwear"
+    },
+    {
+      "type": "Mouth",
+      "value": "BTC Coin",
+      "action": "ok",
+      "reason": "coin in mouth"
+    },
+    {
+      "type": "Mouth",
+      "value": "Bubblegum",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Clown Mouth",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Drooling",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Flat",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Gold Tooth",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Grit",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Lip Bite",
+      "action": "ok",
+      "reason": "facial expression (reviewed, kept)"
+    },
+    {
+      "type": "Mouth",
+      "value": "Mon coin",
+      "action": "ok",
+      "reason": "coin in mouth"
+    },
+    {
+      "type": "Mouth",
+      "value": "normal smile",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Rainbow Puke",
+      "action": "ok",
+      "reason": "cartoon gag"
+    },
+    {
+      "type": "Mouth",
+      "value": "Sad",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "Smile",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Mouth",
+      "value": "wo",
+      "action": "ok",
+      "reason": "open 'wo' mouth"
+    },
+    {
+      "type": "Mouth",
+      "value": "Worried",
+      "action": "ok",
+      "reason": "mouth expression"
+    },
+    {
+      "type": "Naked",
+      "value": "No",
+      "action": "ok",
+      "reason": "an outfit is drawn"
+    },
+    {
+      "type": "Naked",
+      "value": "Yes",
+      "action": "ok",
+      "reason": "no Body outfit is drawn; not sexual (reviewed, kept)"
+    },
+    {
+      "type": "Side",
+      "value": "Left",
+      "action": "ok",
+      "reason": "facing direction"
+    },
+    {
+      "type": "Side",
+      "value": "Right",
+      "action": "ok",
+      "reason": "facing direction"
+    },
+    {
+      "type": "Skin",
+      "value": "Beige",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Black",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Blue",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Green",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Grey",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Jade",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Metal",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Multi Colored",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Origin",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Pink",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Purple",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Red",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "White",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Skin",
+      "value": "Yellow",
+      "action": "ok",
+      "reason": "cartoon skin color"
+    },
+    {
+      "type": "Tier",
+      "value": "Common",
+      "action": "ok",
+      "reason": "rarity tier"
+    },
+    {
+      "type": "Tier",
+      "value": "Epic",
+      "action": "ok",
+      "reason": "rarity tier"
+    },
+    {
+      "type": "Tier",
+      "value": "Legendary",
+      "action": "ok",
+      "reason": "rarity tier"
+    },
+    {
+      "type": "Tier",
+      "value": "Rare",
+      "action": "ok",
+      "reason": "rarity tier"
+    },
+    {
+      "type": "Tier",
+      "value": "Uncommon",
+      "action": "ok",
+      "reason": "rarity tier"
+    }
+  ],
+  "flaggedTokenIds": [
+    9,
+    35,
+    44,
+    54,
+    59,
+    61,
+    74,
+    77,
+    82,
+    84,
+    98,
+    101,
+    108,
+    110,
+    112,
+    119,
+    127,
+    143,
+    153,
+    160,
+    172,
+    187,
+    197,
+    200,
+    217,
+    220,
+    242,
+    244,
+    251,
+    253,
+    257,
+    265,
+    273,
+    274,
+    276,
+    287,
+    288,
+    299,
+    302,
+    306,
+    316,
+    332,
+    334,
+    351,
+    352,
+    371,
+    388,
+    398,
+    410,
+    445,
+    451,
+    458,
+    464,
+    472,
+    474,
+    478,
+    486,
+    540,
+    554,
+    565,
+    571,
+    579,
+    605,
+    617,
+    622,
+    623,
+    628,
+    637,
+    641,
+    642,
+    648,
+    654,
+    672,
+    678,
+    680,
+    684,
+    690,
+    697,
+    700,
+    707,
+    717,
+    720,
+    724,
+    725,
+    726,
+    731,
+    736,
+    737,
+    740,
+    755,
+    758,
+    774,
+    783,
+    785,
+    845,
+    852,
+    854,
+    860,
+    864,
+    867,
+    887,
+    903,
+    909,
+    941,
+    982,
+    987,
+    994,
+    1027,
+    1037,
+    1040,
+    1044,
+    1046,
+    1050,
+    1059,
+    1062,
+    1072,
+    1076,
+    1089,
+    1094,
+    1106,
+    1119,
+    1120,
+    1132,
+    1141,
+    1152,
+    1177,
+    1178,
+    1193,
+    1203,
+    1208,
+    1223,
+    1234,
+    1236,
+    1251,
+    1253,
+    1263,
+    1267,
+    1271,
+    1280,
+    1284,
+    1293,
+    1305,
+    1309,
+    1325,
+    1330,
+    1333,
+    1336,
+    1344,
+    1354,
+    1361,
+    1363,
+    1365,
+    1371,
+    1379,
+    1396,
+    1397,
+    1406,
+    1407,
+    1423,
+    1437,
+    1441,
+    1446,
+    1448,
+    1471,
+    1476,
+    1477,
+    1505,
+    1507,
+    1518,
+    1529,
+    1530,
+    1541,
+    1546,
+    1587,
+    1608,
+    1616,
+    1626,
+    1643,
+    1646,
+    1649,
+    1651,
+    1655,
+    1688,
+    1717,
+    1724,
+    1730,
+    1734,
+    1736,
+    1739,
+    1744,
+    1757,
+    1775,
+    1776,
+    1782,
+    1784,
+    1814,
+    1825,
+    1844,
+    1846,
+    1851,
+    1864,
+    1866,
+    1885,
+    1896,
+    1908,
+    1909,
+    1922,
+    1925,
+    1930,
+    1932,
+    1945,
+    1946,
+    1947,
+    1957
+  ]
+}
