@@ -1,100 +1,82 @@
 JUDGE ACCESS: no wallet, no sign-up, no install
 
-Open <APP_URL> on a desktop or phone. A wallet is only needed for the optional holder steps.
+Start here: open https://useanimr.vercel.app/tour on a desktop or phone. It is a 2-minute guided tour of the real pages, with no wallet. A wallet is only needed for the optional holder steps.
 
 THE 60-SECOND VERSION
 
-1. <APP_URL>/heist: press "Act as the AI". Monad mainnet refuses the AI key's transfer of the House Chog's real $CHOG out of its wallet: Tokenbound answers NotAuthorized(), and the same call from the owner goes through. The block number and explorer links are on screen.
-2. <APP_URL>/replay/2?vs=8: press play. Two Chogs' trait-compiled genomes race on real hourly $CHOG candles.
-3. <APP_URL>/bell: ride a Chog on today's 15:00 UTC call. No wallet: your fan card is a cookie.
+1. https://useanimr.vercel.app/heist: press "Run the check". Monad mainnet refuses the AI key's transfer of the House Chog's $CHOG out of its wallet: Tokenbound answers NotAuthorized(), and the same call from the owner goes through. The block number and explorer links are on screen.
+2. https://useanimr.vercel.app/replay/2?vs=8: press play. Two Chogs' trait-compiled genomes race on real hourly $CHOG candles.
+3. https://useanimr.vercel.app/bell: ride a Chog on today's 15:00 UTC call. No wallet: your fan card is a cookie.
 
 Why the NFT is essential: no NFT, no trader (the strategy is compiled from its traits), no wallet (its ERC-6551 wallet is derived from the token) and no authority (every owner action is checked against ownerOf).
 
-Names: marketplaces call Chogs "CHOG #n", the number in the metadata name. Animr's URLs use the token ID (1–1969). The genome card, the Chog page and Versus show both, for example "CHOG #1462 · token 1", and the /app lookup and the League search accept either.
+Names: marketplaces call Chogs "CHOG #n", the number in the metadata name. Animr's URLs use the token ID (1–1969). Chog pages and Versus show both, for example "CHOG #1462 · token 1", and the /app lookup and League search accept either.
 
 THE FULL NO-WALLET PATH (about 8 minutes)
 
 1. MEET a random Chog (1 min)
-Open <APP_URL>/league and press "Random Chog" (the dice button). Its Time Machine page opens with:
-- its genome card: 8 genes, each naming the trait that set it, when one did
-- its trading style
-- its League rank among all 1,969 Chogs, measured as $CHOG stacked vs just holding
-
-Then open <APP_URL>/traits (Trait Alpha) to see which trait values win across all genomes.
+Open https://useanimr.vercel.app/league and press "Random Chog" (the dice button). Its page shows its genome card (8 genes, each naming the trait that set it), its trading style and its League rank among all 1,969 Chogs, measured as $CHOG stacked vs just holding. Then open /traits (Trait Alpha) to see which trait values win.
 
 2. REWIND it (2 min)
-On that page (/replay/<token id>), press play. Its genome trades the real hourly CHOG/WMON chart, narrated in its own voice, and ends with its edge over holding. Things to try:
-- Switch windows: 30d, 45d or max.
-- Race it against a rival on the same candles. A ready-made race is at <APP_URL>/replay/2?vs=8.
+On its Time Machine page (/replay/<token id>), press play. Its genome trades the real hourly CHOG/WMON chart, narrated in its own voice, and ends with its edge over holding. Switch windows (30d, 45d, max) or race it against a rival on the same candles.
 
 3. VERSUS (2 min)
-Open <APP_URL>/versus. Two Chogs face off on a hidden 48 hours of real $CHOG history:
-- Call the one you think stacks more $CHOG, then watch the race.
-- The real dates are revealed at the end.
-- A correct call adds 10 points (points only, up to 100 a day).
+Open /versus. Two Chogs face off on a hidden 48 hours of real $CHOG history. Call the one you think stacks more $CHOG, watch the race, then see the real dates. A correct call adds 10 points (points only, up to 100 a day).
 
 4. ROB IT (2 min)
-Open <APP_URL>/heist ("Rob this Chog"). The House Chog, CHOG #891 (token 1399), keeps real $CHOG in its own wallet on Monad mainnet. Try to talk its AI into sending it to you: 280 characters per message, 3–6 messages per heist. When the AI says yes, the page shows the exact transfer out of the wallet that the AI's key would send, simulated against Monad mainnet at a pinned block:
+Open /heist ("Rob this Chog"). The House Chog, CHOG #891 (token 1399), keeps real $CHOG in its own wallet on Monad mainnet. Try to talk its AI into sending it to you: 280 characters per message, 3–6 messages per heist. When the AI says yes, the page simulates the exact transfer out of the wallet from the AI's key against Monad mainnet at a pinned block:
 - Tokenbound refuses it with NotAuthorized(): the AI's key isn't the wallet's owner.
 - The same transfer from the real owner goes through, as a control.
 
-The AI's only real door is our guard: a sell within the owner's limits is allowed, and it stays in the same wallet. Nothing is ever broadcast. You don't have to con the AI first: "Act as the AI" runs the same mainnet check at any time.
+The AI's only real door is our guard: a sell within the owner's limits is allowed, and it stays in the same wallet. Nothing is ever broadcast. You don't have to con the AI first: "Run the check" runs the same mainnet check at any time.
 
 5. RIDE the Bell (1 min)
-Open <APP_URL>/bell. At 15:00 UTC every day, every Chog publishes a 24-hour $CHOG call. To ride:
-- Pick the Chog you trust. Your fan card lives in a cookie.
-- Your ride counts from the next hourly close.
-- 24 hours later the real price settles every call: Oracle of the Day, Most Rekt, points and streaks. A settled live Bell also shows its Oracle Purse: real $CHOG the team sends into the Oracle's own ERC-6551 wallet.
+Open /bell. At 15:00 UTC every day, every Chog publishes a 24-hour $CHOG call. Pick the Chog you trust; your ride counts from the next hourly close. 24 hours later the real price settles every call: Oracle of the Day, Most Rekt, points, streaks and a short AI-written recap. A settled live Bell also shows its Oracle Purse: real $CHOG the team sends into the Oracle's own ERC-6551 wallet. Past Bells are under /bell/<YYYY-MM-DD>. Points have no cash value.
 
-Past Bells are under /bell/<YYYY-MM-DD>. Live usage numbers are at <APP_URL>/stats. Points have no cash value.
+OPTIONAL EXTRAS (no wallet)
+
+- /breed: cross two Chogs. The child takes each trait from one parent and trades the same real chart (simulated).
+- Ask this Chog: on any /chog/<token id> page, ask its AI about its trades and DNA. It answers in text and can't act.
+- /market: "Best traders for sale", live OpenSea listings ranked by League edge.
+- Trophy cabinet: on /chog/<token id>, trophies minted by AnimrTrophies into the Chog's own wallet.
+- /docs: 19 pages, including the AnimrTradeGuard, Trophy cabinet and Contracts and API pages.
+- /stats: live usage numbers.
 
 IF YOU HOLD A CHOG (optional, about 5 minutes, a little MON for gas)
 
-1. Open <APP_URL>/chog/<your token id> and connect the wallet that holds the Chog.
-2. Create its wallet: one transaction that creates and initializes its ERC-6551 account through Multicall3.
-3. Wake its AI: sign a free message (not a transaction). Its LLM on 0G Compute can think right away with "Think now", and it thinks again at every Bell. Each decision shows its 0G receipt: provider, request ID and cost. It paper-trades the wallet's $CHOG at live prices.
-4. Optional, real trading: use the five-step setup on the same page.
-   - Let AnimrTradeGuard trade, then set your limits.
-   - Fund the wallet with $CHOG and/or WMON.
-   - Sign to switch the AI to on-chain.
-   - You can disable or revoke at any time.
+1. Open https://useanimr.vercel.app/chog/<your token id> and press "Log in" (a wallet, email, Google, X or Discord). Then link or connect the wallet that holds the Chog: only the holder can do the steps below.
+2. Create the Chog's wallet: one transaction that creates and initializes its ERC-6551 account through Multicall3.
+3. Claim its AI: sign a free message (not a transaction). Its LLM on 0G Compute can think right away with "Think now" and thinks again at every Bell. Each decision shows its 0G receipt: provider, request ID and cost. It paper-trades the wallet's $CHOG at live prices.
+4. Optional, real trading, on the same page: let AnimrTradeGuard trade, set your limits, fund the wallet with $CHOG and/or WMON, then sign to switch the AI to on-chain. You can disable or revoke at any time.
 
-If you sell the Chog, its wallet, tokens, record and AI history go with it. The new owner's limits start blank. To take your Chog off Animr's public pages, use "Hide my Chog" on /stats (one free signature).
+If you sell the Chog, its wallet, tokens, trophies, record and AI history go with it. The new owner's limits start blank. To take your Chog off Animr's public pages, use "Hide my Chog" on /stats (one free signature).
 
-AnimrTradeGuard: 0x92D3d4Af4B3b0F29Ec020e407803e135af61987b (https://monadscan.com/address/0x92D3d4Af4B3b0F29Ec020e407803e135af61987b), source verified on Sourcify. <APP_URL>/guard reads its roles, pause switch and the House Chog's vault live. House Chog: CHOG #891 · token 1399, wallet https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71. Its AI trades that real $CHOG two-way through the guard, at most 10% per trade and 30% per day, and every swap lands back in the same wallet. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead.
+ON-CHAIN
+
+- AnimrTradeGuard: https://monadscan.com/address/0x92D3d4Af4B3b0F29Ec020e407803e135af61987b (source verified on Sourcify). /guard reads its roles, pause switch and the House Chog's vault live.
+- AnimrTrophies: https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d
+- House Chog (CHOG #891 · token 1399, launching): wallet https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71. Once funded, its AI trades real $CHOG two-way through the guard, at most 10% per trade and 30% per day, and every swap lands back in the same wallet. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead.
 
 WHAT'S REAL AND WHAT'S SIMULATED
 
-Real:
-- Chog NFTs, their traits and art (the collection's own IPFS metadata, no AI-generated art)
-- ERC-6551 wallets and balances on Monad mainnet (chain 143)
-- hourly CHOG/WMON candles and Bell settlement prices
-- 0G Compute LLM calls and their receipts
-- the heist's mainnet simulation (read-only)
-- trades through AnimrTradeGuard for vaults switched to on-chain, including the House Chog's, and Oracle Purse transfers
+Real: Chog NFTs, traits and art (no AI-generated art); ERC-6551 wallets and balances on Monad mainnet (chain 143); hourly CHOG/WMON candles and Bell settlement prices; 0G Compute LLM calls and receipts; the heist's mainnet simulation (read-only); trades through AnimrTradeGuard; trophies; Oracle Purse transfers.
 
-Simulated:
-- League, Time Machine and Versus results, labelled "simulated on real $CHOG candles (1% fee + impact)": a replay of each genome's rules on real data, not a track record
-- paper trading for claimed Chogs that haven't switched to on-chain (live prices, simulated fills)
-- Bell days before <FIRST_LIVE_BELL>, rebuilt from real candles and labelled "Replayed Bell"
-
-Points are never money and never a wager.
+Simulated: League, Time Machine, Versus and Breed results, labelled "simulated on real $CHOG candles (1% fee + impact)", a replay of each genome's rules on real data, not a track record; paper trading for claimed Chogs not yet on-chain; Bell days before <FIRST_LIVE_BELL>, labelled "Replayed Bell". Points are never money and never a wager.
 
 TROUBLESHOOTING
 
-- "The House Chog is napping": today's AI budget for the heist ($3 of 0G calls) is spent. It resets at 00:00 UTC. "Act as the AI" still runs the full mainnet check.
-- "Think now" refuses: each Chog can think on demand only every few minutes, and there is a global daily cap on manual runs. Agents still think at every Bell. Chogs trading on-chain think only on schedule.
-- The heist says "no claim made": the check only claims a refusal when the House Chog's wallet is deployed, initialized and holds $CHOG at that block. If you see this, the House Chog isn't funded yet. Contact us below.
-- Numbers differ from the video: windows roll forward every hour (the 30- and 45-day windows start at a UTC midnight), so replays and ranks move. Genome g1-7de62b never changes.
+- "The House Chog is napping": today's $3 AI budget for the heist is spent; it resets at 00:00 UTC. "Run the check" still runs the full mainnet check.
+- The heist says the House Chog is moving in, or "no claim made": the check only claims a refusal once its wallet is deployed, initialized and holds $CHOG. Contact us below.
+- "Think now" refuses: each Chog can think on demand only every few minutes, under a global daily cap. Agents still think at every Bell.
+- Numbers differ from the video: windows roll forward every hour, so replays and ranks move. Genome g1-7de62b never changes.
 - Missing Chog images: the IPFS gateway rate-limits bursts, so reload.
-- The ride window has closed: rides on a Bell open for 12 hours after its 15:00 UTC ring. A ride you take later goes to the next Bell.
+- The ride window has closed: rides open for 12 hours after the 15:00 UTC ring. A later ride goes to the next Bell.
 
 FOR THE CODE
 
-Repo: <REPO_URL>
-- README.md: run locally with npm install, then .env.local from .env.example, then npm run dev. Every key is optional.
-- ARCHITECTURE.md: data flow, security model and costs.
-- contracts/: AnimrTradeGuard.sol and its 37 Foundry tests, which fork live Monad mainnet state (README.md has the commands).
+The repository is private; access for judges is on request via the submission form. Without it, everything is checkable from the app:
+- https://useanimr.vercel.app/docs: Contracts and API (every address and the public HTTP API), AnimrTradeGuard (limits, ceilings, tests) and Trophy cabinet.
+- AnimrTradeGuard's verified source on the explorer (link above). Fork tests on live Monad mainnet: AnimrTradeGuard 37 (0 failures), AnimrTrophies 12 (12 pass).
 
 Contact: <CONTACT>
 
