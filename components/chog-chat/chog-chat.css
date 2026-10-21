@@ -1,0 +1,110 @@
+/*
+ * "Ask this Chog" (components/chog-chat) on the v2 design system. Global like every *.css here, so each class is
+ * prefixed `ask-`. Only the chat pieces live here; the card, chips, input group and pills are v2 classes.
+ */
+
+@layer components {
+  .ask-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .ask-avatar {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid var(--v2-line-soft);
+    object-fit: cover;
+    background: var(--v2-glass-fill);
+  }
+  .ask-log {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 26rem;
+    margin-top: var(--v2-s-5);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .ask-msg {
+    max-width: min(92%, 560px);
+  }
+  .ask-msg--you {
+    align-self: flex-end;
+  }
+  .ask-bubble {
+    padding: 10px 14px;
+    border: 1px solid var(--v2-line-soft);
+    border-radius: var(--v2-r-lg);
+    color: var(--v2-ink);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+  }
+  .ask-msg--you .ask-bubble {
+    border-bottom-right-radius: 6px;
+    background: var(--v2-glass-fill-hover);
+  }
+  .ask-msg--chog .ask-bubble {
+    border-color: var(--v2-line-teal);
+    border-bottom-left-radius: 6px;
+    background: rgb(159 240 236 / 0.035);
+  }
+  .ask-meta {
+    margin-top: 4px;
+    padding-inline: 4px;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-2xs);
+  }
+  .ask-typing {
+    display: inline-flex;
+    gap: 4px;
+    padding-block: 4px;
+  }
+  .ask-typing > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--v2-teal);
+    opacity: 0.5;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ask-typing > span {
+      animation: ask-blink 1.2s ease-in-out infinite;
+    }
+    .ask-typing > span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .ask-typing > span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
+  @keyframes ask-blink {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .ask-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .ask-chips > .v2-chip {
+    cursor: pointer;
+  }
+  .ask-composer > .v2-input {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .ask-composer > button {
+    flex: none;
+  }
+}
