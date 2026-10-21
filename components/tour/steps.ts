@@ -38,7 +38,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "replay",
     title: "Time Machine: one Chog replayed",
-    why: "Watch one Chog trade real $CHOG history, every buy and sell explained by the genes that made it.",
+    why: "Watch one Chog's trades replayed on real $CHOG history (simulated), every buy and sell explained by the genes that made it.",
     point: "The record is computed from the token's own traits, so it travels with the NFT.",
     action: { label: "Open the Time Machine", href: "/replay/1820" },
   },

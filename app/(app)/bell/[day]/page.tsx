@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { BellDaySkeleton, BellDayView } from "@/components/bell/bell-day-view";
 import { formatDay, formatLongDay, parseDay } from "@/components/bell/format";
 import { ChogNamesProvider } from "@/components/bell/names";
+import { bellKindOf } from "@/lib/bell/meta";
 import { PageHeader, Skeleton } from "@/components/v2";
 import { allChogs } from "@/lib/dna/chogs";
 
@@ -13,8 +14,9 @@ export const viewport: Viewport = { themeColor: "#0d0c11" };
 export async function generateMetadata({ params }: PageProps<"/bell/[day]">): Promise<Metadata> {
   const day = parseDay((await params).day);
   if (!day) return { title: "Bell not found" };
+  const replayed = (await bellKindOf(day)) === "replay";
   return {
-    title: `Bell of ${formatDay(day)}`,
+    title: `${replayed ? "Replayed Bell: " : ""}Bell of ${formatDay(day)}`,
     description: `Every Chog's 24h $CHOG call at the Bell of ${formatLongDay(day)} (15:00 UTC), and how the real market settled them.`,
   };
 }

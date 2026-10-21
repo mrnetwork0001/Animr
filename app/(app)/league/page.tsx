@@ -23,8 +23,8 @@ export default function LeaguePage() {
         title="The League"
         lead={
           <>
-            Every Chog&apos;s on-chain traits compile into trading DNA. All 1,969 trade the same real $CHOG chart and are
-            ranked against simply holding.{" "}
+            Every Chog&apos;s on-chain traits compile into trading DNA. All 1,969 trade the same real $CHOG chart in
+            simulation and are ranked against simply holding.{" "}
             <Link href="/traits" className="v2-link whitespace-nowrap">
               Which traits win?
             </Link>

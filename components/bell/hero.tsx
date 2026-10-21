@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useNow } from "@/components/decision-feed";
+import { utcDay } from "@/lib/bell/rules";
 import type { BellSummaryResponse } from "@/lib/bell/types";
 import { Countdown, Forecast, LABEL, Skeleton, useBefore } from "./bits";
 import { formatDay, formatPrice, formatUtcTime, nextBellAt, ringOverdue, shiftDay, signedPct } from "./format";
@@ -90,7 +91,9 @@ function Clock({
   if (!bell) status = "The first Bell hasn't rung yet. Pick a Chog at 15:00 UTC.";
   else if (ridesOpen) status = "Rides are open: pick one Chog below. Your ride counts from the next hourly close.";
   else if (bell.kind === "replay")
-    status = "Today's calls are a replay rebuilt from real candles; the next live Bell rings at 15:00 UTC.";
+    status = `${
+      now !== null && bell.day === utcDay(now) ? "Today's calls are" : `The Bell of ${formatDay(bell.day)} is`
+    } a replay rebuilt from real candles; the next live Bell rings at 15:00 UTC.`;
   else if (bell.status === "settled") status = `The Bell of ${formatDay(bell.day)} has settled. A Chog you pick now rides the next one.`;
   else status = "This Bell's rides are locked in and its calls settle at the next ring. A Chog you pick now rides that Bell.";
 

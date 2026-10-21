@@ -55,7 +55,7 @@ function answerFor(intent: AskIntent, facts: ChogFacts, resting: boolean): strin
       if (!bell.today) return "I have no Bell call on record right now. Check back after the next Daily Bell at 15:00 UTC.";
       const b = bell.latest;
       const record = bell.record && bell.record.calls > 0 ? ` My Bell record: ${bell.record.hits} hits in ${bell.record.calls} calls.` : "";
-      return `${b ? `For the Bell of ${dayLabel(b.day)}, ` : ""}I called ${pct(bell.today.forecastPct)} for $CHOG over 24h, ${Math.round(bell.today.conviction * 100)}% conviction: "${bell.today.thesis}"${record} It's a call, not advice.`;
+      return `${b ? `For the Bell of ${dayLabel(b.day)}${b.kind === "replay" ? " (a replayed Bell, rebuilt from past candles)" : ""}, ` : ""}I called ${pct(bell.today.forecastPct)} for $CHOG over 24h, ${Math.round(bell.today.conviction * 100)}% conviction: "${bell.today.thesis}"${record} It's a call, not advice.`;
     }
     case "rank":
       if (!standing) return "I can't see the League right now. Try again in a minute.";

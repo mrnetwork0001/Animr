@@ -5,14 +5,16 @@ import { Suspense } from "react";
 import { formatDay, formatLongDay, parseDay } from "@/components/bell/format";
 import { BellRecapCard } from "@/components/bell/recap";
 import { PageHeader, PillLink, Skeleton } from "@/components/v2";
+import { bellKindOf } from "@/lib/bell/meta";
 
 export const viewport: Viewport = { themeColor: "#0d0c11" };
 
 export async function generateMetadata({ params }: PageProps<"/bell/[day]/recap">): Promise<Metadata> {
   const day = parseDay((await params).day);
   if (!day) return { title: "Bell not found" };
+  const replayed = (await bellKindOf(day)) === "replay";
   return {
-    title: `Bell recap, ${formatDay(day)}`,
+    title: `${replayed ? "Replayed Bell: " : ""}Bell recap, ${formatDay(day)}`,
     description: `What $CHOG did at the Bell of ${formatLongDay(day)}, the best call, the most rekt and what the crowd called. Points only.`,
   };
 }
