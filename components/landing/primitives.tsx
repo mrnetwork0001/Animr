@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import { type CSSProperties, type ComponentProps, Fragment, type ReactNode } from "react";
 import { Badge, type BadgeTone } from "@/components/v2/primitives";
 import type { TradingStyle } from "@/lib/agent/types";
 import { styles as styleCopy } from "./content";
@@ -29,12 +29,30 @@ type SectionHeadProps = {
   className?: string;
 };
 
+/**
+ * A heading's words, each in its own mask so they can rise in one after another (landing.css .lp-word). Split on
+ * plain spaces only, so no-break spaces keep their pairs together; the text itself is unchanged.
+ */
+export function MaskedWords({ text }: { text: string }) {
+  const words = text.split(" ");
+  return words.map((word, index) => (
+    <Fragment key={index}>
+      <span className="lp-word">
+        <span className="lp-word-in" style={{ "--w": index } as CSSProperties}>
+          {word}
+        </span>
+      </span>
+      {index < words.length - 1 && " "}
+    </Fragment>
+  ));
+}
+
 /** A section's head: a hairline, then the DM Sans title with the lede beside it. */
 export function SectionHead({ id, title, lede, className = "" }: SectionHeadProps) {
   return (
     <header className={`lp-head lp-reveal ${className}`}>
       <h2 id={`${id}-title`} className="lp-h2">
-        {title}
+        <MaskedWords text={title} />
       </h2>
       {lede && (
         <p className="lp-lead">

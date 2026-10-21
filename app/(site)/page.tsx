@@ -5,6 +5,7 @@ import { Faq } from "@/components/landing/faq";
 import { FinalCta } from "@/components/landing/final-cta";
 import { Gate } from "@/components/landing/gate";
 import { LandingFooter } from "@/components/landing/landing-footer";
+import { LandingMotion } from "@/components/landing/landing-motion";
 import { Minds } from "@/components/landing/minds";
 import { Receipts } from "@/components/landing/receipts";
 import { Safety } from "@/components/landing/safety";
@@ -43,7 +44,8 @@ export const viewport: Viewport = {
  * final call, all in the v2 language (app/design-v2.css + components/landing/landing.css) on the
  * hero's near-black and grid. Static and server-rendered: every Chog, name and League number on it is
  * computed from committed data when the page is built (components/landing/showcase.ts). The client code
- * is the hero's motion and menu, Random Chog, the House Chog's live status and the image fallbacks.
+ * is the hero's motion and menu, the body's scroll reveals (components/landing/landing-motion.tsx), Random Chog, the
+ * House Chog's live status and the image fallbacks.
  */
 export default function LandingPage() {
   return (
@@ -56,6 +58,7 @@ export default function LandingPage() {
         <Receipts />
         <Faq />
         <FinalCta />
+        <LandingMotion />
       </div>
     </AnimrHero>
   );
