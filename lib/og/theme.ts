@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { LOGO_PNG_BASE64 } from "./logo-data";
 
 // Shared look of the share cards (app/(app)/**/opengraph-image.tsx): the app's palette, the Animr mark
 // and the Geist fonts, for next/og's ImageResponse (Satori + resvg). Server-only.
@@ -32,10 +33,8 @@ export function toneOf(pct: number | null | undefined, digits = 1): string {
   return pct > 0 ? C.success : C.danger;
 }
 
-/** The Animr mark (public/animr.svg, the site header's logo) as a data URI. */
-export const LOGO_SRC = `data:image/svg+xml;base64,${Buffer.from(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A493FF"/><stop offset="1" stop-color="#6A50F0"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#g)"/><path d="M9.5 23 16 8.5 22.5 23" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="18.6" r="2.3" fill="#fff"/></svg>`,
-).toString("base64")}`;
+/** The Animr mark (public/brand/animr-mark.png, the favicon artwork) as a data URI. */
+export const LOGO_SRC = `data:image/png;base64,${LOGO_PNG_BASE64}`;
 
 type OgFont = { name: string; data: Buffer; weight: 400 | 600; style: "normal" };
 

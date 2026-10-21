@@ -40,7 +40,7 @@ const PRIVY_CONFIG: PrivyClientConfig = {
     accentColor: "#6f5adc",
     // An element with a fixed size: Privy's logo slot collapses to 0×0 for an SVG URL without intrinsic dimensions.
     // eslint-disable-next-line @next/next/no-img-element -- rendered inside Privy's modal, which overwrites its style
-    logo: <img src="/animr.svg" alt="Animr" width={56} height={56} />,
+    logo: <img src="/brand/animr-mark.png" alt="Animr" width={56} height={56} />,
     landingHeader: "Log in to Animr",
     showWalletLoginFirst: true,
     walletChainType: "ethereum-only",

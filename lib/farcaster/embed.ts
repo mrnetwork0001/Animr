@@ -6,7 +6,7 @@
 export const MINIAPP_NAME = "Animr";
 /** The splash shown while the app loads (200x200 PNG) and its background: the app's own near-black. */
 export const SPLASH_PATH = "/farcaster/splash.png";
-export const SPLASH_BACKGROUND = "#0E0B1E";
+export const SPLASH_BACKGROUND = "#040518";
 /** 1024x1024 PNG without alpha, for the manifest. */
 export const ICON_PATH = "/farcaster/icon.png";
 /** The site-wide 3:2 card: today's Daily Bell (app/api/farcaster/embed-image). */
