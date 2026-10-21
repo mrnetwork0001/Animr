@@ -113,27 +113,25 @@
   .sf-heading {
     margin: 0;
     color: var(--v2-violet-ink);
+    /* Same face and size as the rest of the footer (and the app's body text). */
     font-family: var(--v2-font-text);
-    font-size: var(--v2-fs-2xs);
+    font-size: var(--v2-fs-base);
     font-weight: 600;
-    letter-spacing: 0.16em;
-    line-height: 1.4;
-    text-transform: uppercase;
+    line-height: 1.65;
   }
   .sf-links {
     display: grid;
-    gap: 12px;
-    margin: 18px 0 0;
+    gap: 0;
+    margin: 4px 0 0;
     padding: 0;
     list-style: none;
   }
   .sf-link {
     display: inline;
     color: var(--v2-nav);
-    font-family: var(--v2-font-mono);
-    font-size: 13px;
-    letter-spacing: -0.01em;
-    line-height: 1.45;
+    font-family: var(--v2-font-text);
+    font-size: var(--v2-fs-base);
+    line-height: 1.65;
     text-decoration: none;
     overflow-wrap: anywhere;
     border-radius: 4px;

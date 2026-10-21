@@ -88,9 +88,6 @@ export function SiteFooter({
 
 function FooterAnchor({ link }: { link: FooterLink }) {
   if (link.external) {
-    const cut = link.label.lastIndexOf(" ") + 1;
-    const head = link.label.slice(0, cut);
-    const last = link.label.slice(cut);
     return (
       <a
         href={link.href}
@@ -99,14 +96,7 @@ function FooterAnchor({ link }: { link: FooterLink }) {
         title={link.title}
         className="sf-link"
       >
-        {head}
-        {/* The last word and the arrow never part. */}
-        <span className="sf-nowrap">
-          {last}
-          <span aria-hidden="true" className="sf-ext">
-            ↗
-          </span>
-        </span>
+        {link.label}
         <span className="sr-only"> (opens in a new tab)</span>
       </a>
     );
