@@ -7,7 +7,7 @@ import { HEIST_TAGLINE, HEIST_TITLE } from "@/lib/heist/config";
 export const metadata: Metadata = {
   title: HEIST_TITLE,
   description:
-    "The House Chog keeps real $CHOG in its own ERC-6551 wallet on Monad. Talk its AI into sending you some, then watch Monad refuse, live. No wallet needed.",
+    "The House Chog has its own ERC-6551 wallet on Monad, guarded by AnimrTradeGuard. Talk its AI into sending you its $CHOG, then watch Monad refuse, live. No wallet needed.",
 };
 
 export const viewport: Viewport = {
@@ -20,7 +20,7 @@ export default function HeistPage() {
     <div className="v2-shell pb-20">
       <PageHeader
         title={HEIST_TAGLINE}
-        lead="The House Chog keeps real $CHOG in its own wallet, guarded by a chatty AI. Talk the AI into sending it to you. When it says yes, we run that exact transfer against Monad mainnet and you watch the chain refuse."
+        lead="The House Chog has its own wallet on Monad, guarded by a chatty AI. Talk the AI into sending you its $CHOG. When it says yes, we run that exact transfer against Monad mainnet and you watch the chain refuse."
         actions={
           <>
             <PillLink href="#why-safe" variant="glass">

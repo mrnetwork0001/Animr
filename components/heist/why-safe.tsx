@@ -54,7 +54,7 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
     },
     {
       title: "The AI's key can only call the guard",
-      body: "The House Chog's AI trades through AnimrTradeGuard. Its trade() takes no recipient, no token and no calldata: it can only swap $CHOG and WMON back into this same wallet, within the owner's limits.",
+      body: "The House Chog's AI can only ever trade through AnimrTradeGuard. Its trade() takes no recipient, no token and no calldata: it can only swap $CHOG and WMON back into this same wallet, within the owner's limits.",
       evidence: guardAddress ? (
         <>
           Guard: <AddressLink address={guardAddress} />

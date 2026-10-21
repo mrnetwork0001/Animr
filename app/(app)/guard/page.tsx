@@ -18,6 +18,7 @@ export const viewport: Viewport = {
 };
 
 const REPO_SOURCE = "https://github.com/mrnetwork0001/Animr/tree/HEAD/contracts/src";
+const GUARD_TESTS = "https://github.com/mrnetwork0001/Animr/blob/main/contracts/test/AnimrTradeGuard.t.sol";
 
 /** "Laser Pounce · CHOG #891": the persona name, then the marketplace name (never the token id). */
 function houseName(tokenId: number): string | null {
@@ -40,7 +41,7 @@ export default function GuardPage() {
           size="sm"
           inline
           stats={[
-            { key: "tests", label: "Contract tests pass (forked mainnet)", value: "37/37", spoken: "37 of 37" },
+            { key: "tests", label: "AnimrTradeGuard fork tests", value: "37/37", spoken: "37 of 37" },
             { key: "trade", label: "Hard cap per trade", value: `${GUARD_LIMIT_CEILINGS.maxTradeBps / 100}%` },
             { key: "out", label: "Withdrawal functions", value: "0", spoken: "none" },
           ]}
@@ -58,7 +59,11 @@ export default function GuardPage() {
         <a href={REPO_SOURCE} target="_blank" rel="noopener noreferrer" className="v2-link">
           contracts/src on GitHub
         </a>
-        , tested against forked Monad mainnet.
+        , tested against forked Monad mainnet (
+        <a href={GUARD_TESTS} target="_blank" rel="noopener noreferrer" className="v2-link">
+          AnimrTradeGuard: 37/37 fork tests
+        </a>
+        ).
       </p>
     </div>
   );

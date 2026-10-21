@@ -18,7 +18,7 @@ export function Safety() {
       {/* The guard card spans the row on its own until the House Chog card renders beside it (landing.css). */}
       <div className="lp-grid-2 lp-safety-cards">
         <Deployed guard={guard} />
-        <HouseChogCard house={house && { label: house.label, name: house.name }} />
+        <HouseChogCard house={house && { tokenId: house.tokenId, label: house.label, name: house.name }} />
       </div>
 
       <RealVsSimulated />
@@ -62,6 +62,11 @@ function Deployed({ guard }: { guard: GuardLink | null }) {
             <span className="v2-sr"> ({labels.newTab})</span>
           </a>
         )}
+        <a href={deployed.tests.href} target="_blank" rel="noopener noreferrer" className="v2-btn-ghost v2-btn--sm">
+          {deployed.tests.label}
+          <ExternalIcon className="v2-btn-icon" />
+          <span className="v2-sr"> ({labels.newTab})</span>
+        </a>
         <Link href={links.guard} className="v2-btn-ghost v2-btn--sm">
           {deployed.status}
           <ArrowRightIcon className="v2-btn-icon" />

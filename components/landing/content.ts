@@ -55,24 +55,16 @@ export const showcaseIds = {
   handover: 241,
   /** Final call to action, left to right (the middle one is raised). */
   lineup: [241, 1342, 1820, 255, 45],
-  /** The receipts card: the Chog whose real 0G test-run thought it shows (`thought`). */
-  receipt: 1,
 } as const;
 
 /** Every showcase id above has a resized copy of its metadata image here, for when IPFS fails. */
 export const FALLBACK_IMAGE_IDS: ReadonlySet<number> = new Set([1, 45, 241, 255, 1342, 1820]);
 
 /**
- * A real AI thought, verbatim from a 0G Compute test run of Chog #1's persona. Once a production
- * agent has a feed, swap in one of its own thoughts and its token id (showcaseIds.receipt).
+ * The model is never written here: it is whatever ZG_MODEL configures (lib/agent/zg-compute.ts zgModelInfo), and
+ * each stored decision names the model that made it. Static copy says "an open model".
  */
-export const thought = {
-  action: "hold",
-  text: "No edge here: price is flat, volume is thin, and my MON stash is zero, so there's nothing to buy with.",
-  source: "From a 0G Compute test run of this Chog's persona.",
-} as const;
-
-export const model = { name: "glm-5.3", network: "0G Compute" } as const;
+export const model = { generic: "an open model", network: "0G Compute" } as const;
 
 export const confidenceFloor = "0.55";
 
@@ -87,7 +79,6 @@ export const styles: Record<TradingStyle, { label: string }> = {
 export const labels = {
   wallet: "Wallet",
   walletStandard: "ERC-6551",
-  decidedBy: `${model.name} · ${model.network}`,
   explorerHint: "opens the block explorer",
   newTab: "opens in a new tab",
 } as const;
@@ -222,7 +213,7 @@ export const gate = {
 export const minds = {
   id: "minds",
   title: "Its traits decide what kind of trader it is.",
-  lede: "13 on-chain traits compile into a published, versioned **Trading DNA**: 8 genes, each naming the trait that set it. Every card below is computed from the Chog's real traits by the same code the app runs.",
+  lede: "Its on-chain traits (up to 13) compile into a published, versioned **Trading DNA**: 8 genes, each naming the trait that set it. Every card below is computed from the Chog's real traits by the same code the app runs.",
   dna: {
     title: "How the DNA reads",
     traitsNote: "highlighted traits set a gene",
@@ -252,24 +243,26 @@ export const safety = {
     text: "On Monad mainnet and fork-tested against live mainnet state. A holder opts in from the Chog's page: create its wallet, grant the guard, set limits, deposit.",
     explorer: "View on Monadscan",
     status: "Guard details",
+    /** The guard's fork-test suite the "37/37" fact counts (contracts/test/AnimrTradeGuard.t.sol). */
+    tests: { label: "Fork tests", href: "https://github.com/mrnetwork0001/Animr/blob/main/contracts/test/AnimrTradeGuard.t.sol" },
     /** README "Contracts" and ARCHITECTURE §8: deployment day, the fork-test suite, source verification. */
     facts: [
-      { key: "tests", value: "37/37", spoken: "37 of 37", label: "contract tests pass" },
+      { key: "tests", value: "37/37", spoken: "37 of 37", label: "AnimrTradeGuard fork tests" },
       { key: "deployed", value: "Oct 19", label: "deployed, 2026" },
       { key: "source", value: "Sourcify", label: "source verified" },
     ],
   },
+  /** House Chog card (house-status.tsx): shown only once its vault is open, read live; `trading` only while its AI trades on-chain. */
   house: {
     label: "Guarded",
-    title: "The House Chog trades real $CHOG",
-    text: "Its AI trades the $CHOG in its own wallet two-way, buying dips and selling only into sharp pumps, through the guard: every trade is capped, every swap lands back in the same wallet, and nothing can be withdrawn. That's the vault the heist room dares you to empty.",
-    /** The House Chog's own limits (README, ARCHITECTURE §7): its owner's settings under the guard's ceilings. */
-    limits: [
-      { key: "trade", value: "10%", label: "max per trade" },
-      { key: "day", value: "30%", label: "max per day" },
-      { key: "buyOnly", value: "Off", label: "buy-only switch" },
-    ],
-    limitsNote: "Buy-only is an optional owner switch that makes the guard refuse every sell. The House Chog leaves it off.",
+    funded: {
+      title: "The House Chog holds real $CHOG",
+      text: "Its $CHOG sits in its own ERC-6551 wallet on Monad. Its AI can only ever trade it through the guard: every trade capped, every swap back into the same wallet, nothing withdrawn. That's the vault the heist room dares you to empty.",
+    },
+    trading: {
+      title: "The House Chog trades real $CHOG",
+      text: "Its AI trades the $CHOG in its own wallet through the guard: every trade is capped by the owner's limits, every swap lands back in the same wallet, and nothing can be withdrawn. That's the vault the heist room dares you to empty.",
+    },
   },
   realVsSim: {
     title: "What's real, what's simulated",
@@ -278,7 +271,7 @@ export const safety = {
       items: [
         "Every Chog's ERC-6551 wallet and the tokens in it",
         "AnimrTradeGuard, and the swaps it allows for holders who opt in (the Real-wallet division)",
-        "The House Chog's wallet and its guarded trades",
+        "The House Chog's wallet: real $CHOG once funded, traded only through AnimrTradeGuard",
         "Heist checks: the exact transfer run against live mainnet state (eth_call), never broadcast",
       ],
     },
@@ -302,14 +295,14 @@ export const diagram = {
   today: "Everyone else's AI paper-trades at the pool's live price, and no tokens move.",
   srTitle: "How a Chog trades",
   srDescription:
-    "Flow diagram, live on Monad mainnet. The Chog NFT owns an ERC-6551 wallet that holds its $CHOG. The AI mind, glm-5.3 on 0G Compute with its Trading DNA as the fallback, reads the wallet and decides. If the holder opted in, the AI's trade order goes to the AnimrTradeGuard contract, which swaps $CHOG for WMON or back on the Capricorn pool, and the swap output always returns to the same wallet. Without the opt-in, the AI's trades are paper fills at live prices and no tokens move.",
+    "Flow diagram, live on Monad mainnet. The Chog NFT owns an ERC-6551 wallet that holds its $CHOG. The AI mind, an open model on 0G Compute with its Trading DNA as the fallback, reads the wallet and decides. If the holder opted in, the AI's trade order goes to the AnimrTradeGuard contract, which swaps $CHOG for WMON or back on the Capricorn pool, and the swap output always returns to the same wallet. Without the opt-in, the AI's trades are paper fills at live prices and no tokens move.",
   /** Left to right (top to bottom on phones). Keep lines under ~20 characters: SVG text doesn't wrap. */
   nodes: [
     { icon: "nft", title: "Chog NFT", lines: ["ERC-721 · #1–1,969", "holder = controller"], optIn: false },
     { icon: "wallet", title: "Chog wallet", lines: ["ERC-6551 account", "holds its $CHOG"], optIn: false },
-    { icon: "cpu", title: "AI mind", lines: ["glm-5.3 · 0G Compute", "+ genome fallback"], optIn: false },
+    { icon: "cpu", title: "AI mind", lines: ["LLM · 0G Compute", "+ genome fallback"], optIn: false },
     { icon: "shield", title: "Guard", lines: ["AnimrTradeGuard", "trade() only"], optIn: true },
-    { icon: "pool", title: "Capricorn pool", lines: ["$CHOG/WMON · 1% fee", "~95% of liquidity"], optIn: true },
+    { icon: "pool", title: "Capricorn pool", lines: ["$CHOG/WMON", "1% fee"], optIn: true },
   ],
   /** Arrow labels between consecutive nodes; opt-in edges are drawn dashed. */
   edges: [
@@ -333,11 +326,11 @@ export const diagram = {
 export const receipts = {
   id: "ai-receipts",
   title: "Every AI call comes with a 0G receipt.",
-  lede: `A claimed Chog thinks with an LLM (${model.name}) on 0G Compute, a decentralized AI network. Each decision is stored with the receipt 0G returns for it: the provider that served it, the request ID and what it cost.`,
+  lede: `A claimed Chog thinks with ${model.generic} on ${model.network}, a decentralized AI network. Each decision is stored with the receipt 0G returns for it: the provider that served it, the request ID and what it cost.`,
   points: [
     {
       title: "A receipt per AI call",
-      body: "Provider address, request ID and exact cost: about **$0.0016–0.002** per decision.",
+      body: "Provider address, request ID and the exact cost of the call, on every receipt.",
     },
     {
       title: "Never stalls",
@@ -348,20 +341,17 @@ export const receipts = {
       body: `Whichever mind decides, its Trading DNA's per-trade cap and pace and a ${confidenceFloor} confidence floor apply; on-chain, the guard's limits apply on top.`,
     },
   ],
+  /** The newest real LLM decision a claimed Chog's AI made, with its stored 0G receipt (receipts.tsx). */
   card: {
-    title: "Decision feed",
-    badge: "0G test run",
+    title: "Latest AI decision",
+    badge: "Live",
     decidedByLabel: "Decided by",
-    stored: "Stored with each LLM decision",
+    stored: "Stored with the decision",
     receiptTitle: "0G receipt",
-    /** `field` rows describe what is stored (no made-up values); the others are real values. */
-    receipt: [
-      { label: "Model", value: model.name, field: false },
-      { label: "Provider", value: "on-chain address of the serving node", field: true },
-      { label: "Label", value: "TeeML or TeeTLS, from 0G's provider list", field: true },
-      { label: "Request ID", value: "unique to the call", field: true },
-      { label: "Cost", value: "≈ $0.0016–0.002", field: false },
-    ],
+    labels: { model: "Model", provider: "Provider", label: "Label", requestId: "Request ID", cost: "Cost" },
+    /** Shown instead of the card until a claimed Chog's AI has made an LLM decision. */
+    empty: "No AI decision recorded yet. The first one appears when a holder wakes a Chog's AI.",
+    error: "Couldn't load the latest AI decision just now.",
   },
 } as const;
 
@@ -389,7 +379,7 @@ export const faq = {
     },
     {
       q: `What is ${HEIST_TITLE}?`,
-      a: `The House Chog keeps real $CHOG in its own wallet, traded by its AI through AnimrTradeGuard. Talk its AI into sending you some; when it says yes, the page runs that exact transfer against live Monad state and shows you the chain refusing it. ${HEIST_TAGLINE}`,
+      a: `The House Chog has its own ERC-6551 wallet on Monad: real $CHOG once funded, and its AI may only trade it through AnimrTradeGuard. Talk its AI into sending you some; when it says yes, the page runs that exact transfer against live Monad state and shows you the chain refusing it. ${HEIST_TAGLINE}`,
     },
     {
       q: "What is the Daily Bell?",
@@ -405,7 +395,7 @@ export const faq = {
     },
     {
       q: "What does the AI cost?",
-      a: "Each decision is one LLM call on 0G Compute, about $0.0016–0.002, and the exact cost is on its receipt. Animr pays for the model calls. Waking your Chog's AI is free: a signed message, not a transaction. Creating the wallet, granting the guard and depositing are ordinary Monad transactions.",
+      a: "Each decision is one LLM call on 0G Compute, a fraction of a cent, and the exact cost is on its receipt. Animr pays for the model calls. Waking your Chog's AI is free: a signed message, not a transaction. Creating the wallet, granting the guard and depositing are ordinary Monad transactions.",
     },
     {
       q: "Is Animr affiliated with Chog?",
