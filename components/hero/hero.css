@@ -5,12 +5,15 @@
  * Two layouts, one set of components:
  * - Wide screens (5:4 and wider, at least 960px): the hero is drawn on a 2048×1455 design canvas,
  *   one unit --u = viewport height / 1455 (never under 0.468px). The canvas is centred and fills the
- *   screen top to bottom; spare width is background. Its content keeps 75 units from each side (the
- *   owner's slim margins). Below about 1.33:1 (5:4, 4:3 windows) the canvas is wider than the screen:
- *   its empty side margins are trimmed, and the unit also caps at (viewport width - 2 gutters) / 1898
- *   so the content's edge stays at least one gutter (8-20px) from the screen's edge.
+ *   screen top to bottom. Its content keeps 75 units from each side (the owner's slim margins), and
+ *   on screens wider than the canvas the canvas stretches with the screen (up to 270 extra units
+ *   each side, about 16:9): the copy stays 75 units from the left edge while the artwork and cards,
+ *   anchored to the canvas's right edge, move out to the right the same distance. Below about 1.33:1
+ *   (5:4, 4:3 windows) the canvas is wider than the screen: its empty side margins are trimmed, and
+ *   the unit also caps at (viewport width - 2 gutters) / 1898 so the content's edge stays at least
+ *   one gutter from the screen's edge.
  * - Everything else: the same content in one centred column, sized in the fluid unit --f, with
- *   8-20px side margins (--v2-gutter's slim margins).
+ *   --v2-gutter's slim side margins (6px on phones, ~9px at 768).
  * Components size themselves in --k, which is whichever unit the layout uses.
  *
  * Page structure (animr-hero.tsx): .hx-page is the whole page and carries the tokens and units. Its
@@ -43,7 +46,10 @@
   --u: max(0.468px, 100svh / 1455);
   --f: clamp(0.55px, 0.449px + 0.0284vw, 0.76px);
   --k: var(--f);
-  --hx-gutter: clamp(8px, 2.3vw, 20px);
+  /* Same value as --v2-gutter (app/design-v2.css). */
+  --hx-gutter: clamp(6px, 3.125vw - 15px, 32px);
+  /* Wide canvas: the most it stretches past 2048 units, per side (about a 16:9 screen). */
+  --hx-stretch: 270;
 
   position: relative;
 }
@@ -815,9 +821,11 @@ body:has(.hx-page) {
     padding-inline: 0;
   }
 
+  /* The canvas fills the screen's width between 2048 units and its stretch cap; positions on the right
+     (artwork, cards, glow) are measured from its right edge, so they follow it out. */
   .hx-canvas {
     flex: none;
-    width: calc(2048 * var(--u));
+    width: clamp(2048 * var(--u), 100%, (2048 + 2 * var(--hx-stretch)) * var(--u));
     max-width: none;
     height: calc(1455 * var(--u));
     margin-inline: 0;
@@ -837,7 +845,7 @@ body:has(.hx-page) {
 
   .hx-header-canvas {
     flex: none;
-    width: calc(2048 * var(--u));
+    width: clamp(2048 * var(--u), 100%, (2048 + 2 * var(--hx-stretch)) * var(--u));
     max-width: none;
     height: calc(1455 * var(--u));
     margin-inline: 0;
@@ -934,7 +942,7 @@ body:has(.hx-page) {
     content: "";
     position: absolute;
     top: calc(90 * var(--u));
-    left: calc(775 * var(--u));
+    right: calc(453 * var(--u)); /* x = 775 on the 2048-unit canvas */
     width: calc(820 * var(--u));
     height: calc(520 * var(--u));
     pointer-events: none;
@@ -946,7 +954,7 @@ body:has(.hx-page) {
   .hx-art {
     position: absolute;
     top: calc(168 * var(--u));
-    left: calc(1065 * var(--u));
+    right: calc(-137 * var(--u)); /* x = 1065: it bleeds past the canvas's right edge */
     width: calc(1120 * var(--u));
     margin: 0;
   }
@@ -961,14 +969,15 @@ body:has(.hx-page) {
 
   .hx-card--dna {
     top: calc(186 * var(--u));
-    left: calc(805 * var(--u));
+    right: calc(792 * var(--u)); /* x = 805 */
+    left: auto;
   }
 
   .hx-card--guard {
     top: calc(1004 * var(--u));
-    right: auto;
+    right: calc(82 * var(--u)); /* x = 1515 */
     bottom: auto;
-    left: calc(1515 * var(--u));
+    left: auto;
   }
 
   .hx-logos {

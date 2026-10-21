@@ -8,8 +8,9 @@
  * Every animation is opt-in: it only runs when the system doesn't ask for reduced motion.
  *
  * Frame: .lp-root is also .hx-page (the hero's tokens and units) and .v2-page (the v2 tokens). Side
- * spacing is var(--v2-gutter) everywhere. On the hero's wide canvas the content column matches the
- * canvas's content width (75 to 1973 units), so every section lines up with the hero's copy.
+ * spacing is var(--v2-gutter) everywhere. On the hero's wide canvas the column matches the canvas's
+ * content box instead (75 units inside the canvas, which stretches with the screen up to its cap and is
+ * trimmed when the screen is narrower), so every section lines up with the hero's copy and cards.
  */
 
 /* ============================================================================ frame */
@@ -23,7 +24,7 @@
 /* Same query as the hero's wide canvas (components/hero/layout.ts). */
 @media (min-aspect-ratio: 5/4) and (min-width: 960px) {
   .lp-root {
-    --lp-max: clamp(960px, 1898 * var(--u), var(--v2-max-wide));
+    --lp-max: calc((1898 + 2 * var(--hx-stretch)) * var(--u));
   }
 }
 
@@ -48,6 +49,14 @@ html:has(.lp-root) {
   max-width: calc(var(--lp-max) + 2 * var(--v2-gutter));
   margin-inline: auto;
   padding-inline: var(--v2-gutter);
+}
+@media (min-aspect-ratio: 5/4) and (min-width: 960px) {
+  /* The canvas's 75-unit inset; when the screen is narrower than the canvas (100% < 2048u, 5:4 to 4:3)
+     the canvas's trimmed overhang comes off it, as it does for the hero's copy. */
+  .lp-shell {
+    max-width: calc(var(--lp-max) + 150 * var(--u));
+    padding-inline: calc(75 * var(--u) + min(0px, (100% - 2048 * var(--u)) / 2));
+  }
 }
 
 /* Everything under the hero: the hero's grid carries on (same cell, same centre line, so the vertical

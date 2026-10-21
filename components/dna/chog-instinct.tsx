@@ -122,7 +122,7 @@ export function WildChogCard({ tokenId, account, className = "" }: { tokenId: nu
 
       <div className="mt-5 rounded-[var(--v2-r-md)] border border-[var(--v2-line-soft)] bg-white/[0.02] p-4">
         <h3 className="text-sm font-[520]">Claim it: give it a brain and a real wallet</h3>
-        <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-[var(--v2-nav)]">
+        <ol className="mt-2 max-w-[90ch] list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-[var(--v2-nav)]">
           <li>Its holder signs one free message (no gas). An LLM on 0G Compute wakes up with this genome as its character.</li>
           <li>
             It manages the $CHOG in its own ERC-6551 wallet

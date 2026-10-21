@@ -70,11 +70,15 @@ import { ConnectButton } from "@/components/connect-button";
 | Charts | `chart-1` (teal, the subject), `chart-2` (violet, the benchmark: hold, opponent), `chart-3` and `chart-4` (neutrals), `chart-up`, `chart-down`, `chart-grid`, `chart-axis`, `chart-area-teal`, `chart-area-violet` |
 | Radii | `r-xs 8`, `r-sm 10`, `r-md 14` (inputs, toasts), `r-lg 18` (cards, tables), `r-xl 24`, `r-pill` |
 | Spacing | `s-1` to `s-20` (4px steps: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80) |
-| Frame | `gutter` = `clamp(8px, 2.3vw, 20px)` (side margins; 8px on small phones, 20px from about 870px). `max 1320px`, `max-narrow 960px`, `max-wide 1520px`, `header-h 68px` |
+| Frame | `gutter` = `clamp(6px, 3.125vw - 15px, 32px)` (side margins: 6px on phones, ~9px at 768, ~30px at 1440, 32px from 1504px). `max 2048px`, `max-narrow 2048px` (same as `max`, so reading pages line up with the header), `max-wide 2304px`, `header-h 68px` |
 | Type | `font-display` (DM Sans), `font-text` (Inter), `font-mono` (Geist Mono), all set on `.v2-page`. Sizes: `fs-2xs 11`, `fs-xs 12`, `fs-sm 13.5`, `fs-base 15`, `fs-md 16`, `fs-lg 18`, `fs-lead`, `fs-h3`, `fs-h2`, `fs-h1` (34–62, fluid), `fs-stat`, `fs-stat-sm`. `fw-display 380` |
 
-**Slim margins (owner request).** Side gutters are half the hero's (8–20px rather than 16–40px).
-Max widths are wider to match, so content uses more of the screen.
+**Slim margins (owner request).** Side margins are a quarter of the original design's: content starts
+~30px from the screen edge at 1440 and 32px at 1920 (6px on phones, ~9px on tablets). Up to 1920px
+wide the gutter *is* the margin; the max widths only cap the column on bigger screens. Long text keeps
+its ch caps (`v2-lead` 62ch, section copy 64ch, `v2-card-body` 72ch). The landing hero's wide canvas
+stretches with the screen (up to about 16:9), so its copy sits 75 units (~46px at 1440x900) from the
+left edge and the artwork and cards follow the right edge; the landing sections use the same edge.
 
 - Never hard-code page padding. Use `.v2-shell`, or `var(--v2-gutter)` for anything full-bleed.
 - Internal card padding is unchanged: 24px, or 16px with `--tight`.

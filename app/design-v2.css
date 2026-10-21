@@ -99,11 +99,14 @@
   --v2-s-16: 64px;
   --v2-s-20: 80px;
 
-  /* page frame: slim side margins (8px on small phones, 20px from ~870px wide) and wide columns */
-  --v2-gutter: clamp(8px, 2.3vw, 20px);
-  --v2-max: 1320px;
-  --v2-max-narrow: 960px;
-  --v2-max-wide: 1520px;
+  /* page frame (owner request: margins at a quarter of the original design). The gutter is the
+     content's whole side margin up to 1920px: 6px on phones, ~9px at 768, ~30px at 1440, 32px from
+     1504px. The columns only cap beyond 1920px wide; long text keeps its
+     own ch caps (v2-lead, section copy, v2-card-body). */
+  --v2-gutter: clamp(6px, 3.125vw - 15px, 32px);
+  --v2-max: 2048px;
+  --v2-max-narrow: 2048px; /* = --v2-max, so a reading page's column still lines up with the header */
+  --v2-max-wide: 2304px;
   --v2-header-h: 68px;
 
   /* type (the family tokens --v2-font-display / --v2-font-text / --v2-font-mono are set on .v2-page,
@@ -885,6 +888,8 @@
   }
   .v2-card-body {
     display: block;
+    /* a readable measure when a card spans a wide column */
+    max-width: 72ch;
     margin: 8px 0 0;
     color: var(--v2-nav);
     font-size: var(--v2-fs-base);

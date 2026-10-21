@@ -62,7 +62,7 @@ export default function ChogPage({ params }: PageProps<"/chog/[tokenId]">) {
   return (
     <div className="v2-shell flex-1 pt-5 pb-20 sm:pt-7 sm:pb-28">
       <nav aria-label="Chog navigation" className="flex flex-wrap items-center justify-between gap-3">
-        <PillLink href="/league" variant="ghost" size="sm" className="-ml-3">
+        <PillLink href="/league" variant="ghost" size="sm" className="-ml-[min(0.75rem,var(--v2-gutter))]">
           <span aria-hidden>←</span> The League
         </PillLink>
         {nameNumbers && <ChogJump nameNumbers={nameNumbers} />}
