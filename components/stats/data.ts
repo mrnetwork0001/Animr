@@ -17,7 +17,7 @@ import type { BellDayStat, DayCount, StatsResponse, StatsSection } from "./types
 // Sources (read-only):
 //   Daily Bell  lib/bell/store.ts KEYS: the index / live / open day lists and animr:bell:rides:<day> (fanId -> ride)
 //   Fans        animr:fans (fanId -> FanState)
-//   Versus      lib/rewind/counters.ts getVersusCounts() (animr:versus:count:bouts / :picks, per-instance totals)
+//   Versus      lib/rewind/counters.ts getVersusCounts() (animr:versus:picked: picked bouts; animr:versus:count:picks: per-instance totals)
 //   Replays     replay:count:served (optional: the number shows once that counter exists; see readCounter)
 //   Heist       animr:heist:stats:<day> (lib/heist/store.ts: per-instance day totals, kept 8 days), animr:heist:hof
 //   Agents      lib/agent/store.ts: every record and its stored decisions (the newest 200 per agent)
@@ -516,7 +516,6 @@ export async function computeStats(now = Date.now()): Promise<StatsResponse> {
     attempts: heistTotals.attempts,
     caves: heistTotals.caves,
     refusals: heistTotals.refusals,
-    stolenChog: 0 as const,
     wall: heist?.wall ?? 0,
     perDay: series(seriesDays(today, heistSince), (day) => heistDays.get(day)?.attempts ?? 0),
     since: heistSince,

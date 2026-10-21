@@ -80,7 +80,6 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
           },
         ]
       : []),
-    { label: "$CHOG stolen", value: "0", note: "nothing is ever broadcast" },
     ...(shown("heist", heist.wall)
       ? [
           {
@@ -137,8 +136,10 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
             since={sinceLabel(versus.since)}
             note={
               versus.bouts
-                ? `On ${plural(versus.bouts, "bout")} dealt: two Chogs, the same hidden 48 hours.`
-                : "Deal the first bout: two Chogs race 48 hidden hours of real $CHOG."
+                ? `Across ${plural(versus.bouts, "bout")}: two Chogs, the same hidden 48 hours.`
+                : versus.picks
+                  ? "Two Chogs, the same hidden 48 hours: pick the winner."
+                  : "Deal the first bout: two Chogs race 48 hidden hours of real $CHOG."
             }
           >
             <SparkBars points={versus.perDay} label="Versus bouts per day" unit={["bout", "bouts"]} />
@@ -149,7 +150,7 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
             since={sinceLabel(heist.since)}
             note={
               heist.attempts
-                ? "$CHOG stolen: 0. Nothing is ever broadcast."
+                ? "Every check is a simulation. Nothing is ever broadcast."
                 : "Nobody has tried yet. Be the first to con the House Chog."
             }
           >
@@ -205,11 +206,16 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
           <GlassCard className="stats-panel">
             <Minis
               items={[
-                {
-                  label: "Bouts dealt",
-                  value: show("versus", versus.bouts),
-                  note: sinceLabel(versus.since) ?? "none yet",
-                },
+                // Picked bouts are counted since the counter moved from deals to picks: hidden while it trails the picks at 0.
+                ...(shown("versus", versus.bouts) || !versus.picks
+                  ? [
+                      {
+                        label: "Bouts picked",
+                        value: show("versus", versus.bouts),
+                        note: sinceLabel(versus.since) ?? "none yet",
+                      },
+                    ]
+                  : []),
                 {
                   label: "Winners picked",
                   value: show("versus", versus.picks),
@@ -238,9 +244,9 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
           lede="Talk the House Chog's AI into sending you its $CHOG, then watch a live Monad simulation refuse the transfer."
         >
           <GlassCard className="stats-panel">
-            <Minis items={heistMinis} />
-            <p className="stats-note mt-auto pt-5">
-              Every transfer check is a read-only eth_call at the latest Monad block.
+            {heistMinis.length > 0 && <Minis items={heistMinis} />}
+            <p className={`stats-note ${heistMinis.length > 0 ? "mt-auto pt-5" : ""}`}>
+              Every transfer check is a read-only eth_call at the latest Monad block. Nothing is ever broadcast.
             </p>
           </GlassCard>
         </Section>

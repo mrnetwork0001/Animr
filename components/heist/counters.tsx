@@ -5,8 +5,9 @@ import { useHeistState } from "./api";
 import "./heist.css";
 
 /**
- * The scoreboard in the page header: today's attempts and $CHOG stolen (always 0); "AI said yes" and "Monad said no"
- * join them once they have happened today. It shares the /api/heist query with the room below (one request).
+ * The scoreboard in the page header: today's attempts; "AI said yes" and "Monad said no" join them once they have
+ * happened today. Every check is an eth_call, so nothing is ever broadcast (said in plain copy, not as a counted stat).
+ * It shares the /api/heist query with the room below (one request).
  */
 export function HeistScoreboard() {
   const state = useHeistState();
@@ -14,7 +15,7 @@ export function HeistScoreboard() {
   if (!counters) {
     return (
       <div className="v2-stats v2-stats--boxed heist-score" aria-busy="true" aria-label="Loading the scoreboard">
-        {[0, 1].map((i) => (
+        {[0].map((i) => (
           <div key={i} className="v2-stat">
             <Skeleton variant="text" style={{ width: 84 }} />
             <Skeleton variant="title" style={{ width: 52 }} />
@@ -36,7 +37,6 @@ export function HeistScoreboard() {
           ...(counters.refusalsToday > 0
             ? [{ key: "refusals", label: "Monad said no today", value: counters.refusalsToday.toLocaleString("en-US") }]
             : []),
-          { key: "stolen", label: "$CHOG stolen, ever", value: counters.stolenChog.toLocaleString("en-US") },
         ]}
       />
     </section>

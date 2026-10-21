@@ -84,8 +84,6 @@ export type StatsResponse = {
     caves: number;
     /** Live mainnet simulations where the wallet refused the AI's key. */
     refusals: number;
-    /** Always 0: the heist only simulates, nothing is ever broadcast. */
-    stolenChog: 0;
     /** AI replies that made the Hall of Fame wall. */
     wall: number;
     perDay: DayCount[];
