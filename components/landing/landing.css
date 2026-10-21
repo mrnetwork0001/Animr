@@ -1133,10 +1133,17 @@ html:has(.lp-root) {
   color: var(--v2-violet-ink);
 }
 .lp-thought-text {
+  display: -webkit-box;
   margin: 12px 0 0;
+  overflow: hidden;
   color: var(--v2-ink);
   font-size: var(--v2-fs-md);
   line-height: 1.55;
+  overflow-wrap: anywhere;
+  /* An AI thesis has no hard length limit: the card never grows past four lines. */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
 }
 .lp-thought-meta {
   margin: 12px 0 4px;
