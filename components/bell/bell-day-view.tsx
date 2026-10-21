@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { BellCall, BellCallSort, BellSummary } from "@/lib/bell/types";
 import { isNotFound, useBell, useBellCalls, useTodayBell } from "./api";
 import { StatRow, TabLinks } from "@/components/v2/primitives";
-import { Countdown, Forecast, LoadError, SampleBanner, SectionTitle, Skeleton, useBefore } from "./bits";
+import { Countdown, Forecast, LoadError, SectionTitle, Skeleton, useBefore } from "./bits";
 import { CallRow, CallRowsHeader, rideable } from "./call-card";
 import { formatDay, formatPrice, formatUtcTime, shiftDay } from "./format";
 import { PRACTICE_ID } from "./hero";
@@ -66,7 +66,6 @@ export function BellDayView({ day }: { day: string }) {
     }
     return (
       <div className="flex flex-col gap-6">
-        <SampleBanner />
         <div className="v2-empty">
           <p className="v2-empty-title">No Bell rang on {formatDay(day)}</p>
           <p className="v2-empty-body">
@@ -88,7 +87,6 @@ export function BellDayView({ day }: { day: string }) {
   const bell = query.data;
   return (
     <div className="flex flex-col gap-6">
-      <SampleBanner />
       {pager("Bell pager")}
       {bell.status === "settled" && <BellRecapCard day={bell.day} />}
       <Overview bell={bell} />

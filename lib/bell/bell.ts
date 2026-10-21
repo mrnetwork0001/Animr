@@ -39,6 +39,8 @@ import {
   type BellMeta,
   type CallAnchors,
   KEYS,
+  RECORD_KEYS,
+  type RecordKind,
   type StoredRecord,
   bellDays,
   chogCard,
@@ -52,6 +54,7 @@ import {
   readFan,
   readRecord,
   readRecords,
+  readRecordsOf,
   readSummary,
   topChogIds,
   writeCalls,
@@ -65,6 +68,7 @@ import type {
   BellCallsResponse,
   BellCronResponse,
   BellLive,
+  BellSeason,
   BellStandingsResponse,
   BellSummary,
   BellSummaryResponse,
@@ -254,8 +258,15 @@ const notShowcased = (tokenId: number) => isFlaggedTokenId(tokenId);
  * Claimed Chogs (0G calls first), then the season's top oracles: no flagged Chogs, and at most two
  * calls with the same line (numbers aside), so the row never reads like one card repeated.
  */
-async function featuredCalls(calls: BellCall[]): Promise<BellCall[]> {
+/**
+ * Claimed Chogs first, then the season's top oracles: by LIVE records once any live Bell has settled, else by the
+ * replayed Bells' simulated records (`featuredFrom` says which, so the UI labels them).
+ */
+async function featuredCalls(calls: BellCall[]): Promise<Pick<BellSummary, "featured" | "featuredFrom">> {
   const byId = new Map(calls.map((call) => [call.tokenId, call]));
+  const liveTop = await topChogIds("live", FEATURED_MAX * 4);
+  const from: RecordKind = liveTop.length ? "live" : "replay";
+  const top = liveTop.length ? liveTop : await topChogIds("replay", FEATURED_MAX * 4);
   const claimed = calls
     .filter((call) => call.claimed && !notShowcased(call.tokenId))
     .sort((a, b) => Number(b.source === "llm") - Number(a.source === "llm") || a.tokenId - b.tokenId)
@@ -263,7 +274,7 @@ async function featuredCalls(calls: BellCall[]): Promise<BellCall[]> {
   const featured = [...claimed];
   const lines = new Map<string, number>();
   for (const call of featured) lines.set(thesisTemplate(call.thesis), (lines.get(thesisTemplate(call.thesis)) ?? 0) + 1);
-  for (const id of await topChogIds(FEATURED_MAX * 4)) {
+  for (const id of top) {
     if (featured.length >= FEATURED_MAX) break;
     const call = byId.get(id);
     if (!call || featured.includes(call) || notShowcased(id)) continue;
@@ -272,7 +283,7 @@ async function featuredCalls(calls: BellCall[]): Promise<BellCall[]> {
     lines.set(line, (lines.get(line) ?? 0) + 1);
     featured.push(call);
   }
-  return featured;
+  return { featured, featuredFrom: from };
 }
 
 // --- Ring and settle ---
@@ -350,14 +361,17 @@ export async function ringBell(day: string, kind: BellSummary["kind"] = "live", 
     bearPct: bearPct(calls),
     histogram: histogram(calls),
     boldest: boldest(calls, day, 8, notShowcased),
-    featured: await featuredCalls(calls),
+    ...(await featuredCalls(calls)),
   };
   await writeCalls(day, calls, anchors);
   await writeSummary(summary);
   return summary;
 }
 
-/** Adds one settled Bell to the season records; `lastDay` makes a repeat a no-op (Bells settle oldest first). */
+/**
+ * Adds one settled Bell to a season record set; `lastDay` makes a repeat a no-op (Bells settle oldest first). Live
+ * and replayed Bells keep separate records (see RecordKind), so a replay never inflates a live record.
+ */
 function accumulateRecords(records: Record<string, StoredRecord>, day: string, calls: BellCall[], oracleId?: number) {
   const updated: StoredRecord[] = [];
   for (const call of calls) {
@@ -381,8 +395,52 @@ function accumulateRecords(records: Record<string, StoredRecord>, day: string, c
   return updated;
 }
 
-async function applyRecords(day: string, calls: BellCall[], oracleId?: number) {
-  await writeRecords(accumulateRecords(await readRecords(), day, calls, oracleId));
+async function applyRecords(kind: RecordKind, day: string, calls: BellCall[], oracleId?: number) {
+  await writeRecords(kind, accumulateRecords(await readRecords(kind), day, calls, oracleId));
+}
+
+/**
+ * Recomputes both record sets (live, replay) from every settled Bell in day order, replacing whatever was stored
+ * (including the old combined records), and marks the records as split. Run under MAINTAIN_LOCK.
+ */
+async function recomputeRecords(): Promise<void> {
+  const records: Record<RecordKind, Record<string, StoredRecord>> = { live: {}, replay: {} };
+  for (const day of await bellDays()) {
+    const summary = await readSummary(day);
+    // Open Bells add theirs when they settle (after every settled one, as settlement goes oldest first).
+    if (summary?.status !== "settled") continue;
+    const calls = await readCalls(summary);
+    accumulateRecords(records[summary.kind], day, calls, extremes(calls, day).oracle?.tokenId);
+  }
+  const kv = getKv();
+  await kv.del(...RECORD_KEYS);
+  await writeRecords("live", Object.values(records.live));
+  await writeRecords("replay", Object.values(records.replay));
+  await kv.set(KEYS.recordsSplit, 1);
+}
+
+const globalForRecords = globalThis as typeof globalThis & { __animrBellRecordsSplit?: boolean };
+
+/**
+ * Migration: records stored before live and replayed Bells were kept apart mixed both. The first maintenance run (or
+ * the first read, if it can take the lock) recomputes them split. `locked`: the caller holds MAINTAIN_LOCK.
+ */
+async function ensureRecordsSplit(locked: boolean): Promise<void> {
+  if (globalForRecords.__animrBellRecordsSplit) return;
+  const kv = getKv();
+  if (await kv.get(KEYS.recordsSplit)) {
+    globalForRecords.__animrBellRecordsSplit = true;
+    return;
+  }
+  const token = locked ? null : await kv.acquireLock(MAINTAIN_LOCK, MAINTAIN_LOCK_TTL_MS);
+  // Maintenance holds the lock: it splits them itself.
+  if (!locked && !token) return;
+  try {
+    if (!(await kv.get(KEYS.recordsSplit))) await recomputeRecords();
+    globalForRecords.__animrBellRecordsSplit = true;
+  } finally {
+    if (token) await kv.releaseLock(MAINTAIN_LOCK, token).catch(() => {});
+  }
 }
 
 /** Runs `fn` over `items`, `limit` at a time. */
@@ -480,7 +538,7 @@ export async function settleBell(day: string, options: SettleOptions = {}): Prom
   const { oracle, mostRekt } = extremes(calls, day, notShowcased);
   // Each step is idempotent and the summary flips to "settled" last, so a retry after a crash is safe.
   await writeCalls(day, calls, anchors);
-  if (options.records !== false) await applyRecords(day, calls, truth.oracle?.tokenId);
+  if (options.records !== false) await applyRecords(summary.kind, day, calls, truth.oracle?.tokenId);
   if (summary.kind === "live") await creditRiders(day, calls, { candles: series.candles, entryPrice, settlePrice });
   const settled: BellSummary = {
     ...summary,
@@ -489,7 +547,7 @@ export async function settleBell(day: string, options: SettleOptions = {}): Prom
     settlePrice,
     actualPct,
     boldest: boldest(calls, day, 8, notShowcased),
-    featured: await featuredCalls(calls),
+    ...(await featuredCalls(calls)),
     ...(oracle && { oracle }),
     ...(mostRekt && { mostRekt }),
   };
@@ -558,7 +616,7 @@ async function dropBells(days: string[]): Promise<void> {
 /** Deletes every Bell, record and ride (fans keep their points). For dev resets. */
 export async function clearBells(): Promise<void> {
   await dropBells(await bellDays());
-  await getKv().del(KEYS.index, KEYS.live, KEYS.open, KEYS.records, KEYS.chogPoints, KEYS.meta);
+  await getKv().del(KEYS.index, KEYS.live, KEYS.open, ...RECORD_KEYS, KEYS.meta);
 }
 
 /**
@@ -580,16 +638,7 @@ async function rebuildReplays(options: { now: number; series: Series }): Promise
       console.warn(`[animr] Bell: couldn't rebuild the ${day} replay:`, (error as Error).message);
     }
   }
-  const records: Record<string, StoredRecord> = {};
-  for (const day of days) {
-    const summary = await readSummary(day);
-    // Open Bells add theirs when they settle (after every settled one, as settlement goes oldest first).
-    if (summary?.status !== "settled") continue;
-    const calls = await readCalls(summary);
-    accumulateRecords(records, day, calls, extremes(calls, day).oracle?.tokenId);
-  }
-  await getKv().del(KEYS.records, KEYS.chogPoints);
-  await writeRecords(Object.values(records));
+  await recomputeRecords();
   return rebuilt;
 }
 
@@ -604,7 +653,7 @@ async function ensureHistory(options: ReplayOptions & { now: number; series: Ser
   const [count, live, meta] = await Promise.all([kv.zcard(KEYS.index), kv.zcard(KEYS.live), kv.get<BellMeta>(KEYS.meta)]);
   const stale = count > 0 && meta?.genomeVersion !== HISTORY_VERSION;
   const rebuilt = stale && live ? await rebuildReplays(options) : [];
-  if (stale && !live) await kv.del(KEYS.records, KEYS.chogPoints);
+  if (stale && !live) await kv.del(...RECORD_KEYS);
   const added = await replayBells(live ? MISSED_DAYS_REPLAYED : REPLAY_DAYS, { ...options, rebuild: stale && !live });
   if (stale || (count === 0 && added.length)) {
     const days = [...new Set([...rebuilt, ...added])].sort();
@@ -625,6 +674,11 @@ export async function maintainBells(options: { now?: number; deadline?: number }
   try {
     const now = options.now ?? Date.now();
     const result: BellCronResponse = {};
+    try {
+      await ensureRecordsSplit(true);
+    } catch (error) {
+      console.error("[animr] Bell: splitting the season records failed:", error);
+    }
     try {
       const series = await getCandleSeries();
       const replayed = await ensureHistory({ now, series, settle: false });
@@ -709,6 +763,7 @@ async function seedHistory(): Promise<void> {
     const token = await kv.acquireLock(MAINTAIN_LOCK, MAINTAIN_LOCK_TTL_MS);
     if (token) {
       try {
+        await ensureRecordsSplit(true);
         await ensureHistory({ now: Date.now(), series: await getCandleSeries() });
       } finally {
         await kv.releaseLock(MAINTAIN_LOCK, token).catch(() => {});
@@ -801,26 +856,62 @@ export async function getBellCalls(
   return { calls: calls.slice(cursor, end), ...(end < calls.length && { next: String(end) }) };
 }
 
-/** A Chog's call on the latest Bell and its season record. */
-export async function getChogBell(tokenId: number): Promise<ChogBellResponse> {
-  const [latest, record] = await Promise.all([getLatestBell(), readRecord(tokenId)]);
-  const today = latest ? await readCall(latest, tokenId) : undefined;
-  return { ...(today && { today }), record: publicRecord(record, tokenId) };
+/**
+ * Settled Bells by kind, and while no live Bell has settled, when the first one can: the oldest open live Bell's
+ * horizon plus the settle grace, else that of the next ring (today's at 15:00 UTC if it hasn't rung, else tomorrow's).
+ */
+export async function getBellSeason(now = Date.now()): Promise<BellSeason> {
+  const [all, live, open] = await Promise.all([bellDays(), bellDays("live"), bellDays("open")]);
+  const isLive = new Set(live);
+  const isOpen = new Set(open);
+  const liveSettled = live.filter((day) => !isOpen.has(day)).length;
+  const replaySettled = all.filter((day) => !isLive.has(day) && !isOpen.has(day)).length;
+  if (liveSettled > 0) return { liveSettled, replaySettled };
+  const today = utcDay(now);
+  const day = live.find((d) => isOpen.has(d)) ?? (all.includes(today) ? addDays(today, 1) : today);
+  const firstLiveSettlesAt = iso(bellTime(day) + HORIZON_HOURS * HOUR_MS + SETTLE_GRACE_MS);
+  return { liveSettled, replaySettled, firstLiveSettlesAt };
 }
 
-/** The season's best Chogs (most points; Chogs their holders hid left out) and fans. */
-export async function getStandings(limit = 50): Promise<BellStandingsResponse> {
-  await getLatestBell();
-  const visibility = await loadVisibility();
-  const ids = (await topChogIds(limit + visibility.hidden.size))
-    .filter((tokenId) => !visibility.isHidden(tokenId))
-    .slice(0, limit);
-  const [records, fans] = await Promise.all([
-    getKv().hmget<StoredRecord>(KEYS.records, ids.map(String)),
-    topFans(limit),
+/** A Chog's call on the latest Bell, its live season record and its (simulated) replay record. */
+export async function getChogBell(tokenId: number): Promise<ChogBellResponse> {
+  const latest = await getLatestBell();
+  await ensureRecordsSplit(false);
+  const [live, replay, today, season] = await Promise.all([
+    readRecord("live", tokenId),
+    readRecord("replay", tokenId),
+    latest ? readCall(latest, tokenId) : undefined,
+    getBellSeason(),
   ]);
   return {
-    chogs: ids.map((tokenId, i) => ({ ...publicRecord(records[i], tokenId), ...chogCard(tokenId), rank: i + 1 })),
-    fans,
+    ...(today && { today }),
+    record: publicRecord(live, tokenId),
+    ...(replay && replay.calls > 0 && { replay: publicRecord(replay, tokenId) }),
+    season,
   };
+}
+
+/** The best Chogs of one record kind (most points; Chogs their holders hid left out). */
+async function chogStandings(kind: RecordKind, limit: number, isHidden: (tokenId: number) => boolean, hidden: number) {
+  const ids = (await topChogIds(kind, limit + hidden)).filter((tokenId) => !isHidden(tokenId)).slice(0, limit);
+  const records = await readRecordsOf(kind, ids);
+  return ids.map((tokenId, i) => ({ ...publicRecord(records[i], tokenId), ...chogCard(tokenId), rank: i + 1 }));
+}
+
+/**
+ * The season's best Chogs on LIVE Bells (`chogs`; empty until the first live Bell settles), the same on replayed Bells
+ * (`replay`, simulated: label it), and fans.
+ */
+export async function getStandings(limit = 50): Promise<BellStandingsResponse> {
+  await getLatestBell();
+  await ensureRecordsSplit(false);
+  const visibility = await loadVisibility();
+  const isHidden = (tokenId: number) => visibility.isHidden(tokenId);
+  const [chogs, replay, fans, season] = await Promise.all([
+    chogStandings("live", limit, isHidden, visibility.hidden.size),
+    chogStandings("replay", limit, isHidden, visibility.hidden.size),
+    topFans(limit),
+    getBellSeason(),
+  ]);
+  return { chogs, fans, replay, season };
 }

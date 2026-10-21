@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useNow } from "@/components/decision-feed";
 import type { BellSummary } from "@/lib/bell/types";
 import { isNotFound, useBell, useTodayBell } from "./api";
-import { LABEL, LoadError, SampleBanner, SectionTitle, useBefore } from "./bits";
+import { LABEL, LoadError, SectionTitle, useBefore } from "./bits";
 import { CallRow, CallRowsHeader, rideable } from "./call-card";
 import { FanPanel } from "./fan-panel";
 import { scheduledDay, shiftDay } from "./format";
@@ -33,7 +33,6 @@ export function BellDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SampleBanner />
       {today.isError && !noBellYet ? (
         <LoadError
           title="Couldn't reach the Bell"
@@ -95,7 +94,7 @@ function TodaysCalls({ bell }: { bell: BellSummary }) {
       />
       {featured.length > 0 && (
         <CallList
-          label={bell.featured.some((call) => call.claimed) ? "AI agents and best records" : "Best records"}
+          label={featuredLabel(bell)}
           calls={featured}
           bell={bell}
         />
@@ -114,6 +113,15 @@ function TodaysCalls({ bell }: { bell: BellSummary }) {
       )}
     </section>
   );
+}
+
+/**
+ * The featured rows' heading. Their "best records" are live records once a live Bell has settled; before that (and on
+ * Bells stored before records were split) they come from replayed Bells, so the heading says they are simulated.
+ */
+function featuredLabel(bell: BellSummary): string {
+  const records = bell.featuredFrom === "live" ? "best live records" : "best replay records (simulated)";
+  return bell.featured.some((call) => call.claimed) ? `AI agents and ${records}` : records[0].toUpperCase() + records.slice(1);
 }
 
 function CallList({ label, calls, bell, className = "" }: { label: string; calls: BellSummary["featured"]; bell: BellSummary; className?: string }) {

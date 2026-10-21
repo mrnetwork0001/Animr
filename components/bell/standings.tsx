@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { ChogBellStanding, FanResponse, FanStanding } from "@/lib/bell/types";
+import type { BellSeason, ChogBellStanding, FanResponse, FanStanding } from "@/lib/bell/types";
 import { useFan, useStandings } from "./api";
 import { ChogAvatar, LoadError, SectionTitle, Skeleton } from "./bits";
-import { fanName, formatErrorPts, formatPoints, hitRate } from "./format";
+import { fanName, formatDay, formatErrorPts, formatPoints, formatUtcTime, hitRate } from "./format";
 import { FlameIcon } from "./icons";
 import { useChogTag } from "./names";
 
@@ -13,18 +13,45 @@ import { useChogTag } from "./names";
 const RANK_TONE = ["text-[var(--v2-teal)]", "text-[var(--v2-kicker)]", "text-[var(--v2-violet-ink)]"];
 const TOP = 10;
 
-/** Season standings: Chogs by forecasting points (replays included) and fans by points from their rides. */
+/**
+ * "No live Bell has settled yet. The first settles Thu, Oct 22 after 15:10 UTC." from the season's data, or null once
+ * one has.
+ */
+export function noLiveBellLine(season?: BellSeason): string | null {
+  if (!season || season.liveSettled > 0) return null;
+  const at = season.firstLiveSettlesAt;
+  return `No live Bell has settled yet.${at ? ` The first settles ${formatDay(at.slice(0, 10))} after ${formatUtcTime(at)}.` : ""}`;
+}
+
+/** "Simulated · 14 replayed Bells": the label every replay-derived record carries. */
+export function replayLabel(season?: BellSeason): string {
+  const n = season?.replaySettled ?? 0;
+  return n > 0 ? `Simulated · ${n} replayed ${n === 1 ? "Bell" : "Bells"}` : "Simulated · replayed Bells";
+}
+
+/**
+ * Season standings: Chogs by forecasting points on LIVE Bells, and fans by points from their rides. Until a live Bell
+ * settles, the Chogs tab says so and shows the replayed Bells' standings beneath, labelled as simulated.
+ */
 export function SeasonStandings() {
   const standings = useStandings();
   const fan = useFan();
   const [tab, setTab] = useState<"chogs" | "fans">("chogs");
+  const season = standings.data?.season;
+  const liveBells = season?.liveSettled ?? 0;
 
   return (
     <section aria-label="Season standings">
       <SectionTitle
         compact
         title="Season standings"
-        hint={tab === "chogs" ? "Chogs score every settled Bell, replays included." : "Fans score the Chogs they ride."}
+        hint={
+          tab === "fans"
+            ? "Fans score the Chogs they ride."
+            : liveBells > 0
+              ? `Live Bells only · ${liveBells} settled.`
+              : "Live Bells only."
+        }
       />
       <div className="v2-card v2-card--flush overflow-hidden">
         <div className="border-b border-[var(--v2-line-soft)] p-2">
@@ -53,7 +80,7 @@ export function SeasonStandings() {
             />
           </div>
         ) : tab === "chogs" ? (
-          <ChogTable rows={standings.data.chogs} />
+          <ChogTable rows={standings.data.chogs} replay={standings.data.replay ?? []} season={season} />
         ) : (
           <FanTable rows={standings.data.fans} me={fan.data} />
         )}
@@ -80,9 +107,27 @@ function Points({ value }: { value: number }) {
   );
 }
 
-function ChogTable({ rows }: { rows: ChogBellStanding[] }) {
+function ChogTable({ rows, replay, season }: { rows: ChogBellStanding[]; replay: ChogBellStanding[]; season?: BellSeason }) {
   if (rows.length === 0) {
-    return <p className="v2-note px-4 py-8 text-center">Chogs show up here once the first Bell settles.</p>;
+    return (
+      <>
+        <p className="v2-note px-4 py-6 text-center">
+          {noLiveBellLine(season) ?? "Chogs show up here once the first live Bell settles."}
+        </p>
+        {replay.length > 0 && (
+          <>
+            <p className="border-t border-[var(--v2-line-soft)] px-4 pt-4 pb-1 text-[11px] font-medium tracking-wide text-[var(--v2-faint)] uppercase">
+              {replayLabel(season)}
+            </p>
+            <ol aria-label={`Replay standings, ${replayLabel(season).toLowerCase()}`}>
+              {replay.slice(0, TOP).map((row, i) => (
+                <ChogRow key={row.tokenId} row={row} rank={row.rank ?? i + 1} />
+              ))}
+            </ol>
+          </>
+        )}
+      </>
+    );
   }
   return (
     <ol>

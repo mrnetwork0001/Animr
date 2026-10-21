@@ -13,8 +13,11 @@ import type { BellCall, BellSummary, ChogBellRecord, FanState } from "./types";
 //   animr:bell:rides:<day>    hash  fanId -> StoredRide ({ tokenId, at }; a bare tokenId before Oct 19). A ride
 //                                   booked before its Bell rings sits under that Bell's day (at < ring time).
 //   animr:bell:purse:<day>    OraclePurseRecord (lib/bell/purse.ts; written by scripts/send-oracle-purse.mts)
-//   animr:bell:records        hash  tokenId -> StoredRecord
-//   animr:bell:chog-points    zset  tokenId -> totalPoints
+//   animr:bell:records:live   hash  tokenId -> StoredRecord, from settled LIVE Bells only (the record users see)
+//   animr:bell:records:replay hash  tokenId -> StoredRecord, from settled replayed Bells only (simulated, labelled)
+//   animr:bell:chog-points:live / :replay  zset  tokenId -> totalPoints, per kind
+//   animr:bell:records:split  "1" once the records above were split from the old combined ones (lib/bell/bell.ts)
+//   animr:bell:records, animr:bell:chog-points: the old combined (live + replay) records; deleted by that split
 //   animr:bell:meta           BellMeta
 //   (lib/kv.ts namespaces every key per deployment in Redis: "animr:production:bell:index")
 //   animr:fans                hash  fanId -> FanState
@@ -27,6 +30,12 @@ export const KEYS = {
   calls: (day: string) => `animr:bell:calls:${day}`,
   rides: (day: string) => `animr:bell:rides:${day}`,
   purse: (day: string) => `animr:bell:purse:${day}`,
+  recordsLive: "animr:bell:records:live",
+  recordsReplay: "animr:bell:records:replay",
+  chogPointsLive: "animr:bell:chog-points:live",
+  chogPointsReplay: "animr:bell:chog-points:replay",
+  recordsSplit: "animr:bell:records:split",
+  /** Legacy: live and replayed Bells mixed in one record. */
   records: "animr:bell:records",
   chogPoints: "animr:bell:chog-points",
   meta: "animr:bell:meta",
@@ -49,6 +58,25 @@ export function parseRide(raw: unknown): StoredRide | null {
   const ride = raw as Partial<StoredRide> | null;
   return ride && Number.isInteger(Number(ride.tokenId)) ? { tokenId: Number(ride.tokenId), at: Number(ride.at) || 0 } : null;
 }
+
+/** Which settled Bells a record counts: live Bells (real, the default everywhere) or replays (simulated). */
+export type RecordKind = "live" | "replay";
+
+function recordKeys(kind: RecordKind) {
+  return kind === "live"
+    ? { records: KEYS.recordsLive, points: KEYS.chogPointsLive }
+    : { records: KEYS.recordsReplay, points: KEYS.chogPointsReplay };
+}
+
+/** Every season-record key, both kinds plus the legacy combined ones (resets delete them all). */
+export const RECORD_KEYS = [
+  KEYS.recordsLive,
+  KEYS.recordsReplay,
+  KEYS.chogPointsLive,
+  KEYS.chogPointsReplay,
+  KEYS.records,
+  KEYS.chogPoints,
+] as const;
 
 /** ChogBellRecord plus what makes settlement idempotent. */
 export type StoredRecord = ChogBellRecord & { lastDay: string; errorSum: number };
@@ -247,24 +275,29 @@ export async function latestSummary(which: "all" | "live" = "all"): Promise<Bell
 
 // --- Records ---
 
-export async function readRecords(): Promise<Record<string, StoredRecord>> {
-  return getKv().hgetall<StoredRecord>(KEYS.records);
+export async function readRecords(kind: RecordKind): Promise<Record<string, StoredRecord>> {
+  return getKv().hgetall<StoredRecord>(recordKeys(kind).records);
 }
 
-export async function readRecord(tokenId: number): Promise<StoredRecord | null> {
-  return getKv().hget<StoredRecord>(KEYS.records, String(tokenId));
+export async function readRecord(kind: RecordKind, tokenId: number): Promise<StoredRecord | null> {
+  return getKv().hget<StoredRecord>(recordKeys(kind).records, String(tokenId));
 }
 
-export async function writeRecords(records: StoredRecord[]): Promise<void> {
+export async function readRecordsOf(kind: RecordKind, tokenIds: number[]): Promise<(StoredRecord | null)[]> {
+  return tokenIds.length ? getKv().hmget<StoredRecord>(recordKeys(kind).records, tokenIds.map(String)) : [];
+}
+
+export async function writeRecords(kind: RecordKind, records: StoredRecord[]): Promise<void> {
   if (!records.length) return;
   const kv = getKv();
-  await kv.hset(KEYS.records, Object.fromEntries(records.map((record) => [String(record.tokenId), record])));
-  await kv.zadd(KEYS.chogPoints, ...records.map((record) => ({ member: String(record.tokenId), score: record.totalPoints })));
+  const keys = recordKeys(kind);
+  await kv.hset(keys.records, Object.fromEntries(records.map((record) => [String(record.tokenId), record])));
+  await kv.zadd(keys.points, ...records.map((record) => ({ member: String(record.tokenId), score: record.totalPoints })));
 }
 
-/** Token ids with the most season points, best first. */
-export async function topChogIds(limit: number): Promise<number[]> {
-  return (await getKv().zrange(KEYS.chogPoints, 0, limit - 1, { rev: true })).map((entry) => Number(entry.member));
+/** Token ids with the most season points of `kind`, best first. */
+export async function topChogIds(kind: RecordKind, limit: number): Promise<number[]> {
+  return (await getKv().zrange(recordKeys(kind).points, 0, limit - 1, { rev: true })).map((entry) => Number(entry.member));
 }
 
 // --- Fans ---

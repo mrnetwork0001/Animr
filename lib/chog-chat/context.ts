@@ -2,6 +2,7 @@ import { getChogBell, getLatestBell } from "../bell/bell";
 import type { BellCall, BellSummary, ChogBellRecord } from "../bell/types";
 import { safeTraits, scrubTraitText } from "../brand-safety";
 import { getStore } from "../agent/store";
+import { isUnfunded } from "../agent/paper";
 import type { AgentRecord, Decision } from "../agent/types";
 import { getChog } from "../dna/chogs";
 import { describeGenome } from "../dna/genome";
@@ -29,7 +30,8 @@ export type ChogFacts = {
   genome: Genome;
   replay: (ReplayResult & { holdPct: number; scored: ScoredTrade[] }) | null;
   standing: ChogStanding | null;
-  bell: { today: BellCall | null; record: ChogBellRecord | null; latest: BellSummary | null };
+  /** `record`: from live Bells only; `replay`: from replayed Bells (simulated on past candles). */
+  bell: { today: BellCall | null; record: ChogBellRecord | null; replay: ChogBellRecord | null; latest: BellSummary | null };
   agent: { record: AgentRecord; decisions: Decision[] } | null;
 };
 
@@ -60,7 +62,7 @@ export async function loadChogFacts(tokenId: number): Promise<ChogFacts | null> 
     genome: chogGenome(chog),
     replay: replay ? { ...replay, ...scoreReplay(replay) } : null,
     standing,
-    bell: { today: chogBell?.today ?? null, record: chogBell?.record ?? null, latest },
+    bell: { today: chogBell?.today ?? null, record: chogBell?.record ?? null, replay: chogBell?.replay ?? null, latest },
     agent: agent ? { record: agent, decisions } : null,
   };
 }
@@ -168,10 +170,13 @@ export function factsText(facts: ChogFacts): string {
       );
     }
     const r = bell.record;
-    if (r && r.calls > 0) {
-      lines.push(
-        `Bell season record: ${r.hits} hits in ${r.calls} calls, ${r.totalPoints} points, average error ${r.avgErrorPts.toFixed(1)} points${r.oracleWins ? `, Oracle of the Day ${r.oracleWins}x` : ""}.`,
-      );
+    const summary = (rec: ChogBellRecord) =>
+      `${rec.hits} hits in ${rec.calls} calls, ${rec.totalPoints} points, average error ${rec.avgErrorPts.toFixed(1)} points${rec.oracleWins ? `, Oracle of the Day ${rec.oracleWins}x` : ""}`;
+    if (r && r.calls > 0) lines.push(`Bell season record (live Bells only): ${summary(r)}.`);
+    else lines.push("Bell season record on live Bells: none yet, no live Bell has settled with my call.");
+    const replay = bell.replay;
+    if (replay && replay.calls > 0) {
+      lines.push(`On replayed Bells (simulated from past candles, not live; always say so): ${summary(replay)}.`);
     }
   }
 
@@ -179,7 +184,10 @@ export function factsText(facts: ChogFacts): string {
     const a = agent.record;
     lines.push(
       "",
-      `Claimed: my holder woke my live AI agent on ${a.activatedAt.slice(0, 10)} (${a.active ? "awake" : "paused"}, ${a.mode === "onchain" ? "trading the real $CHOG in my wallet through AnimrTradeGuard" : "paper trading"}). It is ${pct(a.pnlPct)} vs holding since then over ${a.decisions} decisions.`,
+      `Claimed: my holder woke my live AI agent on ${a.activatedAt.slice(0, 10)} (${a.active ? "awake" : "paused"}, ${a.mode === "onchain" ? "trading the real $CHOG in my wallet through AnimrTradeGuard" : "paper trading on my wallet's real balance"}). ` +
+        (isUnfunded(a)
+          ? "My wallet holds no $CHOG or WMON, so I am not trading: my holder needs to fund my wallet to start."
+          : `It is ${pct(a.pnlPct)} vs holding since then over ${a.decisions} decisions.`),
     );
     if (agent.decisions.length) {
       lines.push("Latest real decisions (newest first):");

@@ -188,14 +188,6 @@ export function Countdown({ to, className = "" }: { to: number | null; className
   );
 }
 
-/**
- * Deprecated: the Bell no longer falls back to sample data (a failed request shows its error state), so this renders
- * nothing. Kept only until bell-dashboard.tsx and bell-day-view.tsx drop their <SampleBanner /> (phase 2).
- */
-export function SampleBanner() {
-  return null;
-}
-
 export function LoadError({
   title,
   error,

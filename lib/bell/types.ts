@@ -53,12 +53,21 @@ export type BellSummary = {
   boldest: BellCall[];
   /** Claimed Chogs and the season's top oracles. */
   featured: BellCall[];
+  /**
+   * Whose season records picked the top-oracle rows of `featured`: live Bells' records, or (before any live Bell
+   * settled) replayed Bells' simulated ones. Missing on Bells stored before the split: mixed, so label as replays.
+   */
+  featuredFrom?: "live" | "replay";
   /** Closest call once settled. */
   oracle?: BellCall;
   /** Furthest call once settled. */
   mostRekt?: BellCall;
 };
 
+/**
+ * A Chog's season record. Every record users see by default counts LIVE Bells only (rung on schedule, settled by the
+ * real market); a replay record counts replayed Bells (rebuilt from past candles: simulated) and is always labelled.
+ */
 export type ChogBellRecord = {
   tokenId: number;
   calls: number;
@@ -88,8 +97,8 @@ export type FanState = {
 //   GET  /api/bell/today                 -> BellSummary (the latest rung Bell)
 //   GET  /api/bell/[day]                 -> BellSummary
 //   GET  /api/bell/[day]/calls?cursor=&sort=bold|bull|bear|tokenId -> { calls: BellCall[]; next?: string }
-//   GET  /api/bell/chog/[tokenId]        -> { today?: BellCall; record: ChogBellRecord }
-//   GET  /api/bell/standings             -> { chogs: ChogBellRecord[]; fans: Pick<FanState, "fanId" | "nickname" | "points" | "streak">[] }
+//   GET  /api/bell/chog/[tokenId]        -> { today?: BellCall; record: ChogBellRecord (live); replay?; season }
+//   GET  /api/bell/standings             -> { chogs: ChogBellRecord[] (live); fans: Pick<FanState, "fanId" | "nickname" | "points" | "streak">[]; replay; season }
 //   GET  /api/fan                        -> FanState (sets the cookie on first visit)
 //   POST /api/fan                        body { nickname } -> FanState
 //   POST /api/bell/ride                  body { tokenId } -> FanState (one ride per Bell: the open Bell inside its ride
@@ -104,8 +113,17 @@ export type BellCallSort = "bold" | "bull" | "bear" | "tokenId" | "points";
 /** GET /api/bell/[day]/calls?cursor=&sort=&limit= (limit 1-200, default 50; "points" ranks settled calls). */
 export type BellCallsResponse = { calls: BellCall[]; next?: string };
 
-/** GET /api/bell/chog/[tokenId]: `today` is the Chog's call on the latest Bell (the one /api/bell/today returns). */
-export type ChogBellResponse = { today?: BellCall; record: ChogBellRecord };
+/**
+ * How many settled Bells the season counts, by kind. `firstLiveSettlesAt` (ISO), while no live Bell has settled: the
+ * earliest time the first one can (the oldest open live Bell's horizon plus the settle grace, else the next ring's).
+ */
+export type BellSeason = { liveSettled: number; replaySettled: number; firstLiveSettlesAt?: string };
+
+/**
+ * GET /api/bell/chog/[tokenId]: `today` is the Chog's call on the latest Bell (the one /api/bell/today returns).
+ * `record` is its LIVE record; `replay` its simulated record from replayed Bells (label it), when it has one.
+ */
+export type ChogBellResponse = { today?: BellCall; record: ChogBellRecord; replay?: ChogBellRecord; season?: BellSeason };
 
 /** A "chogs" row of GET /api/bell/standings (most season points first). */
 export type ChogBellStanding = ChogBellRecord & { name: string; image: string; rank: number };
@@ -113,7 +131,16 @@ export type ChogBellStanding = ChogBellRecord & { name: string; image: string; r
 /** A "fans" row of GET /api/bell/standings (most points first). */
 export type FanStanding = Pick<FanState, "fanId" | "nickname" | "points" | "streak"> & { rank: number };
 
-export type BellStandingsResponse = { chogs: ChogBellStanding[]; fans: FanStanding[] };
+/**
+ * `chogs`: standings from LIVE Bells only (empty until the first live Bell settles). `replay`: the same from replayed
+ * Bells (simulated on past candles; always labelled as such). Fans only ever ride live Bells.
+ */
+export type BellStandingsResponse = {
+  chogs: ChogBellStanding[];
+  fans: FanStanding[];
+  replay?: ChogBellStanding[];
+  season?: BellSeason;
+};
 
 /** GET/POST /api/fan and POST /api/bell/ride: the fan plus their rank among fans who have ridden. */
 export type FanResponse = FanState & { rank?: number; fans: number };

@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { type ReactNode, useId } from "react";
 import { useNow } from "@/components/decision-feed";
-import type { BellSummary, ChogBellRecord } from "@/lib/bell/types";
+import type { BellSeason, BellSummary, ChogBellRecord } from "@/lib/bell/types";
 import { isNotFound, useChogBell, useTodayBell } from "./api";
 import { CallResult, Conviction, Countdown, Forecast, LoadError, Skeleton } from "./bits";
 import { RideButton } from "./call-card";
 import { formatDay, formatPoints, hitRate, nextBellAt } from "./format";
+import { noLiveBellLine, replayLabel } from "./standings";
 
 /**
  * A Chog's Daily Bell card for its profile: this Bell's call (forecast, conviction, thesis and whether
@@ -20,6 +21,8 @@ export function ChogDailyCall({ tokenId }: { tokenId: number }) {
   const bell = today.data;
   const call = chog.data?.today;
   const record = chog.data?.record;
+  const replay = chog.data?.replay;
+  const season = chog.data?.season;
 
   let body: ReactNode;
   if (chog.isPending) {
@@ -75,7 +78,7 @@ export function ChogDailyCall({ tokenId }: { tokenId: number }) {
         <BellClock bell={bell} />
       </div>
       {body}
-      {record && <Record record={record} />}
+      {record && <Records live={record} replay={replay} season={season} />}
       <Link href="/bell" className="v2-link mt-5 inline-flex text-sm">
         See all 1,969 calls at the Bell
       </Link>
@@ -103,17 +106,38 @@ function BellClock({ bell }: { bell?: BellSummary }) {
 /** Average miss in percentage points of $CHOG's move, read as "3.5%". */
 const formatMiss = (value: number) => `${value.toFixed(value < 1 ? 2 : value < 10 ? 1 : 0)}%`;
 
-function Record({ record }: { record: ChogBellRecord }) {
-  if (record.calls === 0) {
+/**
+ * Its Bell record from LIVE Bells (real market, on schedule). Replayed Bells (simulated on past candles) keep a
+ * separate record, shown only with its label: beneath the live one until a live Bell has settled.
+ */
+function Records({ live, replay, season }: { live: ChogBellRecord; replay?: ChogBellRecord; season?: BellSeason }) {
+  if (live.calls > 0) {
     return (
-      <p className="v2-note mt-5 border-t border-[var(--v2-line-soft)] pt-4">
-        No settled calls yet: its record starts when its first Bell settles.
-      </p>
+      <div className="mt-5 border-t border-[var(--v2-line-soft)] pt-4">
+        <RecordStats title="Bell record" record={live} />
+        <p className="v2-note mt-3">Live Bells only. The record stays with the NFT.</p>
+      </div>
     );
   }
+  const waiting = noLiveBellLine(season);
   return (
     <div className="mt-5 border-t border-[var(--v2-line-soft)] pt-4">
-      <h3 className="text-[length:var(--v2-fs-sm)] font-medium text-[var(--v2-ink)]">Bell record</h3>
+      <p className="v2-note">
+        {waiting ?? "No settled live calls yet: its record starts when its first live Bell settles."}
+      </p>
+      {replay && replay.calls > 0 && (
+        <div className="mt-4">
+          <RecordStats title={replayLabel(season)} record={replay} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecordStats({ title, record }: { title: string; record: ChogBellRecord }) {
+  return (
+    <>
+      <h3 className="text-[length:var(--v2-fs-sm)] font-medium text-[var(--v2-ink)]">{title}</h3>
       <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3">
         <RecordStat label="Hit rate">
           {hitRate(record.hits, record.calls)}%{" "}
@@ -125,8 +149,7 @@ function Record({ record }: { record: ChogBellRecord }) {
         <RecordStat label="Avg miss">{formatMiss(record.avgErrorPts)}</RecordStat>
         <RecordStat label="Points">{formatPoints(record.totalPoints)}</RecordStat>
       </dl>
-      <p className="v2-note mt-3">The record stays with the NFT.</p>
-    </div>
+    </>
   );
 }
 
