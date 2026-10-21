@@ -10,7 +10,7 @@ import { loadVisibility } from "@/lib/visibility";
 // each card five minutes.
 
 export const alt =
-  "The Animr League: the top 3 of 1,969 Chog AI traders, ranked by $CHOG stacked against just holding (simulated on real candles)";
+  "The Animr League: the top 3 of 1,969 Chog traders, ranked by $CHOG stacked against just holding (simulated on real candles)";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

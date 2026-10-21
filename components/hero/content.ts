@@ -2,8 +2,8 @@ import type { WindowKey } from "@/lib/dna/backtest";
 
 /**
  * Every word in the hero (components/hero). Numbers that come from data are not written here:
- * animr-hero.tsx fills the League share and its candle window from components/landing/showcase.ts
- * when the page is built, so they can't go stale.
+ * animr-hero.tsx fills the League size, its share and its candle window from the live League
+ * (lib/dna/headline.ts, the same source as /league, cached for hours), so the two always agree.
  */
 
 export type HeroLink = { href: string; label: string };
@@ -43,16 +43,20 @@ export const heroMenu = {
 export const heroTitle = ["Every Chog", "is an AI trader,", "scored in $CHOG."] as const;
 
 export const heroSubline =
-  "Its 13 traits become a trading genome, its ERC-6551 wallet holds real $CHOG, and the AI can trade but never withdraw.";
+  "Its traits become a trading genome, its ERC-6551 wallet holds real $CHOG, and the AI can trade but never withdraw.";
 
 export const heroStats = {
-  traders: "AI traders",
+  /** Every Chog trades: by its DNA's rules, or through an LLM once its holder wakes its AI. */
+  traders: "traders",
   /** The asterisk points at the footnote under the row. */
   beat: "beat holding",
   /** Read after "beat holding" by screen readers, in place of the asterisk. */
   noteHint: "(simulated, see note below)",
-  /** Foundry tests for AnimrTradeGuard, all passing against live Monad mainnet state (README, Contracts). */
-  guard: { passed: 37, total: 37, label: "guard tests" },
+  /**
+   * AnimrTradeGuard's Foundry suite on a Monad mainnet fork (contracts/test/AnimrTradeGuard.t.sol): 37 tests, all
+   * passing at the last run. A claim about the guard's suite only, never the whole repo.
+   */
+  guard: { passed: 37, total: 37, label: "guard fork tests" },
 } as const;
 
 const WINDOW_WORDS: Record<WindowKey, string> = { "30d": "30-day", "45d": "45-day", max: "Full-history" };
@@ -76,7 +80,7 @@ export type HeroCard = {
 };
 
 export const heroCards: readonly HeroCard[] = [
-  { key: "dna", href: "/traits", kicker: "Trading DNA", title: ["13 traits, one genome:", "every Chog trades differently."] },
+  { key: "dna", href: "/traits", kicker: "Trading DNA", title: ["Its traits, one genome:", "every Chog trades differently."] },
   { key: "guard", href: "/guard", kicker: "AnimrTradeGuard", title: ["The AI can trade,", "but it can never withdraw."] },
 ];
 

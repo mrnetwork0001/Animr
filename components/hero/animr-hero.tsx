@@ -2,8 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { preload } from "react-dom";
 import { RandomChog } from "@/components/landing/random-chog-button";
-import { leagueSnapshot, plainPct } from "@/components/landing/showcase";
 import { DEFAULT_WINDOW } from "@/lib/dna/backtest";
+import { allChogs } from "@/lib/dna/chogs";
+import { leagueHeadline, windowLabel } from "@/lib/dna/headline";
 import {
   heroActions,
   heroBrand,
@@ -45,22 +46,22 @@ type AnimrHeroProps = {
 
 /**
  * The Animr hero and the page it opens: one screen drawn on a 2048×1455 design canvas on wide screens,
- * one centred column on phones and tablets (hero.css). Server-rendered and static: the League share
- * and its window are replayed from committed candles when the page is built (components/landing/
- * showcase.ts), and the only client code is the entrance timeline + artwork loop (hero-motion.tsx),
- * the phone menu and Random Chog.
+ * one centred column on phones and tablets (hero.css). Server-rendered and prerendered: the League share
+ * and its window come from the live League (lib/dna/headline.ts, "use cache" for hours, the same
+ * getPopulation /league serves), and the only client code is the entrance timeline + artwork loop
+ * (hero-motion.tsx), the phone menu and Random Chog.
  *
  * Landmarks: the hero's header (brand, nav, menu) is the page's banner, outside <main>; it is laid over
  * the hero (.hx-header-frame repeats the canvas geometry), so the look is the canvas's. <main> holds the
  * hero's copy and artwork, then `children`; `footer` follows <main>.
  */
-export function AnimrHero({ className = "", children, footer }: AnimrHeroProps) {
-  const league = leagueSnapshot();
+export async function AnimrHero({ className = "", children, footer }: AnimrHeroProps) {
+  const league = await leagueHeadline();
   const { passed, total } = heroStats.guard;
   const stats: Stat[] = [
     {
       key: "traders",
-      value: (league?.total ?? 1969).toLocaleString("en-US"),
+      value: (league?.total ?? allChogs().length).toLocaleString("en-US"),
       label: heroStats.traders,
     },
     // Without a replay (candles unreadable) the share and its footnote are left out, never guessed.
@@ -68,7 +69,8 @@ export function AnimrHero({ className = "", children, footer }: AnimrHeroProps) 
       ? [
           {
             key: "beat",
-            value: plainPct(league.beatHoldPct),
+            // Rounded like the League's own field panel (components/dna/league-board.tsx), so both read the same.
+            value: `${Math.round(league.beatHoldPct)}%`,
             label: heroStats.beat,
             noted: true,
           },
@@ -183,7 +185,7 @@ export function AnimrHero({ className = "", children, footer }: AnimrHeroProps) 
                 {league && (
                   <p id="hx-note" className="hx-note" data-hx="note">
                     <span aria-hidden="true">*</span>
-                    {heroFootnote(DEFAULT_WINDOW, league.window)}
+                    {heroFootnote(DEFAULT_WINDOW, windowLabel(league.from, league.to))}
                   </p>
                 )}
               </div>

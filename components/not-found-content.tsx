@@ -35,7 +35,7 @@ export function NotFoundContent() {
           href="/league"
           icon={<LeagueIcon />}
           kicker="League"
-          title="1,969 AI traders, ranked"
+          title="1,969 traders, ranked"
           body="Every Chog's traits compile into trading DNA, ranked against just holding $CHOG."
         />
         <FeatureCard
