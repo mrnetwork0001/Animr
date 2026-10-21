@@ -8,7 +8,7 @@ import { ChogJump } from "@/components/chog-jump";
 import { ListedFor } from "@/components/market/listed-for";
 import { PillLink } from "@/components/v2";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
-import { chogLabel } from "@/lib/chog-id";
+import { chogLabel, nameNumberOf } from "@/lib/chog-id";
 import { appConfig } from "@/lib/config";
 import { allChogs, getChog } from "@/lib/dna/chogs";
 import { deriveGenome } from "@/lib/dna/genome";
@@ -50,7 +50,13 @@ export const viewport: Viewport = { themeColor: "#0d0c11" };
 export async function generateMetadata({ params }: PageProps<"/chog/[tokenId]">): Promise<Metadata> {
   const tokenId = parseTokenId((await params).tokenId);
   if (!tokenId) return { title: "Chog not found" };
-  const label = chogLabel(tokenId, { metadataName: metadataNameOf(tokenId) });
+  const nameNumber = nameNumberOf(metadataNameOf(tokenId));
+  const number = nameNumber === null ? chogLabel(tokenId) : `CHOG #${nameNumber}`;
+  // Persona name first ("Laser Pounce · CHOG #891"), never for a Chog its holder hid (request data: after connection()).
+  const dna = chogDna(tokenId);
+  await connection();
+  const hidden = HAS_SNAPSHOT && (await isHiddenChog(tokenId));
+  const label = dna && !hidden ? `${dna.name} · ${number}` : number;
   return {
     title: label,
     description: `${label}: its trading DNA, its Time Machine replay on real $CHOG candles, its Daily Bell call, its ERC-6551 wallet and, once claimed, its AI trader on 0G Compute.`,

@@ -42,11 +42,11 @@ const whenUtc = (iso: string) => `${formatDay(iso.slice(0, 10))} · ${formatUtcT
 // --- /chog/[tokenId] ------------------------------------------------------------------------------
 
 export function ChogCard({ core, bell }: { core: ChogCardCore; bell: ChogBellBrief | null }) {
-  // "CHOG #1468 · token 7" (lib/chog-id.ts): the name marketplaces show, then the id the app uses. The
-  // ten 1:1s carry long names ("CHOG #392 — Burning Skully"), so the title shrinks to fit its column.
+  // "Laser Pounce · CHOG #891": the persona name every page shows first, then the number marketplaces show. Long
+  // persona names shrink the title to fit its column.
   const nameNumber = nameNumberOf(core.metadataName);
-  const title = nameNumber === null ? core.name : core.metadataName;
-  const titleSize = Math.min(58, Math.floor(520 / (0.6 * title.length)));
+  const title = core.name;
+  const titleSize = Math.min(58, Math.floor(430 / (0.6 * title.length)));
   // "Knife-Catching Breakout Chaser" and its style chip must share the column too.
   const archetypeSize = Math.min(34, Math.floor(470 / (0.58 * core.archetype.length)));
   const note = core.league ? `Simulated on real $CHOG candles, ${core.league.windowLabel} (1% fee + impact)` : SIM_NOTE;
@@ -70,7 +70,7 @@ export function ChogCard({ core, bell }: { core: ChogCardCore; bell: ChogBellBri
                 {title}
               </div>
               {nameNumber !== null && (
-                <div style={{ display: "flex", flexShrink: 0, fontSize: 24, color: C.subtle, whiteSpace: "nowrap" }}>{`· token ${core.tokenId}`}</div>
+                <div style={{ display: "flex", flexShrink: 0, fontSize: 24, color: C.subtle, whiteSpace: "nowrap" }}>{`· CHOG #${nameNumber}`}</div>
               )}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 14 }}>
@@ -91,7 +91,6 @@ export function ChogCard({ core, bell }: { core: ChogCardCore; bell: ChogBellBri
                 {upper(core.style)}
               </Chip>
             </div>
-            <div style={{ display: "flex", marginTop: 8, fontSize: 20, color: C.muted }}>{`Trader “${core.name}”`}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {core.genes.map((gene) => (

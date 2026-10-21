@@ -61,7 +61,31 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
         ]
       : []),
   ];
+  // Today's attempts and the busiest day so far, from the same per-day counts as the headline bars (the last day is today).
+  const heistToday = heist.perDay.at(-1);
+  const heistBusiest = heist.perDay.reduce<(typeof heist.perDay)[number] | undefined>(
+    (best, point) => (point.value > (best?.value ?? 0) ? point : best),
+    undefined,
+  );
   const heistMinis: MiniProps[] = [
+    ...(shown("heist", heist.attempts) && heistToday
+      ? [
+          {
+            label: "Attempts today",
+            value: show("heist", heistToday.value),
+            note: "since 00:00 UTC",
+          },
+        ]
+      : []),
+    ...(!missing("heist") && heistBusiest && heistBusiest.day !== heistToday?.day
+      ? [
+          {
+            label: "Busiest day",
+            value: formatCount(heistBusiest.value),
+            note: formatLongDay(heistBusiest.day),
+          },
+        ]
+      : []),
     ...(shown("heist", heist.caves)
       ? [
           {
