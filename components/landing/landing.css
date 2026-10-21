@@ -1218,9 +1218,16 @@ html:has(.lp-root) {
   font-family: var(--v2-font-mono);
   font-variant-numeric: tabular-nums;
 }
-.lp-receipt-field {
-  color: var(--v2-nav);
-  font-style: italic;
+.lp-receipt-note {
+  padding-block: 4px 8px;
+}
+/* No real AI decision yet (or still loading): one muted line where the card goes. */
+.lp-decision-empty {
+  min-height: 64px;
+  margin: 0;
+  padding: 20px;
+  border: 1px dashed var(--v2-line-soft);
+  border-radius: var(--v2-r-md);
 }
 @media (max-width: 419.98px) {
   .lp-hide-xs {
