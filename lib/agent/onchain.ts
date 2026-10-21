@@ -24,6 +24,7 @@ import {
   readGuardOnboarding,
   readVaultBalances,
 } from "../contracts/animr-trade-guard";
+import { awardFirstTradeTrophy } from "../trophies/hooks";
 import type { BrainDecision } from "./brain";
 import { getStore } from "./store";
 import type { AgentRecord, MarketSnapshot, Portfolio, Trade } from "./types";
@@ -88,6 +89,15 @@ export function getOperatorAddress(): Address | null {
   }
 }
 
+/** The operator's wallet client for its other signed calls (lib/trophies awards), or null. Never exposes the key. */
+export function getOperatorWallet(): Operator["wallet"] | null {
+  try {
+    return getOperator()?.wallet ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Both halves of on-chain mode are configured: the guard deployment and the operator key. */
 export function isOnchainConfigured(): boolean {
   return Boolean(animrTradeGuardAddress && getOperatorAddress());
@@ -121,7 +131,8 @@ async function chainRead<T>(read: () => Promise<T>): Promise<T> {
   }
 }
 
-async function withOperatorLock<T>(fn: () => Promise<T>): Promise<T> {
+/** Serializes every operator-signed send (nonces) across runs and instances; also used by lib/trophies. */
+export async function withOperatorLock<T>(fn: () => Promise<T>): Promise<T> {
   const store = getStore();
   const deadline = Date.now() + OPERATOR_LOCK_WAIT_MS;
   let token = await store.acquireLock(OPERATOR_LOCK_KEY, OPERATOR_LOCK_TTL_MS);
@@ -236,6 +247,8 @@ export async function executeOnchainTrade(
   );
   // Rounded to the nearest bp, like paper fills (a 10% cap on an odd balance is 999.99.. bps).
   const filledBps = balanceIn > BigInt(0) ? Number((traded.amountIn * BPS + balanceIn / BigInt(2)) / balanceIn) : 0;
+  // "First real trade" trophy into the Chog's own wallet (lib/trophies): once per Chog, never throws.
+  await awardFirstTradeTrophy(agent.tokenId);
   return { trade, portfolio, filledBps };
 }
 
