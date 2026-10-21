@@ -45,7 +45,9 @@ import { GuardOnboarding } from "./onchain/guard-onboarding";
 import { Callout, Spinner } from "./onchain/ui";
 import { VaultPanel } from "./onchain/vault-panel";
 import { PnlBadge } from "./pnl-badge";
+import { AskChog } from "./chog-chat/ask-chog";
 import { Sparkline } from "./sparkline";
+import { TrophyCabinet } from "./trophies/cabinet";
 import { ExternalIcon, RewindIcon, SparkIcon } from "./v2/icons";
 import { Badge, PillLink, SectionTitle, StatRow, type V2Stat, pillClass } from "./v2/primitives";
 
@@ -635,6 +637,8 @@ export function AgentProfile({
             )}
           </section>
 
+          <TrophyCabinet account={computedAccount} />
+
           {/* The vault's real balances and guard status: for its holder, and for everyone once it trades real $CHOG. */}
           {HAS_DNA && computedAccount && (isOwner || agent?.mode === "onchain") && (
             <VaultPanel tba={computedAccount} tokenId={chogId} />
@@ -731,6 +735,7 @@ export function AgentProfile({
           )}
           {dnaShown && <TimeMachineTeaser tokenId={chogId} />}
           {dnaShown && <GenomeCard tokenId={chogId} hideIdentity />}
+          {dnaShown && <AskChog tokenId={chogId} viewer={viewer} />}
           {HAS_DNA && hidden && agent && <HiddenChogNotice tokenId={chogId} label={label} />}
         </div>
       </div>
