@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRightIcon, PillLink, pillClass } from "@/components/v2";
 import { ChogImage } from "./chog-image";
 import { ctas, finalCta, links, showcaseIds } from "./content";
@@ -43,7 +44,12 @@ export function FinalCta() {
                 <ArrowRightIcon className="v2-btn-icon" />
               </PillLink>
             </div>
-            <p className="v2-note">{finalCta.footnote}</p>
+            <p className="v2-note">
+              {finalCta.footnote}{" "}
+              <Link href="/tour" className="v2-link">
+                Judging? Take the 2-minute tour
+              </Link>
+            </p>
           </div>
         </div>
       </Shell>
