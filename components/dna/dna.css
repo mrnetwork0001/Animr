@@ -1,8 +1,347 @@
 /*
- * DNA UI effects (genome card, Time Machine). Layout and color come from Tailwind utilities;
- * this file only holds keyframes. Global on purpose (see components/landing/landing.css), so
- * every class is prefixed `dna-`. Animations only run when the system allows motion.
+ * DNA UI (League, Trait Alpha, Time Machine, genome card) on the v2 design system (app/design-v2.css).
+ * Layout comes from v2 classes and Tailwind utilities; this file holds the few DNA-only pieces (edge bars,
+ * the field histogram, the replay scrubber, the league table's stretched rows) and the keyframes. Global
+ * on purpose, so every class is prefixed `dna-`. Component rules sit in @layer components (utilities win),
+ * and every animation only runs when the system allows motion.
  */
+
+/* Tailwind's layer order, pinned whichever stylesheet loads first (as in app/design-v2.css). */
+@layer theme, base, components, utilities;
+
+@layer components {
+  /* ------------------------------------------------------------------ edge (vs holding) */
+
+  /* A signed edge as text: DM Sans, green/red only because it is a signed change. */
+  .dna-edge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    font-family: var(--v2-font-display, inherit);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    color: var(--v2-nav);
+  }
+  .dna-edge[data-tone="up"] {
+    color: var(--v2-success);
+  }
+  .dna-edge[data-tone="down"] {
+    color: var(--v2-danger);
+  }
+  .dna-edge-arrow {
+    font-size: 0.62em;
+    transform: translateY(-0.1em);
+  }
+
+  /* A diverging bar from a centre hairline: violet-to-teal to the right, danger to the left. */
+  .dna-dbar {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 6px;
+    border-radius: var(--v2-r-pill);
+    background: rgb(255 255 255 / 0.05);
+  }
+  .dna-dbar::before {
+    content: "";
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    left: 50%;
+    width: 1px;
+    background: var(--v2-line-strong);
+  }
+  .dna-dbar > span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: var(--v2-r-pill);
+  }
+  .dna-dbar > span[data-tone="up"] {
+    left: 50%;
+    background: var(--v2-grad-meter);
+    box-shadow: 0 0 10px rgb(159 240 236 / 0.28);
+  }
+  .dna-dbar > span[data-tone="down"] {
+    right: 50%;
+    background: rgb(255 122 138 / 0.7);
+  }
+
+  /* A one-sided bar (Alpha / Rekt lists): grows from the left. */
+  .dna-bar {
+    position: relative;
+    display: block;
+    height: 6px;
+    overflow: hidden;
+    border-radius: var(--v2-r-pill);
+    background: rgb(255 255 255 / 0.05);
+  }
+  .dna-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--v2-grad-meter);
+    box-shadow: 0 0 10px rgb(159 240 236 / 0.3);
+  }
+  .dna-bar[data-tone="down"] > span {
+    background: rgb(255 122 138 / 0.7);
+    box-shadow: none;
+  }
+
+  /* ------------------------------------------------------------------ the field (league histogram) */
+
+  .dna-field {
+    position: relative;
+    height: 112px;
+  }
+  .dna-field svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .dna-field-zero {
+    position: absolute;
+    top: -6px;
+    bottom: 0;
+    width: 0;
+    border-left: 1.5px dashed var(--v2-chart-2);
+  }
+  .dna-field-zero > span {
+    position: absolute;
+    top: -14px;
+    left: 6px;
+    color: var(--v2-violet-ink);
+    font-size: var(--v2-fs-2xs);
+    white-space: nowrap;
+  }
+  .dna-field-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: var(--v2-faint);
+    font-family: var(--v2-font-display, inherit);
+    font-size: var(--v2-fs-2xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ------------------------------------------------------------------ league table */
+
+  /* Rows are positioned so the name's ::after can stretch over the whole row (the row opens the profile). */
+  .dna-league tbody tr {
+    position: relative;
+  }
+  .dna-row-link {
+    color: var(--v2-ink);
+    font-weight: 480;
+  }
+  .dna-row-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+  }
+  .dna-league .dna-row-link:focus-visible {
+    outline: none;
+  }
+  .dna-league .dna-row-link:focus-visible::after {
+    outline: 2px solid var(--v2-teal);
+    outline-offset: -2px;
+  }
+  .dna-league .dna-above {
+    position: relative;
+    z-index: 1;
+  }
+  /* The flexible column: takes the room left and lets its text truncate. */
+  .dna-league .dna-fill {
+    width: 100%;
+    max-width: 0;
+  }
+  .dna-league .dna-rank-top {
+    color: var(--v2-kicker);
+  }
+  .dna-league tr.dna-focus td {
+    background-color: rgb(159 240 236 / 0.07);
+  }
+  @media (max-width: 639.98px) {
+    .dna-league :is(th, td) {
+      padding-inline: 8px;
+    }
+    .dna-league :is(th, td):first-child {
+      padding-left: 12px;
+    }
+    .dna-league :is(th, td):last-child {
+      padding-right: 12px;
+    }
+  }
+
+  /* The phone filter rows scroll sideways inside the card. */
+  .dna-scroll-x {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .dna-scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* A compact select for toolbars (the v2 one is 48px tall). */
+  .dna-select-sm {
+    height: 38px;
+    padding-left: 14px;
+    border-radius: var(--v2-r-pill);
+    font-size: var(--v2-fs-sm);
+    background-position: right 12px center;
+  }
+
+  /* ------------------------------------------------------------------ trait groups (masonry) */
+
+  .dna-columns {
+    column-gap: var(--v2-s-4);
+  }
+  .dna-columns > * {
+    break-inside: avoid;
+    margin-bottom: var(--v2-s-4);
+  }
+  @media (min-width: 900px) {
+    .dna-columns {
+      column-count: 2;
+    }
+  }
+
+  /* ------------------------------------------------------------------ Time Machine */
+
+  /* The scrubber: a thin track filled teal up to the playhead, a glowing teal thumb. */
+  .dna-range {
+    --dna-progress: 0%;
+    appearance: none;
+    -webkit-appearance: none;
+    height: 24px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .dna-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: var(--v2-r-pill);
+    background: linear-gradient(90deg, var(--v2-violet-b), var(--v2-teal)) 0 0 / var(--dna-progress) 100% no-repeat,
+      rgb(255 255 255 / 0.1);
+  }
+  .dna-range::-moz-range-track {
+    height: 4px;
+    border-radius: var(--v2-r-pill);
+    background: rgb(255 255 255 / 0.1);
+  }
+  .dna-range::-moz-range-progress {
+    height: 4px;
+    border-radius: var(--v2-r-pill);
+    background: linear-gradient(90deg, var(--v2-violet-b), var(--v2-teal));
+  }
+  .dna-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border: 2px solid var(--v2-teal);
+    border-radius: 50%;
+    background: var(--v2-bg);
+    box-shadow: 0 0 10px rgb(159 240 236 / 0.55);
+  }
+  .dna-range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--v2-teal);
+    border-radius: 50%;
+    background: var(--v2-bg);
+    box-shadow: 0 0 10px rgb(159 240 236 / 0.55);
+  }
+  .dna-range:focus-visible {
+    outline: 2px solid var(--v2-teal);
+    outline-offset: 4px;
+    border-radius: 6px;
+  }
+
+  /* Legend swatch for a dashed series. */
+  .dna-swatch-dash {
+    width: 16px;
+    height: 0;
+    border-top: 2px dashed var(--v2-swatch, var(--v2-chart-2));
+  }
+  .dna-swatch-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--v2-swatch);
+  }
+
+  /* The Chog's portrait in the replay header: a column on wide screens, a row on phones. */
+  .dna-portrait {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  @media (min-width: 1024px) {
+    .dna-portrait {
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+    }
+  }
+  @media (max-width: 1023.98px) {
+    .dna-portrait .v2-avatar--xl {
+      width: 96px;
+      height: 96px;
+      border-radius: 20px;
+    }
+  }
+
+  /* Phones and tablets: the portrait leads the replay's header (it is the page's subject). */
+  @media (max-width: 1023.98px) {
+    .dna-replay-header > .v2-page-header-aside {
+      order: -1;
+    }
+  }
+  @media (min-width: 1024px) {
+    .dna-replay-header {
+      align-items: center;
+    }
+  }
+
+  /* The key-moments timeline: a 1px rail with a dot per moment. */
+  .dna-rail {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0 0 0 20px;
+    list-style: none;
+  }
+  .dna-rail::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 3px;
+    width: 1px;
+    background: var(--v2-line-soft);
+  }
+  .dna-rail > li {
+    position: relative;
+  }
+  .dna-rail > li::before {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: -20px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--v2-bg);
+    box-shadow: inset 0 0 0 1.5px var(--v2-teal);
+  }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   /* A gene bar filling up from the left; stagger with animation-delay. */

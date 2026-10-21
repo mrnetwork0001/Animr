@@ -1,13 +1,16 @@
 "use client";
 
-import { Fragment, type ReactNode, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { type CSSProperties, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Badge, type BadgeTone, pillClass } from "@/components/v2/primitives";
 import { chogLabel } from "@/lib/chog-id";
-import type { ReplayTrade } from "@/lib/dna/types";
+import type { ReplayMoment, ReplayTrade } from "@/lib/dna/types";
 import { formatAmount } from "@/lib/format";
 import { useReplay } from "./api";
+import { PauseIcon, PlayIcon, RestartIcon } from "./icons";
 import {
   Chart,
   SERIES_COLOR,
+  SERIES_INK,
   type Series,
   SpeechBubble,
   edgeOf,
@@ -15,7 +18,7 @@ import {
   sampleAt,
   useGeometry,
 } from "./replay-chart";
-import { DEFAULT_WINDOW, SIM_LABEL, type WindowKey, edgeTone, formatDay, formatHour, formatPrice, signedPct } from "./shared";
+import { DEFAULT_WINDOW, SIM_LABEL, type WindowKey, formatDay, formatHour, formatPrice, signedPct } from "./shared";
 import { WindowPicker } from "./window-picker";
 import "./dna.css";
 
@@ -37,6 +40,9 @@ type TimeMachineProps = {
   autoPlay?: boolean;
   /** Shown on the verdict card of a solo replay, e.g. to pick a rival. */
   onChallenge?: () => void;
+  /** The replay window, when the page owns it (the replay page's header and stats follow it); else internal. */
+  span?: WindowKey;
+  onSpanChange?: (span: WindowKey) => void;
   className?: string;
 };
 
@@ -45,9 +51,23 @@ type TimeMachineProps = {
  * its $CHOG stack against just holding, the price with its buys and sells, speech bubbles at key
  * moments, a running counter and a verdict at the end. With `rivalId`, two Chogs race.
  */
-export function TimeMachine({ tokenId, rivalId, nameNumbers, autoPlay = true, onChallenge, className = "" }: TimeMachineProps) {
+export function TimeMachine({
+  tokenId,
+  rivalId,
+  nameNumbers,
+  autoPlay = true,
+  onChallenge,
+  span: spanProp,
+  onSpanChange,
+  className = "",
+}: TimeMachineProps) {
   const labelOf: Labeler = (id) => chogLabel(id, { number: nameNumbers?.[id - 1] || null });
-  const [span, setSpan] = useState<WindowKey>(DEFAULT_WINDOW);
+  const [ownSpan, setOwnSpan] = useState<WindowKey>(DEFAULT_WINDOW);
+  const span = spanProp ?? ownSpan;
+  const setSpan = (next: WindowKey) => {
+    setOwnSpan(next);
+    onSpanChange?.(next);
+  };
   const main = useReplay(tokenId, span);
   const rival = useReplay(rivalId, span);
   const headingId = useId();
@@ -61,19 +81,19 @@ export function TimeMachine({ tokenId, rivalId, nameNumbers, autoPlay = true, on
   const meta = main.data;
 
   return (
-    <section aria-labelledby={headingId} className={`card overflow-hidden ${className}`}>
-      <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-4 sm:px-6 sm:pt-5">
+    <section aria-labelledby={headingId} className={`v2-card v2-card--feature v2-card--flush ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-5 sm:px-7 sm:pt-6">
         <div className="min-w-0">
-          <p className="eyebrow">Time Machine</p>
-          <h2 id={headingId} className="mt-1 text-lg font-semibold tracking-tight sm:text-xl">
+          <p className="v2-kicker">Time Machine</p>
+          <h2 id={headingId} className="v2-h3 mt-1.5">
             {rivalId === undefined ? (
               <>
-                {labelOf(tokenId)} <span className="text-muted">vs just holding $CHOG</span>
+                {labelOf(tokenId)} <span className="text-[var(--v2-nav)]">vs just holding $CHOG</span>
               </>
             ) : (
               <>
-                <span style={{ color: SERIES_COLOR[0] }}>{labelOf(tokenId)}</span> <span className="text-muted">vs</span>{" "}
-                <span style={{ color: SERIES_COLOR[1] }}>{labelOf(rivalId)}</span>
+                <span style={{ color: SERIES_INK[0] }}>{labelOf(tokenId)}</span> <span className="text-[var(--v2-nav)]">vs</span>{" "}
+                <span style={{ color: SERIES_INK[1] }}>{labelOf(rivalId)}</span>
               </>
             )}
           </h2>
@@ -81,7 +101,7 @@ export function TimeMachine({ tokenId, rivalId, nameNumbers, autoPlay = true, on
         <WindowPicker value={span} onChange={setSpan} />
       </div>
 
-      <div className="px-2 pt-3 sm:px-4">
+      <div className="px-2 pt-4 sm:px-5">
         {series ? (
           <Player
             key={`${span}:${series.map((s) => s.tokenId).join("-")}`}
@@ -91,16 +111,16 @@ export function TimeMachine({ tokenId, rivalId, nameNumbers, autoPlay = true, on
             onChallenge={rivalId === undefined ? onChallenge : undefined}
           />
         ) : error ? (
-          <div role="alert" className="flex h-[300px] flex-col items-center justify-center px-6 text-center sm:h-[384px]">
-            <p className="font-medium text-danger">Couldn&apos;t load this replay</p>
-            <p className="mt-1 max-w-md break-words font-mono text-xs text-muted">{error.message}</p>
+          <div role="alert" className="flex h-[300px] flex-col items-center justify-center px-6 text-center sm:h-[440px]">
+            <p className="font-[480] text-[var(--v2-danger)]">Couldn&apos;t load this replay</p>
+            <p className="v2-mono mt-1 max-w-md break-words text-xs text-[var(--v2-nav)]">{error.message}</p>
             <button
               type="button"
               onClick={() => {
                 void main.refetch();
                 if (rivalId !== undefined) void rival.refetch();
               }}
-              className="btn btn-secondary mt-4"
+              className={`${pillClass("glass", "sm")} mt-4`}
             >
               Try again
             </button>
@@ -110,12 +130,12 @@ export function TimeMachine({ tokenId, rivalId, nameNumbers, autoPlay = true, on
         )}
       </div>
 
-      <p className="border-t border-line/70 px-4 py-3 text-[11px] leading-relaxed text-subtle sm:px-6">
+      <p className="v2-note border-t border-[var(--v2-line-soft)] px-4 py-3.5 sm:px-7">
         {SIM_LABEL}
         {meta && (
           <>
             {" "}
-            · {meta.window.label} · genome <span className="font-mono">{meta.genomeVersion}</span>
+            · {meta.window.label} · genome <span className="v2-mono">{meta.genomeVersion}</span>
           </>
         )}
         . A rules replay of this Chog&apos;s DNA, not a promise: past candles don&apos;t predict the next ones.
@@ -223,7 +243,7 @@ function Player({
     setPlaying(true);
   };
 
-  const height = width < 640 ? 260 : 340;
+  const height = width < 640 ? 270 : 400;
   const g = useGeometry(series, width, height);
   const primary = series[0];
   const points = primary.result.points;
@@ -248,29 +268,29 @@ function Player({
   return (
     <div>
       {/* Running counter; the chart's text alternative is its aria-label, the verdict and the lists below. */}
-      <div aria-hidden className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 px-2 pb-2">
-        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+      <div aria-hidden className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 px-2 pb-3">
+        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
           {live.map((s, i) => (
-            <p key={s.tokenId} className="flex items-baseline gap-2">
+            <p key={s.tokenId} className="flex items-baseline gap-2.5">
               <span
-                className={`font-mono text-2xl font-semibold tabular-nums sm:text-3xl ${solo ? edgeTone(s.edge) : ""}`}
-                style={solo ? undefined : { color: SERIES_COLOR[i] }}
+                className="v2-num text-[length:var(--v2-fs-stat)] leading-none"
+                style={{ color: solo ? edgeColor(s.edge) : SERIES_INK[i] }}
               >
                 {signedPct(s.edge)}
               </span>
-              <span className="text-xs text-muted">
+              <span className="text-[13px] text-[var(--v2-nav)]">
                 {solo ? "vs holding · simulated" : `token ${s.tokenId}`} · {s.trades} {s.trades === 1 ? "trade" : "trades"}
               </span>
             </p>
           ))}
         </div>
-        <p className="font-mono text-[11px] uppercase tracking-wider text-subtle tabular-nums">
+        <p className="v2-overline v2-num tracking-[0.12em]">
           Day {day}/{totalDays} · {formatDay(now)}
         </p>
       </div>
 
       <div className="relative">
-        <div ref={chartRef} className="relative h-[260px] sm:h-[340px]">
+        <div ref={chartRef} className="relative h-[270px] sm:h-[400px]">
           {width > 0 && points.length > 1 ? (
             <Chart series={series} g={g} width={width} height={height} progress={progress} now={now} summary={summary} />
           ) : (
@@ -311,7 +331,6 @@ function Player({
       />
 
       <Legend ids={series.map((s) => s.tokenId)} labelOf={labelOf} />
-      <Details series={series} labelOf={labelOf} />
     </div>
   );
 }
@@ -349,12 +368,7 @@ function VerdictCard({
   const label = { win: "Beat holding", loss: "Trailed holding", rekt: "Rekt", duel: "Race over" }[tone];
   // The engine's verdict often names the outcome already ("REKT -59%"); don't stamp it twice.
   const stamp = line.toLowerCase().includes(label.toLowerCase()) ? "Verdict" : label;
-  const stampTone = {
-    win: "bg-success/15 text-success ring-success/30",
-    loss: "bg-danger/10 text-danger ring-danger/30",
-    rekt: "bg-danger/20 text-danger ring-danger/50",
-    duel: "bg-warning/15 text-warning ring-warning/30",
-  }[tone];
+  const stampTone: BadgeTone = { win: "success", loss: "danger", rekt: "danger", duel: "violet" }[tone] as BadgeTone;
 
   const share = async () => {
     const url = window.location.href;
@@ -377,55 +391,57 @@ function VerdictCard({
 
   return (
     // Phones: a card under the chart, so the finished chart stays visible. From sm: over the chart.
-    <div className="z-20 mt-3 sm:absolute sm:inset-0 sm:mt-0 sm:flex sm:items-center sm:justify-center sm:bg-background/55 sm:p-3 sm:backdrop-blur-[2px]">
+    <div className="z-20 mt-3 sm:absolute sm:inset-0 sm:mt-0 sm:flex sm:items-center sm:justify-center sm:bg-[rgb(13_12_17/0.5)] sm:p-3 sm:backdrop-blur-[2px]">
       <div
         role="group"
         aria-label="Replay verdict"
-        className="dna-rise relative w-full rounded-2xl border border-line-strong bg-surface p-4 shadow-2xl shadow-black/60 sm:max-w-md sm:p-5"
+        className="dna-rise v2-glass--strong relative w-full rounded-[var(--v2-r-lg)] p-5 sm:max-w-[30rem] sm:p-6"
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close the verdict"
-          className="absolute top-2 right-2 rounded-lg px-2 py-1 text-lg leading-none text-subtle hover:bg-surface-2 hover:text-foreground"
+          className="absolute top-3 right-3 grid size-8 place-items-center rounded-full text-lg leading-none text-[var(--v2-faint)] transition-colors hover:bg-white/5 hover:text-[var(--v2-ink)]"
         >
           ×
         </button>
-        <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest ring-1 ring-inset ${stampTone}`}>
+        <Badge tone={stampTone} dot>
           {stamp}
-        </span>
-        <p className="mt-2 pr-6 text-lg font-semibold tracking-tight text-balance sm:text-2xl">{line}</p>
+        </Badge>
+        <p className="mt-3 pr-6 font-[family-name:var(--v2-font-display)] text-[22px] leading-[1.18] font-[380] tracking-[-0.015em] text-balance sm:text-[28px]">
+          {line}
+        </p>
 
         {solo ? (
-          <dl className="mt-3 grid grid-cols-4 gap-x-3 gap-y-2 sm:mt-4">
-            <Stat label="vs hold" value={signedPct(r.edgePct)} tone={edgeTone(r.edgePct)} />
+          <dl className="mt-5 grid grid-cols-4 gap-x-3 gap-y-2 border-t border-[var(--v2-line-soft)] pt-4">
+            <Stat label="vs hold" value={signedPct(r.edgePct)} color={edgeColor(r.edgePct)} />
             <Stat label="Worst dip" value={signedPct(-Math.abs(r.maxDrawdownPct))} />
             <Stat label="Trades" value={String(r.trades.length)} />
             <Stat label="Fees" value={formatAmount(r.feesPaidChog, 0)} hint="$CHOG" />
           </dl>
         ) : (
-          <dl className="mt-3 grid grid-cols-2 gap-4 sm:mt-4">
+          <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-[var(--v2-line-soft)] pt-4">
             {series.map((s, i) => (
               <Stat
                 key={s.tokenId}
                 label={labelOf(s.tokenId)}
                 value={signedPct(s.result.edgePct)}
-                color={SERIES_COLOR[i]}
+                color={SERIES_INK[i]}
                 hint={`${s.result.trades.length} trades`}
               />
             ))}
           </dl>
         )}
 
-        <div className="mt-4 flex flex-wrap gap-2 sm:mt-5">
-          <button type="button" onClick={onReplay} className="btn btn-secondary px-3 py-1.5">
-            <span aria-hidden>↺</span> Replay
+        <div className="mt-5 flex flex-wrap gap-2">
+          <button type="button" onClick={onReplay} className={pillClass("glass", "sm")}>
+            <RestartIcon className="size-4" /> Replay
           </button>
-          <button type="button" onClick={share} className="btn btn-secondary px-3 py-1.5">
+          <button type="button" onClick={share} className={pillClass("glass", "sm")}>
             {shared === "copied" ? "Link copied" : shared === "failed" ? "Couldn't share" : "Share"}
           </button>
           {onChallenge && (
-            <button type="button" onClick={onChallenge} className="btn btn-primary px-3 py-1.5">
+            <button type="button" onClick={onChallenge} className={pillClass("primary", "sm")}>
               Challenge a Chog
             </button>
           )}
@@ -435,16 +451,22 @@ function VerdictCard({
   );
 }
 
-function Stat({ label, value, hint, tone = "", color }: { label: string; value: string; hint?: string; tone?: string; color?: string }) {
+function Stat({ label, value, hint, color }: { label: string; value: string; hint?: string; color?: string }) {
   return (
     <div className="min-w-0">
-      <dt className="truncate text-[10px] font-medium uppercase tracking-wider text-subtle">{label}</dt>
-      <dd className={`mt-0.5 font-mono text-sm font-semibold tabular-nums sm:text-base ${tone}`} style={color ? { color } : undefined}>
+      <dt className="truncate text-xs text-[var(--v2-nav)]">{label}</dt>
+      <dd className="v2-num mt-1 text-[19px] leading-tight sm:text-[22px]" style={color ? { color } : undefined}>
         {value}
-        {hint && <span className="block font-sans text-[10px] font-normal text-subtle sm:ml-1 sm:inline sm:text-[11px]">{hint}</span>}
+        {hint && <span className="block font-[family-name:var(--v2-font-text)] text-[11px] text-[var(--v2-faint)] sm:ml-1 sm:inline">{hint}</span>}
       </dd>
     </div>
   );
+}
+
+/** A signed edge's colour: green above holding, red below, grey at ~0 (signed changes only). */
+function edgeColor(pct: number): string {
+  if (!Number.isFinite(pct) || Math.abs(pct) < 0.05) return "var(--v2-nav)";
+  return pct > 0 ? "var(--v2-success)" : "var(--v2-danger)";
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -474,14 +496,14 @@ function Controls({
   onSeek: (value: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 px-2 pt-3 sm:gap-3">
+    <div className="flex items-center gap-2 px-2 pt-4 sm:gap-3">
       <button
         type="button"
         onClick={playing ? onPause : onPlay}
-        className="btn btn-primary w-[5.75rem] shrink-0"
+        className={`${pillClass("glass")} h-11 w-[6.25rem] shrink-0 gap-2 px-0`}
         aria-label={playing ? "Pause the replay" : finished ? "Play the replay again" : "Play the replay"}
       >
-        <span aria-hidden>{playing ? "❚❚" : "▶"}</span>
+        {playing ? <PauseIcon className="size-4 text-[var(--v2-teal)]" /> : <PlayIcon className="size-4 text-[var(--v2-teal)]" />}
         {playing ? "Pause" : finished ? "Again" : "Play"}
       </button>
       <input
@@ -493,119 +515,124 @@ function Controls({
         onChange={(e) => onSeek(Number(e.target.value) / 1000)}
         aria-label="Replay timeline"
         aria-valuetext={formatHour(now)}
-        className="h-2 min-w-0 flex-1 cursor-pointer accent-accent"
+        className="dna-range min-w-0 flex-1"
+        style={{ "--dna-progress": `${(progress * 100).toFixed(2)}%` } as CSSProperties}
       />
       <button
         type="button"
         onClick={onSpeed}
         aria-label={`Playback speed ${speed}×`}
         title="Change the playback speed"
-        className="btn btn-ghost w-12 shrink-0 px-2 font-mono"
+        className={`${pillClass("ghost", "sm")} v2-num w-12 shrink-0 px-0 text-[15px]`}
       >
         {speed}×
       </button>
-      <button type="button" onClick={onRestart} aria-label="Restart the replay" className="btn btn-ghost hidden shrink-0 px-2 sm:inline-flex">
-        ↺
+      <button
+        type="button"
+        onClick={onRestart}
+        aria-label="Restart the replay"
+        className={`${pillClass("ghost", "sm")} hidden w-10 shrink-0 px-0 sm:inline-flex`}
+      >
+        <RestartIcon className="size-[18px]" />
       </button>
     </div>
   );
 }
 
 function Legend({ ids, labelOf }: { ids: number[]; labelOf: Labeler }) {
+  const solo = ids.length === 1;
   return (
-    <ul aria-hidden className="flex flex-wrap gap-x-4 gap-y-1 px-3 pt-3 text-[11px] text-muted">
+    <ul aria-hidden className="v2-legend px-3 pt-4 pb-5 sm:pb-6">
       {ids.map((id, i) => (
-        <li key={id} className="flex items-center gap-1.5">
-          <span className="h-0.5 w-4 rounded-full" style={{ background: SERIES_COLOR[i] }} />
-          {ids.length > 1 ? labelOf(id) : "Chog's stack"}
+        <li key={id}>
+          <span className="v2-legend-swatch" style={{ "--v2-swatch": SERIES_COLOR[i] } as CSSProperties} />
+          {solo ? "Chog's $CHOG stack" : labelOf(id)}
         </li>
       ))}
-      <li className="flex items-center gap-1.5">
-        <span className="w-4 border-t-[1.5px] border-dashed border-muted" /> Just holding
+      <li>
+        <span
+          className="dna-swatch-dash"
+          style={{ "--v2-swatch": solo ? "var(--v2-chart-2)" : "var(--v2-chart-3)" } as CSSProperties}
+        />
+        Just holding
       </li>
-      <li className="flex items-center gap-1.5">
-        <span className="h-0.5 w-4 rounded-full bg-accent/70" /> $CHOG price
+      <li>
+        <span className="v2-legend-swatch" style={{ "--v2-swatch": "rgb(211 211 215 / 0.5)", boxShadow: "none" } as CSSProperties} />
+        $CHOG price
       </li>
-      <li className="flex items-center gap-1.5">
-        <span className="text-success">▲</span> buy <span className="text-danger">▼</span> sell
-        {ids.length > 1 && ` (${labelOf(ids[0])})`}
+      <li>
+        <span className="dna-swatch-dot" style={{ "--v2-swatch": "var(--v2-chart-up)" } as CSSProperties} /> buy
+        <span className="dna-swatch-dot ml-1" style={{ "--v2-swatch": "var(--v2-chart-down)" } as CSSProperties} /> sell
+        {!solo && ` (${labelOf(ids[0])})`}
       </li>
     </ul>
   );
 }
 
-function Details({ series, labelOf }: { series: Series[]; labelOf: Labeler }) {
-  const r = series[0].result;
-  const moments = [...r.moments].sort((a, b) => a.t - b.t);
+/** The key moments of a replay, oldest first, on a rail. */
+export function KeyMoments({ moments }: { moments: readonly ReplayMoment[] }) {
+  const sorted = [...moments].sort((a, b) => a.t - b.t);
   return (
-    <div className="space-y-1 px-2 pt-3 pb-4">
-      {moments.length > 0 && (
-        <Disclosure title={`Key moments (${moments.length})`}>
-          <ol className="space-y-2">
-            {moments.map((m, i) => (
-              <li key={i} className="flex gap-3 text-sm">
-                <time dateTime={new Date(m.t * 1000).toISOString()} className="w-28 shrink-0 font-mono text-xs text-subtle">
-                  {formatHour(m.t).replace(" UTC", "")}
-                </time>
-                <span className="text-muted">{m.text}</span>
-              </li>
-            ))}
-          </ol>
-        </Disclosure>
-      )}
-      <Disclosure title={`Trades of ${labelOf(series[0].tokenId)} (${r.trades.length})`}>
-        {r.trades.length === 0 ? (
-          <p className="text-sm text-muted">It never traded in this window: it just held its $CHOG.</p>
-        ) : (
-          <TradeTable trades={r.trades} />
-        )}
-      </Disclosure>
-    </div>
+    <ol className="dna-rail">
+      {sorted.map((m, i) => (
+        <li key={i}>
+          <time dateTime={new Date(m.t * 1000).toISOString()} className="v2-num block text-xs text-[var(--v2-faint)]">
+            {formatHour(m.t)}
+          </time>
+          <span className="mt-0.5 block text-[14px] leading-relaxed text-[var(--v2-muted)]">{m.text}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
-function Disclosure({ title, children }: { title: string; children: ReactNode }) {
+/** Every simulated trade: when (faint), side (a teal Buy / violet Sell badge), price and amounts in DM Sans, why. */
+export function TradeLog({ trades }: { trades: readonly ReplayTrade[] }) {
   return (
-    <details className="group rounded-xl px-2">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-2 text-sm font-medium text-muted hover:text-foreground [&::-webkit-details-marker]:hidden">
-        <span aria-hidden className="text-xs text-subtle transition-transform group-open:rotate-90">
-          ▶
-        </span>
-        {title}
-      </summary>
-      <div className="max-h-80 overflow-y-auto pb-3">{children}</div>
-    </details>
-  );
-}
-
-function TradeTable({ trades }: { trades: ReplayTrade[] }) {
-  return (
-    <table className="w-full text-left text-xs">
-      <thead className="text-[10px] uppercase tracking-wider text-subtle">
+    <table className="v2-table">
+      <caption className="v2-sr">Simulated trades, oldest first</caption>
+      <thead>
         <tr>
-          <th scope="col" className="py-1 pr-3 font-medium">When (UTC)</th>
-          <th scope="col" className="py-1 pr-3 font-medium">Side</th>
-          <th scope="col" className="py-1 pr-3 text-right font-medium">Price</th>
-          <th scope="col" className="hidden py-1 pr-3 font-medium sm:table-cell">Why</th>
+          <th scope="col">When (UTC)</th>
+          <th scope="col">Side</th>
+          <th scope="col" className="is-num">
+            Price
+          </th>
+          <th scope="col" className="is-num v2-hide-sm">
+            In
+          </th>
+          <th scope="col" className="is-num v2-hide-sm">
+            Out
+          </th>
+          <th scope="col" className="max-lg:hidden">
+            Why
+          </th>
         </tr>
       </thead>
-      <tbody className="font-mono tabular-nums">
-        {trades.map((trade, i) => (
-          <Fragment key={i}>
-            <tr className="border-t border-line/50">
-              <td className="py-1.5 pr-3 text-muted">{formatHour(trade.t).replace(" UTC", "")}</td>
-              <td className={`py-1.5 pr-3 font-semibold ${trade.side === "buy" ? "text-success" : "text-danger"}`}>{trade.side}</td>
-              <td className="py-1.5 pr-3 text-right text-muted">{formatPrice(trade.price)}</td>
-              <td className="hidden py-1.5 pr-3 font-sans text-muted sm:table-cell">{trade.reason}</td>
-            </tr>
-            {/* Phones: the reason gets its own line under the trade. */}
-            <tr className="sm:hidden">
-              <td colSpan={3} className="pb-2 font-sans text-muted">
+      <tbody>
+        {trades.map((trade, i) => {
+          const buy = trade.side === "buy";
+          // A buy spends WMON for $CHOG; a sell spends $CHOG for WMON.
+          const [inUnit, outUnit] = buy ? ["WMON", "$CHOG"] : ["$CHOG", "WMON"];
+          return (
+            <tr key={i}>
+              <td className="v2-num text-[13px] text-[var(--v2-faint)]">{formatHour(trade.t).replace(" UTC", "")}</td>
+              <td>
+                <Badge tone={buy ? "teal" : "violet"}>{trade.side}</Badge>
+              </td>
+              <td className="is-num">{formatPrice(trade.price)}</td>
+              <td className="is-num v2-hide-sm text-[var(--v2-muted)]">
+                {formatAmount(trade.amountIn, 2)} <span className="text-xs text-[var(--v2-faint)]">{inUnit}</span>
+              </td>
+              <td className="is-num v2-hide-sm text-[var(--v2-muted)]">
+                {formatAmount(trade.amountOut, 2)} <span className="text-xs text-[var(--v2-faint)]">{outUnit}</span>
+              </td>
+              <td className="min-w-[16rem] text-[13px] leading-snug whitespace-normal text-[var(--v2-nav)] max-lg:hidden">
                 {trade.reason}
               </td>
             </tr>
-          </Fragment>
-        ))}
+          );
+        })}
       </tbody>
     </table>
   );
@@ -613,10 +640,10 @@ function TradeTable({ trades }: { trades: ReplayTrade[] }) {
 
 function ChartSkeleton({ bare = false }: { bare?: boolean }) {
   return (
-    <div role="status" className={`overflow-hidden ${bare ? "absolute inset-0" : "relative h-[300px] sm:h-[384px]"}`}>
-      <span className="sr-only">Loading the replay…</span>
-      <div aria-hidden className="absolute inset-x-2 top-6 bottom-[38%] animate-pulse rounded-xl bg-surface-2/60" />
-      <div aria-hidden className="absolute inset-x-2 bottom-8 h-[22%] animate-pulse rounded-xl bg-surface-2/40" />
+    <div role="status" className={`overflow-hidden ${bare ? "absolute inset-0" : "relative h-[330px] sm:h-[480px]"}`}>
+      <span className="v2-sr">Loading the replay…</span>
+      <span aria-hidden className="v2-skeleton absolute inset-x-2 top-6 bottom-[38%]" />
+      <span aria-hidden className="v2-skeleton absolute inset-x-2 bottom-8 h-[22%] opacity-60" />
     </div>
   );
 }

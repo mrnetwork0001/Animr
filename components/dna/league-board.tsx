@@ -2,24 +2,29 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useId, useMemo, useState } from "react";
+import { useConnection } from "wagmi";
+import { PulseIcon, SearchIcon } from "@/components/v2/icons";
+import { Badge, EmptyState, GlassCard, SectionTitle, StatRow, pillClass } from "@/components/v2/primitives";
 import type { TradingStyle } from "@/lib/agent/types";
 import { displayTraitValue } from "@/lib/brand-safety";
 import type { PopulationResponse, PopulationRow } from "@/lib/dna/types";
+import { useIsClient } from "../connect-button";
 import { useHiddenChogs } from "../hidden-chogs";
+import { useHoldings } from "../your-chogs";
 import { usePopulation } from "./api";
 import { ChogThumb } from "./chog-thumb";
 import { EdgeBadge } from "./edge-badge";
 import { TRAIT_FAMILIES, familyMembers } from "./families";
 import { StyleChip } from "./genome-card";
-import { DiceIcon } from "./icons";
+import { DiceIcon, PlayIcon } from "./icons";
 import type { LeagueIndex } from "./league-index";
 import {
   CHOG_COUNT,
   IN_SAMPLE_NOTE,
   SIM_LABEL,
+  WINDOW_LABEL,
   type WindowKey,
-  edgeTone,
   formatInt,
   parseChogId,
   parseWindow,
@@ -27,6 +32,7 @@ import {
   signedPct,
 } from "./shared";
 import { WindowPicker } from "./window-picker";
+import "./dna.css";
 
 const PAGE_SIZE = 50;
 const STYLES: TradingStyle[] = ["aggressive", "balanced", "cautious"];
@@ -46,10 +52,6 @@ const DIVISIONS: { key: Division; label: string; title: string }[] = [
 ];
 const isDivision = (value: string | null): value is Division => DIVISIONS.some((d) => d.key === value);
 const divisionOf = (row: PopulationRow): Division => (row.onchain ? "real" : row.claimed ? "claimed" : "wild");
-
-// Phones: rank | Chog | edge over replay. From sm: rank | Chog | trades | edge | replay.
-const GRID =
-  "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-x-2.5 sm:grid-cols-[2.75rem_minmax(0,1fr)_4.5rem_6.5rem_6rem] sm:gap-x-4";
 
 type Filters = {
   q: string;
@@ -140,6 +142,15 @@ function numericQuery(q: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
+/** The token ids the connected wallet holds (empty when disconnected), for the "Yours" highlight. */
+function useMyChogIds(): ReadonlySet<number> {
+  const isClient = useIsClient();
+  const connection = useConnection();
+  const address = isClient && connection.status === "connected" ? connection.address : undefined;
+  const holdings = useHoldings(address);
+  return useMemo(() => new Set((holdings.data?.chogs ?? []).map((chog) => chog.tokenId)), [holdings.data]);
+}
+
 /**
  * The league: all 1,969 Chogs ranked by their genome's simulated edge over holding $CHOG, with search,
  * filters (division, style, archetype, trait), sorting, pagination and a Random Chog button. Filters
@@ -151,10 +162,17 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
   const [span, setSpan] = useState<WindowKey>(() => parseWindow(params.get("window")));
   const [filters, setFilters] = useState<Filters>(() => readFilters(params));
   const [page, setPage] = useState(1);
-  const { data, error, isFetching, refetch } = usePopulation(span);
+  const population = usePopulation(span);
+  const { error, isFetching, refetch } = population;
+  // The server renders the loading state; the field above may have filled the shared query before this boundary
+  // hydrates, so the data only shows after hydration (no mismatch).
+  const hydrated = useIsClient();
+  const data = hydrated ? population.data : undefined;
   const hidden = useHiddenChogs();
+  const mine = useMyChogIds();
   const searchId = useId();
   const listId = useId();
+  const titleId = useId();
 
   // A link to /league?… while this page is open (same route, new params) resets the view to it;
   // our own replaceState below lands here too, but then the URL already matches the view.
@@ -284,108 +302,107 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
     return counts;
   }, [data]);
   const exact = numericQuery(filters.q);
+  // The edge bars share one scale: the widest edge in the whole league (rows are sorted best first).
+  const maxAbs = data?.rows.length
+    ? Math.max(1, Math.abs(data.rows[0].edgePct), Math.abs(data.rows[data.rows.length - 1].edgePct))
+    : 1;
+  const divisionEmpty = filters.division !== "" && divisionCounts[filters.division] === 0;
 
   return (
-    <section aria-label="Chog league" className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-subtle">
-          {SIM_LABEL}
-          {data && <> · {data.window.label}</>}
-          <span className="block">{IN_SAMPLE_NOTE}</span>
-        </p>
-        <WindowPicker
-          value={span}
-          onChange={(value) => {
-            setSpan(value);
-            setPage(1);
-          }}
-        />
-      </div>
-
-      {data ? <StatsStrip data={data} /> : <StatsSkeleton />}
-
-      <div className="card space-y-3 p-3 sm:p-4">
-        <div className="flex gap-2">
-          <label htmlFor={searchId} className="sr-only">
-            Search Chogs
-          </label>
-          <input
-            id={searchId}
-            type="search"
-            value={filters.q}
-            onChange={(e) => update({ q: e.target.value })}
-            placeholder="Search: 7, CHOG #1462, laser, crown…"
-            autoComplete="off"
-            className="input min-w-0 flex-1"
+    <section aria-labelledby={titleId} className="v2-section">
+      <SectionTitle
+        id={titleId}
+        kicker="Standings"
+        title="Every Chog, ranked"
+        description={
+          <>
+            {SIM_LABEL}
+            {data && <> · {data.window.label}</>}. {IN_SAMPLE_NOTE}
+          </>
+        }
+        action={
+          <WindowPicker
+            value={span}
+            onChange={(value) => {
+              setSpan(value);
+              setPage(1);
+            }}
           />
+        }
+      />
+
+      <GlassCard padding="tight" className="space-y-3.5">
+        <div className="flex gap-2">
+          <div className="relative min-w-0 flex-1">
+            <label htmlFor={searchId} className="v2-sr">
+              Search Chogs
+            </label>
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-[var(--v2-faint)]" />
+            <input
+              id={searchId}
+              type="search"
+              value={filters.q}
+              onChange={(e) => update({ q: e.target.value })}
+              placeholder="Search: 7, CHOG #1462, laser, crown…"
+              autoComplete="off"
+              className="v2-input h-11 rounded-full pl-11"
+            />
+          </div>
           <button
             type="button"
             onClick={() => router.push(`/replay/${randomChogId(undefined, hidden)}`)}
             aria-label="Random Chog"
-            className="btn btn-primary shrink-0 px-3 sm:px-4"
+            className={`${pillClass("primary")} h-11 shrink-0 px-4 sm:px-5`}
           >
-            <DiceIcon className="size-5 sm:size-4" />
+            <DiceIcon className="size-5 sm:size-[18px]" />
             <span aria-hidden className="hidden sm:inline">
               Random Chog
             </span>
           </button>
         </div>
 
-        {/* The three divisions; phones: one row that scrolls sideways. */}
-        <div
-          role="group"
-          aria-label="Division"
-          className="-mx-3 flex w-[calc(100%+1.5rem)] gap-1 overflow-x-auto px-3 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0"
-        >
-          {([{ key: "", label: "All divisions", title: "Every Chog" }, ...DIVISIONS] as const).map((division) => (
-            <button
-              key={division.key || "all"}
-              type="button"
-              title={division.title}
-              aria-pressed={filters.division === division.key}
-              onClick={() => update({ division: division.key })}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                filters.division === division.key
-                  ? "bg-accent/20 text-foreground ring-accent/50"
-                  : "text-muted ring-line hover:text-foreground"
-              }`}
-            >
-              {division.label}
-              {division.key && data && (
-                <span className="ml-1 font-mono text-[11px] text-subtle tabular-nums">{formatInt(divisionCounts[division.key])}</span>
-              )}
-            </button>
-          ))}
-        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
+          {/* The three divisions; phones: one row that scrolls sideways. */}
+          <div role="group" aria-label="Division" className="dna-scroll-x -mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-auto sm:px-0">
+            {([{ key: "", label: "All divisions", title: "Every Chog" }, ...DIVISIONS] as const).map((division) => (
+              <button
+                key={division.key || "all"}
+                type="button"
+                title={division.title}
+                aria-pressed={filters.division === division.key}
+                onClick={() => update({ division: division.key })}
+                className="v2-chip h-8 shrink-0 cursor-pointer px-3"
+              >
+                {division.label}
+                {division.key && data && (
+                  <span className="v2-num text-[var(--v2-faint)]">{formatInt(divisionCounts[division.key])}</span>
+                )}
+              </button>
+            ))}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Phones: one row that scrolls sideways. */}
-          <div
-            role="group"
-            aria-label="Trading style"
-            className="-mx-3 flex w-[calc(100%+1.5rem)] gap-1 overflow-x-auto px-3 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0"
-          >
+          <span aria-hidden className="v2-vr hidden h-5 self-center lg:block" />
+
+          <div role="group" aria-label="Trading style" className="dna-scroll-x -mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-auto sm:px-0">
             {(["", ...STYLES] as const).map((style) => (
               <button
                 key={style || "all"}
                 type="button"
                 aria-pressed={filters.style === style}
                 onClick={() => update({ style })}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${style ? "capitalize" : ""} ${
-                  filters.style === style ? "bg-accent/20 text-foreground ring-accent/50" : "text-muted ring-line hover:text-foreground"
-                }`}
+                className={`v2-chip h-8 shrink-0 cursor-pointer px-3 ${style ? "capitalize" : ""}`}
               >
                 {style || "All styles"}
               </button>
             ))}
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto lg:ml-auto">
             <select
               aria-label="Archetype"
               value={filters.archetype}
               onChange={(e) => update({ archetype: e.target.value })}
-              className="input min-w-0 py-1.5 text-xs sm:w-auto sm:max-w-56"
+              className="v2-select dna-select-sm min-w-0 sm:w-auto sm:max-w-60"
             >
               <option value="">All archetypes</option>
               {archetypes.options.map(([archetype, count]) => (
@@ -400,7 +417,7 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
                 aria-label="Trait"
                 value={trait ? trait.id : ""}
                 onChange={(e) => update({ trait: e.target.value })}
-                className="input min-w-0 py-1.5 text-xs sm:w-auto sm:max-w-64"
+                className="v2-select dna-select-sm min-w-0 sm:w-auto sm:max-w-64"
               >
                 <option value="">Any trait</option>
                 {traitOptions.map(({ type, options }) => (
@@ -416,54 +433,69 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
             )}
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {!data ? (
         error ? (
-          <div role="alert" className="card border-danger/40 px-6 py-10 text-center">
-            <p className="font-medium text-danger">Couldn&apos;t load the league</p>
-            <p className="mt-1 break-words font-mono text-xs text-muted">{error.message}</p>
-            <button type="button" onClick={() => refetch()} disabled={isFetching} className="btn btn-secondary mt-5">
-              {isFetching ? "Retrying…" : "Try again"}
-            </button>
+          <div role="alert" className="mt-4">
+            <EmptyState
+              icon={<PulseIcon />}
+              title="Couldn't load the league"
+              body={<span className="v2-mono break-words">{error.message}</span>}
+              actions={
+                <button type="button" onClick={() => refetch()} disabled={isFetching} className={pillClass("glass")}>
+                  {isFetching ? "Retrying…" : "Try again"}
+                </button>
+              }
+            />
           </div>
         ) : (
           <ListSkeleton />
         )
       ) : (
-        <div id={listId} className="scroll-mt-28 md:scroll-mt-24">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p aria-live="polite" className="text-xs text-subtle">
-              {filtering ? `${formatInt(rows.length)} of ${formatInt(data.rows.length)} Chogs match` : `${formatInt(rows.length)} Chogs`}
+        <div id={listId} className="mt-4 scroll-mt-28">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-1">
+            <p aria-live="polite" className="text-[13px] text-[var(--v2-nav)]">
+              {filtering ? (
+                <>
+                  <span className="v2-num text-[var(--v2-ink)]">{formatInt(rows.length)}</span> of {formatInt(data.rows.length)}{" "}
+                  Chogs match
+                </>
+              ) : (
+                <>
+                  <span className="v2-num text-[var(--v2-ink)]">{formatInt(rows.length)}</span> Chogs
+                </>
+              )}
               {trait && <> · {trait.label}</>}
               {filtering && rows.length > 0 && <SubsetStats rows={rows} />}
             </p>
-            <select
-              aria-label="Sort"
-              value={filters.sort}
-              onChange={(e) => update({ sort: e.target.value as Sort })}
-              className="input w-auto py-1 text-xs"
-            >
-              {(Object.keys(SORT_LABEL) as Sort[]).map((sort) => (
-                <option key={sort} value={sort}>
-                  {SORT_LABEL[sort]}
-                </option>
-              ))}
-            </select>
+            <label className="flex items-center gap-2 text-[13px] text-[var(--v2-faint)]">
+              Sort
+              <select
+                value={filters.sort}
+                onChange={(e) => update({ sort: e.target.value as Sort })}
+                className="v2-select dna-select-sm h-9 w-auto"
+              >
+                {(Object.keys(SORT_LABEL) as Sort[]).map((sort) => (
+                  <option key={sort} value={sort}>
+                    {SORT_LABEL[sort]}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           {rows.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-              <p className="font-medium">
-                {filters.division && divisionCounts[filters.division] === 0 ? "Nobody in this division yet" : "No Chog matches that"}
-              </p>
-              <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
-                {filters.division && divisionCounts[filters.division] === 0 ? (
+            <EmptyState
+              icon={<SearchIcon />}
+              title={divisionEmpty ? "Nobody in this division yet" : "No Chog matches that"}
+              body={
+                divisionEmpty ? (
                   filters.division === "real" ? (
                     <>
-                      A holder moves their Chog here from its page: create its wallet, grant AnimrTradeGuard, set limits
-                      and deposit. Then its AI trades the real $CHOG and can never withdraw.{" "}
-                      <Link href="/guard" className="text-accent-strong hover:underline">
+                      A holder moves their Chog here from its page: create its wallet, grant AnimrTradeGuard, set limits and
+                      deposit. Then its AI trades the real $CHOG and can never withdraw.{" "}
+                      <Link href="/guard" className="v2-link">
                         How the guard works
                       </Link>
                     </>
@@ -474,101 +506,97 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
                   `Chog token IDs run from 1 to ${formatInt(CHOG_COUNT)}.`
                 ) : (
                   "Try a token ID, a trait like “laser” or clear the filters."
-                )}
-              </p>
-              <button
-                type="button"
-                onClick={() => update({ q: "", style: "", archetype: "", trait: "", division: "" })}
-                className="btn btn-secondary mt-5"
-              >
-                {filters.division && divisionCounts[filters.division] === 0 ? "See every Chog" : "Clear filters"}
-              </button>
-            </div>
+                )
+              }
+              actions={
+                <button
+                  type="button"
+                  onClick={() => update({ q: "", style: "", archetype: "", trait: "", division: "" })}
+                  className={pillClass("glass")}
+                >
+                  {divisionEmpty ? "See every Chog" : "Clear filters"}
+                </button>
+              }
+            />
           ) : (
-            <div className="card overflow-hidden">
-              <div
-                aria-hidden
-                className={`${GRID} hidden border-b border-line px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-subtle sm:grid`}
-              >
-                <span>Rank</span>
-                <span>Chog</span>
-                <span className="text-right">Trades</span>
-                <span className="text-right">vs holding</span>
-                <span />
-              </div>
-              <ol>
-                {visible.map((row) => (
-                  <LeagueRow key={row.tokenId} row={row} focused={row.tokenId === filters.focus} />
-                ))}
-              </ol>
+            <div className="v2-table-wrap">
+              <table className="v2-table dna-league">
+                <caption className="v2-sr">
+                  Chogs ranked by their genome&apos;s simulated edge versus simply holding $CHOG,{" "}
+                  {WINDOW_LABEL[span] === "All" ? "over all history" : `over ${WINDOW_LABEL[span]}`}. Page {current} of {pages}.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Chog</th>
+                    <th scope="col" className="v2-hide-sm">
+                      Style
+                    </th>
+                    <th scope="col" className="is-num v2-hide-sm">
+                      Trades
+                    </th>
+                    <th scope="col" className="w-[180px] max-md:hidden">
+                      <span className="flex justify-between gap-2">
+                        <span>Behind</span>
+                        <span>Ahead</span>
+                      </span>
+                    </th>
+                    <th scope="col" className="is-num">
+                      vs holding
+                    </th>
+                    <th scope="col">
+                      <span className="v2-sr">Time Machine</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((row) => (
+                    <LeagueRow
+                      key={row.tokenId}
+                      row={row}
+                      maxAbs={maxAbs}
+                      focused={row.tokenId === filters.focus}
+                      mine={mine.has(row.tokenId)}
+                    />
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
           {pages > 1 && (
-            <nav aria-label="League pages" className="mt-4 flex items-center justify-between gap-3 text-sm">
+            <nav aria-label="League pages" className="mt-4 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => goTo(current - 1)}
                 disabled={current <= 1}
-                className="btn btn-secondary"
+                className={pillClass("glass", "sm")}
               >
-                ‹ Prev
+                <span aria-hidden>‹</span> Prev
               </button>
-              <span className="text-xs text-muted tabular-nums">
-                {formatInt((current - 1) * PAGE_SIZE + 1)}–{formatInt(Math.min(current * PAGE_SIZE, rows.length))} of{" "}
-                {formatInt(rows.length)} · page {current} of {pages}
+              <span className="text-center text-[13px] text-[var(--v2-faint)]">
+                <span className="v2-num text-[var(--v2-nav)]">
+                  {formatInt((current - 1) * PAGE_SIZE + 1)}–{formatInt(Math.min(current * PAGE_SIZE, rows.length))}
+                </span>{" "}
+                of {formatInt(rows.length)}
+                <span className="max-sm:hidden">
+                  {" "}
+                  · page {current} of {pages}
+                </span>
               </span>
               <button
                 type="button"
                 onClick={() => goTo(current + 1)}
                 disabled={current >= pages}
-                className="btn btn-secondary"
+                className={pillClass("glass", "sm")}
               >
-                Next ›
+                Next <span aria-hidden>›</span>
               </button>
             </nav>
           )}
         </div>
       )}
     </section>
-  );
-}
-
-function StatsStrip({ data }: { data: PopulationResponse }) {
-  const { stats, rows } = data;
-  // The rates are the whole collection's (all 1,969, Chogs their holders hid included); the top and bottom tiles
-  // name a Chog, so they show the best and worst Chogs on show, with their own edges.
-  const best = rows[0];
-  const worst = rows[rows.length - 1];
-  const bestEdge = best?.edgePct ?? stats.bestEdgePct;
-  const worstEdge = worst?.edgePct ?? stats.worstEdgePct;
-  return (
-    <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Tile label="Beat just holding" value={`${Math.round(stats.beatHoldPct)}%`} hint={`of ${formatInt(CHOG_COUNT)} Chogs`} />
-      <Tile label="Median Chog" value={signedPct(stats.medianEdgePct)} tone={edgeTone(stats.medianEdgePct)} hint="vs holding $CHOG" />
-      <Tile
-        label="Top trader"
-        value={signedPct(bestEdge)}
-        tone={edgeTone(bestEdge)}
-        hint={best ? <Link href={`/replay/${best.tokenId}`} className="hover:text-foreground hover:underline">Chog #{best.tokenId} ▶</Link> : undefined}
-      />
-      <Tile
-        label="Most rekt"
-        value={signedPct(worstEdge)}
-        tone={edgeTone(worstEdge)}
-        hint={worst ? <Link href={`/replay/${worst.tokenId}`} className="hover:text-foreground hover:underline">Chog #{worst.tokenId} ▶</Link> : undefined}
-      />
-    </dl>
-  );
-}
-
-function Tile({ label, value, hint, tone = "" }: { label: string; value: string; hint?: ReactNode; tone?: string }) {
-  return (
-    <div className="card px-3 py-2.5 sm:px-4 sm:py-3">
-      <dt className="text-[11px] font-medium uppercase tracking-wider text-subtle">{label}</dt>
-      <dd className={`mt-1 font-mono text-xl font-semibold tabular-nums sm:text-2xl ${tone}`}>{value}</dd>
-      {hint && <dd className="mt-0.5 text-xs text-muted">{hint}</dd>}
-    </div>
   );
 }
 
@@ -580,124 +608,325 @@ function SubsetStats({ rows }: { rows: PopulationRow[] }) {
   return (
     <>
       {" "}
-      · median <span className={`font-mono ${edgeTone(median)}`}>{signedPct(median)}</span> · {Math.round(beat)}% beat holding
+      · median <EdgeBadge pct={median} /> · <span className="v2-num">{Math.round(beat)}%</span> beat holding
     </>
   );
 }
 
-function LeagueRow({ row, focused = false }: { row: PopulationRow; focused?: boolean }) {
-  const top = row.rank <= 3 ? ["text-warning", "text-foreground", "text-orange-300"][row.rank - 1] : "text-subtle";
+/** The edge as a bar from the "just holding" hairline, on the league-wide scale. Decorative: the number is beside it. */
+function EdgeBar({ pct, maxAbs }: { pct: number; maxAbs: number }) {
+  const width = Math.min(50, (Math.abs(pct) / maxAbs) * 50);
+  if (!Number.isFinite(pct) || width < 0.4) return <span aria-hidden className="dna-dbar" />;
   return (
-    <li
+    <span aria-hidden className="dna-dbar">
+      <span data-tone={pct > 0 ? "up" : "down"} style={{ width: `${width}%` }} />
+    </span>
+  );
+}
+
+function LeagueRow({
+  row,
+  maxAbs,
+  focused = false,
+  mine = false,
+}: {
+  row: PopulationRow;
+  maxAbs: number;
+  focused?: boolean;
+  mine?: boolean;
+}) {
+  return (
+    <tr
       id={`league-row-${row.tokenId}`}
       aria-current={focused ? "true" : undefined}
-      className={`relative scroll-mt-28 border-b border-line/60 transition-colors last:border-0 hover:bg-accent/[0.06] md:scroll-mt-24 ${
-        focused ? "bg-accent/[0.12] ring-2 ring-inset ring-accent/60" : ""
-      }`}
+      className={`scroll-mt-28 ${focused || mine ? "is-highlight" : ""} ${focused ? "dna-focus" : ""}`}
     >
-      <div className={`${GRID} px-3 py-2.5 sm:px-4`}>
-        <span className={`font-mono text-xs font-semibold tabular-nums sm:text-sm ${top}`}>
-          <span className="sr-only">Rank </span>
-          {row.rank}
-        </span>
+      <td className={`is-rank ${row.rank <= 3 ? "dna-rank-top" : ""}`}>
+        <span className="v2-sr">Rank </span>
+        {formatInt(row.rank)}
+      </td>
 
-        <span className="flex min-w-0 items-center gap-3">
-          <ChogThumb image={row.image} tokenId={row.tokenId} size={40} box="size-9 sm:size-10" className="rounded-xl" />
+      <td className="dna-fill">
+        <span className="v2-table-cell-chog min-w-0">
+          <ChogThumb
+            image={row.image}
+            tokenId={row.tokenId}
+            size={40}
+            box="size-9 sm:size-10"
+            className="rounded-[10px] border border-[var(--v2-line)]"
+          />
           <span className="min-w-0">
-            <span className="flex items-center gap-2">
+            <span className="flex min-w-0 items-center gap-2">
               {/* The name's ::after stretches over the row, so the whole row opens the profile. */}
-              <Link
-                href={`/chog/${row.tokenId}`}
-                className="truncate font-semibold text-foreground after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-accent"
-              >
+              <Link href={`/chog/${row.tokenId}`} className="dna-row-link truncate">
                 Chog #{row.tokenId}
               </Link>
+              {mine && (
+                <Badge tone="teal" className="h-5 px-1.5 text-[10px]">
+                  Yours
+                </Badge>
+              )}
               {row.claimed && (
                 <span
+                  className="max-sm:hidden"
                   title={
                     row.onchain
                       ? "Real wallet: its AI trades the real $CHOG in its own wallet through AnimrTradeGuard"
                       : "Claimed: an owner woke this Chog's live AI (0G Compute)"
                   }
-                  className="shrink-0 rounded bg-success/10 px-1.5 py-px text-[10px] font-medium uppercase tracking-wider text-success ring-1 ring-inset ring-success/30"
                 >
-                  {row.onchain ? "real wallet" : "claimed"}
+                  <Badge tone={row.onchain ? "teal" : "violet"} dot={row.onchain} className="h-5 px-1.5 text-[10px]">
+                    {row.onchain ? "Real wallet" : "Claimed"}
+                  </Badge>
                 </span>
               )}
             </span>
-            <span className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-muted">
-              <span className="truncate">{row.archetype}</span>
-              <span className="hidden sm:inline-flex">
-                <StyleChip style={row.style} />
-              </span>
+            <span className="mt-0.5 block truncate text-xs font-normal text-[var(--v2-nav)]">
+              {row.archetype}
+              <span className="text-[var(--v2-faint)]"> · {row.name}</span>
             </span>
-            <span className="mt-0.5 block truncate text-[11px] text-subtle">{row.name}</span>
           </span>
         </span>
+      </td>
 
-        <span className="hidden text-right font-mono text-sm tabular-nums text-muted sm:block">
-          {row.trades}
-          <span className="sr-only"> trades</span>
-        </span>
+      <td className="v2-hide-sm">
+        <StyleChip style={row.style} />
+      </td>
 
-        {/* Stacked on phones; `sm:contents` turns the two into their own grid columns. */}
-        <span className="flex flex-col items-end gap-1.5 sm:contents">
-          <span className="sm:text-right">
-            <span className="sr-only">Edge vs holding </span>
-            <EdgeBadge pct={row.edgePct} />
+      <td className="is-num v2-hide-sm text-[var(--v2-nav)]">
+        {row.trades}
+        <span className="v2-sr"> trades</span>
+      </td>
+
+      <td className="max-md:hidden">
+        <EdgeBar pct={row.edgePct} maxAbs={maxAbs} />
+      </td>
+
+      <td className="is-num">
+        <span className="v2-sr">Edge vs holding </span>
+        <EdgeBadge pct={row.edgePct} className="text-[15px]" />
+      </td>
+
+      <td className="w-px text-right">
+        <Link
+          href={`/replay/${row.tokenId}`}
+          aria-label={`Replay Chog #${row.tokenId} in the Time Machine`}
+          className={`${pillClass("glass", "sm")} dna-above h-8 gap-1.5 px-3 max-sm:w-8 max-sm:px-0`}
+        >
+          <PlayIcon className="size-3.5 text-[var(--v2-teal)]" />
+          <span aria-hidden className="max-sm:hidden">
+            Replay
           </span>
-          <Link
-            href={`/replay/${row.tokenId}`}
-            aria-label={`Replay Chog #${row.tokenId} in the Time Machine`}
-            className="btn btn-secondary relative z-10 px-2 py-0.5 text-[11px] sm:justify-self-end sm:px-2.5 sm:py-1 sm:text-xs"
-          >
-            <span aria-hidden>▶</span> Replay
-          </Link>
-        </span>
-      </div>
-    </li>
-  );
-}
-
-function StatsSkeleton() {
-  return (
-    <div aria-hidden className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="card space-y-2 px-4 py-3">
-          <span className="block h-3 w-20 animate-pulse rounded bg-surface-2" />
-          <span className="block h-7 w-24 animate-pulse rounded bg-surface-2" />
-        </div>
-      ))}
-    </div>
+        </Link>
+      </td>
+    </tr>
   );
 }
 
 function ListSkeleton() {
   return (
-    <div role="status" className="card overflow-hidden">
-      <span className="sr-only">Loading all 1,969 Chogs…</span>
+    <div role="status" className="v2-table-wrap mt-4">
+      <span className="v2-sr">Loading all 1,969 Chogs…</span>
+      <div aria-hidden className="h-11 border-b border-[var(--v2-line)]" />
       {Array.from({ length: 8 }, (_, i) => (
-        <div key={i} aria-hidden className="flex items-center gap-3 border-b border-line/60 px-4 py-3 last:border-0">
-          <span className="h-4 w-6 animate-pulse rounded bg-surface-2" />
-          <span className="size-10 animate-pulse rounded-xl bg-surface-2" />
+        <div key={i} aria-hidden className="flex items-center gap-4 border-b border-[var(--v2-line-soft)] px-5 py-3.5 last:border-0">
+          <span className="v2-skeleton v2-skeleton--text w-6" />
+          <span className="v2-skeleton size-10 rounded-[10px]" />
           <span className="flex-1 space-y-2">
-            <span className="block h-3 w-28 animate-pulse rounded bg-surface-2" />
-            <span className="block h-3 w-40 animate-pulse rounded bg-surface-2/60" />
+            <span className="v2-skeleton v2-skeleton--text w-28" />
+            <span className="v2-skeleton v2-skeleton--text w-44 opacity-60" />
           </span>
-          <span className="h-5 w-16 animate-pulse rounded-full bg-surface-2" />
+          <span className="v2-skeleton v2-skeleton--text hidden w-36 md:block" />
+          <span className="v2-skeleton v2-skeleton--text w-14" />
         </div>
       ))}
     </div>
   );
 }
 
-/** Suspense fallback for the league page. */
+/** Suspense fallback for the board (the page reads its filters from the URL). */
 export function LeagueSkeleton() {
   return (
-    <div className="space-y-5">
-      <StatsSkeleton />
-      <div aria-hidden className="card h-28 animate-pulse" />
+    <div className="v2-section">
+      <div aria-hidden className="v2-section-title">
+        <span className="space-y-3">
+          <span className="v2-skeleton v2-skeleton--text w-20" />
+          <span className="v2-skeleton v2-skeleton--title w-64" />
+        </span>
+      </div>
+      <span aria-hidden className="v2-skeleton block h-[118px] rounded-[var(--v2-r-lg)] sm:h-[124px]" />
       <ListSkeleton />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// The field: the page header's aside. Every Chog's edge as one histogram, then the median, the top and the rekt.
+
+function niceStep(raw: number): number {
+  const magnitude = 10 ** Math.floor(Math.log10(raw || 1));
+  const norm = raw / magnitude;
+  return (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * magnitude;
+}
+
+/** ~30–40 bins across the 1st–99th percentile (the tails fold into the end bins), with 0 on a bin edge. */
+function binEdges(rows: PopulationRow[]) {
+  const sorted = rows.map((row) => row.edgePct).filter(Number.isFinite).sort((a, b) => a - b);
+  const n = sorted.length;
+  const at = (p: number) => sorted[Math.min(n - 1, Math.max(0, Math.round(p * (n - 1))))];
+  const lo = Math.min(at(0.01), -1);
+  const hi = Math.max(at(0.99), 1);
+  const width = niceStep((hi - lo) / 34);
+  const start = Math.floor(lo / width) * width;
+  const end = Math.ceil(hi / width) * width;
+  const counts = new Array<number>(Math.max(1, Math.round((end - start) / width))).fill(0);
+  for (const edge of sorted) counts[Math.min(counts.length - 1, Math.max(0, Math.floor((edge - start) / width)))]++;
+  const mid = n >> 1;
+  const median = n === 0 ? 0 : n % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  return { counts, start, end, width, median };
+}
+
+/**
+ * The League's header panel: all 1,969 edges as a histogram around the "just holding" line, the share that beat
+ * it, and the median, best and worst Chogs on show. Follows the board's window through the URL (?window=).
+ */
+export function LeagueField() {
+  const params = useSearchParams();
+  const span = parseWindow(params.get("window"));
+  const { data } = usePopulation(span);
+  // As in the board: the server renders the skeleton, so the data waits for hydration.
+  const hydrated = useIsClient();
+  if (!data || !hydrated) return <LeagueFieldSkeleton />;
+  return <FieldPanel data={data} span={span} />;
+}
+
+function FieldPanel({ data, span }: { data: PopulationResponse; span: WindowKey }) {
+  const { stats, rows } = data;
+  const bins = useMemo(() => binEdges(rows), [rows]);
+  // The rates are the whole collection's (all 1,969, Chogs their holders hid included); the top and bottom
+  // name a Chog, so they show the best and worst Chogs on show, with their own edges.
+  const best = rows[0];
+  const worst = rows[rows.length - 1];
+  const bestEdge = best?.edgePct ?? stats.bestEdgePct;
+  const worstEdge = worst?.edgePct ?? stats.worstEdgePct;
+  const peak = Math.max(1, ...bins.counts);
+  const span01 = (value: number) => (value - bins.start) / (bins.end - bins.start);
+  const medianBin = Math.floor((bins.median - bins.start) / bins.width);
+  const beat = Math.round(stats.beatHoldPct);
+  const barW = 10;
+
+  return (
+    <GlassCard feature as="section" aria-label="The field" className="p-5 sm:p-6">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div>
+          <p className="v2-kicker">The field · {WINDOW_LABEL[span] === "All" ? "all history" : WINDOW_LABEL[span]}</p>
+          <p className="mt-2 flex items-baseline gap-2.5 text-[var(--v2-nav)]">
+            <span className="v2-num text-[length:var(--v2-fs-stat)] leading-none text-[var(--v2-ink)]">{beat}%</span>
+            <span className="text-sm">
+              of {formatInt(CHOG_COUNT)} beat
+              <br />
+              just holding $CHOG
+            </span>
+          </p>
+        </div>
+        <ul className="v2-legend pb-1 text-[11.5px]" aria-hidden>
+          <li>
+            <span className="v2-legend-swatch" style={{ "--v2-swatch": "var(--v2-chart-1)" } as CSSProperties} />
+            Ahead
+          </li>
+          <li>
+            <span className="v2-legend-swatch" style={{ "--v2-swatch": "var(--v2-danger)", boxShadow: "none" } as CSSProperties} />
+            Behind
+          </li>
+        </ul>
+      </div>
+
+      <div
+        role="img"
+        aria-label={`How all ${formatInt(CHOG_COUNT)} Chogs did against just holding: ${beat}% ahead, median ${signedPct(bins.median)}, from ${signedPct(worstEdge)} to ${signedPct(bestEdge)}.`}
+        className="dna-field mt-7"
+      >
+        <svg viewBox={`0 0 ${bins.counts.length * barW} 100`} preserveAspectRatio="none" aria-hidden>
+          {bins.counts.map((count, i) => {
+            const h = count === 0 ? 0 : Math.max(2, (count / peak) * 100);
+            const ahead = bins.start + i * bins.width >= 0;
+            return (
+              <rect
+                key={i}
+                x={i * barW + 1.2}
+                y={100 - h}
+                width={barW - 2.4}
+                height={h}
+                rx={1.4}
+                fill={ahead ? "var(--v2-chart-1)" : "var(--v2-danger)"}
+                fillOpacity={i === medianBin ? 0.95 : 0.6}
+              />
+            );
+          })}
+        </svg>
+        <span aria-hidden className="dna-field-zero" style={{ left: `${span01(0) * 100}%` }}>
+          <span>just holding</span>
+        </span>
+      </div>
+      <div aria-hidden className="dna-field-axis">
+        <span>{signedPct(bins.start, 0)}</span>
+        <span>{signedPct(bins.end, 0)}+</span>
+      </div>
+
+      <StatRow
+        size="sm"
+        inline
+        className="mt-6 border-t border-[var(--v2-line-soft)] pt-5"
+        stats={[
+          { key: "median", label: "Median Chog", value: signedPct(stats.medianEdgePct), tone: toneOf(stats.medianEdgePct) },
+          {
+            key: "best",
+            label: "Top",
+            hint: best ? (
+              <Link href={`/replay/${best.tokenId}`} className="v2-link font-normal">
+                #{best.tokenId}
+              </Link>
+            ) : undefined,
+            value: signedPct(bestEdge),
+            tone: toneOf(bestEdge),
+          },
+          {
+            key: "worst",
+            label: "Most rekt",
+            hint: worst ? (
+              <Link href={`/replay/${worst.tokenId}`} className="v2-link font-normal">
+                #{worst.tokenId}
+              </Link>
+            ) : undefined,
+            value: signedPct(worstEdge),
+            tone: toneOf(worstEdge),
+          },
+        ]}
+      />
+    </GlassCard>
+  );
+}
+
+const toneOf = (pct: number): "up" | "down" | undefined =>
+  !Number.isFinite(pct) || Math.abs(pct) < 0.05 ? undefined : pct > 0 ? "up" : "down";
+
+export function LeagueFieldSkeleton() {
+  return (
+    <div role="status" className="v2-card p-5 sm:p-6">
+      <span className="v2-sr">Loading the field…</span>
+      <span aria-hidden className="block space-y-3">
+        <span className="v2-skeleton v2-skeleton--text w-32" />
+        <span className="v2-skeleton v2-skeleton--title w-40" />
+      </span>
+      <span aria-hidden className="v2-skeleton mt-7 block h-[112px]" />
+      <span aria-hidden className="mt-6 grid grid-cols-3 gap-4 border-t border-[var(--v2-line-soft)] pt-5">
+        {Array.from({ length: 3 }, (_, i) => (
+          <span key={i} className="space-y-2">
+            <span className="v2-skeleton v2-skeleton--title w-20" />
+            <span className="v2-skeleton v2-skeleton--text w-16" />
+          </span>
+        ))}
+      </span>
     </div>
   );
 }

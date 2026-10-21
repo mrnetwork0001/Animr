@@ -21,10 +21,11 @@ export function parseWindow(raw: string | null | undefined): WindowKey {
   return (WINDOWS as readonly string[]).includes(raw ?? "") ? (raw as WindowKey) : DEFAULT_WINDOW;
 }
 
+/** A trading style's v2 badge tone (components/v2): violet runs hot, teal runs cool, balanced stays neutral. */
 export const STYLE_TONE: Record<TradingStyle, string> = {
-  aggressive: "bg-warning/10 text-warning ring-warning/25",
-  balanced: "bg-accent/10 text-accent-strong ring-accent/30",
-  cautious: "bg-sky-400/10 text-sky-300 ring-sky-400/25",
+  aggressive: "v2-badge--violet",
+  balanced: "",
+  cautious: "v2-badge--teal",
 };
 
 /** Canonical token id (1–1969) from a route param or user input ("7", "#7", "007"), else null. */

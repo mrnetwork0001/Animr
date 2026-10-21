@@ -9,8 +9,14 @@ import { formatDay, formatPrice, signedPct } from "./shared";
 
 export type Series = { tokenId: number; result: ReplayResult };
 
-/** Line colors: the Chog, then its rival in a race. */
-export const SERIES_COLOR = ["var(--color-accent-strong)", "var(--color-warning)"] as const;
+/** Line colors (v2 chart tokens): the Chog in teal, its rival in a race in violet. */
+export const SERIES_COLOR = ["var(--v2-chart-1)", "var(--v2-chart-2)"] as const;
+/** Text-safe versions of the same two (violet text needs the lighter ink on near-black). */
+export const SERIES_INK = ["var(--v2-teal)", "var(--v2-violet-ink)"] as const;
+
+/** The subject line's one glow (components/v2/README.md, "Charts: quick recipe"). */
+const GLOW = "drop-shadow(0 0 6px rgb(159 240 236 / 0.45))";
+const AXIS_TEXT = { fontFamily: "var(--v2-font-text)", fontSize: 11 } as const;
 
 /** How long a speech bubble stays up, as a share of the replayed window. */
 const BUBBLE_SHARE = 0.09;
@@ -135,6 +141,8 @@ export function Chart({
   const id = useId().replace(/[^\w-]/g, "");
   const single = series.length === 1;
   const headX = g.x0 + (g.x1 - g.x0) * progress;
+  const holdColor = single ? "var(--v2-chart-2)" : "var(--v2-chart-3)";
+  const holdInk = single ? "var(--v2-violet-ink)" : "var(--v2-nav)";
 
   // Everything static is built once per size/data; each frame only moves the clip, the playhead and dots.
   const staticLayers = useMemo(
@@ -147,60 +155,69 @@ export function Chart({
           <clipPath id={`${id}-below`}>
             <rect x={0} y={g.zeroY} width={width} height={height - g.zeroY} />
           </clipPath>
+          {/* The equity area: teal fading down to the hold line above it, a faint danger wash below it. */}
+          <linearGradient id={`${id}-up`} gradientUnits="userSpaceOnUse" x1="0" y1={g.valueTop} x2="0" y2={g.zeroY}>
+            <stop offset="0%" stopColor="var(--v2-chart-1)" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="var(--v2-chart-1)" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={`${id}-down`} gradientUnits="userSpaceOnUse" x1="0" y1={g.zeroY} x2="0" y2={g.valueBottom}>
+            <stop offset="0%" stopColor="var(--v2-danger)" stopOpacity="0" />
+            <stop offset="100%" stopColor="var(--v2-danger)" stopOpacity="0.16" />
+          </linearGradient>
           <linearGradient id={`${id}-price`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        {/* Grid and axes */}
+        {/* Grid: horizontal hairlines only, labels in faint Inter on the right. */}
         {g.edgeTicks.map((tick) => (
           <g key={tick}>
-            <line
-              x1={g.x0}
-              x2={g.x1}
-              y1={g.yEdge(tick)}
-              y2={g.yEdge(tick)}
-              stroke="var(--color-line)"
-              strokeWidth={1}
-              strokeDasharray={tick === 0 ? undefined : "2 4"}
-              opacity={tick === 0 ? 0 : 0.8}
-            />
-            <text x={g.x1 + 6} y={g.yEdge(tick) + 3.5} fontSize={10} fill="var(--color-subtle)" className="font-mono">
+            {tick !== 0 && (
+              <line x1={g.x0} x2={g.x1} y1={g.yEdge(tick)} y2={g.yEdge(tick)} stroke="var(--v2-chart-grid)" strokeWidth={1} />
+            )}
+            <text
+              x={g.x1 + 8}
+              y={g.yEdge(tick) + 3.5}
+              fill={tick === 0 ? holdInk : "var(--v2-chart-axis)"}
+              style={AXIS_TEXT}
+            >
               {tick === 0 ? "hold" : signedPct(tick, Math.abs(tick) < 10 && tick % 1 ? 1 : 0)}
             </text>
           </g>
         ))}
-        <text x={g.x1 + 6} y={g.priceTop + 8} fontSize={10} fill="var(--color-subtle)" className="font-mono">
+        <line x1={g.x0} x2={g.x1} y1={g.priceTop} y2={g.priceTop} stroke="var(--v2-chart-grid)" strokeWidth={1} />
+        <text x={g.x1 + 8} y={g.priceTop + 9} fill="var(--v2-chart-axis)" style={AXIS_TEXT}>
           {formatPrice(g.pHi)}
         </text>
-        <text x={g.x1 + 6} y={g.priceBottom} fontSize={10} fill="var(--color-subtle)" className="font-mono">
+        <text x={g.x1 + 8} y={g.priceBottom} fill="var(--v2-chart-axis)" style={AXIS_TEXT}>
           {formatPrice(g.pLo)}
         </text>
-        <text x={g.x0 + 2} y={g.priceTop - 7} fontSize={10} fill="var(--color-subtle)">
+        <text x={g.x0 + 2} y={g.priceTop - 8} fill="var(--v2-chart-axis)" style={AXIS_TEXT}>
           $CHOG price (WMON per $CHOG)
         </text>
         {g.timeTicks.map((t) => (
-          <text key={t} x={g.xOf(t)} y={height - 7} fontSize={10} fill="var(--color-subtle)" textAnchor="middle">
+          <text key={t} x={g.xOf(t)} y={height - 6} fill="var(--v2-chart-axis)" textAnchor="middle" style={AXIS_TEXT}>
             {formatDay(t)}
           </text>
         ))}
 
-        {/* "Just holding": known in advance, so it's drawn in full as the ghost to beat. */}
+        {/* "Just holding": known in advance, so it's drawn in full as the dashed ghost to beat (violet when it is
+            the one benchmark, neutral in a race, where violet is the rival). */}
         <line
           x1={g.x0}
           x2={g.x1}
           y1={g.zeroY}
           y2={g.zeroY}
-          stroke="var(--color-muted)"
-          strokeWidth={1.5}
-          strokeDasharray="5 5"
-          opacity={0.75}
+          stroke={holdColor}
+          strokeWidth={1.6}
+          strokeDasharray="4 5"
+          strokeLinecap="round"
         />
-        <line x1={g.x0} x2={g.x1} y1={g.priceBottom} y2={g.priceBottom} stroke="var(--color-line)" strokeWidth={1} />
+        <line x1={g.x0} x2={g.x1} y1={g.priceBottom} y2={g.priceBottom} stroke="var(--v2-chart-grid)" strokeWidth={1} />
       </>
     ),
-    [g, id, width, height],
+    [g, id, width, height, holdColor, holdInk],
   );
 
   const revealed = useMemo(
@@ -208,23 +225,27 @@ export function Chart({
       <>
         {single && (
           <>
-            <path d={g.area} fill="var(--color-success)" fillOpacity={0.14} clipPath={`url(#${id}-above)`} />
-            <path d={g.area} fill="var(--color-danger)" fillOpacity={0.14} clipPath={`url(#${id}-below)`} />
+            <path d={g.area} fill={`url(#${id}-up)`} clipPath={`url(#${id}-above)`} />
+            <path d={g.area} fill={`url(#${id}-down)`} clipPath={`url(#${id}-below)`} />
           </>
         )}
         <path d={g.priceArea} fill={`url(#${id}-price)`} />
-        <path d={g.priceLine} fill="none" stroke="var(--color-accent)" strokeOpacity={0.75} strokeWidth={1.25} strokeLinejoin="round" />
-        {series.map((s, i) => (
-          <path
-            key={s.tokenId}
-            d={g.lines[i]}
-            fill="none"
-            stroke={SERIES_COLOR[i]}
-            strokeWidth={2.25}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-        ))}
+        <path d={g.priceLine} fill="none" stroke="var(--v2-chart-3)" strokeOpacity={0.5} strokeWidth={1.25} strokeLinejoin="round" />
+        {/* The rival first, so the subject (and its one glow) draws on top. */}
+        {series
+          .map((s, i) => (
+            <path
+              key={s.tokenId}
+              d={g.lines[i]}
+              fill="none"
+              stroke={SERIES_COLOR[i]}
+              strokeWidth={2}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              style={i === 0 ? { filter: GLOW } : undefined}
+            />
+          ))
+          .reverse()}
         <TradeMarkers series={series[0]} g={g} />
       </>
     ),
@@ -248,28 +269,36 @@ export function Chart({
       <g clipPath={`url(#${id}-reveal)`}>{revealed}</g>
 
       {progress > 0 && progress < 1 && (
+        <line
+          x1={headX}
+          x2={headX}
+          y1={g.valueTop}
+          y2={g.priceBottom}
+          stroke="#ffffff"
+          strokeOpacity={0.22}
+          strokeWidth={1}
+        />
+      )}
+      {/* The playhead (or, at the end, the end marker): near-black dots ringed in each series' colour. */}
+      {progress > 0 && (
         <g>
-          <line
-            x1={headX}
-            x2={headX}
-            y1={g.valueTop}
-            y2={g.priceBottom}
-            stroke="var(--color-foreground)"
-            strokeOpacity={0.35}
-            strokeWidth={1}
-          />
-          {series.map((s, i) => (
-            <circle
-              key={s.tokenId}
-              cx={headX}
-              cy={g.yEdge(edgeOf(s, sampleAt(s.result.points, now, "value")))}
-              r={4.5}
-              fill={SERIES_COLOR[i]}
-              stroke="var(--color-background)"
-              strokeWidth={2}
-            />
-          ))}
-          <circle cx={headX} cy={g.yPrice(sampleAt(series[0].result.points, now, "price"))} r={3} fill="var(--color-accent)" />
+          {series
+            .map((s, i) => (
+              <circle
+                key={s.tokenId}
+                cx={headX}
+                cy={g.yEdge(edgeOf(s, sampleAt(s.result.points, now, "value")))}
+                r={4}
+                fill="var(--v2-bg)"
+                stroke={SERIES_COLOR[i]}
+                strokeWidth={2}
+                style={i === 0 ? { filter: GLOW } : undefined}
+              />
+            ))
+            .reverse()}
+          {progress < 1 && (
+            <circle cx={headX} cy={g.yPrice(sampleAt(series[0].result.points, now, "price"))} r={2.5} fill="var(--v2-chart-3)" />
+          )}
         </g>
       )}
     </svg>
@@ -285,13 +314,9 @@ function TradeMarkers({ series, g }: { series: Series; g: Geometry }) {
         const x = g.xOf(trade.t);
         const y = g.yPrice(sampleAt(points, trade.t, "price"));
         const buy = trade.side === "buy";
-        const fill = buy ? "var(--color-success)" : "var(--color-danger)";
-        if (dense) return <circle key={i} cx={x} cy={y} r={2.5} fill={fill} />;
-        // Buys sit under the line pointing up, sells above it pointing down.
-        const d = buy
-          ? `M${x} ${y + 3}l5 8h-10z`
-          : `M${x} ${y - 3}l5 -8h-10z`;
-        return <path key={i} d={d} fill={fill} stroke="var(--color-background)" strokeWidth={1} />;
+        const fill = buy ? "var(--v2-chart-up)" : "var(--v2-chart-down)";
+        // Small dots on the price line: buys green, sells red.
+        return <circle key={i} cx={x} cy={y} r={dense ? 2.25 : 3.25} fill={fill} stroke="var(--v2-bg)" strokeWidth={dense ? 0.75 : 1.25} />;
       })}
     </g>
   );
@@ -327,11 +352,11 @@ export function SpeechBubble({ series, g, width, now }: { series: Series; g: Geo
     >
       <div
         key={moment.t}
-        className="dna-pop relative w-max max-w-[200px] rounded-2xl border border-line-strong bg-surface-2 px-3 py-2 text-xs leading-snug font-medium text-foreground shadow-lg shadow-black/40 sm:max-w-[240px] sm:text-[13px]"
+        className="dna-pop v2-glass--strong relative w-max max-w-[200px] rounded-[var(--v2-r-md)] px-3 py-2 text-xs leading-snug text-[var(--v2-ink)] sm:max-w-[250px] sm:text-[13px]"
       >
         <span className="line-clamp-4">{moment.text}</span>
         <span
-          className={`absolute size-2.5 rotate-45 border-line-strong bg-surface-2 ${
+          className={`absolute size-2.5 rotate-45 border-[var(--v2-line)] bg-[#17161c] ${
             below ? "-top-[6px] border-t border-l" : "-bottom-[6px] border-r border-b"
           }`}
           style={{ left: align === "left" ? 8 : align === "right" ? "calc(100% - 18px)" : "calc(50% - 5px)" }}

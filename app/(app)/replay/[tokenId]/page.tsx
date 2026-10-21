@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { ReplaySkeleton, ReplayView } from "@/components/dna/replay-view";
+import { BackToLeague, ReplaySkeleton, ReplayView } from "@/components/dna/replay-view";
 import { parseChogId } from "@/components/dna/shared";
 import { HiddenChogNotice } from "@/components/stats/hidden-notice";
 import { chogLabel } from "@/lib/chog-id";
@@ -14,6 +13,8 @@ import { isHiddenChog } from "@/lib/visibility";
 function labelOf(tokenId: number): string {
   return chogLabel(tokenId, { metadataName: getChog(tokenId)?.name });
 }
+
+export const viewport: Viewport = { themeColor: "#0d0c11" };
 
 export async function generateMetadata({ params }: PageProps<"/replay/[tokenId]">): Promise<Metadata> {
   const tokenId = parseChogId((await params).tokenId);
@@ -34,10 +35,8 @@ export default function ReplayPage({ params }: PageProps<"/replay/[tokenId]">) {
   // Token id -> name number ("CHOG #1462" is token 1), for the Time Machine's labels and the rival search.
   const nameNumbers = allChogs().map((chog) => Number(chog.metadataId) || 0);
   return (
-    <div className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-20 sm:px-6 sm:pt-10">
-      <Link href="/league" className="mb-6 inline-flex text-sm text-muted transition-colors hover:text-foreground">
-        ← The League
-      </Link>
+    <div className="v2-shell pb-20 sm:pb-28">
+      <BackToLeague />
       {/* params are request data under Cache Components, so they're read inside the boundary. */}
       <Suspense fallback={<ReplaySkeleton />}>
         <Replay params={params} nameNumbers={nameNumbers} />

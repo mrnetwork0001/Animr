@@ -9,6 +9,7 @@ import type { ChogSnapshot, Gene, Genome } from "@/lib/dna/types";
 import { useGenome } from "./api";
 import { ChogThumb } from "./chog-thumb";
 import { STYLE_TONE } from "./shared";
+import "@/app/design-v2.css";
 import "./dna.css";
 
 type GenomeCardProps = ({ tokenId: number } | { chog: ChogSnapshot; genome: Genome; name?: string }) & {
@@ -40,10 +41,10 @@ function GenomeCardQuery({ tokenId, hideIdentity, className = "" }: { tokenId: n
   }
   if (!error) return <GenomeCardSkeleton className={className} />;
   return (
-    <div role="alert" className={`card px-5 py-8 text-center ${className}`}>
-      <p className="font-medium text-danger">Couldn&apos;t read Chog #{tokenId}&apos;s DNA</p>
-      <p className="mt-1 break-words font-mono text-xs text-muted">{error.message}</p>
-      <button type="button" onClick={() => refetch()} disabled={isFetching} className="btn btn-secondary mt-4">
+    <div role="alert" className={`v2-card px-5 py-8 text-center ${className}`}>
+      <p className="font-medium text-[var(--v2-danger)]">Couldn&apos;t read Chog #{tokenId}&apos;s DNA</p>
+      <p className="v2-mono mt-1 break-words text-xs text-[var(--v2-nav)]">{error.message}</p>
+      <button type="button" onClick={() => refetch()} disabled={isFetching} className="v2-btn-glass v2-btn--sm mt-4">
         {isFetching ? "Retrying…" : "Try again"}
       </button>
     </div>
@@ -67,20 +68,22 @@ function GenomeCardView({
   const headingId = useId();
   const persona = name ?? personaName(String(chog.id), sanitizeTraits(chog.traits));
   return (
-    <section aria-labelledby={headingId} className={`card p-5 sm:p-6 ${className}`}>
+    <section aria-labelledby={headingId} className={`v2-card ${className}`}>
       <div className="flex items-start gap-4">
-        {!hideIdentity && <ChogThumb image={chog.image} tokenId={chog.id} size={56} className="rounded-2xl" />}
+        {!hideIdentity && (
+          <ChogThumb image={chog.image} tokenId={chog.id} size={56} className="rounded-[14px] border border-[var(--v2-line)]" />
+        )}
         <div className="min-w-0 flex-1">
-          <p className="eyebrow">Trading DNA</p>
-          <h2 id={headingId} className="mt-1 text-xl font-semibold tracking-tight text-balance">
+          <p className="v2-kicker">Trading DNA</p>
+          <h2 id={headingId} className="v2-h3 mt-2 text-balance">
             {hideIdentity ? `The genes behind the ${genome.archetype}` : genome.archetype}
           </h2>
           {!hideIdentity && (
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-[var(--v2-nav)]">
               {/* Both numbers: the name marketplaces show and the token id ("CHOG #1462 · token 1"). */}
-              <span className="font-medium text-foreground">{chogLabel(chog.id, { metadataName: chog.name })}</span>
+              <span className="font-medium text-[var(--v2-ink)]">{chogLabel(chog.id, { metadataName: chog.name })}</span>
               {/* Its persona name, the one every page shows. */}
-              <span className="text-subtle">{persona}</span>
+              <span className="text-[var(--v2-faint)]">{persona}</span>
               <StyleChip style={genome.style} />
             </p>
           )}
@@ -88,17 +91,17 @@ function GenomeCardView({
       </div>
 
       {genome.genes.length > 0 ? (
-        <ul className="mt-5 space-y-4">
+        <ul className="mt-6 space-y-5">
           {genome.genes.map((gene, i) => (
             <GeneRow key={gene.key} gene={gene} index={i} />
           ))}
         </ul>
       ) : (
-        <p className="mt-5 text-sm text-muted">This Chog&apos;s metadata couldn&apos;t be read, so it trades on default genes.</p>
+        <p className="mt-5 text-sm text-[var(--v2-nav)]">This Chog&apos;s metadata couldn&apos;t be read, so it trades on default genes.</p>
       )}
 
-      <p className="mt-5 border-t border-line/70 pt-4 text-xs leading-relaxed text-subtle">
-        Compiled from this Chog&apos;s traits by genome <span className="font-mono text-muted">{genome.version}</span>.
+      <p className="v2-note mt-6 border-t border-[var(--v2-line-soft)] pt-4">
+        Compiled from this Chog&apos;s traits by genome <span className="v2-mono text-[var(--v2-nav)]">{genome.version}</span>.
         Same traits, same trader: anyone can re-run it.
       </p>
     </section>
@@ -128,21 +131,18 @@ function GeneRow({ gene, index }: { gene: Gene; index: number }) {
   return (
     <li>
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-subtle">{gene.label}</span>
-        <span className="text-right text-sm font-medium text-foreground">{gene.display}</span>
+        <span className="v2-overline">{gene.label}</span>
+        <span className="text-right text-sm font-[480] text-[var(--v2-ink)]">{gene.display}</span>
       </div>
-      <div aria-hidden className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2">
-        <div
-          className="dna-grow h-full rounded-full bg-linear-to-r from-accent-deep to-accent-strong"
-          style={{ width: `${Math.max(value, 3)}%`, animationDelay: `${index * 70}ms` }}
-        />
+      <div aria-hidden className="dna-bar mt-2">
+        <span className="dna-grow" style={{ width: `${Math.max(value, 3)}%`, animationDelay: `${index * 70}ms` }} />
       </div>
-      <span className="sr-only">{Math.round(value)} out of 100.</span>
-      <p className="mt-1.5 text-xs leading-relaxed text-muted">
+      <span className="v2-sr">{Math.round(value)} out of 100.</span>
+      <p className="mt-2 text-[13px] leading-relaxed text-[var(--v2-nav)]">
         {gene.trait && chip && chip.action !== "hide" && (
-          <span className="mr-1.5 inline-flex max-w-full items-baseline gap-1 rounded-md bg-accent/10 px-1.5 py-px align-baseline text-[11px] text-accent-strong ring-1 ring-inset ring-accent/25">
-            <span className="text-subtle">{gene.trait.type}:</span>
-            <span className="truncate font-medium">{chip.display}</span>
+          <span className="mr-1.5 inline-flex max-w-full items-baseline gap-1 rounded-full border border-[rgb(189_247_238/0.28)] bg-[rgb(159_240_236/0.06)] px-2 py-px align-baseline text-[11.5px] text-[var(--v2-kicker)]">
+            <span className="text-[var(--v2-faint)]">{gene.trait.type}:</span>
+            <span className="truncate font-[480]">{chip.display}</span>
           </span>
         )}
         {explanationAfterChip(gene)}
@@ -153,31 +153,26 @@ function GeneRow({ gene, index }: { gene: Gene; index: number }) {
 
 export function StyleChip({ style }: { style: TradingStyle }) {
   return (
-    <span
-      className={`rounded px-1.5 py-px text-[10px] font-medium uppercase tracking-wider ring-1 ring-inset ${STYLE_TONE[style] ?? STYLE_TONE.balanced}`}
-    >
-      {style}
-    </span>
+    <span className={`v2-badge h-[22px] px-2 text-[10.5px] ${STYLE_TONE[style] ?? STYLE_TONE.balanced}`}>{style}</span>
   );
 }
 
 export function GenomeCardSkeleton({ className = "" }: { className?: string }) {
   return (
-    <div role="status" className={`card p-5 sm:p-6 ${className}`}>
-      <span className="sr-only">Loading trading DNA…</span>
+    <div role="status" className={`v2-card ${className}`}>
+      <span className="v2-sr">Loading trading DNA…</span>
       <div aria-hidden className="flex items-start gap-4">
-        <span className="size-14 animate-pulse rounded-2xl bg-surface-2" />
+        <span className="v2-skeleton size-14 rounded-[14px]" />
         <span className="flex-1 space-y-2 pt-1">
-          <span className="block h-3 w-24 animate-pulse rounded bg-surface-2" />
-          <span className="block h-5 w-40 animate-pulse rounded bg-surface-2" />
-          <span className="block h-3 w-32 animate-pulse rounded bg-surface-2/60" />
+          <span className="v2-skeleton v2-skeleton--text w-24" />
+          <span className="v2-skeleton v2-skeleton--title w-44" />
         </span>
       </div>
-      <div aria-hidden className="mt-6 space-y-5">
+      <div aria-hidden className="mt-7 space-y-6">
         {Array.from({ length: 6 }, (_, i) => (
-          <span key={i} className="block space-y-2">
-            <span className="block h-3 w-28 animate-pulse rounded bg-surface-2/70" />
-            <span className="block h-2 animate-pulse rounded-full bg-surface-2" />
+          <span key={i} className="block space-y-2.5">
+            <span className="v2-skeleton v2-skeleton--text w-28" />
+            <span className="v2-skeleton h-1.5 min-h-0 rounded-full" />
           </span>
         ))}
       </div>

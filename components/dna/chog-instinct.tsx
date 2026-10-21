@@ -5,16 +5,18 @@ import { type ReactNode, useId } from "react";
 import type { Address } from "viem";
 import type { AgentRecord } from "@/lib/agent/types";
 import { shortAddress } from "@/lib/format";
+import { pillClass } from "@/components/v2/primitives";
 import { Sparkline } from "../sparkline";
 import { useReplay, useStanding } from "./api";
 import { EdgeBadge } from "./edge-badge";
-import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, WINDOW_LABEL, edgeTone, formatInt, signedPct } from "./shared";
+import { PlayIcon } from "./icons";
+import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, WINDOW_LABEL, formatInt, signedPct } from "./shared";
 
 // A Chog's instinct (its trait genome) on its profile: the Time Machine teaser, the "wild" state of
 // an unclaimed Chog, and Brain vs Instinct vs HODL for a claimed one. Every instinct number is a
 // simulation on real $CHOG candles; the labels say so.
 
-const LABEL = "text-[11px] font-medium uppercase tracking-wider text-subtle";
+const LABEL = "text-xs text-[var(--v2-nav)]";
 
 /** The genome's replay as a mini chart with its verdict, edge and league rank, linking to /replay/[id]. */
 export function TimeMachineTeaser({ tokenId, className = "" }: { tokenId: number; className?: string }) {
@@ -25,15 +27,15 @@ export function TimeMachineTeaser({ tokenId, className = "" }: { tokenId: number
   const row = standing.data?.row;
 
   return (
-    <section aria-labelledby={headingId} className={`card p-5 sm:p-6 ${className}`}>
+    <section aria-labelledby={headingId} className={`v2-card ${className}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="eyebrow">Time Machine · last {WINDOW_LABEL[DEFAULT_WINDOW]}</p>
-          <h2 id={headingId} className="mt-1 text-lg font-semibold tracking-tight text-balance">
+          <p className="v2-kicker">Time Machine · last {WINDOW_LABEL[DEFAULT_WINDOW]}</p>
+          <h2 id={headingId} className="v2-h3 mt-1.5 text-balance">
             {data ? data.verdict : "Its DNA, replayed on the real $CHOG chart"}
           </h2>
         </div>
-        {data && <EdgeBadge pct={data.edgePct} className="mt-1" />}
+        {data && <EdgeBadge pct={data.edgePct} className="mt-1 text-lg" />}
       </div>
 
       {data ? (
@@ -44,15 +46,15 @@ export function TimeMachineTeaser({ tokenId, className = "" }: { tokenId: number
           className="mt-5 h-20"
         />
       ) : replay.isError ? (
-        <p role="alert" className="mt-5 text-sm text-danger">
+        <p role="alert" className="mt-5 text-sm text-[var(--v2-danger)]">
           Couldn&apos;t load the replay: {replay.error.message}
         </p>
       ) : (
-        <div aria-hidden className="mt-5 h-20 animate-pulse rounded-lg bg-surface-2" />
+        <span aria-hidden className="v2-skeleton mt-5 block h-20" />
       )}
 
       {data && (
-        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-line pt-4">
+        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-[var(--v2-line-soft)] pt-4">
           <Stat label="League rank">{row ? `#${formatInt(row.rank)}` : "…"}</Stat>
           <Stat label="Trades">{formatInt(data.trades.length)}</Stat>
           <Stat label="Worst dip">{signedPct(data.maxDrawdownPct)}</Stat>
@@ -60,18 +62,18 @@ export function TimeMachineTeaser({ tokenId, className = "" }: { tokenId: number
       )}
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Link href={`/replay/${tokenId}`} className="btn btn-primary">
-          <span aria-hidden>▶</span> Watch the replay
+        <Link href={`/replay/${tokenId}`} className={pillClass("primary", "sm")}>
+          <PlayIcon className="size-3.5" /> Watch the replay
         </Link>
         {/* VERSUS: this Chog against a random rival on a hidden 48 hours of real $CHOG; the visitor picks first. */}
-        <Link href={`/versus?a=${tokenId}`} className="btn btn-secondary">
+        <Link href={`/versus?a=${tokenId}`} className={pillClass("glass", "sm")}>
           Race this Chog
         </Link>
-        <Link href={`/league?id=${tokenId}`} className="btn btn-ghost">
+        <Link href={`/league?id=${tokenId}`} className={pillClass("ghost", "sm")}>
           See it in the League
         </Link>
       </div>
-      <p className="mt-4 text-[11px] leading-relaxed text-subtle">
+      <p className="v2-note mt-4">
         {SIM_LABEL}
         {data ? ` · ${data.window.label}` : ""}. A replay of its trait genome, not a promise: past candles don&apos;t
         predict the next ones.
@@ -92,42 +94,42 @@ export function WildChogCard({ tokenId, account, className = "" }: { tokenId: nu
   return (
     <section
       aria-labelledby={headingId}
-      className={`card relative overflow-hidden border-accent/30 bg-linear-to-br from-accent/10 via-transparent to-transparent p-5 sm:p-6 ${className}`}
+      className={`v2-card v2-card--feature relative overflow-hidden ${className}`}
     >
       {/* The header's "Wild · trading on instinct" chip already says it's unclaimed. */}
       {row && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Link href={`/league?id=${tokenId}`} className="chip hover:text-foreground">
+          <Link href={`/league?id=${tokenId}`} className="v2-chip">
             League #{formatInt(row.rank)} of {formatInt(standing.data?.total ?? CHOG_COUNT)}
           </Link>
         </div>
       )}
-      <h2 id={headingId} className="text-xl font-semibold tracking-tight text-balance">
+      <h2 id={headingId} className="v2-h3 text-balance">
         Its instinct is already trading
       </h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+      <p className="mt-2 max-w-prose text-[15px] leading-relaxed text-[var(--v2-nav)]">
         Nobody has claimed this Chog yet, so it runs on instinct: its 13 traits compile into a trading genome
         that trades the real $CHOG chart in the League and calls $CHOG at the Daily Bell every day.
         {row && (
           <>
             {" "}
             Over the last {WINDOW_LABEL[DEFAULT_WINDOW]} it went{" "}
-            <span className={`font-mono font-medium ${edgeTone(row.edgePct)}`}>{signedPct(row.edgePct)}</span> against
+            <EdgeBadge pct={row.edgePct} /> against
             just holding (simulated, 1% fee + impact).
           </>
         )}
       </p>
 
-      <div className="mt-5 rounded-xl border border-line bg-surface-2/50 p-4">
-        <h3 className="text-sm font-semibold">Claim it: give it a brain and a real wallet</h3>
-        <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-muted">
+      <div className="mt-5 rounded-[var(--v2-r-md)] border border-[var(--v2-line-soft)] bg-white/[0.02] p-4">
+        <h3 className="text-sm font-[520]">Claim it: give it a brain and a real wallet</h3>
+        <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-[var(--v2-nav)]">
           <li>Its holder signs one free message (no gas). An LLM on 0G Compute wakes up with this genome as its character.</li>
           <li>
             It manages the $CHOG in its own ERC-6551 wallet
             {account && (
               <>
                 {" "}
-                (<span className="font-mono text-foreground">{shortAddress(account)}</span>)
+                (<span className="v2-mono text-[var(--v2-ink)]">{shortAddress(account)}</span>)
               </>
             )}
             : paper fills at live prices, or real trades through AnimrTradeGuard once its holder opts in (it can
@@ -138,13 +140,13 @@ export function WildChogCard({ tokenId, account, className = "" }: { tokenId: nu
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Link href={`/replay/${tokenId}`} className="btn btn-primary">
-          <span aria-hidden>▶</span> Watch its instinct trade
+        <Link href={`/replay/${tokenId}`} className={pillClass("primary", "sm")}>
+          <PlayIcon className="size-3.5" /> Watch its instinct trade
         </Link>
-        <Link href={`/versus?a=${tokenId}`} className="btn btn-secondary">
+        <Link href={`/versus?a=${tokenId}`} className={pillClass("glass", "sm")}>
           Race this Chog
         </Link>
-        <Link href={`/app?id=${tokenId}#lookup`} className="btn btn-ghost">
+        <Link href={`/app?id=${tokenId}#lookup`} className={pillClass("ghost", "sm")}>
           Hold it? Set up its wallet
         </Link>
       </div>
@@ -172,10 +174,10 @@ export function BrainVsInstinct({ agent, className = "" }: { agent: AgentRecord;
 
   return (
     <section aria-labelledby={headingId} className={`card p-5 sm:p-6 ${className}`}>
-      <h2 id={headingId} className="text-lg font-semibold tracking-tight">
+      <h2 id={headingId} className="v2-h3">
         Brain vs Instinct vs HODL
       </h2>
-      <p className="mt-1 text-xs text-subtle">
+      <p className="v2-note mt-1">
         Since {sinceDay}
         {instinct && instinct.hours > 0 ? ` · ${formatInt(instinct.hours)} hourly candles` : ""} · edge over just holding
         $CHOG
@@ -186,7 +188,7 @@ export function BrainVsInstinct({ agent, className = "" }: { agent: AgentRecord;
           note={onchain ? "Its own calls, real $CHOG" : "Its own calls, paper fills at live prices"}
           leads={leader === 0}
         >
-          <EdgeBadge pct={brain} />
+          <EdgeBadge pct={brain} className="text-lg" />
         </Contender>
         <Contender
           label="Instinct · genome only"
@@ -194,21 +196,21 @@ export function BrainVsInstinct({ agent, className = "" }: { agent: AgentRecord;
           leads={leader === 1}
         >
           {instinct && !tooEarly ? (
-            <EdgeBadge pct={instinct.edgePct} />
+            <EdgeBadge pct={instinct.edgePct} className="text-lg" />
           ) : standing.isError ? (
-            <span className="text-xs text-danger">Unavailable</span>
+            <span className="text-xs text-[var(--v2-danger)]">Unavailable</span>
           ) : instinct ? (
-            <span className="text-xs text-muted">Too early</span>
+            <span className="text-xs text-[var(--v2-nav)]">Too early</span>
           ) : (
-            <span className="inline-block h-6 w-16 animate-pulse rounded-full bg-surface-2" />
+            <span className="v2-skeleton inline-block h-6 w-16 rounded-full" />
           )}
         </Contender>
         <Contender label="HODL" note="Just holding $CHOG" leads={leader === 2}>
-          <EdgeBadge pct={0} />
+          <EdgeBadge pct={0} className="text-lg" />
         </Contender>
       </dl>
       {tooEarly && (
-        <p className="mt-3 text-xs text-muted">
+        <p className="mt-3 text-xs text-[var(--v2-nav)]">
           The instinct needs a few closed hourly candles since {sinceDay} before the comparison means anything.
         </p>
       )}
@@ -234,13 +236,13 @@ function Contender({
   children: ReactNode;
 }) {
   return (
-    <div className={`rounded-xl border p-3 ${leads ? "border-accent/50 bg-accent/10" : "border-line bg-surface-2/40"}`}>
+    <div className={`rounded-[var(--v2-r-md)] border p-3.5 ${leads ? "border-[var(--v2-line-teal)] bg-[rgb(159_240_236/0.05)]" : "border-[var(--v2-line-soft)] bg-white/[0.02]"}`}>
       <dt className="flex items-center justify-between gap-2">
         <span className={LABEL}>{label}</span>
-        {leads && <span className="text-[10px] font-medium uppercase tracking-wider text-accent-strong">Leads</span>}
+        {leads && <span className="v2-badge v2-badge--teal h-5 px-1.5 text-[10px]">Leads</span>}
       </dt>
       <dd className="mt-2">{children}</dd>
-      <dd className="mt-1.5 text-[11px] leading-snug text-subtle">{note}</dd>
+      <dd className="mt-1.5 text-[11.5px] leading-snug text-[var(--v2-faint)]">{note}</dd>
     </div>
   );
 }
@@ -249,7 +251,7 @@ function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <dt className={LABEL}>{label}</dt>
-      <dd className="mt-1 font-mono text-sm tabular-nums">{children}</dd>
+      <dd className="v2-num mt-1 text-lg">{children}</dd>
     </div>
   );
 }

@@ -1,17 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { type ReactNode, useId, useMemo, useState } from "react";
+import { GenomeIcon, PulseIcon } from "@/components/v2/icons";
+import { EmptyState, GlassCard, PageHeader, SectionTitle, pillClass } from "@/components/v2/primitives";
 import { displayTraitValue } from "@/lib/brand-safety";
 import type { TraitAlphaRow } from "@/lib/dna/types";
+import { useIsClient } from "../connect-button";
 import { usePopulation, useTraitAlpha } from "./api";
+import { EdgeBadge } from "./edge-badge";
 import { type FamilyStats, familyStats } from "./families";
 import type { LeagueIndex } from "./league-index";
-import { DEFAULT_WINDOW, IN_SAMPLE_NOTE, SIM_LABEL, type WindowKey, edgeTone, formatInt, signedPct } from "./shared";
+import { DEFAULT_WINDOW, IN_SAMPLE_NOTE, SIM_LABEL, type WindowKey, formatInt } from "./shared";
 import { WindowPicker } from "./window-picker";
+import "./dna.css";
 
 type SortKey = "trait" | "count" | "median" | "beat";
 type Sort = { key: SortKey; desc: boolean };
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: "median", label: "Median edge" },
+  { key: "beat", label: "Beat hold" },
+  { key: "count", label: "Chogs" },
+  { key: "trait", label: "A–Z" },
+];
 
 const MIN_COUNTS = [1, 5, 10, 25] as const;
 /** A headline needs enough Chogs on both sides to mean something. */
@@ -63,25 +74,32 @@ function findHeadline(contenders: Contender[]) {
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
+/** The page's title block, from the server (the board renders it so the headline can sit beside it). */
+export type TraitAlphaHeader = { kicker: ReactNode; title: ReactNode; lead: ReactNode; actions?: ReactNode };
+
 /**
  * The Trait Alpha index: which trait values make the best and worst traders, on real $CHOG history.
  * With the league index (server-built) it also pools related values into families ("laser eyes").
+ * With `header`, it renders the page header too, with this window's headline as its aside.
  */
-export function TraitAlphaBoard({ index }: { index?: LeagueIndex }) {
+export function TraitAlphaBoard({ index, header }: { index?: LeagueIndex; header?: TraitAlphaHeader }) {
   const [span, setSpan] = useState<WindowKey>(DEFAULT_WINDOW);
   const [type, setType] = useState("");
   const [minCount, setMinCount] = useState<number>(10);
   const [sort, setSort] = useState<Sort>({ key: "median", desc: true });
-  const { data, error, refetch, isFetching } = useTraitAlpha(span);
+  const traits = useTraitAlpha(span);
+  const { error, refetch, isFetching } = traits;
   // Families need every Chog's edge; the league shares this query, so it's often cached already.
   const population = usePopulation(span);
+  // The server renders the loading state; a query already in the cache only shows after hydration (no mismatch).
+  const hydrated = useIsClient();
+  const data = hydrated ? traits.data : undefined;
+  const populationRows = hydrated ? population.data?.rows : undefined;
+  const tableTitleId = useId();
 
   const allRows = useMemo(() => data?.rows ?? [], [data]);
   const types = useMemo(() => [...new Set(allRows.map((r) => r.traitType))].sort(), [allRows]);
-  const families = useMemo(
-    () => (index && population.data ? familyStats(index, population.data.rows) : []),
-    [index, population.data],
-  );
+  const families = useMemo(() => (index && populationRows ? familyStats(index, populationRows) : []), [index, populationRows]);
   // The story reads best family vs family ("side-eyed Chogs beat laser-eyed Chogs"); single values
   // carry it until the families are in, or when they don't split the field.
   const headline = useMemo(() => {
@@ -89,7 +107,7 @@ export function TraitAlphaBoard({ index }: { index?: LeagueIndex }) {
     return byFamily && byFamily.gap >= 5 ? byFamily : findHeadline(allRows.map(fromRow));
   }, [families, allRows]);
   // Hold the headline until the families are in, so it doesn't change under the reader.
-  const headlineReady = !index || !population.isPending;
+  const headlineReady = Boolean(data) && (!index || (hydrated && !population.isPending));
   const spotlight = useMemo(() => {
     const common = allRows.filter((r) => r.count >= HEADLINE_MIN).sort((a, b) => b.medianEdgePct - a.medianEdgePct);
     return { alpha: common.slice(0, 5), rekt: common.slice(-5).reverse() };
@@ -105,163 +123,292 @@ export function TraitAlphaBoard({ index }: { index?: LeagueIndex }) {
       return cmp * dir || b.count - a.count;
     });
   }, [allRows, type, minCount, sort]);
+  // One card per trait type, in the order of each type's best row under the current sort.
+  const groups = useMemo(() => {
+    const byType = new Map<string, TraitAlphaRow[]>();
+    for (const row of rows) byType.set(row.traitType, [...(byType.get(row.traitType) ?? []), row]);
+    return [...byType];
+  }, [rows]);
   const maxAbs = Math.max(1, ...rows.map((r) => Math.abs(r.medianEdgePct)));
 
   const sortBy = (key: SortKey) =>
     setSort((current) => (current.key === key ? { key, desc: !current.desc } : { key, desc: key !== "trait" }));
 
+  const picker = <WindowPicker value={span} onChange={setSpan} />;
+  const pageHeader = header && (
+    <PageHeader
+      kicker={header.kicker}
+      title={header.title}
+      lead={header.lead}
+      actions={header.actions}
+      aside={headlineReady && headline ? <Headline headline={headline} picker={picker} /> : <HeadlineSkeleton />}
+    />
+  );
+
   if (!data) {
-    if (!error) return <TraitAlphaSkeleton />;
     return (
-      <div role="alert" className="card border-danger/40 px-6 py-10 text-center">
-        <p className="font-medium text-danger">Couldn&apos;t load the Trait Alpha index</p>
-        <p className="mt-1 break-words font-mono text-xs text-muted">{error.message}</p>
-        <button type="button" onClick={() => refetch()} disabled={isFetching} className="btn btn-secondary mt-5">
-          {isFetching ? "Retrying…" : "Try again"}
-        </button>
-      </div>
+      <>
+        {pageHeader}
+        {error && hydrated ? (
+          <div role="alert" className="v2-section">
+            <EmptyState
+              icon={<PulseIcon />}
+              title="Couldn't load the Trait Alpha index"
+              body={<span className="v2-mono break-words">{error.message}</span>}
+              actions={
+                <button type="button" onClick={() => refetch()} disabled={isFetching} className={pillClass("glass")}>
+                  {isFetching ? "Retrying…" : "Try again"}
+                </button>
+              }
+            />
+          </div>
+        ) : (
+          <TraitAlphaSkeleton bare />
+        )}
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-subtle">
-          {SIM_LABEL} · {data.window.label} · genome <span className="font-mono">{data.genomeVersion}</span>
-          <span className="block">{IN_SAMPLE_NOTE}</span>
+    <>
+      {pageHeader}
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="v2-note max-w-3xl">
+          {SIM_LABEL} · {data.window.label} · genome <span className="v2-mono text-[0.95em]">{data.genomeVersion}</span>. {IN_SAMPLE_NOTE}
         </p>
-        <WindowPicker value={span} onChange={setSpan} />
+        {/* Without the header the picker has no headline to sit in. */}
+        {!header && picker}
       </div>
 
-      {!headlineReady && <div aria-hidden className="card h-56 animate-pulse sm:h-60" />}
-
-      {headlineReady && headline && (
-        <section aria-label="Headline" className="card relative overflow-hidden px-5 py-6 sm:px-8 sm:py-8">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-accent/20 blur-3xl"
+      {spotlight.alpha.length > 0 && (
+        <section aria-labelledby="spotlight-title" className="v2-section">
+          <SectionTitle
+            id="spotlight-title"
+            kicker="Spotlight"
+            title="Alpha and rekt traits"
+            description={`The five best and five worst median edges among trait values ${HEADLINE_MIN}+ Chogs wear.`}
           />
-          <p className="eyebrow">This window&apos;s headline · {headline.type}</p>
-          <p className="mt-3 text-2xl font-semibold tracking-tight text-balance sm:text-4xl">
-            <span className="text-success">{capitalize(headline.top.noun)}</span> beat{" "}
-            <span className="text-danger">{headline.bottom.noun}</span>
-          </p>
-          <p className="mt-3 max-w-2xl text-sm text-muted">
-            Median edge vs holding:{" "}
-            <span className={`font-mono ${edgeTone(headline.top.medianEdgePct)}`}>{signedPct(headline.top.medianEdgePct)}</span> for{" "}
-            {formatInt(headline.top.count)} {headline.top.noun} against{" "}
-            <span className={`font-mono ${edgeTone(headline.bottom.medianEdgePct)}`}>
-              {signedPct(headline.bottom.medianEdgePct)}
-            </span>{" "}
-            for {formatInt(headline.bottom.count)} {headline.bottom.noun}.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Link href={headline.top.href} className="btn btn-secondary">
-              See the {headline.top.label}
-            </Link>
-            <Link href={headline.bottom.href} className="btn btn-ghost">
-              See the {headline.bottom.label}
-            </Link>
+          <div className="v2-grid--2 grid gap-4">
+            <Spotlight title="Alpha traits" tone="up" rows={spotlight.alpha} />
+            <Spotlight title="Rekt traits" tone="down" rows={spotlight.rekt} />
           </div>
         </section>
       )}
 
-      {spotlight.alpha.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Spotlight title="Alpha traits" note={`Best median edge, ${HEADLINE_MIN}+ Chogs`} rows={spotlight.alpha} />
-          <Spotlight title="Rekt traits" note={`Worst median edge, ${HEADLINE_MIN}+ Chogs`} rows={spotlight.rekt} />
-        </div>
-      )}
-
       {families.length > 0 && <Families families={families} />}
 
-      <section aria-labelledby="trait-table-title" className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 id="trait-table-title" className="text-lg font-semibold tracking-tight">
-            Every trait value
-          </h2>
-          <label className="flex items-center gap-2 text-xs text-muted">
-            Min. Chogs
-            <select value={minCount} onChange={(e) => setMinCount(Number(e.target.value))} className="input w-auto py-1.5 text-xs">
-              {MIN_COUNTS.map((n) => (
-                <option key={n} value={n}>
-                  {n === 1 ? "Any" : `${n}+`}
-                </option>
-              ))}
-            </select>
-          </label>
+      <section aria-labelledby={tableTitleId} className="v2-section">
+        <SectionTitle
+          id={tableTitleId}
+          kicker="The full index"
+          title="Every trait value"
+          description="Grouped by trait type. Each row opens the League filtered to the Chogs wearing it."
+          action={
+            <label className="flex items-center gap-2 text-[13px] text-[var(--v2-faint)]">
+              Min. Chogs
+              <select
+                value={minCount}
+                onChange={(e) => setMinCount(Number(e.target.value))}
+                className="v2-select dna-select-sm h-9 w-auto"
+              >
+                {MIN_COUNTS.map((n) => (
+                  <option key={n} value={n}>
+                    {n === 1 ? "Any" : `${n}+`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          }
+        />
+
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div role="group" aria-label="Trait type" className="dna-scroll-x -mx-[var(--v2-gutter)] px-[var(--v2-gutter)] lg:mx-0 lg:flex-wrap lg:px-0">
+            {["", ...types].map((t) => (
+              <button
+                key={t || "all"}
+                type="button"
+                aria-pressed={type === t}
+                onClick={() => setType(t)}
+                className="v2-chip h-8 shrink-0 cursor-pointer px-3"
+              >
+                {t || "All traits"}
+              </button>
+            ))}
+          </div>
+          <div role="group" aria-label="Sort trait values" className="v2-tabs shrink-0 self-start">
+            {SORTS.map(({ key, label }) => {
+              const active = sort.key === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => sortBy(key)}
+                  aria-label={active ? `${label}, ${sort.desc ? "descending" : "ascending"}: press to reverse` : `Sort by ${label}`}
+                  className="v2-tab h-[30px] px-3 text-[13px]"
+                >
+                  {label}
+                  {active && <span aria-hidden>{sort.desc ? "↓" : "↑"}</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div role="group" aria-label="Trait type" className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
-          {["", ...types].map((t) => (
-            <button
-              key={t || "all"}
-              type="button"
-              aria-pressed={type === t}
-              onClick={() => setType(t)}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                type === t ? "bg-accent/20 text-foreground ring-accent/50" : "text-muted ring-line hover:text-foreground"
-              }`}
-            >
-              {t || "All traits"}
-            </button>
-          ))}
-        </div>
-
-        <div className="card overflow-hidden">
-          <table className="w-full table-fixed text-left text-sm">
-            <caption className="sr-only">
-              Median simulated edge vs holding $CHOG and share of Chogs beating holding, per trait value. Column headers sort.
-            </caption>
-            <thead className="border-b border-line text-[11px] uppercase tracking-wider text-subtle">
-              <tr>
-                <SortHeader label="Trait" sortKey="trait" sort={sort} onSort={sortBy} />
-                <SortHeader label="Chogs" sortKey="count" sort={sort} onSort={sortBy} className="hidden w-20 text-right sm:table-cell" />
-                <SortHeader label="Median" sortKey="median" sort={sort} onSort={sortBy} className="w-[6.5rem] text-right sm:w-56" />
-                <SortHeader label="Beat hold" sortKey="beat" sort={sort} onSort={sortBy} className="w-[5.5rem] text-right sm:w-32" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.traitType}:${row.value}`} className="border-b border-line/50 last:border-0 hover:bg-accent/[0.05]">
-                  <th scope="row" className="py-2.5 pr-2 pl-4 font-normal">
-                    <Link href={leagueHref(row)} className="group block min-w-0">
-                      <span className="block truncate font-medium text-foreground group-hover:underline">{shown(row)}</span>
-                      <span className="block truncate text-[11px] text-subtle">
-                        {row.traitType}
-                        <span className="sm:hidden"> · {formatInt(row.count)} Chogs</span>
-                      </span>
-                    </Link>
-                  </th>
-                  <td className="hidden py-2.5 pr-4 text-right font-mono text-xs tabular-nums text-muted sm:table-cell">
-                    {formatInt(row.count)}
-                  </td>
-                  <td className="py-2.5 pr-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <DivergingBar pct={row.medianEdgePct} maxAbs={maxAbs} />
-                      <span className={`w-14 shrink-0 text-right font-mono text-xs tabular-nums ${edgeTone(row.medianEdgePct)}`}>
-                        {signedPct(row.medianEdgePct)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-2.5 pr-4 text-right">
-                    <span className="font-mono text-xs tabular-nums text-muted">{Math.round(row.beatHoldPct)}%</span>
-                    <span aria-hidden className="mt-1 ml-auto block h-1 w-full max-w-20 overflow-hidden rounded-full bg-surface-2">
-                      <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.min(100, row.beatHoldPct)}%` }} />
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {rows.length === 0 && <p className="px-4 py-8 text-center text-sm text-muted">No trait value has that many Chogs.</p>}
-        </div>
-        <p className="text-xs text-subtle">
+        {groups.length === 0 ? (
+          <EmptyState
+            icon={<GenomeIcon />}
+            title="No trait value has that many Chogs"
+            body="Lower the minimum or pick another trait type."
+            actions={
+              <button type="button" onClick={() => setMinCount(1)} className={pillClass("glass")}>
+                Show every value
+              </button>
+            }
+          />
+        ) : (
+          <div className="dna-columns">
+            {groups.map(([traitType, typeRows]) => (
+              <TraitGroup key={traitType} type={traitType} rows={typeRows} maxAbs={maxAbs} />
+            ))}
+          </div>
+        )}
+        <p className="v2-note mt-2 max-w-3xl">
           Each Chog runs its own genome; a trait&apos;s row summarizes every Chog carrying it, so traits that ride along with
           each other share credit. Points of edge are simulated, not earned.
         </p>
       </section>
+    </>
+  );
+}
+
+type Headline = NonNullable<ReturnType<typeof findHeadline>>;
+
+/** The header's aside: this window's widest split, winner in teal, loser in violet, with the window picker. */
+function Headline({ headline, picker }: { headline: Headline; picker: ReactNode }) {
+  return (
+    <GlassCard feature as="section" aria-label="This window's headline" className="p-5 sm:p-7">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="v2-kicker">Headline · {headline.type}</p>
+        {picker}
+      </div>
+      <p className="mt-5 font-[family-name:var(--v2-font-display)] text-[clamp(26px,1.6vw+18px,38px)] leading-[1.12] font-[380] tracking-[-0.018em] text-balance">
+        <span className="text-[var(--v2-teal)]">{capitalize(headline.top.noun)}</span>{" "}
+        <span className="text-[var(--v2-nav)]">beat</span> <span className="text-[var(--v2-violet-ink)]">{headline.bottom.noun}</span>
+      </p>
+      <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-[var(--v2-line-soft)] pt-5">
+        {[headline.top, headline.bottom].map((side, i) => (
+          <div key={side.href} className="min-w-0">
+            <dt className="flex items-center gap-2 truncate text-[13px] text-[var(--v2-nav)]">
+              <span
+                aria-hidden
+                className="size-2 shrink-0 rounded-full"
+                style={{ background: i === 0 ? "var(--v2-teal)" : "var(--v2-violet-ink)" }}
+              />
+              <span className="truncate">
+                {formatInt(side.count)} {side.label}
+              </span>
+            </dt>
+            <dd className="mt-1.5">
+              <span className="v2-sr">Median edge vs holding </span>
+              <EdgeBadge pct={side.medianEdgePct} className="text-[length:var(--v2-fs-stat-sm)]" />
+              <Link href={side.href} className="v2-link mt-1.5 block w-fit text-[13px] font-normal">
+                See them
+              </Link>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </GlassCard>
+  );
+}
+
+function HeadlineSkeleton() {
+  return (
+    <div role="status" className="v2-card p-5 sm:p-7">
+      <span className="v2-sr">Loading this window&apos;s headline…</span>
+      <span aria-hidden className="flex items-center justify-between gap-3">
+        <span className="v2-skeleton v2-skeleton--text w-32" />
+        <span className="v2-skeleton h-[40px] w-[168px] rounded-full" />
+      </span>
+      <span aria-hidden className="mt-5 block space-y-3">
+        <span className="v2-skeleton v2-skeleton--title w-11/12" />
+        <span className="v2-skeleton v2-skeleton--title w-2/3" />
+      </span>
+      <span aria-hidden className="mt-6 grid grid-cols-2 gap-4 border-t border-[var(--v2-line-soft)] pt-5">
+        <span className="v2-skeleton v2-skeleton--title w-24" />
+        <span className="v2-skeleton v2-skeleton--title w-24" />
+      </span>
     </div>
+  );
+}
+
+/** A bar from the "just holding" hairline: violet-to-teal ahead, danger behind. Decorative: the number is beside it. */
+function DivergingBar({ pct, maxAbs, className = "" }: { pct: number; maxAbs: number; className?: string }) {
+  const width = Math.min(50, (Math.abs(pct) / maxAbs) * 50);
+  return (
+    <span aria-hidden className={`dna-dbar ${className}`}>
+      {Number.isFinite(pct) && width >= 0.4 && <span data-tone={pct > 0 ? "up" : "down"} style={{ width: `${width}%` }} />}
+    </span>
+  );
+}
+
+function TraitGroup({ type, rows, maxAbs }: { type: string; rows: TraitAlphaRow[]; maxAbs: number }) {
+  const headingId = useId();
+  return (
+    <GlassCard as="section" aria-labelledby={headingId} padding="flush">
+      <div className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-3">
+        <h3 id={headingId} className="v2-h3">
+          {type}
+        </h3>
+        <span className="text-xs text-[var(--v2-faint)]">
+          {rows.length} {rows.length === 1 ? "value" : "values"}
+        </span>
+      </div>
+      <table className="w-full table-fixed border-collapse text-left text-[13.5px]">
+        <caption className="v2-sr">
+          {type}: median simulated edge vs holding $CHOG and share of Chogs beating holding, per value.
+        </caption>
+        <thead className="text-[10.5px] tracking-[0.12em] text-[var(--v2-faint)] uppercase">
+          <tr className="border-y border-[var(--v2-line-soft)]">
+            <th scope="col" className="py-2 pl-5 font-[520]">
+              Value
+            </th>
+            <th scope="col" className="hidden w-[30%] py-2 font-[520] sm:table-cell">
+              <span className="v2-sr">Edge bar</span>
+            </th>
+            <th scope="col" className="w-[5.5rem] py-2 text-right font-[520]">
+              Median
+            </th>
+            <th scope="col" className="w-[4.75rem] py-2 pr-5 text-right font-[520]">
+              Beat
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={`${row.traitType}:${row.value}`} className="border-b border-[var(--v2-line-soft)] last:border-0 hover:bg-white/[0.03]">
+              <th scope="row" className="py-2.5 pr-3 pl-5 font-normal">
+                <Link href={leagueHref(row)} className="group block min-w-0">
+                  <span className="block truncate text-[var(--v2-ink)] group-hover:text-[var(--v2-kicker)]">{shown(row)}</span>
+                  <span className="v2-num block truncate text-[11.5px] text-[var(--v2-faint)]">{formatInt(row.count)} Chogs</span>
+                </Link>
+              </th>
+              <td className="hidden py-2.5 pr-3 sm:table-cell">
+                <DivergingBar pct={row.medianEdgePct} maxAbs={maxAbs} />
+              </td>
+              <td className="py-2.5 text-right">
+                <EdgeBadge pct={row.medianEdgePct} className="text-[14.5px]" />
+              </td>
+              <td className="v2-num py-2.5 pr-5 text-right text-[14.5px] text-[var(--v2-nav)]" title="Share of these Chogs that beat holding">
+                {Math.round(row.beatHoldPct)}%
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </GlassCard>
   );
 }
 
@@ -269,131 +416,97 @@ function Families({ families }: { families: FamilyStats[] }) {
   const sorted = [...families].sort((a, b) => b.medianEdgePct - a.medianEdgePct);
   const maxAbs = Math.max(1, ...sorted.map((f) => Math.abs(f.medianEdgePct)));
   return (
-    <section aria-labelledby="families-title" className="card p-4 sm:p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 id="families-title" className="font-semibold">
-          Trait families
-        </h2>
-        <span className="text-[11px] text-subtle">Related values pooled: all four laser eyes count as one</span>
-      </div>
-      <div
-        aria-hidden
-        className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_3rem] gap-3 px-1 text-[10px] font-medium uppercase tracking-wider text-subtle"
-      >
-        <span>Family</span>
-        <span className="text-right">Median edge</span>
-        <span className="text-right">Beat hold</span>
-      </div>
-      <ol className="mt-1 divide-y divide-line/50">
-        {sorted.map((family) => (
-          <li key={family.key}>
-            <Link
-              href={`/league?trait=${encodeURIComponent(`family:${family.key}`)}`}
-              className="grid grid-cols-[minmax(0,1fr)_auto_3rem] items-center gap-3 rounded-lg px-1 py-2 hover:bg-surface-2"
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-medium">
-                  {family.label} <span className="text-xs font-normal text-subtle">{family.type}</span>
+    <section aria-labelledby="families-title" className="v2-section">
+      <SectionTitle
+        id="families-title"
+        kicker="Families"
+        title="Trait families"
+        description="Related values pooled: all four laser eyes count as one, so the bigger groups speak louder."
+      />
+      <GlassCard padding="flush">
+        <ol className="divide-y divide-[var(--v2-line-soft)]">
+          {sorted.map((family) => (
+            <li key={family.key}>
+              <Link
+                href={`/league?trait=${encodeURIComponent(`family:${family.key}`)}`}
+                className="grid grid-cols-[minmax(0,1fr)_auto_3.5rem] items-center gap-x-4 px-5 py-3.5 transition-colors hover:bg-white/[0.03] sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_5.5rem_4rem] sm:px-6"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-[15px] text-[var(--v2-ink)]">
+                    {family.label} <span className="text-xs text-[var(--v2-faint)]">{family.type}</span>
+                  </span>
+                  <span className="block truncate text-xs text-[var(--v2-faint)]">
+                    <span className="v2-num">{formatInt(family.count)}</span> Chogs · {family.values.join(", ")}
+                  </span>
                 </span>
-                <span className="block truncate text-[11px] text-subtle">
-                  {formatInt(family.count)} Chogs · {family.values.join(", ")}
+                <DivergingBar pct={family.medianEdgePct} maxAbs={maxAbs} className="max-sm:hidden" />
+                <span className="text-right">
+                  <span className="v2-sr">Median edge </span>
+                  <EdgeBadge pct={family.medianEdgePct} className="text-[15px]" />
                 </span>
-              </span>
-              <span className="flex items-center gap-2">
-                <DivergingBar pct={family.medianEdgePct} maxAbs={maxAbs} />
-                <span className={`w-14 text-right font-mono text-xs tabular-nums ${edgeTone(family.medianEdgePct)}`}>
-                  {signedPct(family.medianEdgePct)}
+                <span className="v2-num text-right text-[15px] text-[var(--v2-nav)]" title="Share of these Chogs that beat holding">
+                  <span className="v2-sr">Beat holding: </span>
+                  {Math.round(family.beatHoldPct)}%
                 </span>
-              </span>
-              <span className="text-right font-mono text-xs tabular-nums text-muted" title="Share of these Chogs that beat holding">
-                {Math.round(family.beatHoldPct)}%
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ol>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </GlassCard>
     </section>
   );
 }
 
-function Spotlight({ title, note, rows }: { title: string; note: string; rows: TraitAlphaRow[] }) {
+function Spotlight({ title, tone, rows }: { title: string; tone: "up" | "down"; rows: TraitAlphaRow[] }) {
+  const headingId = useId();
+  const maxAbs = Math.max(1, ...rows.map((row) => Math.abs(row.medianEdgePct)));
   return (
-    <section aria-label={title} className="card p-4 sm:p-5">
+    <GlassCard as="section" aria-labelledby={headingId}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-semibold">{title}</h2>
-        <span className="text-[11px] text-subtle">{note}</span>
+        <h3 id={headingId} className="v2-h3">
+          {title}
+        </h3>
+        <span className="text-xs text-[var(--v2-faint)]">Median edge · {HEADLINE_MIN}+ Chogs</span>
       </div>
-      <ol className="mt-3 space-y-2">
+      <ol className="mt-4 space-y-1">
         {rows.map((row, i) => (
           <li key={`${row.traitType}:${row.value}`}>
-            <Link href={leagueHref(row)} className="flex items-center gap-3 rounded-lg px-1 py-1 text-sm hover:bg-surface-2">
-              <span className="w-4 font-mono text-xs text-subtle">{i + 1}</span>
-              <span className="min-w-0 flex-1 truncate">
-                {shown(row)} <span className="text-xs text-subtle">{row.traitType}</span>
+            <Link
+              href={leagueHref(row)}
+              className="-mx-2 grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 rounded-[var(--v2-r-sm)] px-2 py-2 transition-colors hover:bg-white/[0.035]"
+            >
+              <span className="v2-num text-[15px] text-[var(--v2-faint)]">{i + 1}</span>
+              <span className="min-w-0 truncate text-[15px] text-[var(--v2-ink)]">
+                {shown(row)} <span className="text-xs text-[var(--v2-faint)]">{row.traitType}</span>
               </span>
-              <span className={`font-mono text-xs tabular-nums ${edgeTone(row.medianEdgePct)}`}>{signedPct(row.medianEdgePct)}</span>
+              <EdgeBadge pct={row.medianEdgePct} className="text-[15px]" />
+              <span aria-hidden className="dna-bar col-start-2 col-end-4" data-tone={tone}>
+                <span style={{ width: `${Math.max(4, (Math.abs(row.medianEdgePct) / maxAbs) * 100)}%` }} />
+              </span>
             </Link>
           </li>
         ))}
       </ol>
-    </section>
+    </GlassCard>
   );
 }
 
-function SortHeader({
-  label,
-  sortKey,
-  sort,
-  onSort,
-  className = "",
-}: {
-  label: string;
-  sortKey: SortKey;
-  sort: Sort;
-  onSort: (key: SortKey) => void;
-  className?: string;
-}) {
-  const active = sort.key === sortKey;
+/** Loading state for the board (bare: without the header, which renders its own). */
+export function TraitAlphaSkeleton({ bare = false }: { bare?: boolean }) {
   return (
-    <th scope="col" aria-sort={active ? (sort.desc ? "descending" : "ascending") : "none"} className={`py-2.5 font-medium first:pl-4 last:pr-4 ${className}`}>
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 uppercase tracking-wider hover:text-foreground ${active ? "text-foreground" : ""}`}
-      >
-        {label}
-        <span aria-hidden className={active ? "" : "opacity-0"}>
-          {sort.desc ? "↓" : "↑"}
+    <div role="status">
+      <span className="v2-sr">Loading the Trait Alpha index…</span>
+      {!bare && <HeadlineSkeleton />}
+      <div aria-hidden className="v2-section">
+        <span className="block space-y-3">
+          <span className="v2-skeleton v2-skeleton--text w-20" />
+          <span className="v2-skeleton v2-skeleton--title w-64" />
         </span>
-      </button>
-    </th>
-  );
-}
-
-/** A bar growing right (green) or left (red) from a center line, scaled to the largest |value| shown. */
-function DivergingBar({ pct, maxAbs }: { pct: number; maxAbs: number }) {
-  const width = `${Math.min(50, (Math.abs(pct) / maxAbs) * 50)}%`;
-  return (
-    <span aria-hidden className="relative hidden h-2 w-28 rounded-full bg-surface-2 sm:block">
-      <span className="absolute inset-y-0 left-1/2 w-px bg-line-strong" />
-      <span
-        className={`absolute inset-y-0 rounded-full ${pct >= 0 ? "left-1/2 bg-success/70" : "right-1/2 bg-danger/70"}`}
-        style={{ width }}
-      />
-    </span>
-  );
-}
-
-export function TraitAlphaSkeleton() {
-  return (
-    <div role="status" className="space-y-6">
-      <span className="sr-only">Loading the Trait Alpha index…</span>
-      <div aria-hidden className="card h-44 animate-pulse" />
-      <div aria-hidden className="grid gap-4 sm:grid-cols-2">
-        <div className="card h-48 animate-pulse" />
-        <div className="card h-48 animate-pulse" />
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <span className="v2-skeleton v2-skeleton--card h-72" />
+          <span className="v2-skeleton v2-skeleton--card h-72" />
+        </div>
       </div>
-      <div aria-hidden className="card h-96 animate-pulse" />
     </div>
   );
 }

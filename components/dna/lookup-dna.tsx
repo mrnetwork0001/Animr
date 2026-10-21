@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useChogBell, useTodayBell } from "@/components/bell/api";
 import { Forecast, SourceBadge } from "@/components/bell/bits";
+import { pillClass } from "@/components/v2/primitives";
 import { appConfig } from "@/lib/config";
 import { HiddenChogNotice } from "@/components/stats/hidden-notice";
 import { useHiddenChogs } from "../hidden-chogs";
 import { DnaApiError, useStanding } from "./api";
 import { EdgeBadge } from "./edge-badge";
 import { StyleChip } from "./genome-card";
+import { PlayIcon } from "./icons";
 import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, WINDOW_LABEL, formatInt, parseChogId } from "./shared";
 
 /**
@@ -27,7 +29,7 @@ export function LookupDna({ tokenId }: { tokenId: string }) {
   if (id === undefined) return null;
   if (hidden || (standing.error instanceof DnaApiError && standing.error.status === 404 && /public pages/.test(standing.error.message))) {
     return (
-      <section aria-label="Trading DNA" className="border-t border-line px-5 py-5 sm:px-6">
+      <section aria-label="Trading DNA" className="border-t border-[var(--v2-line-soft)] px-5 py-5 sm:px-6">
         <HiddenChogNotice tokenId={id} />
       </section>
     );
@@ -37,54 +39,55 @@ export function LookupDna({ tokenId }: { tokenId: string }) {
   const replayed = latest.data?.kind === "replay";
 
   return (
-    <section aria-label="Trading DNA" className="border-t border-line px-5 py-5 sm:px-6">
+    <section aria-label="Trading DNA" className="border-t border-[var(--v2-line-soft)] px-5 py-5 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-medium text-muted">Trading DNA · every Chog is already a trader</h4>
+        <h4 className="v2-kicker">Trading DNA · every Chog is already a trader</h4>
         {row && <StyleChip style={row.style} />}
       </div>
 
       {row ? (
         <>
-          <p className="mt-2 text-lg font-semibold tracking-tight">
-            {row.archetype} <span className="text-sm font-normal text-muted">· {row.name}</span>
+          <p className="v2-h3 mt-2.5">
+            {row.archetype} <span className="text-sm font-normal text-[var(--v2-nav)]">· {row.name}</span>
           </p>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+          <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1 text-sm text-[var(--v2-nav)]">
             <span>
-              League #{formatInt(row.rank)} of {formatInt(standing.data?.total ?? CHOG_COUNT)}
+              League <span className="v2-num text-[var(--v2-ink)]">#{formatInt(row.rank)}</span> of{" "}
+              {formatInt(standing.data?.total ?? CHOG_COUNT)}
             </span>
-            <EdgeBadge pct={row.edgePct} />
-            <span className="text-xs text-subtle">vs holding, last {WINDOW_LABEL[DEFAULT_WINDOW]}</span>
+            <EdgeBadge pct={row.edgePct} className="text-[15px]" />
+            <span className="text-xs text-[var(--v2-faint)]">vs holding, last {WINDOW_LABEL[DEFAULT_WINDOW]}</span>
           </p>
         </>
       ) : standing.isError ? (
-        <p className="mt-2 text-sm text-danger">Couldn&apos;t load its DNA: {standing.error.message}</p>
+        <p className="mt-2 text-sm text-[var(--v2-danger)]">Couldn&apos;t load its DNA: {standing.error.message}</p>
       ) : (
-        <div aria-hidden className="mt-2 space-y-2">
-          <div className="h-6 w-48 animate-pulse rounded bg-surface-2" />
-          <div className="h-4 w-64 animate-pulse rounded bg-surface-2/60" />
+        <div aria-hidden className="mt-3 space-y-2.5">
+          <span className="v2-skeleton block h-6 w-48 rounded-lg" />
+          <span className="v2-skeleton v2-skeleton--text block w-64" />
         </div>
       )}
 
       {call && (
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--v2-nav)]">
           Daily Bell call{replayed ? " (replay)" : ""}: <Forecast pct={call.forecastPct} size="sm" />
-          <span className="text-xs text-subtle">{replayed ? "$CHOG over 24h, rebuilt from past candles" : "$CHOG in 24h"}</span>
+          <span className="text-xs text-[var(--v2-faint)]">{replayed ? "$CHOG over 24h, rebuilt from past candles" : "$CHOG in 24h"}</span>
           <SourceBadge source={call.source} />
         </p>
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link href={`/replay/${id}`} className="btn btn-secondary">
-          <span aria-hidden>▶</span> Watch its replay
+        <Link href={`/replay/${id}`} className={pillClass("glass", "sm")}>
+          <PlayIcon className="size-3.5 text-[var(--v2-teal)]" /> Watch its replay
         </Link>
-        <Link href={`/chog/${id}`} className="btn btn-ghost">
+        <Link href={`/chog/${id}`} className={pillClass("ghost", "sm")}>
           Profile
         </Link>
-        <Link href={`/chog/${id}#bell`} className="btn btn-ghost">
+        <Link href={`/chog/${id}#bell`} className={pillClass("ghost", "sm")}>
           Its Bell call
         </Link>
       </div>
-      <p className="mt-3 text-[11px] text-subtle">League: {SIM_LABEL}.</p>
+      <p className="v2-note mt-3">League: {SIM_LABEL}.</p>
     </section>
   );
 }
