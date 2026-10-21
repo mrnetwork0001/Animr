@@ -82,27 +82,8 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
         <Corner side="b" fighter={preview.b} label={labels.b} line={genomeLine(genomes.b)} loading={genomeB.isPending} />
       </div>
 
-      <dl className="relative mx-3 mt-5 divide-y divide-line/60 rounded-xl border border-line/70 bg-background/40 text-xs sm:mx-6 sm:text-sm">
-        <TapeRow
-          label={`League · ${WINDOW_LABEL[DEFAULT_WINDOW]}`}
-          labels={labels}
-          a={standingA.data ? <Standing rank={standingA.data.row.rank} edge={standingA.data.row.edgePct} /> : undefined}
-          b={standingB.data ? <Standing rank={standingB.data.row.rank} edge={standingB.data.row.edgePct} /> : undefined}
-          loading={{ a: standingA.isPending, b: standingB.isPending }}
-        />
-        {rows.length > 0
-          ? rows.map((row) => <TapeRow key={row.key} label={row.label} labels={labels} a={row.a} b={row.b} />)
-          : ["Signal", "Trigger", "Size", "Exit"].map((label) => (
-              <TapeRow
-                key={label}
-                label={label}
-                labels={labels}
-                loading={{ a: genomeA.isPending, b: genomeB.isPending }}
-              />
-            ))}
-      </dl>
-
-      <div className="relative mt-5 border-t border-line/70 bg-background/30 px-4 pt-5 pb-5 text-center sm:px-6">
+      {/* The one action comes right under the corners; the gene table backs it up below. */}
+      <div className="relative mt-5 border-y border-line/70 bg-background/30 px-4 pt-5 pb-5 text-center sm:px-6">
         <h3 id={questionId} className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">
           Who stacks more $CHOG?
         </h3>
@@ -146,8 +127,29 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
             {error}
           </p>
         )}
-        <p className="mt-4 text-[11px] text-subtle">{VERSUS_SIM_LABEL}. Real dates are revealed at the KO.</p>
       </div>
+      <dl aria-label="Tale of the tape: both genomes, gene by gene" className="relative mx-3 mt-5 divide-y divide-line/60 rounded-xl border border-line/70 bg-background/40 text-xs sm:mx-6 sm:text-sm">
+        <TapeRow
+          label={`League · ${WINDOW_LABEL[DEFAULT_WINDOW]}`}
+          labels={labels}
+          a={standingA.data ? <Standing rank={standingA.data.row.rank} edge={standingA.data.row.edgePct} /> : undefined}
+          b={standingB.data ? <Standing rank={standingB.data.row.rank} edge={standingB.data.row.edgePct} /> : undefined}
+          loading={{ a: standingA.isPending, b: standingB.isPending }}
+        />
+        {rows.length > 0
+          ? rows.map((row) => <TapeRow key={row.key} label={row.label} labels={labels} a={row.a} b={row.b} />)
+          : ["Signal", "Trigger", "Size", "Exit"].map((label) => (
+              <TapeRow
+                key={label}
+                label={label}
+                labels={labels}
+                loading={{ a: genomeA.isPending, b: genomeB.isPending }}
+              />
+            ))}
+      </dl>
+      <p className="relative px-4 pt-3 pb-5 text-center text-[11px] text-subtle sm:px-6">
+        {VERSUS_SIM_LABEL}. Real dates are revealed at the KO.
+      </p>
     </section>
   );
 }
@@ -194,7 +196,7 @@ function Corner({
         <StyleTag style={fighter.style} />
       </p>
       {line ? (
-        <p className="mt-2 line-clamp-4 text-xs leading-relaxed text-pretty text-muted italic sm:text-[13px]">
+        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-pretty text-muted italic sm:line-clamp-4 sm:text-[13px]">
           &ldquo;{line}&rdquo;
         </p>
       ) : loading ? (

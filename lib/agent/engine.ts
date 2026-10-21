@@ -1,6 +1,7 @@
 import { type Address, erc20Abi, formatUnits } from "viem";
 import { publicClient } from "../clients";
 import { appConfig } from "../config";
+import { houseChogTokenId } from "../heist/config";
 import { fetchNftMetadata } from "../nft";
 import { decide, type BrainDecision } from "./brain";
 import { getMarketSnapshot } from "./market";
@@ -141,6 +142,28 @@ function syncVault(agent: AgentRecord, vault: Portfolio, priceQuote: number | nu
   return { ...agent, portfolio: vault, startValueChog: growth > 0 ? now / growth : now };
 }
 
+/** "+4.2%" / "−3.1%" for a rule's reason. */
+function signedChange(pct: number): string {
+  return `${pct > 0 ? "+" : pct < 0 ? "−" : ""}${Math.abs(pct).toFixed(1)}%`;
+}
+
+/**
+ * The House Chog's code rule (HOUSE_CHOG_TOKEN_ID, on-chain mode only): its mandate is to buy dips, never to sell
+ * real $CHOG into one. A sell decision while $CHOG is down over the last hour or day (or while the trend can't be
+ * read) becomes a hold, whatever the LLM said. Its reason in words, or undefined when the decision may go ahead.
+ */
+export function houseDipRule(agent: Pick<AgentRecord, "tokenId" | "mode">, action: BrainDecision["action"], market: MarketSnapshot) {
+  if (action !== "sell" || agent.mode !== "onchain") return undefined;
+  const house = houseChogTokenId();
+  if (house === null || Number(agent.tokenId) !== house) return undefined;
+  const { change1hPct: hour, change24hPct: day } = market;
+  if (hour === null || day === null) return "House rule: no real-money sell while the $CHOG trend can't be read";
+  if (hour < 0 || day < 0) {
+    return `House rule: no real-money sells into a dip ($CHOG ${signedChange(hour)} in 1h, ${signedChange(day)} in 24h)`;
+  }
+  return undefined;
+}
+
 export type RunOptions = {
   /**
    * Wall-clock time (ms) after which the run sends no on-chain trade (it records a hold instead): set by
@@ -174,7 +197,10 @@ export function runAgentOnce(agent: AgentRecord, options: RunOptions = {}): Prom
     let held: string | undefined;
     let error: string | undefined;
     let late = false;
-    if (brain.action !== "hold" && current.mode === "onchain" && options.deadline !== undefined && Date.now() > options.deadline) {
+    const ruled = houseDipRule(current, brain.action, market);
+    if (ruled) {
+      // The House Chog's mandate: no real-money sell into a dip. Nothing is sent; recorded as a hold.
+    } else if (brain.action !== "hold" && current.mode === "onchain" && options.deadline !== undefined && Date.now() > options.deadline) {
       late = true;
     } else if (brain.action !== "hold") {
       try {
@@ -192,11 +218,13 @@ export function runAgentOnce(agent: AgentRecord, options: RunOptions = {}): Prom
       id: crypto.randomUUID(),
       tokenId: current.tokenId,
       at,
-      action: held || late ? "hold" : brain.action,
-      sizeBps: held || late ? 0 : (execution?.filledBps ?? brain.sizeBps),
+      action: held || late || ruled ? "hold" : brain.action,
+      sizeBps: held || late || ruled ? 0 : (execution?.filledBps ?? brain.sizeBps),
       maxSlippageBps: brain.maxSlippageBps,
       confidence: brain.confidence,
-      thesis: held
+      thesis: ruled
+        ? `${brain.thesis} (${ruled}: no transaction sent, holding.)`
+        : held
         ? `${brain.thesis} (AnimrTradeGuard: ${held}, holding.)`
         : late
           ? `${brain.thesis} (Out of time for this run: no transaction sent, holding.)`

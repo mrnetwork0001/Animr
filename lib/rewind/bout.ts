@@ -29,7 +29,7 @@ import { type DramaWindow, WINDOW_HOURS, rankDramaWindows, revealLabel, windowBo
 // Server-only (data/chogs.json and the candles).
 
 /** Bump whenever a change here (or in the genome's voice lines) changes what a bout id serves (the per-process cache is keyed by it). */
-const ENGINE_REV = 4;
+const ENGINE_REV = 5;
 /** Bouts kept per instance (an id is recomputed in a few ms anyway). */
 const MAX_CACHED_BOUTS = 500;
 /** Random pairs tried before settling for the best bout found. */

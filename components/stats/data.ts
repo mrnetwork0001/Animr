@@ -1,4 +1,5 @@
 import { isTeeVerified, receiptCostUsd } from "@/lib/agent/receipts";
+import { zgProviderInfo } from "@/lib/agent/zg-compute";
 import { MAX_DECISIONS_PER_AGENT, getStore } from "@/lib/agent/store";
 import type { AgentRecord, Decision } from "@/lib/agent/types";
 import { DAY_MS, HOUR_MS, RIDE_WINDOW_HOURS, addDays, bellTime, parseDay, utcDay } from "@/lib/bell/rules";
@@ -325,15 +326,22 @@ type AgentSummary = {
   onchain: number;
   zgMicro: number;
   perDay: Record<string, number>;
+  /** LLM decisions per serving provider and model ("<address> <model>"), for the provider-tier counts. */
+  providers: Record<string, number>;
 };
 
 function summarize(decisions: Decision[], at: string | null): AgentSummary {
-  const summary: AgentSummary = { at, stored: 0, llm: 0, tee: 0, paper: 0, onchain: 0, zgMicro: 0, perDay: {} };
+  const summary: AgentSummary = { at, stored: 0, llm: 0, tee: 0, paper: 0, onchain: 0, zgMicro: 0, perDay: {}, providers: {} };
   for (const decision of decisions) {
     if (!decision || typeof decision !== "object") continue;
     summary.stored++;
     if (decision.decidedBy === "llm") summary.llm++;
     if (isTeeVerified(decision)) summary.tee++;
+    const provider = typeof decision.zg?.provider === "string" ? decision.zg.provider.trim().toLowerCase() : "";
+    if (/^0x[0-9a-f]{40}$/.test(provider)) {
+      const key = `${provider} ${decision.model ?? ""}`;
+      summary.providers[key] = (summary.providers[key] ?? 0) + 1;
+    }
     // An on-chain trade counts once it has a transaction; paper fills are simulated.
     if (decision.trade?.mode === "onchain" && decision.trade.txHash) summary.onchain++;
     else if (decision.trade?.mode === "paper") summary.paper++;
@@ -352,7 +360,31 @@ const globalForStats = globalThis as typeof globalThis & {
   __animrStatsAgents?: Map<string, AgentSummary>;
 };
 
-async function readAgents(): Promise<{ agents: AgentRecord[]; summaries: AgentSummary[] }> {
+type ProviderTiers = { teeML: number; teeTLS: number; standard: number };
+
+/**
+ * How many stored LLM decisions each kind of 0G provider served, labelled from the Router's public provider list
+ * (zgProviderInfo, cached ~1 h). A provider's tier says how it serves calls, not that a given call was verified.
+ */
+async function providerTiers(summaries: AgentSummary[]): Promise<ProviderTiers> {
+  const counts = new Map<string, number>();
+  for (const summary of summaries) {
+    for (const [key, n] of Object.entries(summary.providers ?? {})) counts.set(key, (counts.get(key) ?? 0) + n);
+  }
+  const tiers: ProviderTiers = { teeML: 0, teeTLS: 0, standard: 0 };
+  await Promise.all(
+    [...counts].map(async ([key, n]) => {
+      const [address, model] = key.split(" ");
+      const info = await zgProviderInfo(address, model || undefined);
+      if (info?.label === "TeeML") tiers.teeML += n;
+      else if (info?.label === "TeeTLS") tiers.teeTLS += n;
+      else if (info?.label === "standard") tiers.standard += n;
+    }),
+  );
+  return tiers;
+}
+
+async function readAgents(): Promise<{ agents: AgentRecord[]; summaries: AgentSummary[]; tiers: ProviderTiers }> {
   const store = getStore();
   const agents = await store.listAgents();
   const cache = (globalForStats.__animrStatsAgents ??= new Map());
@@ -363,7 +395,7 @@ async function readAgents(): Promise<{ agents: AgentRecord[]; summaries: AgentSu
     cache.set(agent.tokenId, summary);
     return summary;
   });
-  return { agents, summaries };
+  return { agents, summaries, tiers: await providerTiers(summaries) };
 }
 
 // --- Plain counters: first-seen days and daily snapshots ---------------------------------------------
@@ -504,6 +536,7 @@ export async function computeStats(now = Date.now()): Promise<StatsResponse> {
     stored: total((s) => s.stored),
     llm: total((s) => s.llm),
     teeVerified: total((s) => s.tee),
+    providerTiers: agentData?.tiers ?? { teeML: 0, teeTLS: 0, standard: 0 },
     paperTrades: total((s) => s.paper),
     onchainTrades: total((s) => s.onchain),
     perDay: series(seriesDays(today, agentsSince), (day) => perDay[day] ?? 0),

@@ -94,6 +94,8 @@ export type VersusRecord = {
   /** VERSUS points earned on the current UTC day, and the daily cap. */
   pointsToday: number;
   dailyCap: number;
+  /** Points waiting for this cookie's first fan card (a first Daily Bell ride or nickname); 0 once it has one. */
+  pending?: number;
 };
 
 /**

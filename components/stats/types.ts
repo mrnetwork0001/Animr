@@ -102,8 +102,10 @@ export type StatsResponse = {
     stored: number;
     /** Stored decisions made by an LLM on 0G Compute. */
     llm: number;
-    /** Stored LLM decisions whose provider's TEE attestation was verified. */
+    /** Stored LLM decisions whose own receipt says the provider's TEE attestation was verified (0 while the Router seals traffic). */
     teeVerified: number;
+    /** Stored LLM decisions by the tier 0G's public list gives their provider: how it serves calls, not a check of a call. */
+    providerTiers: { teeML: number; teeTLS: number; standard: number };
     paperTrades: number;
     onchainTrades: number;
     /** Stored decisions per day. */

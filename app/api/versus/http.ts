@@ -14,7 +14,10 @@ export const CACHE_STATS = "public, max-age=0, s-maxage=30, stale-while-revalida
 export const NO_STORE = "private, no-store";
 
 /** Requests per minute per network (lib/bell/http.ts rateLimit), roomy enough for a judging room behind one IP. */
-export const LIMITS = { deal: 60, view: 120, pick: 30, picksPerDay: 1000, stats: 120 } as const;
+export const LIMITS = { deal: 60, view: 120, pick: 30, picksPerDay: 1000, newPickersPerDay: 100, stats: 120 } as const;
+
+export const NEW_PICKERS_MESSAGE =
+  "Too many new Versus players from this network today. Try another network, or come back tomorrow.";
 
 export function json(body: unknown, cacheControl: string): Response {
   return Response.json(body, { headers: { "Cache-Control": cacheControl } });

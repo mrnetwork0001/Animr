@@ -30,9 +30,8 @@ export function BellDashboard() {
     : [];
   const previous = useBell(bell?.status === "settled" ? null : pastDays[0]);
   const verdict = bell?.status === "settled" ? bell : previous.data;
-  // While rides are closed the practice game is the one thing to play, so it sits right under the fan card.
-  const beforeClose = useBefore(bell ? Date.parse(bell.rideWindowClosesAt) : Number.NaN);
-  const ridesOpen = Boolean(bell && rideable(bell) && beforeClose);
+  // The practice game comes after the real picks: open or closed, the calls' Ride buttons (this Bell, or the next one)
+  // come first, so a phone reaches a ride that counts before a practice one. The fan card links down to the game.
   const game = pastDays.length > 0 && <ReplayGame days={pastDays} id={REPLAY_GAME_ID} />;
 
   return (
@@ -49,7 +48,6 @@ export function BellDashboard() {
         <BellHero bell={bell} pending={today.isPending} />
       )}
       <FanPanel bell={bell} />
-      {!ridesOpen && game}
 
       <div className="grid items-start gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-10">
@@ -57,7 +55,7 @@ export function BellDashboard() {
           {bell?.status === "settled" && <Verdict bell={bell} />}
           {bell && <TodaysCalls bell={bell} />}
           {verdict && verdict !== bell && <Verdict bell={verdict} />}
-          {ridesOpen && game}
+          {game}
         </div>
         <aside className="min-w-0 space-y-10">
           <SeasonStandings />

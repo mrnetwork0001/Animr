@@ -181,7 +181,8 @@ function Player({
     return () => cancelAnimationFrame(frame);
   }, [playing, speed]);
 
-  // Autoplay once, the first time the chart is mostly on screen.
+  // Autoplay once, as soon as the chart's top is on screen: on a phone the card starts low, and waiting for most of it
+  // left the timeline at day 1 over an empty chart.
   useEffect(() => {
     const el = chartRef.current;
     if (!autoPlay || reducedMotion || !el || progressRef.current > 0) return;
@@ -191,7 +192,8 @@ function Player({
         observer.disconnect();
         setPlaying(true);
       },
-      { threshold: 0.6 },
+      // Any of it, 40px above the fold: the chart's top entering the screen starts it.
+      { threshold: 0, rootMargin: "0px 0px -40px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();

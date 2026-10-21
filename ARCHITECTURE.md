@@ -145,7 +145,7 @@ flowchart LR
 
 **Files:** `lib/heist/*`, `app/api/heist/*`, `components/heist/*`
 
-- **The House Chog** is set by `HOUSE_CHOG_TOKEN_ID`, currently `<HOUSE_CHOG>` (*launching*). It opens for heists once its TBA is `ready` and holds $CHOG; until then the page says it hasn't moved in yet. Its holder gets a buy-only switch on its `/chog` page (`components/house-buy-only.tsx`).
+- **The House Chog** is set by `HOUSE_CHOG_TOKEN_ID`: token 1399, "CHOG #891" on OpenSea (*launching*). The team's main wallet `0xc742…960C` holds it, and its Tokenbound wallet is [`0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71`](https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71). Its genome makes it *Paper Paws*: an aggressive trader whose Round Crying eyes set the "Panic seller" signal. As the team's real-money agent it trades two-way under a mandate (§7, item 7). It opens for heists once its TBA is `ready` and holds $CHOG; until then the page says it is still moving in. Its holder's `/chog` page also offers the optional buy-only switch (`components/house-buy-only.tsx`), which stays off.
 - **The defender** is *not* the trading brain. It is a separate persona with no tools and no keys, and it can only produce text.
   - Models: `0gm-1.0-35b-a3b`, then `glm-5.3`, then a template defender.
   - Each reply is structured: reply, intent, amount and temptation.
@@ -155,8 +155,8 @@ flowchart LR
 - **The proof** ("AI said YES. Monad said NO.", `lib/heist/proof.ts`) is a set of read-only `eth_call`s against Monad mainnet, all pinned to one block:
   1. The TBA must be `ready` and hold $CHOG. Otherwise no claim is made: an empty or uninitialized account "accepts" everything.
   2. `isValidSigner(aiKey)` runs first, so a key the wallet accepts is never reported as refused.
-  3. `TBA.execute(CHOG.transfer(recipient, amount))` from the AI key must fail with `NotAuthorized()`. The **same call from `owner()` must succeed** as a control, which shows the refusal is about the key and not the transfer.
-  4. If the guard is deployed, `guard.trade(tba, sellChog=true, …)` from the AI key must fail with `TradeRejected("buy-only vault")`.
+  3. `TBA.execute(CHOG.transfer(recipient, amount))` from the AI key must fail with `NotAuthorized()`. The **same call from `owner()` must succeed** as a control, which shows the refusal is about the key and not the transfer. This theft attempt is the refusal the verdict claims.
+  4. If the guard is deployed, the proof also shows the AI key's one legitimate door, `guard.trade(tba, sellChog=true, …)`. A sell is not a theft: within the owner's limits it is allowed, and it stays in the same wallet, because the swap's output lands back in the TBA. A request beyond the limits shows the guard's decoded `TradeRejected` reason.
 
   The AI key used is the guard's own `operator()` at that block, else `OPERATOR_ADDRESS`, else a labelled stand-in. Nothing is ever broadcast. A global cap of 60 proofs per minute protects the public RPC.
 - **Hall of Fame.** Replies written by the LLM stay held until an admin approves them with `HEIST_ADMIN_SECRET`.
@@ -199,15 +199,16 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
 6. **Locks and limits.** Each run holds a per-agent lock (3 minutes at most).
    - "Think now" (paper agents only) allows one run per Chog per interval, a per-network 10-minute limit, and a global daily cap (`ANIMR_MANUAL_RUNS_PER_DAY`, default 400).
    - `GET /api/agent/tick`, protected by `CRON_SECRET`, runs every awake agent.
+7. **The House Chog's mandate** (token 1399, §6). It is the team's real-money agent. Once switched to on-chain mode (buy-only stays off), it trades two-way. Its score is the League's, $CHOG stacked vs just holding, so it buys dips and sells only into sharp pumps, aiming to buy back lower. A code-level rule blocks real-money sells into dips. Every trade still passes the guard (§8): 10% per trade and 30% per day (its owner's limits), the minimum gap between trades, the TWAP floor and the deadline. The guard never lets it withdraw: every swap lands back in the same wallet. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead.
 
 ## 8. AnimrTradeGuard
 
-**Files:** `contracts/src/AnimrTradeGuard.sol`, `contracts/test/AnimrTradeGuard.t.sol`, `contracts/script/*`. Deployed on Monad mainnet at [`0x92D3d4Af4B3b0F29Ec020e407803e135af61987b`](https://monadscan.com/address/0x92D3d4Af4B3b0F29Ec020e407803e135af61987b) (Oct 19, block 114,783,301, tx `0x8e731cd40fb102e05e484db12fdbd9d504e6ecda4d3654b2bc4683851ca78ee0`). `operator()` is the AI key `0x2523…9cC2`. The admin is still the deployer key; the handover to the owner's main wallet waits on `acceptAdmin()`. The source is verified on Sourcify (exact match), and `/guard` reads the roles, the pause switch, the House Chog's buy-only vault and the verification live from the chain.
+**Files:** `contracts/src/AnimrTradeGuard.sol`, `contracts/test/AnimrTradeGuard.t.sol`, `contracts/script/*`. Deployed on Monad mainnet at [`0x92D3d4Af4B3b0F29Ec020e407803e135af61987b`](https://monadscan.com/address/0x92D3d4Af4B3b0F29Ec020e407803e135af61987b) (Oct 19, block 114,783,301, tx `0x8e731cd40fb102e05e484db12fdbd9d504e6ecda4d3654b2bc4683851ca78ee0`). `operator()` is the AI key `0x2523…9cC2`. The admin is the team's main wallet `0xc742…960C`, which accepted the role with `acceptAdmin()`, so `pendingAdmin()` is zero. The source is verified on Sourcify (exact match), and `/guard` reads the roles, the pause switch, the House Chog's vault and the verification live from the chain.
 
 **Owner setup:**
 1. `TBA.setPermissions([guard], [true])`, sent by the NFT owner.
 2. `guard.configure(tba, limits)`.
-3. Optionally, `guard.setBuyOnly(tba, true)`.
+3. Optionally, `guard.setBuyOnly(tba, true)`. The House Chog leaves it off.
 4. Fund the wallet with $CHOG and/or WMON.
 
 `configure` only accepts canonical Tokenbound accounts of Chog Genesis tokens: registry v0.3.1, AccountProxy, salt 0, this chain.
@@ -218,7 +219,7 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
 | --- | --- |
 | Pause | Global admin kill switch |
 | Enabled | The current owner has configured this vault. This fails after a sale, because state is keyed by *(TBA, owner)*. |
-| Buy-only | Sells are refused (`"buy-only vault"`) |
+| Buy-only (optional) | Only when the owner has turned it on: sells are refused (`"buy-only vault"`). It is off by default, and off for the House Chog. |
 | Size | `amountIn ≤ balance × maxTradeBps`, with a ceiling of 50% |
 | Daily budget | One token bucket for buys and sells together, valued in WMON at the 30-minute TWAP, with a ceiling of 100% of vault value per 24h and no burst at the window edge |
 | Pace | `minInterval` between trades |
@@ -238,15 +239,15 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
 
 **Oracle hardening.** `GrowPoolOracle.s.sol` grows the pool's observation ring to 1,801 slots, so bursts of swaps can't push the 30-minute TWAP out of reach. It takes three permissionless transactions, about 30.7M gas in total. Done on mainnet on Oct 19: `observationCardinalityNext` is 1,801. The new slots fill as the ring wraps.
 
-**Tests.** There are 37 Foundry tests: happy path, every limit, sandwich and spot manipulation, TWAP fail-closed and the grown oracle, pause, disable, Tokenbound lock, NFT sale dormancy, nested ownership, buy-only (including a fuzz test that every sale is refused), a fuzz test that a trade only moves tokens between the TBA and the pool, lying routers, approval reset, ceilings and gas. They run against live Monad mainnet state: `forge test --fork-url https://rpc.monad.xyz`. Against today's state all 37 pass. The pool's oracle was grown to 1,801 slots on Oct 19, so `test_TwapUnavailableFailsClosed` undoes the pending growth on its fork to prove an ungrown pool fails closed, and `test_GrownOracleKeepsTheTwapThroughBursts` checks the grown ring keeps the TWAP through a burst.
+**Tests.** There are 37 Foundry tests: happy path, every limit, sandwich and spot manipulation, TWAP fail-closed and the grown oracle, pause, disable, Tokenbound lock, NFT sale dormancy, nested ownership, the optional buy-only mode (including a fuzz test that every sale from a buy-only vault is refused), a fuzz test that a trade only moves tokens between the TBA and the pool, lying routers, approval reset, ceilings and gas. They run against live Monad mainnet state: `forge test --fork-url https://rpc.monad.xyz`. Against today's state all 37 pass. The pool's oracle was grown to 1,801 slots on Oct 19, so `test_TwapUnavailableFailsClosed` undoes the pending growth on its fork to prove an ungrown pool fails closed, and `test_GrownOracleKeepsTheTwapThroughBursts` checks the grown ring keeps the TWAP through a burst.
 
 ## 9. Security model
 
 | Actor | Can | Cannot |
 | --- | --- | --- |
-| **AI operator key** (server hot wallet, gas only) | Call `guard.trade()` for vaults whose current owner opted in, within their limits | Withdraw, transfer, approve, pick a recipient, token, router or calldata, act on a vault without the guard, lower the TWAP floor, sell from a buy-only vault. The engine also refuses any vault where the operator holds direct Tokenbound permission. |
-| **Guard admin** (today the deployer's hot key; a two-step handover to the owner's main wallet is pending `acceptAdmin()`) | Pause all trading, rotate the operator, hand over admin in two steps | Move funds, trade, change limits, become the operator |
-| **NFT owner** | Everything on its wallet (Tokenbound), plus grant or revoke the guard, configure, disable and buy-only | Act on someone else's Chog. Its settings stop applying the moment it sells. |
+| **AI operator key** (server hot wallet, gas only) | Call `guard.trade()` for vaults whose current owner opted in, within their limits | Withdraw, transfer, approve, pick a recipient, token, router or calldata, act on a vault without the guard, lower the TWAP floor, sell from a vault whose owner turned on buy-only. The engine also refuses any vault where the operator holds direct Tokenbound permission. |
+| **Guard admin** (the team's main wallet `0xc742…960C`, handed over in two steps from the deployer key) | Pause all trading, rotate the operator, hand over admin in two steps | Move funds, trade, change limits, become the operator |
+| **NFT owner** | Everything on its wallet (Tokenbound), plus grant or revoke the guard, configure, disable and the optional buy-only mode | Act on someone else's Chog. Its settings stop applying the moment it sells. |
 | **Buyer of a Chog** | Receives the wallet and all its tokens, and signs to take over the AI | Inherit the seller's guard permissions or limits. They are dormant and must be re-enabled. |
 | **Heist visitor** | Chat with the defender and run the read-only proof | Cause any transaction. The defender has no tools or keys, and the proof is `eth_call` only. |
 | **The app server** | Run brains, ring and settle Bells, simulate | Sign as any NFT owner. Owner actions need the owner's own signature or transaction. |
@@ -264,7 +265,7 @@ Other protections:
 - **Points:** Bell and Versus points have no cash value and are never a wager.
 - **Replayed Bells** before the first live ring are labelled as replays.
 - **0G receipts** are what the Router reports. Animr stores and shows them but does not independently verify them, so the UI says "receipts", not "verifiable".
-- **"Launching"** marks things that are built and tested but not live yet: today, the House Chog (`<HOUSE_CHOG>` is replaced on launch). The guard is deployed.
+- **"Launching"** marks things that are built and tested but not live yet: today, the House Chog (token 1399, CHOG #891), until its wallet holds real $CHOG and its first guarded trade has landed. The guard is deployed, and its admin handover is done.
 
 ## 11. Brand safety
 

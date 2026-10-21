@@ -5,10 +5,10 @@ import { getShownBout } from "@/lib/rewind/bout";
 import { countVersus } from "@/lib/rewind/counters";
 import { VersusError } from "@/lib/rewind/errors";
 import { isBoutId } from "@/lib/rewind/id";
-import { recordPick } from "@/lib/rewind/picks";
+import { getVersusRecord, recordPick } from "@/lib/rewind/picks";
 import type { VersusPickResponse } from "@/lib/rewind/types";
 import { loadVisibility } from "@/lib/visibility";
-import { LIMITS, NO_STORE, json, versusErrorResponse } from "../../http";
+import { LIMITS, NEW_PICKERS_MESSAGE, NO_STORE, json, versusErrorResponse } from "../../http";
 
 /**
  * Body { fighter: "a" | "b" }: the cookie fan's pick (the first visit sets the animr_fan cookie; no wallet).
@@ -26,7 +26,14 @@ export async function POST(request: Request, ctx: RouteContext<"/api/versus/[id]
     const fighter = body.fighter;
     if (fighter !== "a" && fighter !== "b") throw new VersusError(400, 'Pick a side: { "fighter": "a" } or { "fighter": "b" }.');
     const bout = await getShownBout(id, (await loadVisibility()).hidden);
-    const { first, response } = await recordPick(await fanIdentity(), bout, fighter);
+    const fanId = await fanIdentity();
+    // A cookie's first VERSUS record is capped per network and day (roomy for a judging room behind one IP), so a
+    // script that drops its cookie can't mint records without limit. Cookies with a record pick as usual.
+    if ((await getVersusRecord(fanId)).picks === 0) {
+      const capped = await rateLimit(request, "versus-new-fan", LIMITS.newPickersPerDay, DAY_MS, NEW_PICKERS_MESSAGE);
+      if (capped) return capped;
+    }
+    const { first, response } = await recordPick(fanId, bout, fighter);
     if (first) after(() => countVersus("picks"));
     return json(response satisfies VersusPickResponse, NO_STORE);
   } catch (error) {

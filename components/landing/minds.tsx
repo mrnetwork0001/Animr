@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChogImage } from "./chog-image";
-import { ctas, labels, links, minds, showcaseIds } from "./content";
+import { ctas, links, minds, showcaseIds } from "./content";
 import { Icon } from "./icons";
 import { STYLE_HIGHLIGHT, STYLE_TEXT, Section, StyleBadge } from "./primitives";
 import { Rich } from "./rich";
@@ -47,7 +47,7 @@ function DnaStrip({ chog }: { chog: ShowcaseChog }) {
 
       <div className="min-w-0">
         <p className="font-mono text-xs text-subtle">
-          {labels.chog(chog.tokenId)} · {chog.name} · {dna.traitsNote}
+          {chog.label} · {chog.name} · {dna.traitsNote}
         </p>
         <ul className="mt-3 flex flex-wrap gap-1.5">
           {chog.traits.map((trait) => (
@@ -69,7 +69,7 @@ function DnaStrip({ chog }: { chog: ShowcaseChog }) {
           <ChogImage
             src={chog.image.src}
             fallbackSrc={chog.image.fallbackSrc}
-            alt={labels.chog(chog.tokenId)}
+            alt={chog.label}
             size={112}
             fallbackLabel={`#${chog.tokenId}`}
             className="size-14 shrink-0 rounded-xl"
@@ -121,14 +121,14 @@ function PersonaCard({ chog }: { chog: ShowcaseChog }) {
       <ChogImage
         src={chog.image.src}
         fallbackSrc={chog.image.fallbackSrc}
-        alt={`${labels.chog(chog.tokenId)}, ${chog.name}`}
+        alt={`${chog.label}, ${chog.name}`}
         size={600}
-        fallbackLabel={labels.chog(chog.tokenId)}
+        fallbackLabel={chog.label}
         className="rounded-xl lg:rounded-[0.8rem]"
       />
       <div className="self-center lg:px-3 lg:pt-4">
         <p className="font-mono text-xs text-subtle">
-          {labels.chog(chog.tokenId)} · {chog.name}
+          {chog.label} · {chog.name}
         </p>
         <div className="mt-0.5 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-lg font-semibold tracking-tight">{chog.archetype}</h3>

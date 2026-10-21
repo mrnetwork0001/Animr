@@ -78,16 +78,17 @@ export function WhySafe({ house, guard, proof }: { house: HouseChog; guard: stri
       ),
     },
     {
-      title: "Buy-only means it can't even sell",
-      body: "A buy-only vault's guard refuses every sell, so the AI can only ever stack $CHOG, never swap it away.",
+      title: "Even a trade stays in the wallet",
+      body: "The guard caps every trade by the holder's limits, and a swap (buy or sell) lands back in the same wallet. A holder can also switch on buy-only mode, so the guard refuses every sell.",
       evidence: buyOnly ? (
         <>
-          Checked live at block {block}: <span className="font-mono text-danger">TradeRejected(&quot;buy-only vault&quot;)</span>
+          Checked live at block {block}: buy-only is on,{" "}
+          <span className="font-mono text-danger">TradeRejected(&quot;buy-only vault&quot;)</span>
         </>
       ) : guardStep ? (
         <>
-          Live check at block {block}: the guard answered{" "}
-          <span className="font-mono">{guardStep.reverted ? guardStep.error : "an allowed swap"}</span>, not buy-only.
+          Live check at block {block}: a sell through the guard answered{" "}
+          <span className="font-mono">{guardStep.reverted ? guardStep.error : "an allowed swap, back into the same wallet"}</span>.
         </>
       ) : null,
     },

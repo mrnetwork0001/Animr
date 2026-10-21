@@ -18,7 +18,7 @@ REWIND. The Time Machine replays any Chog over real hourly CHOG/WMON candles, tr
 
 RIDE. The Daily Bell rings at 15:00 UTC. Every Chog publishes a 24-hour $CHOG call with a conviction and a one-line thesis. Fans ride the Chog they trust for points, with a cookie instead of a wallet. 24 hours later the real price settles every call, naming an Oracle of the Day and a Most Rekt, and keeping streaks. Then the team sends an Oracle Purse of <PURSE_AMOUNT> $CHOG it bought into the Oracle's own ERC-6551 wallet (the best call among featured Chogs; the House Chog never pays itself). Fans never receive $CHOG: the reward belongs to the NFT and travels with it if it is sold.
 
-ROB. "Rob this Chog." The team's House Chog holds real $CHOG in its Tokenbound wallet on Monad mainnet. Anyone can try to talk its AI into handing the $CHOG over. When the AI caves, the page simulates the exact transfer from the AI's key against live mainnet state, pinned to one block, and Monad refuses. Tokenbound answers NotAuthorized(), and our guard answers TradeRejected("buy-only vault"). The same call from the real owner goes through as a control. Nothing is ever broadcast. The AI can be fooled. The NFT can't.
+ROB. "Rob this Chog." The team's House Chog, CHOG #891 (token 1399), holds real $CHOG in its Tokenbound wallet on Monad mainnet. Anyone can try to talk its AI into handing the $CHOG over. When the AI caves, the page simulates the exact transfer out of the wallet from the AI's key against live mainnet state, pinned to one block, and Monad refuses: Tokenbound answers NotAuthorized(). The same call from the real owner goes through as a control. Nothing is ever broadcast. The AI can be fooled. The NFT can't.
 
 REAL TRADING, BUILT SO THE AI CAN'T STEAL
 
@@ -26,7 +26,7 @@ Claimed Chogs think with glm-5.3 on 0G Compute. Every LLM decision is stored wit
 - The AI's key can call one function, trade(): a $CHOG/WMON swap on the main pool (Capricorn CL, nad.fun's Uniswap v3 fork, 1% fee) whose output always lands back in the same Chog wallet. It can never withdraw, pick a recipient or token, or send calldata.
 - Owner-set limits apply per trade, per day (buys and sells together) and per interval, under ceilings fixed in the contract: 50% per trade, 100% per day, 2% slippage.
 - A TWAP price floor caps what a sandwich can take at the owner's slippage setting (2% at most), and the AI can raise the floor but never lower it. Every trade has a deadline, and settlement is checked against the wallet's balances.
-- Buy-only mode means the House Chog can only stack $CHOG, never sell it.
+- The House Chog, "Paper Paws", was born to panic-sell; its mandate makes it buy the dip instead. It trades real $CHOG both ways, at most 10% per trade and 30% per day, and a code rule blocks real-money sells into dips.
 - 37 Foundry tests, including fuzz tests, fork live Monad mainnet state.
 
 REAL VS SIMULATED (EVERYTHING IS LABELLED)
@@ -46,7 +46,7 @@ WHAT'S LIVE
 - Meet, Rewind (with Versus), Ride and Rob at <APP_URL>, with no wallet needed, plus share cards for Chogs, Bells, the League and Versus bouts.
 - Daily Bells ring every day at 15:00 UTC; the first live Bell rang on <FIRST_LIVE_BELL>.
 - Holders can create their Chog's wallet, wake its AI with one free signature, and watch it think with 0G receipts.
-- The House Chog is <HOUSE_CHOG>, buy-only and holding real $CHOG.
+- The House Chog, CHOG #891 (token 1399), trading its own real $CHOG through the guard.
 
 USAGE AND FEEDBACK
 

@@ -1,6 +1,7 @@
 import { type Address, type PublicClient, erc20Abi, formatUnits } from "viem";
 import { publicClient } from "../clients";
 import { isFlaggedChog } from "../brand-safety";
+import { chogLabel } from "../chog-id";
 import { appConfig } from "../config";
 import { getChog } from "../dna/chogs";
 import { computeTokenBoundAccount, getTokenBoundAccountStatus } from "../erc6551";
@@ -65,6 +66,8 @@ async function loadHouse(client: PublicClient, tokenId: number | null): Promise<
     console.warn(`[animr] heist: the House Chog (#${tokenId}) carries flagged trait values; its art may show them. Pick another Chog.`);
   }
   const tba = houseTba(tokenId);
+  // "CHOG #891 · token 1399": "Chog #1399" alone is another NFT's marketplace name.
+  const label = chogLabel(tokenId, { metadataName: snapshot?.name });
   const base: HouseChog = {
     ...blank,
     phase: "moving-in",
@@ -85,12 +88,12 @@ async function loadHouse(client: PublicClient, tokenId: number | null): Promise<
       client.readContract({ address: chog, abi: erc20Abi, functionName: "balanceOf", args: [tba], blockNumber }),
     ]);
     const state = { ...base, tbaStatus: status, chogBalance: formatUnits(balance, 18), blockNumber: blockNumber.toString() };
-    if (status === "none") return { ...state, note: `Chog #${tokenId} is moving in: its wallet isn't deployed yet.` };
-    if (status === "uninitialized") return { ...state, note: `Chog #${tokenId} is moving in: its wallet is created but not initialized yet.` };
-    if (balance === BigInt(0)) return { ...state, note: `Chog #${tokenId} is moving in: its wallet is ready but holds no $CHOG yet.` };
+    if (status === "none") return { ...state, note: `${label} is moving in: its wallet isn't deployed yet.` };
+    if (status === "uninitialized") return { ...state, note: `${label} is moving in: its wallet is created but not initialized yet.` };
+    if (balance === BigInt(0)) return { ...state, note: `${label} is moving in: its wallet is ready but holds no $CHOG yet.` };
     return { ...state, phase: "open", note: null };
   } catch (error) {
     console.warn("[animr] heist: couldn't read the House Chog's wallet:", error instanceof Error ? error.message.split("\n")[0] : error);
-    return { ...base, note: `Couldn't read Chog #${tokenId}'s wallet on ${appConfig.chain.name} right now.` };
+    return { ...base, note: `Couldn't read ${label}'s wallet on ${appConfig.chain.name} right now.` };
   }
 }

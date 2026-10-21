@@ -223,16 +223,34 @@ export function StatsBoard({ stats }: { stats: StatsResponse }) {
                   : "No Chog claimed yet. Holders wake their Chog's AI with one free signature."
               }
             />
-            <SparkBars points={agents.perDay} label="Agent decisions per day" unit={["decision", "decisions"]} className="mt-4" />
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Mini label="On 0G Compute" value={show("agents", agents.llm)} note="decided by an LLM" />
-              <Mini label="TEE-verified" value={show("agents", agents.teeVerified)} note="receipt says so" />
-              <Mini
-                label="Trades"
-                value={show("agents", agents.paperTrades + agents.onchainTrades)}
-                note={`${formatCount(agents.onchainTrades)} on-chain, ${formatCount(agents.paperTrades)} paper`}
-              />
-            </div>
+            {agents.claimedEver === 0 && !missing("agents") ? (
+              // One honest line instead of a row of zero tiles until a holder wakes a Chog's AI.
+              <p className="mt-4 text-sm leading-relaxed text-pretty text-muted">
+                No claimed agents yet: their decisions, 0G receipts and trades show here from the first one. Meanwhile
+                every Chog already trades on its genome in the League and calls the Daily Bell.
+              </p>
+            ) : (
+              <>
+                <SparkBars points={agents.perDay} label="Agent decisions per day" unit={["decision", "decisions"]} className="mt-4" />
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <Mini label="On 0G Compute" value={show("agents", agents.llm)} note="decided by an LLM" />
+                  <Mini
+                    label="Provider tier"
+                    value={missing("agents") ? "—" : `${formatCount(agents.providerTiers.teeML)} · ${formatCount(agents.providerTiers.teeTLS)}`}
+                    note={
+                      agents.teeVerified > 0
+                        ? `TeeML · TeeTLS, as 0G lists the provider; ${formatCount(agents.teeVerified)} receipts say TEE verified`
+                        : "TeeML · TeeTLS, as 0G lists the provider: a label, not a check of each call"
+                    }
+                  />
+                  <Mini
+                    label="Trades"
+                    value={show("agents", agents.paperTrades + agents.onchainTrades)}
+                    note={`${formatCount(agents.onchainTrades)} on-chain, ${formatCount(agents.paperTrades)} paper`}
+                  />
+                </div>
+              </>
+            )}
           </Panel>
         </Section>
 

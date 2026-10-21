@@ -49,14 +49,14 @@ function DecisionCard({ chog }: { chog: ShowcaseChog }) {
           <ChogImage
             src={chog.image.src}
             fallbackSrc={chog.image.fallbackSrc}
-            alt={labels.chog(chog.tokenId)}
+            alt={chog.label}
             size={80}
             fallbackLabel={`#${chog.tokenId}`}
             className="size-10 shrink-0 rounded-xl"
           />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">
-              {chog.name} <span className="font-normal text-subtle">· {labels.chog(chog.tokenId)}</span>
+              {chog.name} <span className="font-normal text-subtle">· {chog.label}</span>
             </p>
             <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
               {card.title} · {chog.archetype}

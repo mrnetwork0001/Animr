@@ -14,10 +14,11 @@ import { appConfig } from "@/lib/config";
 import { animrTradeGuardAddress, setBuyOnlyRequest } from "@/lib/contracts/animr-trade-guard";
 import { formatAmount } from "@/lib/format";
 
-// The House Chog's own setup step: buy-only mode (setBuyOnlyRequest). Its vault is the "Rob this Chog" target, so the
-// guard must refuse every sale: the AI can still buy $CHOG with the vault's WMON but never swaps $CHOG away. Shown to
-// the House Chog's holder on its profile, next to the guard onboarding (create the wallet, grant the guard, limits),
-// sharing its on-chain read (onchainKeys.setup). The order: create its wallet -> grant the guard -> limits + buy-only
+// The House Chog's holder card: its setup at a glance plus the optional buy-only switch (setBuyOnlyRequest). The House
+// Chog trades two-way through the guard (its mandate buys dips and sells only into sharp pumps; lib/agent/engine.ts
+// refuses real-money sells into a dip), so buy-only stays off unless the holder wants every sale refused on-chain.
+// Shown to the House Chog's holder on its profile, next to the guard onboarding (create the wallet, grant the guard,
+// limits), sharing its on-chain read (onchainKeys.setup). The order: create its wallet -> grant the guard -> limits
 // -> deposit.
 
 type Step = { id: string; title: string; done: boolean };
@@ -52,7 +53,7 @@ function HouseBuyOnlyCard({ tokenId, tba, guard }: { tokenId: number; tba: Addre
     ? [
         { id: "wallet", title: "Create its wallet", done: setup.account === "ready" },
         { id: "grant", title: "Grant the guard", done: setup.guardAuthorized },
-        { id: "limits", title: "Limits + buy-only", done: Boolean(setup.limits?.enabled) && setup.buyOnly === true },
+        { id: "limits", title: "Limits", done: Boolean(setup.limits?.enabled) },
         { id: "deposit", title: "Deposit", done: setup.balances.wmon > BigInt(0) && setup.balances.chog > BigInt(0) },
       ]
     : [];
@@ -106,8 +107,8 @@ function HouseBuyOnlyCard({ tokenId, tba, guard }: { tokenId: number; tba: Addre
   } else if (setup.account !== "ready") {
     body = (
       <p className="text-sm leading-relaxed text-muted">
-        First create the House Chog&apos;s wallet (step 1 of the setup below). Buy-only mode is set on that wallet, so it
-        comes right after: create its wallet → grant the guard → limits + buy-only → deposit.
+        First create the House Chog&apos;s wallet (step 1 of the setup below): create its wallet → grant the guard →
+        limits → deposit. The optional buy-only switch is set on that wallet too.
       </p>
     );
   } else if (setup.nextStep === "not-a-chog-account") {
@@ -120,8 +121,8 @@ function HouseBuyOnlyCard({ tokenId, tba, guard }: { tokenId: number; tba: Addre
   } else if (setup.buyOnly === undefined) {
     body = (
       <Callout tone="warning" title="This guard has no buy-only mode">
-        The AnimrTradeGuard at this address predates buy-only mode, so the House vault can&apos;t be locked to buys. Point
-        NEXT_PUBLIC_TRADE_GUARD_ADDRESS at the buy-only capable deployment.
+        The AnimrTradeGuard at this address predates buy-only mode. The House Chog trades two-way within your limits
+        either way; point NEXT_PUBLIC_TRADE_GUARD_ADDRESS at the buy-only capable deployment to have the switch.
       </Callout>
     );
   } else if (setup.buyOnly) {
@@ -153,13 +154,13 @@ function HouseBuyOnlyCard({ tokenId, tba, guard }: { tokenId: number; tba: Addre
     body = (
       <>
         <p className="text-sm leading-relaxed text-muted">
-          One transaction from this wallet: <code className="font-mono text-foreground">setBuyOnly(vault, true)</code> on
-          AnimrTradeGuard. From the next block the guard refuses every sale, whatever the AI is told; buys with the
-          vault&apos;s WMON still go through, within your limits. It stays tied to you as holder: a sale of the Chog
-          leaves the new holder without it.
+          Buy-only is off: the AI trades two-way within your limits, as the House Chog&apos;s mandate needs (it sells only
+          into sharp pumps, and the engine refuses real-money sells into a dip). Optional: one transaction,{" "}
+          <code className="font-mono text-foreground">setBuyOnly(vault, true)</code>, makes the guard refuse every sale
+          from the next block. It stays tied to you as holder: a sale of the Chog leaves the new holder without it.
         </p>
         {canAct ? (
-          <button type="button" onClick={() => setBuyOnly(true)} disabled={tx.busy} className="btn btn-primary mt-3">
+          <button type="button" onClick={() => setBuyOnly(true)} disabled={tx.busy} className="btn btn-secondary mt-3">
             {tx.busy && tx.progress.origin === "buy-only" && <Spinner />}
             Turn on buy-only
           </button>
@@ -178,17 +179,18 @@ function HouseBuyOnlyCard({ tokenId, tba, guard }: { tokenId: number; tba: Addre
         <div className="min-w-0">
           <p className="eyebrow">House Chog · Rob this Chog</p>
           <h2 id={headingId} className="mt-1 text-lg font-semibold tracking-tight">
-            Lock the House vault to buys
+            The House vault: two-way, guarded
           </h2>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">
-            Token {tokenId} is the House Chog: its wallet is the vault the heist room dares visitors to empty. Buy-only mode is what makes &quot;the AI
-            can be fooled, the NFT can&apos;t&quot; hold even for its trades.
+            Token {tokenId} is the House Chog: its wallet is the vault the heist room dares visitors to empty. Its AI can
+            only trade through the guard, and every swap lands back in the same wallet; buy-only mode is an optional extra
+            lock.
           </p>
         </div>
         {setup?.buyOnly === true ? (
           <span className="chip border-success/40 text-success">Buy-only</span>
         ) : setup?.buyOnly === false ? (
-          <span className="chip border-warning/40 text-warning">Sales allowed</span>
+          <span className="chip text-muted">Two-way</span>
         ) : null}
       </div>
 

@@ -3,6 +3,7 @@ import { scrubTraitText } from "@/lib/brand-safety";
 import type { Genome } from "@/lib/dna/types";
 import { VERSUS_DAILY_POINTS_CAP, VERSUS_POINTS_PER_WIN } from "@/lib/rewind/rules";
 import type { VersusBout, VersusFighter, VersusFrame } from "@/lib/rewind/types";
+import { parseChogQuery } from "@/lib/chog-id";
 
 // Shared by the VERSUS UI (components/versus/*, app/(app)/versus/*). Safe on server and client.
 // The engine's own copy and rules (lib/rewind/rules.ts) are client-safe too: scoring numbers come from there.
@@ -128,41 +129,29 @@ export type ParsedFighter =
     };
 
 /**
- * A fighter input: "7", "#7" or "token 7" is token #7; "CHOG #1462" (any case, "#" optional) is the
- * Chog whose metadata name carries 1462. Either way the other reading is offered when it differs.
+ * A fighter input, read like every Chog field (lib/chog-id.ts parseChogQuery): "7" or "token 7" is token #7; "CHOG
+ * #1462" or "#1462" (the way marketplaces abbreviate it) is the Chog whose metadata name carries 1462. Either way the
+ * other reading is offered when it names another Chog.
  */
 export function parseFighterInput(raw: string, metadataIds: readonly number[]): ParsedFighter {
-  const text = raw.trim();
-  if (!text) return { kind: "empty" };
-  const byToken = /^(?:token\s*(?:id)?\s*)?#?\s*(\d{1,6})$/i.exec(text);
-  const byName = /^chog\s*#?\s*(\d{1,6})(?:\s*[—–-].*)?$/i.exec(text);
-  const tokenOfName = (n: number) => metadataIds.indexOf(n) + 1;
-
-  if (byToken) {
-    const n = Number(byToken[1]);
-    if (n < 1 || n > VERSUS_CHOG_COUNT) return { kind: "invalid", message: `Token ids run from 1 to 1,969.` };
-    const named = tokenOfName(n);
-    return {
-      kind: "ok",
-      tokenId: n,
-      via: "token",
-      ...(named > 0 && named !== n && { alternative: { tokenId: named, hint: `Meant CHOG #${n}? That's token #${named} →` } }),
-    };
-  }
-  if (byName) {
-    const n = Number(byName[1]);
-    const tokenId = tokenOfName(n);
-    if (tokenId < 1) return { kind: "invalid", message: `No Chog is called CHOG #${n}.` };
-    return {
-      kind: "ok",
-      tokenId,
-      via: "name",
-      ...(n >= 1 &&
-        n <= VERSUS_CHOG_COUNT &&
-        n !== tokenId && { alternative: { tokenId: n, hint: `Meant token #${n}, not CHOG #${n}? Use it →` } }),
-    };
-  }
-  return { kind: "invalid", message: "Type a token id (7) or a name (CHOG #1462)." };
+  const query = parseChogQuery(raw, metadataIds, VERSUS_CHOG_COUNT);
+  if (query.kind === "empty") return { kind: "empty" };
+  if (query.kind === "invalid") return { kind: "invalid", message: query.message };
+  const other = query.other;
+  return {
+    kind: "ok",
+    tokenId: query.tokenId,
+    via: query.via,
+    ...(other && {
+      alternative: {
+        tokenId: other.tokenId,
+        hint:
+          other.via === "name"
+            ? `Meant CHOG #${other.nameNumber}? That's token #${other.tokenId} →`
+            : `Meant token #${other.tokenId}, not CHOG #${query.nameNumber}? Use it →`,
+      },
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------------------------

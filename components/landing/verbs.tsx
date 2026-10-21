@@ -1,8 +1,9 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { type Verb, links, showcaseIds, verbs, verbsSection } from "./content";
+import { RobNote } from "./house-status";
 import { Icon } from "./icons";
 import { Section } from "./primitives";
-import { Rich } from "./rich";
 import { houseChog, showcaseChog } from "./showcase";
 
 /** Meet, Rewind, Ride, Rob: what each one is, what you do in under a minute, and the way in. */
@@ -18,13 +19,9 @@ export function Verbs() {
             verb.key === "rewind" && replayChog
               ? { label: `Time Machine: ${replayChog.name}`, href: links.replay(replayChog.tokenId) }
               : verb.secondary;
-          const note =
-            verb.key === "rob"
-              ? house
-                ? verbsSection.houseMovedIn(house.tokenId, house.name)
-                : verbsSection.houseMovingIn
-              : undefined;
-          return <VerbCard key={verb.key} verb={verb} secondary={secondary} note={note} movingIn={verb.key === "rob" && !house} />;
+          // Rob's note says "moving in" until the House Chog's vault is live (read in the browser: house-status.tsx).
+          const note = verb.key === "rob" ? <RobNote house={house && { label: house.label, name: house.name }} /> : undefined;
+          return <VerbCard key={verb.key} verb={verb} secondary={secondary} note={note} />;
         })}
       </ol>
 
@@ -44,17 +41,7 @@ export function Verbs() {
   );
 }
 
-function VerbCard({
-  verb,
-  secondary,
-  note,
-  movingIn,
-}: {
-  verb: Verb;
-  secondary?: { label: string; href: string };
-  note?: string;
-  movingIn: boolean;
-}) {
+function VerbCard({ verb, secondary, note }: { verb: Verb; secondary?: { label: string; href: string }; note?: ReactNode }) {
   return (
     <li className="landing-reveal card relative flex flex-col p-5 transition-colors hover:border-line-strong sm:p-6">
       <div className="flex items-center justify-between gap-3">
@@ -72,15 +59,7 @@ function VerbCard({
       </div>
       <h3 className="mt-4 text-lg font-semibold tracking-tight">{verb.title}</h3>
       <p className="mt-2 flex-1 text-sm leading-relaxed text-pretty text-muted">{verb.body}</p>
-      {note && (
-        <p
-          className={`mt-4 rounded-xl border px-3 py-2 text-xs leading-relaxed text-pretty ${
-            movingIn ? "border-warning/30 bg-warning/5 text-muted" : "border-line bg-surface-2/60 text-muted"
-          }`}
-        >
-          <Rich text={note} />
-        </p>
-      )}
+      {note}
       {secondary && (
         <Link
           href={secondary.href}

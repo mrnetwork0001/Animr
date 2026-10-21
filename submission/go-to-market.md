@@ -14,13 +14,13 @@ THE LOOPS
   - Versus reveals ("you thought it was a pump, it was Oct 2")
   - Chog, Bell and League cards
 - Holder pride and price discovery: the League and Trait Alpha answer "which traits trade best?", a question every holder wants answered about their own Chog. A Chog with a good record and a funded wallet is a better listing, and Animr links every Chog to its marketplace page.
-- Real $CHOG, flowing the right way: after each live Bell the team sends an Oracle Purse of <PURSE_AMOUNT> $CHOG, bought from the market with the team's House wallet, into the Oracle's own ERC-6551 wallet. The Purse goes to the Oracle shown on the Bell page: the best call among featured Chogs, never the House Chog itself. The buy-only House Chog can only stack $CHOG, never sell. On-chain agents trade the main CHOG/WMON pool. Each of these puts $CHOG inside NFTs, where it changes hands with the NFT.
+- Real $CHOG, flowing the right way: after each live Bell the team sends an Oracle Purse of <PURSE_AMOUNT> $CHOG, bought from the market by the team and sent from its House wallet, into the Oracle's own ERC-6551 wallet. The Purse goes to the Oracle shown on the Bell page: the best call among featured Chogs, never the House Chog itself. The House Chog, CHOG #891, trades its own real $CHOG two-way through the guard, scored on $CHOG stacked vs just holding: it buys dips and sells only into sharp pumps. On-chain agents trade the main CHOG/WMON pool. Each of these puts $CHOG inside NFTs, where it changes hands with the NFT.
 
 LAUNCH PLAN
 
 Hackathon week (Oct 20–23)
 - Live Bells every day from <FIRST_LIVE_BELL>, with a post at 15:00 UTC with the calls and the previous day's Oracle of the Day.
-- The House Chog opens for heists. The first fans to con its AI make the Hall of Fame (glory only, no money).
+- The House Chog, CHOG #891 ("Paper Paws": born to panic-sell, its mandate makes it buy the dip instead), opens for heists and starts trading real $CHOG. The first fans to con its AI make the Hall of Fame (glory only, no money).
 - /stats publishes real usage: fans, rides, return visits, Versus picks, heist attempts, claimed agents and AI spend.
 - Holders can hide their Chog from every public page with one free signature ("Hide my Chog").
 

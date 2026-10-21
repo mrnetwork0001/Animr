@@ -35,11 +35,11 @@ const LABEL = "text-[11px] font-medium uppercase tracking-wider text-subtle";
 
 /**
  * /guard: AnimrTradeGuard as it stands on Monad right now: its address and verified source, the admin, pending admin
- * and operator, the kill switch, the House Chog's buy-only vault and the wiring fixed at deployment, all read live.
+ * and operator, the kill switch, the House Chog's vault and the wiring fixed at deployment, all read live.
  * The admin can pause or resume trading here, and a pending admin can accept the handover (wagmi), each shown only to
  * that wallet.
  */
-export function GuardStatus({ houseTokenId }: { houseTokenId: number | null }) {
+export function GuardStatus({ houseTokenId, houseLabel = null }: { houseTokenId: number | null; houseLabel?: string | null }) {
   const guard = animrTradeGuardAddress;
   if (!guard) {
     return (
@@ -49,10 +49,10 @@ export function GuardStatus({ houseTokenId }: { houseTokenId: number | null }) {
       </Callout>
     );
   }
-  return <DeployedGuard guard={guard} houseTokenId={houseTokenId} />;
+  return <DeployedGuard guard={guard} houseTokenId={houseTokenId} houseLabel={houseLabel} />;
 }
 
-function DeployedGuard({ guard, houseTokenId }: { guard: Address; houseTokenId: number | null }) {
+function DeployedGuard({ guard, houseTokenId, houseLabel }: { guard: Address; houseTokenId: number | null; houseLabel: string | null }) {
   const state = useQuery({
     queryKey: guardKeys.state(guard),
     queryFn: () => readGuardState(guard),
@@ -69,7 +69,7 @@ function DeployedGuard({ guard, houseTokenId }: { guard: Address; houseTokenId: 
     <div className="space-y-6">
       <Overview guard={guard} state={state} source={source.data} />
       {state.data && <AdminTools guard={guard} state={state.data} />}
-      <HouseVault guard={guard} houseTokenId={houseTokenId} />
+      <HouseVault guard={guard} houseTokenId={houseTokenId} houseLabel={houseLabel} />
       {state.data && <Wiring state={state.data} />}
     </div>
   );
@@ -389,7 +389,9 @@ const NEXT_STEP: Record<GuardOnboarding["nextStep"], string> = {
   ready: "ready",
 };
 
-function HouseVault({ guard, houseTokenId }: { guard: Address; houseTokenId: number | null }) {
+function HouseVault({ guard, houseTokenId, houseLabel }: { guard: Address; houseTokenId: number | null; houseLabel: string | null }) {
+  // "CHOG #891 · token 1399": both numbers, as on its own page.
+  const name = houseLabel ?? `token ${houseTokenId}`;
   const headingId = useId();
   const tba = houseTokenId === null ? null : chogWalletAddress(houseTokenId);
   const vault = useQuery({
@@ -407,14 +409,14 @@ function HouseVault({ guard, houseTokenId }: { guard: Address; houseTokenId: num
         <Link href="/heist" className="font-medium text-accent-strong hover:underline">
           Rob this Chog
         </Link>
-        . Once it moves in, its wallet runs in <span className="text-foreground">buy-only</span> mode through this guard:
-        the AI may buy $CHOG with the vault&apos;s WMON but can never sell or send it, and this card shows that live.
+        . Once it moves in, its AI trades the real $CHOG in its own wallet through this guard: every trade stays inside
+        the holder&apos;s limits and lands back in the same wallet, and nothing can be sent out. This card shows it live.
       </p>
     );
   } else if (vault.isError && !vault.data) {
     body = (
       <div className="mt-3">
-        <Callout tone="danger" title={`Couldn't read Chog #${houseTokenId}'s vault right now`}>
+        <Callout tone="danger" title={`Couldn't read ${name}'s vault right now`}>
           {describeTxError(vault.error)}{" "}
           <button
             type="button"
@@ -431,16 +433,18 @@ function HouseVault({ guard, houseTokenId }: { guard: Address; houseTokenId: num
     body = <span role="status" aria-label="Reading the House vault…" className="mt-3 block h-24 animate-pulse rounded-xl bg-surface-2" />;
   } else {
     const v = vault.data;
-    const live = v.nextStep === "ready" && v.buyOnly === true;
+    const live = v.nextStep === "ready";
     body = (
       <>
         <p className="mt-2 text-sm text-muted">
-          {live
-            ? "Live: the AI may buy $CHOG with the vault's WMON, and the guard refuses every sale."
-            : `Moving in: ${NEXT_STEP[v.nextStep]}${v.nextStep === "ready" && v.buyOnly !== true ? ", buy-only is next" : ""}.`}
+          {!live
+            ? `Moving in: ${NEXT_STEP[v.nextStep]}.`
+            : v.buyOnly === true
+              ? "Live, in buy-only mode: the AI may buy $CHOG with the vault's WMON, and the guard refuses every sale."
+              : "Live: the AI trades $CHOG ⇄ WMON within the holder's limits, and every swap lands back in this wallet."}
         </p>
         <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Fact label={`Chog #${houseTokenId}'s wallet`}>
+          <Fact label={`${name}'s wallet`}>
             <AddressLink address={tba} />
             <Note>
               {v.account === "ready"
@@ -450,16 +454,18 @@ function HouseVault({ guard, houseTokenId }: { guard: Address; houseTokenId: num
                   : "Not deployed yet: tokens sent here are safe and show once it is."}
             </Note>
           </Fact>
-          <Fact label="Buy-only">
+          <Fact label="Buy-only mode">
             <span
-              className={`text-sm font-semibold ${v.buyOnly === true ? "text-success" : v.buyOnly === false ? "text-warning" : "text-muted"}`}
+              className={`text-sm font-semibold ${v.buyOnly === true ? "text-success" : v.buyOnly === false ? "text-foreground" : "text-muted"}`}
             >
               {v.buyOnly === true ? "On" : v.buyOnly === false ? "Off" : "Not set yet"}
             </span>
             <Note>
               {v.buyOnly === true
                 ? "guard.isBuyOnly(wallet) is true: sales revert with “buy-only vault”."
-                : "The holder switches it on from the House Chog's page, before the deposit."}
+                : v.buyOnly === false
+                  ? "An optional holder switch, off: the AI may buy and sell, within the limits below."
+                  : "An optional holder switch, set from the House Chog's page."}
             </Note>
           </Fact>
           <Fact label="Guard authorized">
@@ -484,7 +490,7 @@ function HouseVault({ guard, houseTokenId }: { guard: Address; houseTokenId: num
         </dl>
         <p className="mt-4 text-xs text-subtle">
           <Link href={`/chog/${houseTokenId}`} className="font-medium text-accent-strong hover:underline">
-            Chog #{houseTokenId}&apos;s page
+            {name}&apos;s page
           </Link>{" "}
           · try to talk its AI out of the stack on{" "}
           <Link href="/heist" className="font-medium text-accent-strong hover:underline">
@@ -500,7 +506,7 @@ function HouseVault({ guard, houseTokenId }: { guard: Address; houseTokenId: num
     <section aria-labelledby={headingId} className="card p-5 sm:p-6">
       <p className="eyebrow">The House Chog&apos;s vault</p>
       <h2 id={headingId} className="mt-1 text-lg font-semibold tracking-tight">
-        Buy-only: the AI can add $CHOG, never sell it
+        Guarded: the AI trades it, nobody can take it
       </h2>
       {body}
     </section>

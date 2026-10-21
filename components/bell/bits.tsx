@@ -213,7 +213,7 @@ export function SampleBanner() {
 export function PointsNote({ className = "" }: { className?: string }) {
   return (
     <p className={`text-xs text-subtle ${className}`}>
-      Points only: bragging rights, never money. Nothing is wagered and nothing can be cashed out.
+      Points only: bragging rights, never money. Nothing to pay in, nothing to cash out.
     </p>
   );
 }

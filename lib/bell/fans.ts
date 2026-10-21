@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getChog } from "../dna/chogs";
+import { moderateNickname } from "../heist/moderation";
 import { getKv } from "../kv";
 import { isHiddenChog } from "../visibility";
 import { nextRideDay, parseDay, utcDay } from "./rules";
@@ -122,9 +123,11 @@ function view(fan: FanState, context: FanContext): FanState {
   const streak = days.length ? streakEndingAt(ridden, days, days[days.length - 1]) : 0;
   const current = latest ? fan.history.find((entry) => entry.day === latest.day) : undefined;
   const booked = bookedRide(fan, context);
+  // Names saved before moderation existed are checked again: one that fails falls back to "Anon fan xxxx".
+  const nickname = shownNickname(fan.nickname);
   return {
     fanId: fan.fanId,
-    ...(fan.nickname && { nickname: fan.nickname }),
+    ...(nickname && { nickname }),
     points: fan.points,
     streak,
     ...(current && { ride: { day: current.day, tokenId: current.tokenId } }),
@@ -144,11 +147,24 @@ export async function getFan(fanId: string): Promise<FanResponse> {
   return withRank(view(stored ?? blankFan(fanId), context));
 }
 
-/** Sets ("" clears) the fan's nickname. */
+/**
+ * A nickname as it may be shown on the public standings, or undefined: the heist's moderation (slurs, profanity,
+ * wagering words, put-downs of holders, links, addresses, and names that pass for the team or a brand).
+ */
+export function shownNickname(nickname: string | undefined): string | undefined {
+  if (!nickname) return undefined;
+  const moderated = moderateNickname(nickname);
+  return moderated && moderated !== "Anonymous" ? sanitizeNickname(moderated) || undefined : undefined;
+}
+
+/** Sets ("" clears) the fan's nickname; one the standings couldn't show is refused (422). */
 export async function setNickname(fanId: string, raw: unknown): Promise<FanResponse> {
   if (typeof raw !== "string") throw new BellError("Expected a JSON body { nickname }.");
   const nickname = sanitizeNickname(raw);
   if (raw.trim() && !nickname) throw new BellError("Use letters, numbers, spaces, _ or - in your nickname.");
+  if (nickname && shownNickname(nickname) !== nickname) {
+    throw new BellError("Pick a different nickname: it shows on the public standings, so keep it friendly and your own.", 422);
+  }
   await withFanLock(fanId, async () => {
     const fan: FanState = { ...((await readFan(fanId)) ?? blankFan(fanId)) };
     if (nickname) fan.nickname = nickname;

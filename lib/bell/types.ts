@@ -5,7 +5,10 @@
 /** One Chog's call at a Bell. */
 export type BellCall = {
   tokenId: number;
+  /** Its persona name ("Rocket Ears"). */
   name: string;
+  /** "CHOG #1075 · token 1583": both numbers (lib/chog-id.ts). Filled in by the API on the Oracle and Most Rekt. */
+  label?: string;
   image: string;
   /** Expected % move of $CHOG (vs WMON) over the next 24h, e.g. 4.5 or -7. */
   forecastPct: number;
@@ -127,11 +130,14 @@ export type BellLive = { price: number; movePct: number; at: string; source: str
  * Day, or the runner-up when the Oracle is the House Chog (the House never pays itself).
  *   "sent":    the transfer is confirmed on-chain: tba and txHash are set.
  *   "pending": on its way: not sent yet, or sent and not confirmed yet.
+ *   "unsent":  nothing was recorded within 48 h of settlement: the page says the purse wasn't sent.
  */
 export type BellPurse = {
-  status: "sent" | "pending";
+  status: "sent" | "pending" | "unsent";
   /** The Chog whose wallet gets the purse. */
   tokenId: number;
+  /** "CHOG #1075 · token 1583": both numbers (lib/chog-id.ts), filled in by the API. */
+  label?: string;
   /** Whole $CHOG, as a decimal string ("5000"). */
   amount: string;
   /** The Chog's ERC-6551 wallet (once sent). */

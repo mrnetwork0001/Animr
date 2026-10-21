@@ -5,14 +5,16 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { VersusArena, VersusArenaSkeleton } from "@/components/versus/arena";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
+import { chogLabel } from "@/lib/chog-id";
 import { allChogs, getChog } from "@/lib/dna/chogs";
 import { decodeBoutId } from "@/lib/rewind/id";
 import { loadVisibility } from "@/lib/visibility";
 
-/** "Rocket Ears (Chog #2)", the name every page shows, from the frozen snapshot. */
+/** "Rocket Ears (CHOG #1463 · token 2)": its persona name and both numbers, from the frozen snapshot. */
 function fighterName(tokenId: number): string {
   const chog = getChog(tokenId);
-  return chog ? `${personaName(String(tokenId), sanitizeTraits(chog.traits))} (Chog #${tokenId})` : `Chog #${tokenId}`;
+  const label = chogLabel(tokenId, { metadataName: chog?.name });
+  return chog ? `${personaName(String(tokenId), sanitizeTraits(chog.traits))} (${label})` : label;
 }
 
 export async function generateMetadata({ params }: PageProps<"/versus/[id]">): Promise<Metadata> {

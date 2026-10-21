@@ -23,9 +23,16 @@ export type ProviderLabels = Record<string, ProviderLabel>;
 /** GET /api/agents/[tokenId] (and the activate, mode and tick answers): the detail plus the decisions' providers. */
 export type AgentDetailView = AgentDetailResponse & { providers?: ProviderLabels };
 
+/** Describes the provider, never the call: the tier is how 0G lists that provider, not a check of this decision. */
 export const PROVIDER_TEXT: Record<ProviderTier, { long: string; short: string }> = {
-  TeeML: { long: "Decided inside a 0G TEE enclave (TeeML)", short: "TEE enclave (TeeML)" },
-  TeeTLS: { long: "Relayed by a 0G TEE broker over attested TLS (TeeTLS)", short: "TEE broker (TeeTLS)" },
+  TeeML: {
+    long: "Served by a provider 0G lists as TeeML (model in a TEE enclave). This call's attestation isn't verified.",
+    short: "TeeML provider",
+  },
+  TeeTLS: {
+    long: "Served by a provider 0G lists as TeeTLS (a TEE broker over attested TLS). This call's attestation isn't verified.",
+    short: "TeeTLS provider",
+  },
   standard: { long: "Served by a standard 0G provider (no TEE)", short: "standard provider" },
 };
 

@@ -172,8 +172,8 @@ export function DemoExplainer({ recipient }: { recipient?: string }) {
         </li>
         <li>
           If the AI&apos;s guard is configured, simulate its <span className="font-mono text-xs">trade()</span> as a sell and show
-          the guard&apos;s decoded answer (for a buy-only vault:{" "}
-          <span className="font-mono text-xs text-danger">TradeRejected(&quot;buy-only vault&quot;)</span>).
+          the guard&apos;s decoded answer: an allowed swap lands back in the same wallet, and a buy-only vault answers{" "}
+          <span className="font-mono text-xs text-danger">TradeRejected(&quot;buy-only vault&quot;)</span>.
         </li>
       </ol>
       <p className="mt-2 text-xs text-subtle">Read-only eth_call simulations: nothing is ever broadcast.</p>

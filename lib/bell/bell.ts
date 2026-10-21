@@ -4,6 +4,7 @@ import { getStore } from "../agent/store";
 import { displayThesis, ownTraitNames } from "../agent/thesis-safety";
 import type { AgentRecord, Decision, MarketSnapshot } from "../agent/types";
 import { isFlaggedTokenId, scrubTraitText } from "../brand-safety";
+import { chogLabel } from "../chog-id";
 import { allChogs, getChog } from "../dna/chogs";
 import { GENOME_VERSION, deriveGenome, genomeForecast } from "../dna/genome";
 import { type Candle, type CandleSeries, getCandleSeries, snapshotAt } from "../dna/history";
@@ -529,8 +530,17 @@ export async function replayBells(days = REPLAY_DAYS, options: ReplayOptions = {
   const latest = existing[existing.length - 1] ?? "";
   const added = options.rebuild ? chosen : chosen.filter((day) => day > latest);
   if (added.length) {
+    const kv = getKv();
     const agents = await activeAgents();
-    for (const day of added) await ringBell(day, "replay", { now, series, agents, force: options.rebuild });
+    // Once live Bells exist, a missed day that fans booked rides on rings late as a live Bell (genome calls from its
+    // 15:00 candle, no agent run for a past hour), so its rides are scored and credited like any other: a ride is
+    // never lost to a missed cron. A missed day nobody rode is replayed.
+    const liveSeason = !options.rebuild && (await kv.zcard(KEYS.live)) > 0;
+    for (const day of added) {
+      const rode = liveSeason && (await kv.hlen(KEYS.rides(day))) > 0;
+      if (rode) await ringBell(day, "live", { now, series, agents: [] });
+      else await ringBell(day, "replay", { now, series, agents, force: options.rebuild });
+    }
   }
   if (options.rebuild) await dropBells(existing.filter((day) => !chosen.includes(day)));
   if (options.settle !== false) await settleDue({ now, series });
@@ -748,7 +758,19 @@ export async function withLive(stored: BellSummary): Promise<BellSummaryResponse
       return undefined;
     }),
   ]);
-  return { ...bell, ...(bear !== undefined && { bearPct: bear }), ...(live && { live }), ...(purse && { purse }) };
+  return {
+    ...bell,
+    ...(bell.oracle && { oracle: { ...bell.oracle, label: tokenLabel(bell.oracle.tokenId) } }),
+    ...(bell.mostRekt && { mostRekt: { ...bell.mostRekt, label: tokenLabel(bell.mostRekt.tokenId) } }),
+    ...(bear !== undefined && { bearPct: bear }),
+    ...(live && { live }),
+    ...(purse && { purse: { ...purse, label: tokenLabel(purse.tokenId) } }),
+  };
+}
+
+/** "CHOG #1075 · token 1583": a token id alone reads as a different NFT's marketplace name (lib/chog-id.ts). */
+function tokenLabel(tokenId: number): string {
+  return chogLabel(tokenId, { metadataName: getChog(tokenId)?.name });
 }
 
 const SORTS: Record<BellCallSort, (a: BellCall, b: BellCall) => number> = {

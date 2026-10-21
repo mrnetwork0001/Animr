@@ -68,7 +68,7 @@ function VerdictCard({
   return (
     <article
       className={`card relative overflow-hidden p-4 ${oracle ? "border-warning/40" : "border-danger/35"}`}
-      aria-label={`${oracle ? "Oracle of the Day" : "Most Rekt"}: Chog #${call.tokenId}`}
+      aria-label={`${oracle ? "Oracle of the Day" : "Most Rekt"}: ${call.label ?? `Chog #${call.tokenId}`}`}
     >
       <span
         aria-hidden
@@ -88,7 +88,7 @@ function VerdictCard({
         <ChogAvatar src={call.image} tokenId={call.tokenId} className="size-14 rounded-2xl" />
         <div className="min-w-0">
           <Link href={`/chog/${call.tokenId}`} className="font-semibold hover:text-accent-strong">
-            Chog #{call.tokenId}
+            {call.label ?? `Chog #${call.tokenId}`}
           </Link>
           <p className="truncate text-xs text-subtle">{call.name}</p>
           <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm text-muted">
@@ -118,7 +118,7 @@ function VerdictCard({
 function PurseLine({ purse, oracleId }: { purse: BellPurse; oracleId: number }) {
   const amount = `${formatChog(purse.amount)} $CHOG`;
   const href = purse.status === "sent" && purse.txHash ? explorerTxUrl(purse.txHash) : undefined;
-  const recipient = purse.tokenId === oracleId ? "this Chog's" : `runner-up Chog #${purse.tokenId}'s`;
+  const recipient = purse.tokenId === oracleId ? "this Chog's" : `runner-up ${purse.label ?? `Chog #${purse.tokenId}`}'s`;
   return (
     <div className="relative mt-3 flex items-start gap-2.5 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2.5 text-sm">
       <CoinIcon className="mt-0.5 size-4 shrink-0 text-warning" />
@@ -137,6 +137,11 @@ function PurseLine({ purse, oracleId }: { purse: BellPurse; oracleId: number }) 
                 View the transfer ↗
               </a>
             )}
+          </p>
+        ) : purse.status === "unsent" ? (
+          <p className="text-muted">
+            <span className="font-semibold text-foreground">Oracle Purse not sent:</span> the team hasn&apos;t sent this
+            Bell&apos;s {amount} to {recipient} own wallet.
           </p>
         ) : (
           <p className="text-muted">

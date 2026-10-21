@@ -2,6 +2,7 @@ import candleFile from "@/data/chog-ohlcv-1h.json";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
 import type { TradingStyle } from "@/lib/agent/types";
 import { FLAGGED_TOKEN_IDS, displayTraitValue, scrubTraitText, traitSafety } from "@/lib/brand-safety";
+import { chogLabel } from "@/lib/chog-id";
 import { appConfig } from "@/lib/config";
 import { animrTradeGuardAddress } from "@/lib/contracts/animr-trade-guard";
 import { DEFAULT_WINDOW, type ReplaySeries, prepareSeries, replay, replayStats } from "@/lib/dna/backtest";
@@ -38,6 +39,8 @@ export type ShowcaseGene = {
 
 export type ShowcaseChog = {
   tokenId: number;
+  /** Both numbers, the marketplace name first: "CHOG #1312 · token 1820" (lib/chog-id.ts). */
+  label: string;
   /** Its persona name (lib/agent/persona.ts), the same name its agent and League row carry. */
   name: string;
   archetype: string;
@@ -114,6 +117,7 @@ function buildShowcase(tokenId: number): ShowcaseChog | null {
   const signalGene = gene("signal");
   return {
     tokenId,
+    label: chogLabel(tokenId, { metadataName: chog.name }),
     name: nameOf(chog),
     archetype: genome.archetype,
     style: genome.style,
@@ -328,9 +332,14 @@ export function guardLink(): GuardLink | null {
   return address ? { address, short: shortAddress(address), href: explorerAddressUrl(address) } : null;
 }
 
-/** HOUSE_CHOG_TOKEN_ID with its persona name, or null while the House Chog is moving in. */
-export function houseChog(): { tokenId: number; name: string } | null {
+export type HouseShowcase = { tokenId: number; label: string; name: string };
+
+/**
+ * HOUSE_CHOG_TOKEN_ID with both its numbers and its persona name, or null while the team is still picking it. Being
+ * picked isn't being open: whether its wallet is ready and funded is read live (GET /api/heist, house-status.tsx).
+ */
+export function houseChog(): HouseShowcase | null {
   const tokenId = houseChogTokenId();
   const chog = tokenId === null ? undefined : getChog(tokenId);
-  return tokenId !== null && chog ? { tokenId, name: nameOf(chog) } : null;
+  return tokenId !== null && chog ? { tokenId, label: chogLabel(tokenId, { metadataName: chog.name }), name: nameOf(chog) } : null;
 }

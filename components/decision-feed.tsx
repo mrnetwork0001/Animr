@@ -141,7 +141,7 @@ function ProviderReceipt({ decision: d, providers }: { decision: Decision; provi
       <dd className="flex flex-wrap items-baseline gap-x-1.5 text-muted">
         {text && (
           <span className={label?.label === "standard" ? "" : "text-foreground/90"}>
-            {text.long}
+            {isTeeVerified(d) ? text.long.replace(" This call's attestation isn't verified.", "") : text.long}
             {label?.name && <span className="text-muted"> · {label.name}</span>}
           </span>
         )}

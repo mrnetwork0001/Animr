@@ -150,6 +150,10 @@ if (!chog) fail(`No $CHOG token is configured on ${chain.name}.`);
 
 const kv = getKv();
 const store = kv.kind === "redis" ? `Redis, namespace "${KV_NAMESPACE}"` : "local file store (.data/kv or ANIMR_DATA_DIR)";
+// Without a record, the "never paid twice" check can't see the transfer, so a re-run would pay the same Bell again.
+if (broadcast && !record && !devNode) {
+  fail("--broadcast --no-record only runs against a local dev node: a real purse is always recorded, so it is never paid twice.");
+}
 if (broadcast && record && kv.kind === "redis" && !process.env.ANIMR_ENV) {
   fail(`Refusing to pay from Redis namespace "${KV_NAMESPACE}" by default. Set ANIMR_ENV to the live site's namespace (production on Vercel).`);
 }
@@ -193,6 +197,9 @@ if (bell.oracle) {
 
 // --- An earlier attempt for this Bell ---------------------------------------------------------------------------------
 
+/** The nonce of a cleared attempt that never landed: a re-send reuses it, so at most one of the two can ever be mined. */
+let reuseNonce: number | undefined;
+
 async function settleEarlierAttempt(existing: OraclePurseRecord): Promise<"confirmed" | "cleared" | "in-flight"> {
   const receipt = await client.getTransactionReceipt({ hash: existing.txHash }).catch(() => null);
   if (receipt?.status === "success") {
@@ -215,6 +222,8 @@ async function settleEarlierAttempt(existing: OraclePurseRecord): Promise<"confi
       return "in-flight";
     }
     console.log(`  earlier transfer ${existing.txHash} never landed: nothing was paid.`);
+    // Not mined: sign the fresh one with the same nonce, so a slow first transfer and the new one can't both land.
+    if (typeof existing.nonce === "number") reuseNonce = existing.nonce;
   }
   if (broadcast && record) await purse.clearPurse(bell.day);
   console.log(broadcast && record ? "  cleared its record; sending a fresh one." : "  (dry run: --broadcast clears it and sends a fresh one.)");
@@ -296,7 +305,8 @@ if (!broadcast) {
 
 const signer = account!;
 const wallet = createWalletClient({ account: signer, chain, transport: http(rpcUrl) });
-const nonce = await client.getTransactionCount({ address: house, blockTag: "pending" });
+const nonce = reuseNonce ?? (await client.getTransactionCount({ address: house, blockTag: "pending" }));
+if (reuseNonce !== undefined) console.log(`  nonce   ${nonce} (the earlier attempt's: only one of the two can be mined)`);
 const serialized = await wallet.signTransaction({
   to: chog,
   data: encodeFunctionData({ abi: erc20Abi, functionName: "transfer", args: [tba, amountWei] }),
@@ -316,6 +326,7 @@ const pending: OraclePurseRecord = {
   amount,
   txHash,
   from: house,
+  nonce,
   status: "pending",
   sentAt: new Date().toISOString(),
 };

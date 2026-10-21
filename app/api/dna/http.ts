@@ -30,4 +30,4 @@ export function windowParam(request: Request): WindowKey | null {
 
 export const BAD_ID = "Token id must be a Chog Genesis id from 1 to 1969.";
 export const BAD_WINDOW = "window must be 30d, 45d or max.";
-export const HIDDEN_CHOG = "This Chog's holder took it out of Animr's public pages, so its replay doesn't show.";
+export const HIDDEN_CHOG = "This Chog's holder took it out of Animr's public pages, so its DNA and replay don't show.";

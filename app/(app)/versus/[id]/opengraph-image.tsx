@@ -10,7 +10,7 @@ import { decodeBoutId } from "@/lib/rewind/id";
 import type { VersusBout, VersusFighter } from "@/lib/rewind/types";
 import { loadVisibility } from "@/lib/visibility";
 
-export const alt = "Two Chogs' trading genomes raced over the same 48 hours of real $CHOG history, and who stacked more";
+export const alt = "Two Chogs' trading genomes about to race the same hidden 48 hours of real $CHOG history: who stacks more?";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -83,25 +83,20 @@ type CardFighter = {
   title: string;
   ids: string;
   archetype: string;
-  edgePct: number;
   face: string | null;
 };
 
-type Card = {
-  a: CardFighter;
-  b: CardFighter;
-  winner: VersusBout["result"]["winner"];
-  revealLabel: string;
-};
+// The card a shared bout unfurls with in X, Telegram or Discord is a pre-pick card: the page it opens asks the friend
+// to call the winner, so the card never shows the result, either edge or the real dates (those come at the KO).
+type Card = { a: CardFighter; b: CardFighter };
 
-function cardFighter(fighter: VersusFighter, edgePct: number, face: string | null): CardFighter {
+function cardFighter(fighter: VersusFighter, face: string | null): CardFighter {
   const metadataId = getChog(fighter.tokenId)?.metadataId;
   return {
     tokenId: fighter.tokenId,
-    title: fighter.name || `Chog #${fighter.tokenId}`,
+    title: fighter.name || `token #${fighter.tokenId}`,
     ids: metadataId ? `CHOG #${metadataId} · token #${fighter.tokenId}` : `token #${fighter.tokenId}`,
     archetype: fighter.archetype,
-    edgePct,
     face,
   };
 }
@@ -121,20 +116,10 @@ async function loadCard(id: string): Promise<Card | null> {
   const flagged = (f: VersusFighter) => FLAGGED_TOKEN_IDS.has(f.tokenId);
   if ((faceA || flagged(bout.a)) && (faceB || flagged(bout.b))) cacheLife("days");
   else cacheLife("minutes");
-  return {
-    a: cardFighter(bout.a, bout.result.aEdgePct, faceA),
-    b: cardFighter(bout.b, bout.result.bEdgePct, faceB),
-    winner: bout.result.winner,
-    revealLabel: bout.reveal.label,
-  };
+  return { a: cardFighter(bout.a, faceA), b: cardFighter(bout.b, faceB) };
 }
 
-function signedPct(value: number): string {
-  const fixed = Math.abs(value).toFixed(1);
-  return fixed === "0.0" ? "0.0%" : `${value > 0 ? "+" : "−"}${fixed}%`;
-}
-
-function Face({ side, fighter, winner }: { side: Side; fighter: CardFighter | null; winner: boolean }) {
+function Face({ side, fighter }: { side: Side; fighter: CardFighter | null }) {
   const color = SIDE_HEX[side];
   return (
     <div
@@ -148,9 +133,9 @@ function Face({ side, fighter, winner }: { side: Side; fighter: CardFighter | nu
         flexShrink: 0,
         borderRadius: 34,
         overflow: "hidden",
-        border: `${winner ? 6 : 3}px solid ${winner ? color : C.lineStrong}`,
+        border: `4px solid ${color}`,
         background: `linear-gradient(135deg, ${color}55, ${C.surface2})`,
-        boxShadow: winner ? `0 0 60px ${color}66` : "0 24px 60px rgba(0,0,0,0.5)",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
       }}
     >
       {fighter?.face ? (
@@ -159,53 +144,27 @@ function Face({ side, fighter, winner }: { side: Side; fighter: CardFighter | nu
         // No art (flagged, or the image cache was down): a plain name card, never generated art.
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
           <div style={{ display: "flex", fontSize: 42, fontWeight: 600, color: C.fg }}>
-            {fighter ? `Chog #${fighter.tokenId}` : "Chog"}
+            {fighter ? fighter.ids.split(" · ")[0] : "Chog"}
           </div>
-          {fighter && <div style={{ display: "flex", fontSize: 20, color: C.muted }}>{fighter.ids.split(" · ")[0]}</div>}
+          {fighter && <div style={{ display: "flex", fontSize: 20, color: C.muted }}>{fighter.ids.split(" · ")[1] ?? ""}</div>}
         </div>
       )}
     </div>
   );
 }
 
-function Corner({ side, fighter, winner }: { side: Side; fighter: CardFighter | null; winner: boolean }) {
-  const edge = fighter?.edgePct;
-  const tone = edge === undefined ? C.muted : edge > 0.05 ? C.success : edge < -0.05 ? C.danger : C.muted;
+function Corner({ side, fighter }: { side: Side; fighter: CardFighter | null }) {
   const line: CSSProperties = { display: "flex", maxWidth: 360, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" };
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 360 }}>
-      <div style={{ display: "flex", height: 30, alignItems: "center" }}>
-        {winner && (
-          <div
-            style={{
-              display: "flex",
-              padding: "3px 14px",
-              borderRadius: 999,
-              background: SIDE_HEX[side],
-              color: C.bg,
-              fontSize: 17,
-              fontWeight: 600,
-              letterSpacing: 3,
-            }}
-          >
-            WINNER
-          </div>
-        )}
-      </div>
       <div style={{ display: "flex", marginTop: 10 }}>
-        <Face side={side} fighter={fighter} winner={winner} />
+        <Face side={side} fighter={fighter} />
       </div>
       <div style={{ ...line, marginTop: 14, fontSize: 30, fontWeight: 600, color: SIDE_HEX[side] }}>
         {fighter?.title ?? "A Chog"}
       </div>
       <div style={{ ...line, marginTop: 2, fontSize: 19, color: C.muted }}>{fighter?.archetype ?? "1 of 1,969 traders"}</div>
       <div style={{ ...line, marginTop: 2, fontSize: 16, color: C.subtle }}>{fighter?.ids ?? "Chog Genesis"}</div>
-      {edge !== undefined && (
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 6 }}>
-          <div style={{ display: "flex", fontSize: 40, fontWeight: 600, color: tone, letterSpacing: -1 }}>{signedPct(edge)}</div>
-          <div style={{ display: "flex", fontSize: 18, color: C.muted }}>vs holding</div>
-        </div>
-      )}
     </div>
   );
 }
@@ -221,12 +180,6 @@ async function shownBoutId(id: string): Promise<string | null> {
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const shown = await shownBoutId((await params).id);
   const [card, fonts] = await Promise.all([shown ? loadCard(shown) : null, loadFonts()]);
-  const winner = card?.winner ?? null;
-  const headline = !card
-    ? "Who stacks more $CHOG?"
-    : winner === "draw"
-      ? "Dead heat"
-      : `${card[winner as Side].title} stacks more $CHOG`;
 
   return new ImageResponse(
     (
@@ -248,25 +201,23 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           <div style={{ display: "flex", fontSize: 22, letterSpacing: 5, color: C.accentStrong, fontWeight: 600 }}>
             ANIMR · VERSUS
           </div>
-          <div style={{ display: "flex", fontSize: 20, color: C.muted }}>
-            {card ? card.revealLabel : "48 hidden hours of real $CHOG history"}
-          </div>
+          <div style={{ display: "flex", fontSize: 20, color: C.muted }}>48 hidden hours of real $CHOG history</div>
         </div>
 
         <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
-          <Corner side="a" fighter={card?.a ?? null} winner={winner === "a"} />
+          <Corner side="a" fighter={card?.a ?? null} />
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 280 }}>
             <div
               style={{
                 display: "flex",
-                fontSize: winner && winner !== "draw" ? 96 : 84,
+                fontSize: 96,
                 fontWeight: 600,
                 letterSpacing: -2,
-                color: winner && winner !== "draw" ? SIDE_HEX[winner] : C.fg,
+                color: C.fg,
                 transform: "rotate(-4deg)",
               }}
             >
-              {winner && winner !== "draw" ? "K.O." : winner === "draw" ? "DRAW" : "VS"}
+              VS
             </div>
             <div
               style={{
@@ -280,17 +231,13 @@ export default async function Image({ params }: { params: Promise<{ id: string }
                 maxWidth: 280,
               }}
             >
-              {headline}
+              Who stacks more $CHOG?
             </div>
             <div style={{ display: "flex", marginTop: 10, fontSize: 18, color: C.muted, textAlign: "center", justifyContent: "center", maxWidth: 260 }}>
-              {!card
-                ? "Two trading genomes, the same 48 hidden hours"
-                : winner === "draw"
-                  ? "Both genomes ended level on the same 48 hours"
-                  : "on the same 48 hours of real $CHOG history"}
+              Two trading genomes, the same 48 hidden hours. Call it before the KO.
             </div>
           </div>
-          <Corner side="b" fighter={card?.b ?? null} winner={winner === "b"} />
+          <Corner side="b" fighter={card?.b ?? null} />
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 19, color: C.subtle }}>

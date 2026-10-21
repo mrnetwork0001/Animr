@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { HEIST_TITLE } from "@/lib/heist/config";
 import { labels, links, safety } from "./content";
 import { FlowDiagram } from "./flow-diagram";
+import { HouseChogCard } from "./house-status";
 import { Icon } from "./icons";
 import { Section, StatusBadge } from "./primitives";
 import { Rich } from "./rich";
 import { type GuardLink, guardLink, houseChog } from "./showcase";
 
-/** AnimrTradeGuard, live on Monad: the deployment, the buy-only House Chog, real vs simulated, and the rules. */
+/** AnimrTradeGuard, live on Monad: the deployment, the House Chog (live state read in the browser), real vs simulated, and the rules. */
 export function Safety() {
   const guard = guardLink();
   const house = houseChog();
@@ -15,7 +15,7 @@ export function Safety() {
     <Section id={safety.id} eyebrow={safety.eyebrow} title={safety.title} lede={safety.lede}>
       <div className="mt-12 grid gap-4 md:grid-cols-2">
         <Deployed guard={guard} />
-        <HouseChog house={house} />
+        <HouseChogCard house={house && { label: house.label, name: house.name }} />
       </div>
 
       <RealVsSimulated />
@@ -78,45 +78,6 @@ function Deployed({ guard }: { guard: GuardLink | null }) {
           <Icon name="arrowRight" className="size-4" strokeWidth={2} />
         </Link>
       </div>
-    </div>
-  );
-}
-
-function HouseChog({ house }: { house: { tokenId: number; name: string } | null }) {
-  const copy = safety.house;
-  return (
-    <div
-      className={`landing-reveal flex flex-col gap-3 rounded-2xl border p-5 sm:p-6 ${
-        house ? "border-line bg-surface/60" : "border-warning/25 bg-warning/5"
-      }`}
-    >
-      {/* Live only once HOUSE_CHOG_TOKEN_ID is set; until then it says "moving in", never "live". */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {house ? (
-          <>
-            <StatusBadge status="live" label={copy.label} />
-            <span className="font-mono text-xs text-muted">{copy.movedIn(house.tokenId, house.name)}</span>
-          </>
-        ) : (
-          <>
-            <StatusBadge status="moving" label={copy.movingIn} />
-            <span className="font-mono text-xs text-muted">{copy.label}</span>
-          </>
-        )}
-      </div>
-      <h3 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
-        <Icon name="lock" className="size-5 text-accent-strong" />
-        {copy.title}
-      </h3>
-      <p className="text-sm leading-relaxed text-pretty text-muted">{copy.text}</p>
-      {!house && <p className="text-sm leading-relaxed text-pretty text-foreground">{copy.movingInText}</p>}
-      <Link
-        href={links.heist}
-        className="mt-auto inline-flex items-center gap-1.5 self-start pt-1 text-sm font-semibold text-accent-strong hover:underline"
-      >
-        {HEIST_TITLE}
-        <Icon name="arrowRight" className="size-4" strokeWidth={2} />
-      </Link>
     </div>
   );
 }

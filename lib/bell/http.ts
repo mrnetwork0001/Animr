@@ -7,8 +7,12 @@ import { readFan } from "./store";
 
 // Helpers for the Bell and fan route handlers (app/api/bell/*, app/api/fan).
 
-/** New fan records per network (an IPv4 address or an IPv6 /64) per day. */
-const NEW_FANS_PER_IP_PER_DAY = 5;
+/**
+ * New fan records per network (an IPv4 address or an IPv6 /64) per day: roomy enough for a judging room or a venue
+ * Wi-Fi behind one address, while still capping a script that drops its cookie.
+ */
+const NEW_FANS_PER_IP_PER_DAY = 100;
+const NEW_FANS_MESSAGE = "Too many new fans from this network today. Try another network, or come back tomorrow.";
 
 /** Public Bell data: CDN-cacheable for a short while. */
 export function cacheHeaders(seconds: number): HeadersInit {
@@ -71,8 +75,12 @@ function clientKey(request: Request): string | null {
   return fanIdFromToken(cookie);
 }
 
-/** Per-network fixed-window limit: a 429 response once `limit` requests hit `bucket` within `windowMs`, else null. */
-export async function rateLimit(request: Request, bucket: string, limit: number, windowMs = 60_000) {
+/**
+ * Per-network fixed-window limit: a 429 response once `limit` requests hit `bucket` within `windowMs`, else null.
+ * `message` overrides the default "Try again in a minute" (say so when the window is longer). Retry-After always
+ * matches the window.
+ */
+export async function rateLimit(request: Request, bucket: string, limit: number, windowMs = 60_000, message?: string) {
   const who = clientKey(request);
   if (!who) return null;
   const now = Date.now();
@@ -81,7 +89,7 @@ export async function rateLimit(request: Request, bucket: string, limit: number,
   if (count <= limit) return null;
   const retryAfter = Math.max(1, Math.ceil(((window + 1) * windowMs - now) / 1000));
   return Response.json(
-    { error: "Too many requests. Try again in a minute." },
+    { error: message ?? "Too many requests. Try again in a minute." },
     { status: 429, headers: { "Retry-After": String(retryAfter) } },
   );
 }
@@ -89,7 +97,7 @@ export async function rateLimit(request: Request, bucket: string, limit: number,
 /** Fan records are stored on a first ride or nickname: cap how many one network (IPv4 or IPv6 /64) creates per day. */
 export async function newFanLimit(request: Request, fanId: string) {
   if (await readFan(fanId)) return null;
-  return rateLimit(request, "new-fan", NEW_FANS_PER_IP_PER_DAY, DAY_MS);
+  return rateLimit(request, "new-fan", NEW_FANS_PER_IP_PER_DAY, DAY_MS, NEW_FANS_MESSAGE);
 }
 
 /** JSON request body, or a BellError for anything else (also keeps plain HTML forms out). */

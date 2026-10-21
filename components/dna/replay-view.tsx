@@ -21,8 +21,9 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
   const router = useRouter();
   const params = useSearchParams();
   const vs = parseChogId(params.get("vs"));
-  const rivalId = vs !== null && vs !== tokenId ? vs : undefined;
   const hidden = useHiddenChogs();
+  // A rival its holder hid isn't raced or shown (its replay answers 404 anyway).
+  const rivalId = vs !== null && vs !== tokenId && !hidden.has(vs) ? vs : undefined;
   const labelOf = (id: number) => chogLabel(id, { number: nameNumbers[id - 1] || null });
   const label = labelOf(tokenId);
   // VERSUS: the same pair (or this Chog and a random rival) on a hidden 48 hours, picked before the race.
@@ -50,7 +51,10 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
             className="rounded-2xl ring-1 ring-line sm:rounded-3xl"
           />
           <div className="min-w-0">
-            <p className="eyebrow">Trading DNA · {label}</p>
+            <p className="eyebrow">
+              <span className="max-sm:hidden">Trading DNA · </span>
+              {label}
+            </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-balance sm:mt-2 sm:text-4xl">
               {genome.data?.genome.archetype ?? label}
             </h1>
@@ -63,6 +67,10 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
                   #{formatInt(row.rank)} of {formatInt(standing.data?.total ?? CHOG_COUNT)} traders
                 </Link>
               )}
+              {/* Phones: a text link here keeps the buttons below on one row, so the Time Machine starts higher. */}
+              <Link href={`/chog/${tokenId}`} className="font-medium text-accent-strong hover:underline sm:hidden">
+                Meet this Chog →
+              </Link>
               {row?.claimed && (
                 <span className="rounded bg-success/10 px-1.5 py-px text-[10px] font-medium uppercase tracking-wider text-success ring-1 ring-inset ring-success/30">
                   Live AI awake
@@ -72,7 +80,7 @@ export function ReplayView({ tokenId, nameNumbers = [] }: { tokenId: number; nam
           </div>
         </div>
         <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch">
-          <Link href={`/chog/${tokenId}`} className="btn btn-secondary">
+          <Link href={`/chog/${tokenId}`} className="btn btn-secondary max-sm:hidden">
             Meet this Chog
           </Link>
           <Link href={versusHref} className="btn btn-secondary">
@@ -143,6 +151,7 @@ function ChallengeBar({
     if (query.kind === "invalid") return setProblem(query.message);
     const id = query.tokenId;
     if (id === tokenId) return setProblem("A Chog can't race itself. Pick another one.");
+    if (hidden.has(id)) return setProblem(`${labelOf(id)}'s holder took it out of Animr's public pages. Pick another one.`);
     setProblem(null);
     setText("");
     onRival(id);

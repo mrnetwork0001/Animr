@@ -323,7 +323,16 @@ function Verdict({
               {record.dailyCap} today).{" "}
             </>
           )}
-          {fan && (
+          {record?.pending ? (
+            // No fan card yet (VERSUS never makes one): the points wait for the first ride or nickname.
+            <>
+              {formatChog(record.pending)} pts move onto a fan card with your first{" "}
+              <Link href="/bell" className="underline-offset-2 hover:text-foreground hover:underline">
+                Daily Bell ride
+              </Link>
+              .{" "}
+            </>
+          ) : fan ? (
             <>
               Fan card: <span className="font-mono font-semibold text-accent-strong">{formatChog(fan.points)} pts</span>,{" "}
               <Link href="/bell" className="underline-offset-2 hover:text-foreground hover:underline">
@@ -331,7 +340,7 @@ function Verdict({
               </Link>
               .{" "}
             </>
-          )}
+          ) : null}
           {POINTS_LABEL}.
         </p>
       )}

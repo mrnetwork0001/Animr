@@ -1,5 +1,5 @@
 import { ChogImage } from "./chog-image";
-import { gate, labels, showcaseIds } from "./content";
+import { gate, showcaseIds } from "./content";
 import { Icon } from "./icons";
 import { Section, StyleBadge } from "./primitives";
 import { type ShowcaseChog, showcaseChog } from "./showcase";
@@ -49,13 +49,13 @@ function Handover({ chog }: { chog: ShowcaseChog | null }) {
               <ChogImage
                 src={chog.image.src}
                 fallbackSrc={chog.image.fallbackSrc}
-                alt={labels.chog(chog.tokenId)}
+                alt={chog.label}
                 size={96}
                 fallbackLabel={`#${chog.tokenId}`}
                 className="size-14 shrink-0 rounded-xl"
               />
               <div className="min-w-0">
-                <p className="font-mono text-xs text-subtle">{labels.chog(chog.tokenId)}</p>
+                <p className="font-mono text-xs text-subtle">{chog.label}</p>
                 <p className="truncate font-semibold">{chog.name}</p>
                 <StyleBadge style={chog.style} className="mt-1" />
               </div>

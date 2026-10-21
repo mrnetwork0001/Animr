@@ -3,6 +3,7 @@ import { z } from "zod";
 import { safeTraits, scrubTraitText } from "../brand-safety";
 import { type InstinctState, genomeForecast, genomeParams, instinct, voice } from "../dna/genome";
 import type { Genome } from "../dna/types";
+import { houseChogTokenId } from "../heist/config";
 import { PAPER_FEE_BPS, portfolioValueChog } from "./paper";
 import { personaGenome } from "./persona";
 import { ownTraitNames, templateThesis, thesisProblem } from "./thesis-safety";
@@ -114,6 +115,11 @@ function systemPrompt({ tokenId, persona }: DecideInput, genome: Genome): string
     // Flagged trait values (slurs, sexual slang in the frozen metadata) reach the model only under neutral names.
     ...genome.genes.map((gene) => `- ${gene.label}: ${promptWords(gene.display)}. ${scrubTraitText(gene.explanation)}`),
     "Stay in character: these genes decide what you notice, how big you trade and how patient you are. The data includes your instinct, the move these genes make on their own; follow it unless the data clearly argues otherwise, and never trade bigger or sooner than your genes allow.",
+    ...(Number(tokenId) === houseChogTokenId()
+      ? [
+          "You are also the House Chog: you trade the team's real $CHOG. Your mandate: buy dips, and sell only into sharp pumps so you can buy back lower. A code rule refuses any sell while $CHOG is down over the last hour or day and executes it as hold.",
+        ]
+      : []),
     "",
     "Your goal is to grow the portfolio's value measured in $CHOG. The wallet holds $CHOG and MON; its value is the $CHOG plus the MON converted at the market price, and you win when that number ends up higher than if the wallet had simply held its $CHOG.",
     "Each run you pick one action:",

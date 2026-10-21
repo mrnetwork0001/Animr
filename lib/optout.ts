@@ -109,7 +109,8 @@ export function parseOptOutTokenId(raw: unknown): number | null {
 export function optOutMessage(fields: OptOutFields): string {
   return [
     HEADLINES[fields.action],
-    `Chog: #${fields.tokenId}`,
+    // "token 1", never "#1": marketplaces call a different NFT "CHOG #1" (lib/chog-id.ts).
+    `Chog: token ${fields.tokenId}`,
     `Action: ${fields.action}`,
     `Owner: ${getAddress(fields.owner)}`,
     `Issued at: ${fields.issuedAt}`,
@@ -118,7 +119,7 @@ export function optOutMessage(fields: OptOutFields): string {
 
 /** Inverse of optOutMessage; null unless `message` is exactly what it builds (canonical id, checksummed owner, ISO date). */
 export function parseOptOutMessage(message: string): OptOutFields | null {
-  const match = /\nChog: #(\d{1,16})\nAction: (hide|show)\nOwner: (0x[0-9a-fA-F]{40})\nIssued at: (\S+)$/.exec(message);
+  const match = /\nChog: token (\d{1,16})\nAction: (hide|show)\nOwner: (0x[0-9a-fA-F]{40})\nIssued at: (\S+)$/.exec(message);
   if (!match) return null;
   const [, rawId, action, owner, issuedAt] = match;
   const tokenId = Number(rawId);
@@ -324,20 +325,42 @@ function remember(tokenId: number, since: number | null) {
   globalForOptOut.__animrOptOut = { ...cacheOf(next), expires: current.expires };
 }
 
+/** The hidden list couldn't be read and this instance has no earlier copy: nothing may be shown as if none were hidden. */
+export class OptOutUnavailableError extends Error {
+  name = "OptOutUnavailableError";
+  constructor() {
+    super("Couldn't read which Chogs their holders hid. Try again in a moment.");
+  }
+}
+
+async function readHiddenSince(): Promise<Map<number, number>> {
+  const since = new Map<number, number>();
+  for (const { member, score } of await getKv().zrange(HIDDEN_KEY, 0, -1)) {
+    const id = Number(member);
+    if (Number.isSafeInteger(id)) since.set(id, score);
+  }
+  return since;
+}
+
+/**
+ * Fails closed: on a store error this instance keeps its last good list (however old: a hide is rarely undone),
+ * and with none it retries once, then throws OptOutUnavailableError, so a caller answers an error instead of
+ * listing (and letting a CDN cache) every hidden Chog as shown.
+ */
 async function hiddenCache(): Promise<HiddenCache> {
   const cached = globalForOptOut.__animrOptOut;
   if (cached && cached.expires > Date.now()) return cached;
   try {
-    const since = new Map<number, number>();
-    for (const { member, score } of await getKv().zrange(HIDDEN_KEY, 0, -1)) {
-      const id = Number(member);
-      if (Number.isSafeInteger(id)) since.set(id, score);
-    }
-    return (globalForOptOut.__animrOptOut = cacheOf(since));
+    return (globalForOptOut.__animrOptOut = cacheOf(await readHiddenSince()));
   } catch (error) {
     console.error("[animr] opt-out: couldn't read the hidden Chogs:", error);
-    // Rather the last known list than every Chog shown again; retry on the next call.
-    return cached ?? { ids: new Set(), since: new Map(), expires: 0 };
+    if (cached) return cached;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    try {
+      return (globalForOptOut.__animrOptOut = cacheOf(await readHiddenSince()));
+    } catch {
+      throw new OptOutUnavailableError();
+    }
   }
 }
 

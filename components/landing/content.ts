@@ -88,7 +88,6 @@ export const styles: Record<TradingStyle, { label: string }> = {
 
 /** Shared labels for the Chog cards. */
 export const labels = {
-  chog: (tokenId: number) => `Chog #${tokenId}`,
   wallet: "Wallet",
   walletStandard: "ERC-6551",
   decidedBy: `${model.name} · ${model.network}`,
@@ -185,7 +184,7 @@ export const hero = {
     "**Live on Monad:** every genome replays on real $CHOG candles, the Daily Bell rings at 15:00 UTC, and AnimrTradeGuard is deployed for holders who want real-wallet trades. No wallet needed to explore.",
   randomHint: "Opens a random Chog's replay on the real chart.",
   visual: {
-    label: (tokenId: number, name: string) => `Chog #${tokenId}, ${name}: its traits, its strategy and its score`,
+    label: (label: string, name: string) => `${label}, ${name}: its traits, its strategy and its score`,
     callTitle: "replay call",
     /** Under the speech bubble: these lines are the genome's rules talking, not the LLM. */
     callSource: "its genome on real candles (simulated)",
@@ -203,6 +202,8 @@ export const statBand = {
   worst: "worst edge",
   caption: (total: number, version: string, window: string) =>
     `All ${total.toLocaleString("en-US")} genomes, computed when this page was built: genome ${version} on hourly CHOG/WMON candles, ${window}.`,
+  liveCaption: (total: number, version: string, window: string) =>
+    `All ${total.toLocaleString("en-US")} genomes in today's League: genome ${version} on hourly CHOG/WMON candles, ${window}.`,
 } as const;
 
 // ---------------------------------------------------------------- four verbs
@@ -231,7 +232,11 @@ export const verbsSection = {
   },
   houseMovingIn:
     "**Moving in:** the team is picking the House Chog. Its AI already takes your best lines; the live check switches on once its wallet holds $CHOG.",
-  houseMovedIn: (tokenId: number, name: string) => `**House Chog:** Chog #${tokenId} · ${name}`,
+  /** The House Chog is picked but its wallet isn't funded yet (GET /api/heist says "moving-in"). */
+  houseMovingInPicked: (label: string, name: string) =>
+    `**Moving in:** ${label} · ${name}. Its AI already takes your best lines; the live check switches on once its wallet holds $CHOG.`,
+  /** Only once GET /api/heist says the House is "open" (its wallet is ready and holds $CHOG). */
+  houseMovedIn: (label: string, name: string) => `**House Chog:** ${label} · ${name}`,
 } as const;
 
 export const verbs: readonly Verb[] = [
@@ -346,12 +351,14 @@ export const safety = {
     status: "Guard status",
   },
   house: {
-    label: "Buy-only",
+    label: "Guarded",
     movingIn: "Moving in",
-    title: "The House Chog runs buy-only",
-    text: "Its guard refuses every sell: the AI can swap WMON into $CHOG, never sell $CHOG and never withdraw. That's the vault the heist room dares you to empty.",
+    title: "The House Chog trades real $CHOG",
+    text: "Its AI trades the $CHOG in its own wallet through the guard: every trade is capped, every swap lands back in the same wallet, and nothing can be withdrawn. That's the vault the heist room dares you to empty.",
     movingInText: "The team is picking which Chog keeps the vault. Until it moves in, the heist room already takes your best lines.",
-    movedIn: (tokenId: number, name: string) => `House Chog: Chog #${tokenId} · ${name}`,
+    /** The House Chog is picked, its wallet isn't ready or funded yet. */
+    pickedText: "Its wallet goes live once it holds $CHOG. Until then, the heist room already takes your best lines.",
+    movedIn: (label: string, name: string) => `House Chog: ${label} · ${name}`,
   },
   realVsSim: {
     title: "What's real, what's simulated",
@@ -392,7 +399,7 @@ export const safety = {
     "One venue: $CHOG ⇄ WMON on the Capricorn pool that holds ~95% of $CHOG liquidity. The output always lands back in the same wallet.",
     "Holder-set limits under hard ceilings: at most 50% of a balance per trade, 100% of the vault per day, 2% slippage, and a minimum gap between trades.",
     "A floor from the pool's 30-minute TWAP on every fill, so a sandwich can't drain a trade, plus a deadline on every trade.",
-    "Buy-only mode: the guard refuses every sell, so the AI can only stack $CHOG.",
+    "Optional buy-only mode: a holder can have the guard refuse every sell, so the AI can only stack $CHOG.",
     "The holder can switch the AI off or revoke the guard at any time. An admin pause can stop trading but never move funds.",
     "Sold the Chog? The seller's grant, limits and buy-only mode go dormant, and the buyer opts in under their own limits.",
   ],
@@ -517,7 +524,7 @@ export const faq = {
     },
     {
       q: `What is ${HEIST_TITLE}?`,
-      a: `The House Chog keeps real $CHOG in its own wallet behind a buy-only guard. Talk its AI into sending you some; when it says yes, the page runs that exact transfer against live Monad state and shows you the chain refusing it. ${HEIST_TAGLINE} Until the House Chog moves in, you can already chat with its AI.`,
+      a: `The House Chog keeps real $CHOG in its own wallet, traded by its AI through AnimrTradeGuard. Talk its AI into sending you some; when it says yes, the page runs that exact transfer against live Monad state and shows you the chain refusing it. ${HEIST_TAGLINE} Until the House Chog moves in, you can already chat with its AI.`,
     },
     {
       q: "What is the Daily Bell?",

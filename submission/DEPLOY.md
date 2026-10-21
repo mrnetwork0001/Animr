@@ -152,7 +152,7 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `CRON_SECRET` | Required | Secret | New `openssl rand -hex 32`. | Guards `/api/bell/cron` and `/api/agent/tick`, which answer 401 without it in production. Vercel Cron sends it as `Authorization: Bearer …`. It is also the fallback key for the heist's IP hashes. |
 | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`, **or** `KV_REST_API_URL` + `KV_REST_API_TOKEN` | Required | Added by the integration, or Secret for the token | Step 3. | All shared state. Without it, state is per instance and wiped on cold starts, and the heist fails closed (the House Chog naps). |
 | `ZG_API_KEY` | Required for the AI | Secret | The `sk-…` key from pc.0g.ai → Dashboard → API Keys (mainnet), the one in `.env.local`. | 0G Compute Router: agents' LLM decisions with receipts, and the heist's replies. Without it, agents follow their genome's rules and the heist uses template replies. |
-| `OPERATOR_PRIVATE_KEY` | Required for on-chain mode | Secret, Production only | The AI operator's hot key from `.env.local`. Its address must be `0x2523bBdD941783C4E565180D2a1b18DE86319cC2`, the guard's `operator()`. | Signs `AnimrTradeGuard.trade()` for on-chain agents, including the House Chog's buy-only AI. Never use the House key or the admin wallet. Without it, trading is paper only. |
+| `OPERATOR_PRIVATE_KEY` | Required for on-chain mode | Secret, Production only | The AI operator's hot key from `.env.local`. Its address must be `0x2523bBdD941783C4E565180D2a1b18DE86319cC2`, the guard's `operator()`. | Signs `AnimrTradeGuard.trade()` for on-chain agents, including the House Chog's two-way, $CHOG-stacking AI. Never use the House key or the admin wallet. Without it, trading is paper only. |
 | `OPERATOR_ADDRESS` | Recommended | Config | `0x2523bBdD941783C4E565180D2a1b18DE86319cC2` | The heist proof's sender when the guard's `operator()` can't be read. The deploy script also reads it. |
 | `NEXT_PUBLIC_TRADE_GUARD_ADDRESS` | Recommended | Config | `0x92D3d4Af4B3b0F29Ec020e407803e135af61987b` | The live guard. Unset on mainnet means the same address. **An empty value means paper only**, so never save it blank. Inlined at build time. |
 | `NEXT_PUBLIC_NETWORK` | Recommended | Config | `mainnet` | Monad mainnet (chain 143), which is also what unset means. Never `testnet`: the Chog assets exist only on mainnet. Inlined at build time. |
@@ -280,7 +280,7 @@ Then open each URL in an incognito window:
 | `/replay/1820` | "CHOG #1312 · token 1820" and its genome card. Press play: trades appear on the real hourly chart, and the run ends with its edge over holding, labelled "Simulated on real $CHOG candles (1% fee + impact)". |
 | `/versus` | "Two Chogs. 48 hidden hours. Who stacks more $CHOG?" Pick one, watch the race, then the real dates appear, with points. **Share this bout** copies a `/versus/<id>` link. |
 | `/bell` | "Every Chog calls $CHOG. The market settles it." Before Wed 15:01 it shows the latest **replayed** Bell (Oct 20, labelled as a replay). From 15:01 it shows today's **live** Bell: 1,969 calls and a ride button. Run command 3 below first: on a fresh deploy it builds the 14 replayed Bells in one go. Otherwise the first visit builds them and can take about 25 seconds; if it says the first Bell hasn't rung yet, reload a minute later. |
-| `/heist` | "Rob this Chog". Until step 8 is done and the House Chog's wallet holds $CHOG, it says the House Chog is **moving in**: its AI already chats, but the mainnet check is off. After that, **Act as the AI** shows `NotAuthorized()` and `TradeRejected("buy-only vault")` at a pinned block. |
+| `/heist` | "Rob this Chog". Until step 8 is done and the House Chog's wallet holds $CHOG, it says the House Chog is **moving in**: its AI already chats, but the mainnet check is off. After that, **Act as the AI** shows the theft attempt failing with `NotAuthorized()` at a pinned block, and a guarded sell as allowed but landing back in the same wallet. |
 | `/guard` | "The AI can trade. It can never withdraw." It reads `0x92D3…987b` live: operator `0x2523…9cC2`, not paused, admin `0xc742…960C` once you've called `acceptAdmin()` (until then, the handover shows as pending). The House Chog card says moving in until step 8. |
 | `/stats` | "Animr by the numbers". Counters start near zero, which is right for a fresh `production` namespace. |
 | `/leaderboard` | "Live agents". Empty until someone wakes a Chog's AI on production. |
@@ -333,8 +333,8 @@ If the Bell hasn't rung by 15:05, run `curl -s -H "Authorization: Bearer $CRON_S
 2. In Vercel, add `HOUSE_CHOG_TOKEN_ID=<token id>` as Config for Production and Preview. Then **Redeploy without the build cache** (4.2).
 3. Add the same line to `.env.local`, so the Purse script never pays the House Chog.
 4. Set up the House Chog's wallet with the launch checklist (step 4, 4a–4g). After the redeploy:
-   - `/guard` shows its wallet and its buy-only state.
-   - `/chog/<token id>` shows its holder the buy-only switch.
+   - `/guard` shows its wallet and its buy-only state (off: the House Chog trades two-way).
+   - `/chog/<token id>` shows its holder the optional buy-only switch (leave it off).
    - `/heist` opens once its wallet is deployed and holds $CHOG.
 5. Aim to finish before the freeze at Thu 00:00. A redeploy of the same commit is a configuration change, not a feature, but it has to happen before the heist recording on Thursday morning.
 

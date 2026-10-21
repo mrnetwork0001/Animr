@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { IN_SAMPLE_NOTE, SIM_LABEL } from "@/components/dna/shared";
 import { ChogImage } from "./chog-image";
-import { ctas, hero, labels, links, showcaseIds, statBand } from "./content";
+import { ctas, hero, labels, links, showcaseIds } from "./content";
 import { Icon } from "./icons";
+import { HeroScore, LeagueTiles } from "./live-league";
 import { Container, PulseDot, StyleBadge } from "./primitives";
 import { RandomChog } from "./random-chog-button";
 import { Rich } from "./rich";
@@ -12,10 +13,8 @@ import {
   chogWallet,
   formatCallTime,
   leagueSnapshot,
-  plainPct,
   replayCall,
   showcaseChog,
-  signedPct,
 } from "./showcase";
 
 export function Hero() {
@@ -68,7 +67,7 @@ export function Hero() {
 
       {league && (
         <Container className="pb-4">
-          <StatBand league={league} />
+          <StatBand league={league} tokenId={showcaseIds.hero} />
         </Container>
       )}
     </section>
@@ -92,7 +91,7 @@ function HeroCard({ chog, league }: { chog: ShowcaseChog; league: LeagueSnapshot
   return (
     <div
       role="group"
-      aria-label={visual.label(chog.tokenId, chog.name)}
+      aria-label={visual.label(chog.label, chog.name)}
       className="relative mx-auto flex w-full max-w-[25rem] flex-col lg:max-w-none"
     >
       <div aria-hidden className="landing-halo pointer-events-none absolute inset-x-6 top-1/4 bottom-6 -z-10 rounded-full" />
@@ -127,13 +126,13 @@ function HeroCard({ chog, league }: { chog: ShowcaseChog; league: LeagueSnapshot
           <ChogImage
             src={chog.image.src}
             fallbackSrc={chog.image.fallbackSrc}
-            alt={`${labels.chog(chog.tokenId)}, ${chog.name}`}
+            alt={`${chog.label}, ${chog.name}`}
             priority
-            fallbackLabel={labels.chog(chog.tokenId)}
+            fallbackLabel={chog.label}
             className="rounded-[1.3rem]"
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-[1.3rem] bg-linear-to-t from-background/90 via-background/45 to-transparent px-4 pt-20 pb-4">
-            <p className="font-mono text-xs text-muted">{labels.chog(chog.tokenId)}</p>
+            <p className="font-mono text-xs text-muted">{chog.label}</p>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
               <p className="text-xl font-semibold tracking-tight">{chog.name}</p>
               <StyleBadge style={chog.style} />
@@ -142,14 +141,14 @@ function HeroCard({ chog, league }: { chog: ShowcaseChog; league: LeagueSnapshot
         </div>
 
         <dl className="mt-2.5 grid gap-2.5 rounded-[1.1rem] bg-surface-2/70 px-4 py-3 text-sm">
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="flex items-center gap-2 text-muted">
-                <Icon name="dna" className="size-4 text-accent-strong" />
-                {visual.rows.strategy}
-              </dt>
-              <dd className="font-semibold text-foreground">{chog.archetype}</dd>
-            </div>
+          {/* One term, two values: the archetype, then the genes behind it (each <div> holds only <dt> and <dd>s). */}
+          <div className="flex flex-wrap items-center justify-between gap-x-3">
+            <dt className="flex items-center gap-2 text-muted">
+              <Icon name="dna" className="size-4 text-accent-strong" />
+              {visual.rows.strategy}
+            </dt>
+            <dd className="font-semibold text-foreground">{chog.archetype}</dd>
+            <dd className="basis-full">
             <ul className="mt-1.5 space-y-0.5 pl-6 text-xs text-muted">
               {shown.map((gene) => (
                 <li key={gene.key}>
@@ -161,6 +160,7 @@ function HeroCard({ chog, league }: { chog: ShowcaseChog; league: LeagueSnapshot
                 </li>
               ))}
             </ul>
+            </dd>
           </div>
           {wallet && (
             <div className="flex items-center justify-between gap-3">
@@ -194,13 +194,11 @@ function HeroCard({ chog, league }: { chog: ShowcaseChog; league: LeagueSnapshot
                 {visual.rows.score}
               </dt>
               <dd className="text-right">
-                <span className={`font-semibold tabular-nums ${standing.edgePct >= 0 ? "text-success" : "text-danger"}`}>
-                  {signedPct(standing.edgePct)}
-                </span>{" "}
-                <span className="text-foreground">{visual.vsHolding}</span>
-                <span className="block text-xs text-subtle">
-                  {visual.rank(standing.rank, league.total)} · {league.window} · simulated
-                </span>
+                {/* Build-time numbers, swapped for the live League's once the page is idle (live-league.tsx). */}
+                <HeroScore
+                  tokenId={chog.tokenId}
+                  build={{ edgePct: standing.edgePct, rank: standing.rank, total: league.total, window: league.window }}
+                />
               </dd>
             </div>
           )}
@@ -219,28 +217,12 @@ function HeroCard({ chog, league }: { chog: ShowcaseChog; league: LeagueSnapshot
   );
 }
 
-/** The whole League in four numbers, computed when the page was built and labelled with their window. */
-function StatBand({ league }: { league: LeagueSnapshot }) {
-  // Symmetric on purpose: the best and the worst Chog get the same weight.
-  const tiles = [
-    { label: statBand.beat, value: plainPct(league.beatHoldPct) },
-    { label: statBand.median, value: signedPct(league.medianEdgePct) },
-    { label: statBand.best, value: signedPct(league.bestEdgePct) },
-    { label: statBand.worst, value: signedPct(league.worstEdgePct) },
-  ];
-  return (
-    <figure>
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line/70 lg:grid-cols-4">
-        {tiles.map((tile) => (
-          <div key={tile.label} className="flex flex-col-reverse justify-end gap-1.5 bg-background/90 px-5 py-5 sm:px-6 sm:py-6">
-            <dt className="text-sm leading-snug text-pretty text-muted">{tile.label}</dt>
-            <dd className="text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{tile.value}</dd>
-          </div>
-        ))}
-      </dl>
-      <figcaption className="mt-3 max-w-4xl text-xs leading-relaxed text-pretty text-subtle">
-        {statBand.caption(league.total, league.genomeVersion, league.window)} {SIM_LABEL}. {IN_SAMPLE_NOTE}
-      </figcaption>
-    </figure>
-  );
+/**
+ * The whole League in four numbers: computed when the page was built and labelled with their window, then swapped
+ * for the live League's once the page is idle (live-league.tsx), so they match /league.
+ */
+function StatBand({ league, tokenId }: { league: LeagueSnapshot; tokenId: number }) {
+  const { total, genomeVersion, window, beatHoldPct, medianEdgePct, bestEdgePct, worstEdgePct } = league;
+  const build = { total, genomeVersion, window, beatHoldPct, medianEdgePct, bestEdgePct, worstEdgePct };
+  return <LeagueTiles tokenId={tokenId} build={build} note={`${SIM_LABEL}. ${IN_SAMPLE_NOTE}`} />;
 }

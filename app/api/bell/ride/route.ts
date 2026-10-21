@@ -1,6 +1,7 @@
-import { rideBell } from "@/lib/bell/fans";
+import { getFan, rideBell } from "@/lib/bell/fans";
 import { PRIVATE_HEADERS, errorResponse, fanIdentity, jsonBody, newFanLimit, rateLimit } from "@/lib/bell/http";
 import type { FanResponse } from "@/lib/bell/types";
+import { mergeVersusPoints } from "@/lib/rewind/picks";
 
 /**
  * Body { tokenId }: ride that Chog, one ride per Bell. Inside the open Bell's ride window the ride is on that Bell;
@@ -17,7 +18,10 @@ export async function POST(request: Request) {
     const fanId = await fanIdentity();
     const capped = await newFanLimit(request, fanId);
     if (capped) return capped;
-    return Response.json((await rideBell(fanId, tokenId)) satisfies FanResponse, { headers: PRIVATE_HEADERS });
+    let fan: FanResponse = await rideBell(fanId, tokenId);
+    // VERSUS points this cookie earned before it had a fan card move onto it now (lib/rewind/picks.ts).
+    if (await mergeVersusPoints(fanId).catch(() => false)) fan = await getFan(fanId);
+    return Response.json(fan satisfies FanResponse, { headers: PRIVATE_HEADERS });
   } catch (error) {
     return errorResponse(error, "Couldn't take that ride.");
   }

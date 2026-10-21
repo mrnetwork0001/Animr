@@ -54,10 +54,17 @@ type AgentDivisions = { claimed: Set<number>; onchain: Set<number> };
 // Shared by every route bundle in the process (like the agent store).
 const globalForDna = globalThis as typeof globalThis & { __animrDna?: DnaCache };
 
+/**
+ * Bump when display text derived from a genome changes without the genome itself (GENOME_VERSION hashes the rules,
+ * not their wording, e.g. SIZE_DISPLAY), so a long-running server drops genomes cached with the old words.
+ */
+const DISPLAY_REV = 2;
+const CACHE_KEY = `${GENOME_VERSION}:display-${DISPLAY_REV}`;
+
 function cache(): DnaCache {
-  if (globalForDna.__animrDna?.version !== GENOME_VERSION) {
+  if (globalForDna.__animrDna?.version !== CACHE_KEY) {
     globalForDna.__animrDna = {
-      version: GENOME_VERSION,
+      version: CACHE_KEY,
       genomes: new Map(),
       names: new Map(),
       series: new Map(),

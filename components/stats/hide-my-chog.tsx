@@ -6,6 +6,7 @@ import { type Address, erc721Abi, isAddressEqual } from "viem";
 import { useConnection, useSignMessage } from "wagmi";
 import { ConnectButton, useIsClient } from "@/components/connect-button";
 import { publicClient } from "@/lib/clients";
+import { type ChogQueryHit, chogLabel, parseChogQuery } from "@/lib/chog-id";
 import { appConfig } from "@/lib/config";
 import { shortAddress } from "@/lib/format";
 import type { OptOutAction, OptOutChallenge, OptOutStatus } from "@/lib/optout";
@@ -18,12 +19,26 @@ import { formatDay } from "./format";
 
 const { min, max } = appConfig.tokenIdRange;
 
-/** A token id typed by the visitor ("7", "#7"), inside the collection's range; else null. */
+/** A bare token id ("7", "token 7"), inside the collection's range; else null. For collections without name numbers. */
 function parseId(raw: string): number | null {
-  const text = raw.trim().replace(/^#/, "");
+  const text = raw.trim().replace(/^token\s*/i, "");
   if (!/^\d{1,16}$/.test(text)) return null;
   const id = Number(text);
   return Number.isSafeInteger(id) && BigInt(id) >= min && BigInt(id) <= max ? id : null;
+}
+
+type Lookup = { tokenId: number | null; other?: ChogQueryHit & { via: "token" | "name" }; problem?: string };
+
+/**
+ * What the visitor typed, read the way every Chog field reads it (lib/chog-id.ts): a bare number is a token id,
+ * "CHOG #1462" or "#1462" is the number in a Chog's marketplace name. The other reading is offered when it differs.
+ */
+function lookup(raw: string, nameNumbers: readonly number[] | undefined): Lookup {
+  if (!nameNumbers?.length) return { tokenId: parseId(raw) };
+  const query = parseChogQuery(raw, nameNumbers);
+  if (query.kind === "empty") return { tokenId: null };
+  if (query.kind === "invalid") return { tokenId: null, problem: query.message };
+  return { tokenId: query.tokenId, other: query.other };
 }
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -47,10 +62,13 @@ export function useOptOutStatus(tokenId: number | null) {
   });
 }
 
-export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
+export function HideMyChog({ tokenId: fixedId, nameNumbers }: { tokenId?: number; nameNumbers?: readonly number[] }) {
   const inputId = useId();
   const [draft, setDraft] = useState("");
-  const tokenId = fixedId ?? parseId(draft);
+  const typed = fixedId === undefined ? lookup(draft, nameNumbers) : { tokenId: fixedId };
+  const tokenId = typed.tokenId;
+  // "CHOG #1462 · token 1": both numbers, so a holder never signs for the wrong Chog.
+  const name = (id: number) => chogLabel(id, { number: nameNumbers?.[id - 1] || null });
   const queryClient = useQueryClient();
   const isClient = useIsClient();
   const connection = useConnection();
@@ -97,7 +115,13 @@ export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
 
   let step: ReactNode = null;
   if (tokenId === null) {
-    step = <Hint>Type your Chog&apos;s token ID to see whether it plays in Animr.</Hint>;
+    step = typed.problem ? (
+      <Hint>
+        <span className="text-danger">{typed.problem}</span>
+      </Hint>
+    ) : (
+      <Hint>Type your Chog&apos;s token ID or its name (like CHOG #1462) to see whether it plays in Animr.</Hint>
+    );
   } else if (!nft) {
     step = <Hint>Hiding a Chog isn&apos;t available on this network yet.</Hint>;
   } else if (!isClient) {
@@ -106,19 +130,19 @@ export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
     step = (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Hint>
-          Hold Chog #{tokenId}? Connect that wallet to {hidden ? "show it again" : "hide it"}.
+          Hold {name(tokenId)}? Connect that wallet to {hidden ? "show it again" : "hide it"}.
         </Hint>
         <ConnectButton className="ml-auto" />
       </div>
     );
   } else if (owner.isPending) {
-    step = <Hint>Checking who holds Chog #{tokenId}…</Hint>;
+    step = <Hint>Checking who holds {name(tokenId)}…</Hint>;
   } else if (owner.isError) {
     step = isContractRevert(owner.error) ? (
-      <Hint>Chog #{tokenId} hasn&apos;t been minted, so there&apos;s nothing to hide.</Hint>
+      <Hint>{name(tokenId)} hasn&apos;t been minted, so there&apos;s nothing to hide.</Hint>
     ) : (
       <Hint>
-        <span className="text-danger">Couldn&apos;t read the holder of Chog #{tokenId}: {walletErrorMessage(owner.error)}</span>{" "}
+        <span className="text-danger">Couldn&apos;t read the holder of {name(tokenId)}: {walletErrorMessage(owner.error)}</span>{" "}
         <button type="button" onClick={() => owner.refetch()} className="btn btn-secondary ml-1 px-2.5 py-1 text-xs">
           Retry
         </button>
@@ -127,7 +151,7 @@ export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
   } else if (!isOwner) {
     step = (
       <Hint>
-        Only the holder of Chog #{tokenId} can {hidden ? "show it again" : "hide it"}. The connected wallet (
+        Only the holder of {name(tokenId)} can {hidden ? "show it again" : "hide it"}. The connected wallet (
         <span className="font-mono text-foreground">{shortAddress(viewer)}</span>) doesn&apos;t hold it.
       </Hint>
     );
@@ -137,8 +161,8 @@ export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
         ? "Confirm in your wallet…"
         : "Saving…"
       : hidden
-        ? `Sign & show Chog #${tokenId} again`
-        : `Sign & hide Chog #${tokenId}`;
+        ? `Sign & show ${name(tokenId)} again`
+        : `Sign & hide ${name(tokenId)}`;
     step = (
       <div className="flex flex-wrap items-center gap-3">
         <button
@@ -174,13 +198,12 @@ export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
           {fixedId === undefined && (
             <div>
               <label htmlFor={inputId} className="block text-xs font-medium text-muted">
-                Chog token ID
+                {nameNumbers?.length ? "Token ID or name" : "Chog token ID"}
               </label>
               <input
                 id={inputId}
-                inputMode="numeric"
                 autoComplete="off"
-                placeholder={`${min}–${max}`}
+                placeholder={nameNumbers?.length ? "7 or CHOG #1462" : `${min}–${max}`}
                 value={draft}
                 onChange={(event) => {
                   setDraft(event.target.value);
@@ -191,13 +214,33 @@ export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
             </div>
           )}
 
+          {tokenId !== null && fixedId === undefined && (
+            <p className="text-sm text-muted">
+              Checking <span className="font-medium text-foreground">{name(tokenId)}</span>
+              {typed.other && (
+                <>
+                  {" · "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft(typed.other!.via === "name" ? `CHOG #${typed.other!.nameNumber}` : String(typed.other!.tokenId));
+                      toggle.reset();
+                    }}
+                    className="font-medium text-accent-strong underline underline-offset-2"
+                  >
+                    Meant {chogLabel(typed.other.tokenId, { number: typed.other.nameNumber || null })}?
+                  </button>
+                </>
+              )}
+            </p>
+          )}
           {tokenId !== null && (
             <div aria-live="polite" className="text-sm">
               {status.isPending ? (
-                <span className="text-subtle">Checking Chog #{tokenId}…</span>
+                <span className="text-subtle">Checking {name(tokenId)}…</span>
               ) : status.isError ? (
                 <span className="text-danger">
-                  Couldn&apos;t check Chog #{tokenId}: {status.error.message}{" "}
+                  Couldn&apos;t check {name(tokenId)}: {status.error.message}{" "}
                   <button type="button" onClick={() => status.refetch()} className="underline underline-offset-2">
                     Retry
                   </button>
@@ -223,8 +266,8 @@ export function HideMyChog({ tokenId: fixedId }: { tokenId?: number }) {
             {done && (
               <p className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
                 {done.hidden
-                  ? `Done: Chog #${done.tokenId} is hidden. Animr's pages drop it as their caches refresh, usually within minutes.`
-                  : `Done: Chog #${done.tokenId} plays in Animr again.`}
+                  ? `Done: ${name(done.tokenId)} is hidden. Animr's pages drop it as their caches refresh, usually within minutes.`
+                  : `Done: ${name(done.tokenId)} plays in Animr again.`}
               </p>
             )}
           </div>

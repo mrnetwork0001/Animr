@@ -2,6 +2,8 @@ import { cacheLife } from "next/cache";
 import { ImageResponse } from "next/og";
 import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, parseChogId, signedPct } from "@/components/dna/shared";
 import { chogThumbUrl } from "@/components/dna/thumb-url";
+import { isFlaggedTokenId } from "@/lib/brand-safety";
+import { chogLabel } from "@/lib/chog-id";
 import { getChog } from "@/lib/dna/chogs";
 import { chogGenome, chogName, getPopulation, getReplay } from "@/lib/dna/population";
 import type { PopulationResponse, ReplayResult } from "@/lib/dna/types";
@@ -69,6 +71,8 @@ async function loadFace(image: string): Promise<string | null> {
 
 type Card = {
   tokenId: number;
+  /** "CHOG #1312 · token 1820": both numbers (lib/chog-id.ts). */
+  label: string;
   name: string;
   archetype: string;
   edgePct: number | null;
@@ -93,7 +97,8 @@ async function loadCard(tokenId: number): Promise<Card | null> {
   const [replay, population, face]: [ReplayResult | null, PopulationResponse | null, string | null] = await Promise.all([
     withTimeout(getReplay(tokenId, DEFAULT_WINDOW), 8_000),
     withTimeout(getPopulation(DEFAULT_WINDOW), 8_000),
-    loadFace(chog.image),
+    // Flagged Chogs' art still shows the flagged words (lib/brand-safety.ts): never on a share card.
+    isFlaggedTokenId(tokenId) ? null : loadFace(chog.image),
   ]);
   const row = population?.rows.find((r) => r.tokenId === tokenId);
   const step = Math.max(1, Math.ceil((replay?.points.length ?? 0) / 100));
@@ -101,10 +106,11 @@ async function loadCard(tokenId: number): Promise<Card | null> {
     .filter((_, i, all) => i % step === 0 || i === all.length - 1)
     .map((p) => (p.value / replay!.startChog - 1) * 100);
   // A card missing a piece is retried soon; a complete one is good until the candles move on.
-  if (replay && population && face) cacheLife("hours");
+  if (replay && population && (face || isFlaggedTokenId(tokenId))) cacheLife("hours");
   else cacheLife("minutes");
   return {
     tokenId,
+    label: chogLabel(tokenId, { metadataName: chog.name }),
     // Its persona name ("Rocket Ears"), the one every page shows.
     name: chogName(chog),
     archetype: genome.archetype,
@@ -178,7 +184,7 @@ export default async function Image({ params }: { params: Promise<{ tokenId: str
           {card?.face ? (
             <img src={card.face} width={460} height={460} alt="" style={{ objectFit: "cover" }} />
           ) : card ? (
-            `#${card.tokenId}`
+            card.label.split(" · ")[0]
           ) : (
             <img src={LOGO} width={200} height={200} alt="" />
           )}
@@ -189,8 +195,8 @@ export default async function Image({ params }: { params: Promise<{ tokenId: str
             <div style={{ display: "flex", fontSize: 22, letterSpacing: 5, color: C.accentStrong, fontWeight: 600 }}>
               ANIMR · TIME MACHINE
             </div>
-            <div style={{ display: "flex", marginTop: 14, fontSize: 76, fontWeight: 600, letterSpacing: -2, lineHeight: 1 }}>
-              {card ? `Chog #${card.tokenId}` : "Every Chog is a trader"}
+            <div style={{ display: "flex", marginTop: 14, fontSize: card ? 44 : 76, fontWeight: 600, letterSpacing: -1, lineHeight: 1.05 }}>
+              {card ? card.label : "Every Chog is a trader"}
             </div>
             <div style={{ display: "flex", marginTop: 14, fontSize: 32, color: C.muted }}>
               {card ? `${card.archetype} · ${card.name}` : "1,969 trading genomes on real $CHOG candles"}

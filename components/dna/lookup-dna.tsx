@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useChogBell, useTodayBell } from "@/components/bell/api";
 import { Forecast, SourceBadge } from "@/components/bell/bits";
 import { appConfig } from "@/lib/config";
-import { useStanding } from "./api";
+import { HiddenChogNotice } from "@/components/stats/hidden-notice";
+import { useHiddenChogs } from "../hidden-chogs";
+import { DnaApiError, useStanding } from "./api";
 import { EdgeBadge } from "./edge-badge";
 import { StyleChip } from "./genome-card";
 import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, WINDOW_LABEL, formatInt, parseChogId } from "./shared";
@@ -16,10 +18,20 @@ import { CHOG_COUNT, DEFAULT_WINDOW, SIM_LABEL, WINDOW_LABEL, formatInt, parseCh
 export function LookupDna({ tokenId }: { tokenId: string }) {
   // The DNA engine covers Chog Genesis (ids 1-1969) only, not another configured collection.
   const id = appConfig.tokenIdRange.max === BigInt(CHOG_COUNT) ? (parseChogId(tokenId) ?? undefined) : undefined;
-  const standing = useStanding(id, DEFAULT_WINDOW);
-  const bell = useChogBell(id);
+  const hiddenIds = useHiddenChogs();
+  // A Chog its holder hid: the list, or the APIs' own 404 (they check the list on the server).
+  const hidden = id !== undefined && hiddenIds.has(id);
+  const standing = useStanding(hidden ? undefined : id, DEFAULT_WINDOW);
+  const bell = useChogBell(hidden ? undefined : id);
   const latest = useTodayBell();
   if (id === undefined) return null;
+  if (hidden || (standing.error instanceof DnaApiError && standing.error.status === 404 && /public pages/.test(standing.error.message))) {
+    return (
+      <section aria-label="Trading DNA" className="border-t border-line px-5 py-5 sm:px-6">
+        <HiddenChogNotice tokenId={id} />
+      </section>
+    );
+  }
   const row = standing.data?.row;
   const call = bell.data?.today;
   const replayed = latest.data?.kind === "replay";

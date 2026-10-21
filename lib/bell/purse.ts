@@ -18,9 +18,12 @@ import type { BellCall, BellPurse, BellSummary } from "./types";
 // hid (lib/optout.ts) is never named: in either case the purse goes to the next-closest call (flagged Chogs left
 // out, as for the Oracle card).
 
-/** $CHOG per purse when ORACLE_PURSE_CHOG is unset. */
-export const DEFAULT_PURSE_CHOG = "5000";
-/** Without a record, a settled live Bell shows its purse "on its way" for this long after its horizon. */
+/**
+ * $CHOG per purse when ORACLE_PURSE_CHOG is unset: none. A purse is real money the team pays by hand, so the Bell
+ * only promises one once the team has set the amount it will actually send after every Bell (and funded the House key).
+ */
+export const DEFAULT_PURSE_CHOG = "0";
+/** Without a record, a settled live Bell shows its purse "on its way" for this long after its horizon, then "not sent". */
 export const PURSE_PROMISE_MS = 48 * HOUR_MS;
 
 /** animr:bell:purse:<day>, written by scripts/send-oracle-purse.mts. */
@@ -36,6 +39,8 @@ export type OraclePurseRecord = {
   txHash: Hex;
   /** The House key's address. */
   from: Address;
+  /** The transfer's nonce: a re-send after it never landed reuses it, so at most one transfer is ever mined. */
+  nonce?: number;
   /** "pending" from just before the broadcast until the receipt, "confirmed" once the transfer succeeded. */
   status: "pending" | "confirmed";
   /** When the transfer was signed (ISO). */
@@ -55,7 +60,7 @@ export function parsePurseAmount(raw: string | undefined): string | null {
   return `${whole.replace(/^0+(?=\d)/, "")}${trimmed ? `.${trimmed}` : ""}`;
 }
 
-/** ORACLE_PURSE_CHOG (default 5000), or null when it is set but invalid. "0" turns the purse off. */
+/** ORACLE_PURSE_CHOG (unset: "0", no purse), or null when it is set but invalid. "0" turns the purse off. */
 export function purseAmountChog(): string | null {
   const raw = process.env.ORACLE_PURSE_CHOG;
   return raw?.trim() ? parsePurseAmount(raw) : DEFAULT_PURSE_CHOG;
@@ -119,7 +124,8 @@ export function clearPurse(day: string): Promise<void> {
 /**
  * What the Bell page shows about a Bell's purse, or undefined when it has none (replays, open Bells, purses off).
  * A recorded transfer shows once confirmed; until then, and for PURSE_PROMISE_MS after the horizon without a
- * record, the purse is "on its way" to the winner. A purse whose Chog was hidden by its holder isn't shown.
+ * record, the purse is "on its way" to the winner; after that it says plainly that it wasn't sent (never a promise
+ * that quietly disappears). A purse whose Chog was hidden by its holder isn't shown.
  */
 export async function bellPurse(
   summary: BellSummary,
@@ -134,7 +140,9 @@ export async function bellPurse(
   if (record) return { status: "pending", tokenId: record.tokenId, amount: record.amount };
   const amount = purseAmountChog();
   const now = options.now ?? Date.now();
-  if (!amount || Number(amount) <= 0 || now > Date.parse(summary.horizonAt) + PURSE_PROMISE_MS) return undefined;
+  if (!amount || Number(amount) <= 0) return undefined;
   const winner = await purseWinner(summary, { visibility: options.visibility });
-  return winner ? { status: "pending", tokenId: winner.tokenId, amount } : undefined;
+  if (!winner) return undefined;
+  const late = now > Date.parse(summary.horizonAt) + PURSE_PROMISE_MS;
+  return { status: late ? "unsent" : "pending", tokenId: winner.tokenId, amount };
 }

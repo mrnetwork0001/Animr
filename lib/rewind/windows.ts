@@ -206,11 +206,17 @@ export function windowLegs(closes: readonly number[]): [number, number] {
   return [(legs[best] - 1) * 100, (legs[best + 1] - 1) * 100];
 }
 
-/** "Sep 30 – Oct 2, 2026: +31% then −24%" for the closes of frames 0-48 starting at `fromSec`. */
+/**
+ * "Sep 30 – Oct 2, 2026: +31% then −24% · −2% overall" for the closes of frames 0-48 starting at `fromSec`. The two
+ * legs are the window's biggest back-to-back swings, not all of it, so the net move from the first close to the last
+ * is always added: the headline never contradicts the price line under it.
+ */
 export function revealLabel(fromSec: number, toSec: number, closes: readonly number[]): string {
   const [first, second] = windowLegs(closes);
   const dates = dateRangeLabel(fromSec, toSec);
-  if (Math.round(first) === 0 && Math.round(second) === 0) return `${dates}: flat`;
-  if (Math.round(second) === 0) return `${dates}: ${signedWholePct(first)}`;
-  return `${dates}: ${signedWholePct(first)} then ${signedWholePct(second)}`;
+  const net = closes.length > 1 && closes[0] > 0 ? (closes[closes.length - 1] / closes[0] - 1) * 100 : 0;
+  const overall = ` · ${signedWholePct(net)} overall`;
+  if (Math.round(first) === 0 && Math.round(second) === 0) return `${dates}: flat${Math.round(net) === 0 ? "" : overall}`;
+  if (Math.round(second) === 0) return `${dates}: ${signedWholePct(first)}${Math.round(net) === Math.round(first) ? "" : overall}`;
+  return `${dates}: ${signedWholePct(first)} then ${signedWholePct(second)}${overall}`;
 }
