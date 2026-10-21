@@ -1,0 +1,80 @@
+/*
+ * Daily Bell effects (components/bell/*): only what Tailwind utilities can't express, i.e. keyframes.
+ * Global on purpose (next.config.ts routes every *.css through Tailwind as plain CSS), so every class
+ * is prefixed `bell-`. Every animation is opt-in: it only runs when the system allows motion.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The bell icon swings while rides are open or a ring is due. */
+  .bell-swing {
+    transform-origin: 50% 10%;
+    animation: bell-swing 2.6s ease-in-out infinite;
+  }
+
+  /* HIT / MISS stamps land with a thud. */
+  .bell-stamp {
+    animation: bell-stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  }
+
+  /* Histogram bars grow from the baseline. */
+  .bell-rise {
+    transform-origin: bottom;
+    animation: bell-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* Revealed results fade up. */
+  .bell-pop {
+    animation: bell-pop 360ms ease-out both;
+  }
+}
+
+@keyframes bell-swing {
+  0%,
+  55%,
+  100% {
+    transform: rotate(0);
+  }
+  10% {
+    transform: rotate(16deg);
+  }
+  20% {
+    transform: rotate(-13deg);
+  }
+  30% {
+    transform: rotate(8deg);
+  }
+  40% {
+    transform: rotate(-4deg);
+  }
+}
+
+@keyframes bell-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.9) rotate(-14deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg);
+  }
+}
+
+@keyframes bell-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes bell-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
