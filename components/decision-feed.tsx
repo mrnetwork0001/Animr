@@ -73,7 +73,6 @@ const PAGE_SIZE = 20;
 const SOURCE_LABEL: Record<string, string> = {
   dexscreener: "DexScreener",
   geckoterminal: "GeckoTerminal",
-  mock: "simulated market",
   unavailable: "no price feed",
 };
 
@@ -262,7 +261,7 @@ function DecisionRow({ decision: d, providers }: { decision: Decision; providers
           </div>
           <div className="flex items-baseline gap-1.5">
             <dt>Source</dt>
-            <dd className={d.market.source === "mock" ? "text-[var(--v2-warning)]" : "text-[var(--v2-nav)]"}>
+            <dd className="text-[var(--v2-nav)]">
               {SOURCE_LABEL[d.market.source] ?? d.market.source}
             </dd>
           </div>

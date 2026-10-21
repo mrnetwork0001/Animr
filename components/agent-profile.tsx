@@ -812,7 +812,6 @@ function FundWalletCard({ account }: { account: Address }) {
 
 function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: Decision[] }) {
   const paper = agent.mode === "paper";
-  const simulatedMarket = decisions[0]?.market.source === "mock";
   const history = valueHistory(agent, decisions);
   const first = history[0];
   const last = history[history.length - 1];
@@ -890,8 +889,7 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
                 <TimeAgo iso={agent.fundedAt} />
               </>
             )}
-            . Trades are simulated at {simulatedMarket ? "prices from a simulated market" : "market prices"}, so no
-            tokens move.
+            . Trades are simulated at market prices, so no tokens move.
           </>
         ) : (
           <>

@@ -35,8 +35,6 @@ export const BELL_COPY = {
   live: "Provisional until the hourly close at the Bell's settlement.",
   scoring: "Points = max(0, 100 − 4 × miss in % points) + 20 for the right direction.",
   ride: "Your ride counts from the first hourly close after you pick, and scores when the call settles.",
-  purse:
-    "After each live Bell settles, the team sends real $CHOG into the Best call's own wallet. The purse belongs to the Chog, not to a fan.",
 } as const;
 
 export function round(value: number, digits = 2): number {

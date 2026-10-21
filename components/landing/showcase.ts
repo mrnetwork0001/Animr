@@ -1,14 +1,11 @@
-import candleFile from "@/data/chog-ohlcv-1h.json";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
 import type { TradingStyle } from "@/lib/agent/types";
 import { FLAGGED_TOKEN_IDS, displayTraitValue, scrubTraitText, traitSafety } from "@/lib/brand-safety";
 import { nameNumberOf } from "@/lib/chog-id";
 import { appConfig } from "@/lib/config";
 import { animrTradeGuardAddress } from "@/lib/contracts/animr-trade-guard";
-import { DEFAULT_WINDOW, type ReplaySeries, prepareSeries, replay, replayStats } from "@/lib/dna/backtest";
 import { allChogs, getChog } from "@/lib/dna/chogs";
-import { GENOME_VERSION, deriveGenome, genomeParams } from "@/lib/dna/genome";
-import { type Candle, type CandleFile, HOUR, fillGaps } from "@/lib/dna/history";
+import { deriveGenome, genomeParams } from "@/lib/dna/genome";
 import type { ChogSnapshot, Genome } from "@/lib/dna/types";
 import { computeTokenBoundAccount } from "@/lib/erc6551";
 import { explorerAddressUrl, shortAddress } from "@/lib/format";
@@ -16,11 +13,9 @@ import { houseChogTokenId } from "@/lib/heist/config";
 import { resolveUri } from "@/lib/nft";
 import { FALLBACK_IMAGE_IDS } from "./content";
 
-// Server only (it reads the ~1 MB Chog snapshot and the committed candles): everything the landing
-// page shows about a Chog or the League, computed with the app's own code from data/chogs.json and
-// data/chog-ohlcv-1h.json. Pure functions of committed data (no RPC, no clock, no network), so the
-// page still prerenders as static HTML and these numbers are fixed when the page is built; each one
-// is shown with its genome version and candle window.
+// Server only (it reads the ~1 MB Chog snapshot): everything the landing page shows about a Chog,
+// computed with the app's own code from data/chogs.json. Pure functions of committed data (no RPC, no
+// clock, no network), so the page still prerenders as static HTML.
 
 // ---------------------------------------------------------------- one Chog
 
@@ -175,146 +170,13 @@ export function chogWallet(tokenId: number): ChogWallet | null {
   }
 }
 
-// ---------------------------------------------------------------- the League, replayed at build time
-
-export type LeagueSnapshot = {
-  genomeVersion: string;
-  /** "Sep 4 – Oct 19, 2026": the first and last decision of the window (UTC). */
-  window: string;
-  total: number;
-  beatHoldPct: number;
-  medianEdgePct: number;
-  bestEdgePct: number;
-  worstEdgePct: number;
-  /** Rank (1 = best; ties share a rank) and edge vs holding, per token id. */
-  standings: ReadonlyMap<number, { rank: number; edgePct: number }>;
-};
-
-/** One call a Chog made in its replay, in its genome's voice (rules, not the LLM). */
-export type ReplayCall = { t: number; side: "buy" | "sell"; text: string };
-
-let series: ReplaySeries | null | undefined;
-let league: LeagueSnapshot | null | undefined;
-const calls = new Map<number, ReplayCall | null>();
-
-/** A committed candle row ([t, open, high, low, close, volume]) as a Candle, or null when malformed. */
-function toCandle(row: unknown): Candle | null {
-  if (!Array.isArray(row) || row.length < 6) return null;
-  const [t, open, high, low, close, volume] = row.map(Number);
-  if (!Number.isInteger(t) || t % HOUR !== 0 || ![open, high, low, close].every((p) => p > 0 && Number.isFinite(p))) return null;
-  return { t, open, high, low, close, volume: Number.isFinite(volume) && volume > 0 ? volume : 0 };
-}
-
-/**
- * The League's default window over the committed hourly candles: what lib/dna/history.ts serves when
- * GeckoTerminal is unreachable, so it matches the League until newer candles arrive.
- */
-function committedSeries(): ReplaySeries | null {
-  if (series !== undefined) return series;
-  try {
-    const rows = (candleFile as unknown as CandleFile).candles;
-    series = prepareSeries(fillGaps(rows.flatMap((row) => toCandle(row) ?? [])), DEFAULT_WINDOW);
-  } catch (error) {
-    console.warn("[animr] Landing: couldn't replay the committed candles:", (error as Error).message);
-    series = null;
-  }
-  return series;
-}
-
-const round = (value: number, digits = 2) => Number(value.toFixed(digits));
-
-const DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-const YEAR = new Intl.DateTimeFormat("en-US", { year: "numeric", timeZone: "UTC" });
-
-/** "Sep 4 – Oct 19, 2026" from unix seconds. */
-function windowLabel(from: number, to: number): string {
-  const [a, b] = [from * 1000, to * 1000];
-  const fromYear = YEAR.format(a) === YEAR.format(b) ? "" : `, ${YEAR.format(a)}`;
-  return `${DAY.format(a)}${fromYear} – ${DAY.format(b)}, ${YEAR.format(b)}`;
-}
-
-/**
- * All 1,969 genomes replayed over the League's default window, ranked like lib/dna/population.ts
- * (edges rounded to 0.01%, ties share a rank). ~150 ms, once per server process. Null if the
- * committed candles can't be replayed: the page then leaves the numbers out.
- */
-export function leagueSnapshot(): LeagueSnapshot | null {
-  if (league !== undefined) return league;
-  const window = committedSeries();
-  if (!window) return (league = null);
-  try {
-    const rows = allChogs().map((chog) => ({ tokenId: chog.id, edgePct: round(replayStats(genomeOf(chog), window).edgePct) }));
-    rows.sort((a, b) => b.edgePct - a.edgePct || a.tokenId - b.tokenId);
-    const standings = new Map<number, { rank: number; edgePct: number }>();
-    let rank = 0;
-    rows.forEach((row, i) => {
-      if (i === 0 || row.edgePct !== rows[i - 1].edgePct) rank = i + 1;
-      standings.set(row.tokenId, { rank, edgePct: row.edgePct });
-    });
-    const sorted = rows.map((row) => row.edgePct).sort((a, b) => a - b);
-    const mid = sorted.length >> 1;
-    const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-    league = {
-      genomeVersion: GENOME_VERSION,
-      window: windowLabel(window.window.from, window.window.to),
-      total: rows.length,
-      beatHoldPct: round((sorted.filter((edge) => edge > 0).length / Math.max(1, sorted.length)) * 100, 1),
-      medianEdgePct: round(median),
-      bestEdgePct: sorted[sorted.length - 1] ?? 0,
-      worstEdgePct: sorted[0] ?? 0,
-      standings,
-    };
-  } catch (error) {
-    console.warn("[animr] Landing: couldn't compute the League:", (error as Error).message);
-    league = null;
-  }
-  return league;
-}
-
-/** The Chog's first sell in its replay (else its first trade), in its genome's own words. */
-export function replayCall(tokenId: number): ReplayCall | null {
-  if (calls.has(tokenId)) return calls.get(tokenId) ?? null;
-  let call: ReplayCall | null = null;
-  const chog = getChog(tokenId);
-  const window = committedSeries();
-  if (chog && window) {
-    try {
-      const { trades } = replay(genomeOf(chog), window, tokenId);
-      const pick = trades.find((trade) => trade.side === "sell") ?? trades[0];
-      if (pick) call = { t: pick.t, side: pick.side, text: scrubTraitText(pick.reason) };
-    } catch (error) {
-      console.warn(`[animr] Landing: couldn't replay Chog #${tokenId}:`, (error as Error).message);
-    }
-  }
-  calls.set(tokenId, call);
-  return call;
-}
-
-const CALL_TIME = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-  timeZone: "UTC",
-});
-
-/** "Sep 4, 03:00 UTC" from unix seconds. */
-export function formatCallTime(t: number): string {
-  return `${CALL_TIME.format(t * 1000)} UTC`;
-}
+// ---------------------------------------------------------------- numbers
 
 /** "+9.1%" / "−9.4%" with a real minus sign, for display numbers. */
 export function signedPct(pct: number, digits = 1): string {
   if (!Number.isFinite(pct)) return "—";
   const rounded = Math.abs(pct) < 0.5 * 10 ** -digits ? 0 : pct;
   return `${rounded > 0 ? "+" : rounded < 0 ? "−" : ""}${Math.abs(rounded).toFixed(digits)}%`;
-}
-
-/** "39%" or "38.6%": one decimal only when it says something. */
-export function plainPct(pct: number): string {
-  const text = pct.toFixed(1);
-  return `${text.endsWith(".0") ? text.slice(0, -2) : text}%`;
 }
 
 // ---------------------------------------------------------------- Random Chog

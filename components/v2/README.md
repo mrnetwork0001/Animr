@@ -211,7 +211,7 @@ stays the same everywhere.
 
 ### `/league` and `/traits`
 
-- **League header:** h1 "The League", kicker "Meet · 1,969 AI traders". The aside is a boxed
+- **League header:** h1 "The League", kicker "Meet · 1,969 traders". The aside is a boxed
   `StatRow`: traders, the share that beat holding, the best return.
 - **Window picker:** `TabLinks` (30d, 45d, Max).
 - **Board:** a `v2-table`.
