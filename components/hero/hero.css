@@ -5,15 +5,15 @@
  * Two layouts, one set of components:
  * - Wide screens (5:4 and wider, at least 960px): the hero is drawn on a 2048×1455 design canvas,
  *   one unit --u = viewport height / 1455 (never under 0.468px). The canvas is centred and fills the
- *   screen top to bottom. Its content keeps 75 units from each side (the owner's slim margins), and
+ *   screen top to bottom. Its content keeps 112 units from each side (the owner's slim margins), and
  *   on screens wider than the canvas the canvas stretches with the screen (up to 270 extra units
- *   each side, about 16:9): the copy stays 75 units from the left edge while the artwork and cards,
+ *   each side, about 16:9): the copy stays 112 units from the left edge while the artwork and cards,
  *   anchored to the canvas's right edge, move out to the right the same distance. Below about 1.33:1
  *   (5:4, 4:3 windows) the canvas is wider than the screen: its empty side margins are trimmed, and
- *   the unit also caps at (viewport width - 2 gutters) / 1898 so the content's edge stays at least
+ *   the unit also caps at (viewport width - 2 gutters) / 1824 so the content's edge stays at least
  *   one gutter from the screen's edge.
  * - Everything else: the same content in one centred column, sized in the fluid unit --f, with
- *   --v2-gutter's slim side margins (6px on phones, ~9px at 768).
+ *   --v2-gutter's slim side margins (9px on phones, ~14px at 768).
  * Components size themselves in --k, which is whichever unit the layout uses.
  *
  * Page structure (animr-hero.tsx): .hx-page is the whole page and carries the tokens and units. Its
@@ -47,7 +47,7 @@
   --f: clamp(0.55px, 0.449px + 0.0284vw, 0.76px);
   --k: var(--f);
   /* Same value as --v2-gutter (app/design-v2.css). */
-  --hx-gutter: clamp(6px, 3.125vw - 15px, 32px);
+  --hx-gutter: clamp(9px, 4.6875vw - 22.5px, 48px);
   /* Wide canvas: the most it stretches past 2048 units, per side (about a 16:9 screen). */
   --hx-stretch: 270;
 
@@ -809,8 +809,8 @@ body:has(.hx-page) {
 /* Same query as WIDE_LAYOUT in layout.ts. */
 @media (min-aspect-ratio: 5/4) and (min-width: 960px) {
   .hx-page {
-    /* Narrow windows: the 75-unit content edge never comes closer to the screen edge than the gutter. */
-    --u: max(0.468px, min(100svh / 1455, (100vw - 2 * var(--hx-gutter)) / 1898));
+    /* Narrow windows: the 112-unit content edge never comes closer to the screen edge than the gutter. */
+    --u: max(0.468px, min(100svh / 1455, (100vw - 2 * var(--hx-gutter)) / 1824));
     --k: var(--u);
   }
 
@@ -857,7 +857,7 @@ body:has(.hx-page) {
     display: flex;
     justify-content: space-between;
     height: calc(148 * var(--u));
-    padding-inline: calc(75 * var(--u));
+    padding-inline: calc(112 * var(--u));
   }
 
   .hx-nav {
@@ -883,7 +883,7 @@ body:has(.hx-page) {
   .hx-copy {
     position: absolute;
     top: calc(258 * var(--u));
-    left: calc(75 * var(--u));
+    left: calc(112 * var(--u));
     align-items: flex-start;
     width: auto;
     padding: 0;
@@ -942,7 +942,7 @@ body:has(.hx-page) {
     content: "";
     position: absolute;
     top: calc(90 * var(--u));
-    right: calc(453 * var(--u)); /* x = 775 on the 2048-unit canvas */
+    right: calc(490 * var(--u)); /* x = 738 on the 2048-unit canvas */
     width: calc(820 * var(--u));
     height: calc(520 * var(--u));
     pointer-events: none;
@@ -954,7 +954,7 @@ body:has(.hx-page) {
   .hx-art {
     position: absolute;
     top: calc(168 * var(--u));
-    right: calc(-137 * var(--u)); /* x = 1065: it bleeds past the canvas's right edge */
+    right: calc(-100 * var(--u)); /* x = 1028: it bleeds past the canvas's right edge */
     width: calc(1120 * var(--u));
     margin: 0;
   }
@@ -969,13 +969,13 @@ body:has(.hx-page) {
 
   .hx-card--dna {
     top: calc(186 * var(--u));
-    right: calc(792 * var(--u)); /* x = 805 */
+    right: calc(829 * var(--u)); /* x = 768 */
     left: auto;
   }
 
   .hx-card--guard {
     top: calc(1004 * var(--u));
-    right: calc(82 * var(--u)); /* x = 1515 */
+    right: calc(119 * var(--u)); /* x = 1478 */
     bottom: auto;
     left: auto;
   }

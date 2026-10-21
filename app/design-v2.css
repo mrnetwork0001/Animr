@@ -103,7 +103,7 @@
      content's whole side margin up to 1920px: 6px on phones, ~9px at 768, ~30px at 1440, 32px from
      1504px. The columns only cap beyond 1920px wide; long text keeps its
      own ch caps (v2-lead, section copy, v2-card-body). */
-  --v2-gutter: clamp(6px, 3.125vw - 15px, 32px);
+  --v2-gutter: clamp(9px, 4.6875vw - 22.5px, 48px);
   --v2-max: 2048px;
   --v2-max-narrow: 2048px; /* = --v2-max, so a reading page's column still lines up with the header */
   --v2-max-wide: 2304px;
