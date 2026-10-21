@@ -1,17 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { cacheLife } from "next/cache";
 import { showcaseIds } from "@/components/landing/content";
-import {
-  guardLink,
-  houseChog,
-  leagueSnapshot,
-  plainPct,
-  randomChogPool,
-  showcaseChog,
-  signedPct,
-} from "@/components/landing/showcase";
+import { guardLink, houseChog, randomChogPool, showcaseChog, signedPct } from "@/components/landing/showcase";
 import { type TourAction, TOUR_STEP_COUNT } from "@/components/tour/steps";
 import { type TourLive, TourGuide } from "@/components/tour/tour-guide";
 import { PageHeader } from "@/components/v2";
+import { DEFAULT_WINDOW } from "@/lib/dna/backtest";
+import { leagueHeadline, windowLabel } from "@/lib/dna/headline";
+import { getStanding } from "@/lib/dna/population";
 
 export const metadata: Metadata = {
   title: "Judge tour",
@@ -21,15 +17,26 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#0d0c11" };
 
+/** The showcase Chog's League edge vs holding (simulated), from the same cached League as /league; null if unknown. */
+async function leagueEdge(tokenId: number): Promise<number | null> {
+  "use cache";
+  cacheLife("hours");
+  try {
+    return (await getStanding(tokenId, DEFAULT_WINDOW)).row.edgePct;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * The judge tour: nine stops, each opening the real page. The live lines are pure functions of committed data and env
- * (the League replayed on the committed candles, the showcase Chog, the House Chog, the deployed guard), so the page
- * prerenders; any line whose data is missing is left out.
+ * The judge tour: nine stops, each opening the real page. The League lines come from the live League
+ * (leagueHeadline(), "use cache" for hours: the same source as /league and the hero), the rest from committed data and
+ * env (the showcase Chog, the House Chog, the deployed guard), so the page stays prerendered; any line whose data is
+ * missing is left out.
  */
-export default function TourPage() {
-  const league = leagueSnapshot();
+export default async function TourPage() {
   const star = showcaseChog(showcaseIds.hero);
-  const starEdge = star ? league?.standings.get(star.tokenId)?.edgePct : undefined;
+  const [league, starEdge] = await Promise.all([leagueHeadline(), star ? leagueEdge(star.tokenId) : null]);
   const house = houseChog();
   const guard = guardLink();
   const pool = randomChogPool();
@@ -37,9 +44,10 @@ export default function TourPage() {
   const live: TourLive = {};
   if (league) {
     live.trader = `${league.total.toLocaleString("en-US")} Chogs, each with its own wallet address`;
-    live.dna = `Simulated: ${plainPct(league.beatHoldPct)} of Chogs beat holding (${league.window})`;
+    // Rounded like the hero and the League's field panel, so every page reads the same share.
+    live.dna = `Simulated: ${Math.round(league.beatHoldPct)}% of Chogs beat holding (${windowLabel(league.from, league.to)})`;
   }
-  if (star && starEdge !== undefined) {
+  if (star && starEdge !== null) {
     live.replay = `${star.name} · ${star.label}: ${signedPct(starEdge)} vs holding (simulated)`;
   }
   if (house) live.heist = `Defending: ${house.name} · ${house.label}`;
