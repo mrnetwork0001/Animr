@@ -30,6 +30,7 @@ export const V2_FOOTER_LINKS: readonly { href: string; label: string }[] = [
   { href: "/traits", label: "Traits" },
   { href: "/#faq", label: "FAQ" },
   { href: "/#how-it-works", label: "How it works" },
+  { href: "/docs", label: "Docs" },
 ];
 
 /** Whether `pathname` is inside the link's section (whole segments: "/app" isn't active on "/apple"). */

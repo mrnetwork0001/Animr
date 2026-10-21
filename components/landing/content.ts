@@ -129,6 +129,7 @@ export const footer = {
         { href: links.traits, label: "Traits" },
         { href: links.stats, label: "Stats" },
         { href: links.guard, label: "Guard" },
+        { href: "/docs", label: "Docs" },
         { href: "#faq", label: "FAQ" },
       ],
     },

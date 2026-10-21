@@ -16,7 +16,7 @@ export const heroBrand = {
   skipLink: "Skip to content",
 } as const;
 
-/** Six real routes, left to right. Chog #1820 is the landing page's (brand-safe) showcase Chog. */
+/** Seven real routes, left to right (Docs last). Chog #1820 is the landing page's (brand-safe) showcase Chog. */
 export const heroNav: readonly HeroLink[] = [
   { href: "/league", label: "League" },
   { href: "/replay/1820", label: "Time Machine" },
@@ -24,6 +24,7 @@ export const heroNav: readonly HeroLink[] = [
   { href: "/bell", label: "Daily Bell" },
   { href: "/heist", label: "Rob this Chog" },
   { href: "/guard", label: "Guard" },
+  { href: "/docs", label: "Docs" },
 ];
 
 export const heroActions = {
