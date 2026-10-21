@@ -295,9 +295,48 @@ export async function writeRecords(kind: RecordKind, records: StoredRecord[]): P
   await kv.zadd(keys.points, ...records.map((record) => ({ member: String(record.tokenId), score: record.totalPoints })));
 }
 
-/** Token ids with the most season points of `kind`, best first. */
+/** How many more entries topChogs reads per step while the points tied at its cut run on. */
+const TIE_WINDOW = 100;
+
+/**
+ * Standings order: most points, then the smaller average miss (a Chog with no scored calls last), then the lower token
+ * id. Redis orders equal scores by member string, so ties are sorted here.
+ */
+export function compareRecords(a: { tokenId: number; record: StoredRecord | null; score: number }, b: typeof a): number {
+  const miss = (row: typeof a) => (row.record && row.record.calls > 0 ? (row.record.errorSum ?? row.record.avgErrorPts * row.record.calls) / row.record.calls : Number.POSITIVE_INFINITY);
+  return b.score - a.score || miss(a) - miss(b) || a.tokenId - b.tokenId;
+}
+
+/**
+ * The `limit` Chogs with the most season points of `kind`, best first by compareRecords, with their records. Reads the
+ * top of the points zset plus every Chog tied with the last one in (never the whole season), then sorts in code.
+ */
+export async function topChogs(kind: RecordKind, limit: number): Promise<{ tokenId: number; record: StoredRecord | null }[]> {
+  if (limit <= 0) return [];
+  const kv = getKv();
+  const key = recordKeys(kind).points;
+  const entries = await kv.zrange(key, 0, limit - 1, { rev: true });
+  if (entries.length === limit) {
+    const cut = entries[limit - 1].score;
+    for (let start = limit; ; start += TIE_WINDOW) {
+      const more = await kv.zrange(key, start, start + TIE_WINDOW - 1, { rev: true });
+      const tied = more.filter((entry) => entry.score === cut);
+      entries.push(...tied);
+      if (tied.length < more.length || more.length < TIE_WINDOW) break;
+    }
+  }
+  const ids = entries.map((entry) => Number(entry.member));
+  const records = await readRecordsOf(kind, ids);
+  return entries
+    .map((entry, i) => ({ tokenId: ids[i], record: records[i], score: records[i]?.totalPoints ?? entry.score }))
+    .sort(compareRecords)
+    .slice(0, limit)
+    .map(({ tokenId, record }) => ({ tokenId, record }));
+}
+
+/** Token ids with the most season points of `kind`, best first (ties: smaller average miss, then lower token id). */
 export async function topChogIds(kind: RecordKind, limit: number): Promise<number[]> {
-  return (await getKv().zrange(recordKeys(kind).points, 0, limit - 1, { rev: true })).map((entry) => Number(entry.member));
+  return (await topChogs(kind, limit)).map((entry) => entry.tokenId);
 }
 
 // --- Fans ---

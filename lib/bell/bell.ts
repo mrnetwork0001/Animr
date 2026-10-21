@@ -54,9 +54,9 @@ import {
   readFan,
   readRecord,
   readRecords,
-  readRecordsOf,
   readSummary,
   topChogIds,
+  topChogs,
   writeCalls,
   writeFans,
   writeRecords,
@@ -893,9 +893,8 @@ export async function getChogBell(tokenId: number): Promise<ChogBellResponse> {
 
 /** The best Chogs of one record kind (most points; Chogs their holders hid left out). */
 async function chogStandings(kind: RecordKind, limit: number, isHidden: (tokenId: number) => boolean, hidden: number) {
-  const ids = (await topChogIds(kind, limit + hidden)).filter((tokenId) => !isHidden(tokenId)).slice(0, limit);
-  const records = await readRecordsOf(kind, ids);
-  return ids.map((tokenId, i) => ({ ...publicRecord(records[i], tokenId), ...chogCard(tokenId), rank: i + 1 }));
+  const top = (await topChogs(kind, limit + hidden)).filter(({ tokenId }) => !isHidden(tokenId)).slice(0, limit);
+  return top.map(({ tokenId, record }, i) => ({ ...publicRecord(record, tokenId), ...chogCard(tokenId), rank: i + 1 }));
 }
 
 /**
