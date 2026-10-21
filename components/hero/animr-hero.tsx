@@ -120,15 +120,6 @@ export function AnimrHero({ className = "", children, footer }: AnimrHeroProps) 
               </ul>
             </nav>
 
-            <div className="hx-actions">
-              <Link href={heroActions.yourChogs.href} className="hx-text-link" data-hx="head">
-                {heroActions.yourChogs.label}
-              </Link>
-              <Link href={heroActions.launch.href} className="hx-pill hx-glass" data-hx="head">
-                {heroActions.launch.label}
-              </Link>
-            </div>
-
             <HeroMenu items={heroNav} yourChogs={heroActions.yourChogs} launch={heroActions.launch} labels={heroMenu} />
           </header>
         </div>

@@ -854,8 +854,8 @@ body:has(.hx-page) {
   .hx-header {
     position: absolute;
     inset: 0 0 auto;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    justify-content: space-between;
     height: calc(148 * var(--u));
     padding-inline: calc(75 * var(--u));
   }
