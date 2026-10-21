@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { AppFooterFacts } from "@/components/app-footer";
 import { NotFoundContent } from "@/components/not-found-content";
 import { AppShell } from "@/components/v2";
 
@@ -18,7 +17,7 @@ export const viewport: Viewport = { themeColor: "#0d0c11", colorScheme: "dark" }
  */
 export default function NotFound() {
   return (
-    <AppShell footerExtra={<AppFooterFacts />}>
+    <AppShell>
       <NotFoundContent />
     </AppShell>
   );

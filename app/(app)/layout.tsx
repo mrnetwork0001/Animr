@@ -1,6 +1,5 @@
 import type { Viewport } from "next";
 import { Suspense } from "react";
-import { AppFooterFacts } from "@/components/app-footer";
 import { ConnectButton, ConnectButtonFallback } from "@/components/connect-button";
 import { TourPill } from "@/components/tour/tour-pill";
 import { AppShell } from "@/components/v2";
@@ -32,7 +31,6 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             <ConnectButton size="sm" />
           </Suspense>
         }
-        footerExtra={<AppFooterFacts />}
       >
         {children}
         <TourPill />

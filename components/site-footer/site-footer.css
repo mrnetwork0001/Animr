@@ -1,0 +1,272 @@
+/*
+ * The site footer (components/site-footer/site-footer.tsx), shared by the landing page and the app shell. Global like
+ * every *.css here, so each class is prefixed `sf-`. Tokens come from app/design-v2.css (--v2-*), which the component
+ * imports too. Layout: desktop = brand + three link columns; tablet = brand on top, three columns under it; phone =
+ * brand, then a two-column link grid.
+ */
+
+@layer components {
+  .sf {
+    position: relative;
+    isolation: isolate;
+    margin-top: clamp(64px, 7vw, 112px);
+    border-top: 1px solid var(--v2-line-soft);
+    padding-block: clamp(48px, 5.5vw, 80px) clamp(24px, 3vw, 36px);
+    color: var(--v2-faint);
+    font-family: var(--v2-font-text);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.5;
+  }
+
+  /* The site's faint 64px grid, strongest along the top hairline and fading out downwards. */
+  .sf::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+    background-position: 50% 0;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / 0.45) 55%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / 0.45) 55%, transparent 100%);
+  }
+
+  /* ---------------------------------------------------------------- top: brand + columns */
+
+  .sf-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 44px;
+  }
+  @media (min-width: 1100px) {
+    .sf-top {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 3fr);
+      gap: clamp(48px, 5vw, 96px);
+    }
+  }
+
+  .sf-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+  }
+  .sf-brand .v2-brand-logo {
+    height: 40px;
+  }
+  .sf-description {
+    max-width: 44ch;
+    margin: 20px 0 0;
+    color: var(--v2-nav);
+    font-size: var(--v2-fs-base);
+    line-height: 1.65;
+    text-wrap: pretty;
+  }
+
+  .sf-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sf-social {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--v2-line);
+    border-radius: var(--v2-r-sm);
+    background-color: rgb(255 255 255 / 0.02);
+    color: var(--v2-nav);
+    transition:
+      color var(--v2-dur) ease,
+      border-color var(--v2-dur) ease,
+      background-color var(--v2-dur) ease;
+  }
+  .sf-social:hover {
+    border-color: var(--v2-line-strong);
+    background-color: rgb(255 255 255 / 0.05);
+    color: var(--v2-ink);
+  }
+
+  .sf-cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 36px 24px;
+    min-width: 0;
+  }
+  @media (min-width: 640px) {
+    .sf-cols {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 40px clamp(24px, 3vw, 48px);
+    }
+  }
+
+  .sf-col {
+    min-width: 0;
+  }
+  .sf-heading {
+    margin: 0;
+    color: var(--v2-violet-ink);
+    font-family: var(--v2-font-text);
+    font-size: var(--v2-fs-2xs);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+  .sf-links {
+    display: grid;
+    gap: 12px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sf-link {
+    display: inline;
+    color: var(--v2-nav);
+    font-family: var(--v2-font-mono);
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    line-height: 1.45;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    border-radius: 4px;
+    transition: color var(--v2-dur) ease;
+  }
+  .sf-link:hover {
+    color: var(--v2-ink);
+  }
+  .sf-ext {
+    display: inline-block;
+    margin-left: 0.35em;
+    color: var(--v2-faint);
+    font-family: var(--v2-font-text);
+    font-size: 0.85em;
+    transition:
+      color var(--v2-dur) ease,
+      transform var(--v2-dur) var(--v2-ease);
+  }
+  .sf-link:hover .sf-ext,
+  .sf-chip:hover .sf-ext {
+    color: var(--v2-kicker);
+    transform: translate(1px, -1px);
+  }
+
+  /* ---------------------------------------------------------------- divider, note, bottom bar */
+
+  .sf-rule {
+    height: 0;
+    margin: clamp(40px, 5vw, 64px) 0 24px;
+    border: 0;
+    border-top: 1px solid var(--v2-line-soft);
+  }
+
+  .sf-honesty {
+    max-width: 96ch;
+    margin: 0;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-xs);
+    line-height: 1.65;
+    text-wrap: pretty;
+  }
+  .sf-extra {
+    margin-top: 14px;
+    font-size: var(--v2-fs-xs);
+  }
+
+  .sf-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 24px;
+    margin-top: 20px;
+  }
+  .sf-credit {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 0;
+    margin: 0;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-xs);
+    letter-spacing: 0.01em;
+  }
+  .sf-dot {
+    margin-inline: 0.6em;
+    color: var(--v2-line-strong);
+  }
+  /* Phones: one line per part, so no line starts with a dot. */
+  @media (max-width: 559.98px) {
+    .sf-credit {
+      flex-direction: column;
+    }
+    .sf-dot {
+      display: none;
+    }
+  }
+  .sf-nowrap {
+    white-space: nowrap;
+  }
+
+  .sf-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding-inline: 11px;
+    border: 1px solid var(--v2-line);
+    border-radius: var(--v2-r-pill);
+    background-color: rgb(255 255 255 / 0.02);
+    color: var(--v2-muted);
+    font-size: var(--v2-fs-xs);
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      color var(--v2-dur) ease,
+      border-color var(--v2-dur) ease;
+  }
+  .sf-chip:hover {
+    border-color: var(--v2-line-strong);
+    color: var(--v2-ink);
+  }
+  .sf-chip-label {
+    color: var(--v2-nav);
+  }
+  .sf-chip-addr {
+    font-family: var(--v2-font-mono);
+    font-size: 11.5px;
+  }
+  .sf-chip .sf-ext {
+    margin-left: -2px;
+  }
+
+  /* Focus rings: the v2 page rule covers links inside .v2-page; this keeps them on any host. */
+  .sf :where(a):focus-visible {
+    outline: 2px solid var(--v2-teal);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sf-ext {
+      transition: none;
+    }
+    .sf-link:hover .sf-ext,
+    .sf-chip:hover .sf-ext {
+      transform: none;
+    }
+  }
+}

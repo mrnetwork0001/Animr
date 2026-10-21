@@ -101,45 +101,11 @@ export const meta = {
   },
 } as const;
 
-// ---------------------------------------------------------------- footer (the header is the hero's: components/hero)
+// ---------------------------------------------------------------- brand (header: components/hero; footer: components/site-footer)
 
 export const brand = {
   name: "Animr",
   homeLabel: "Animr home",
-} as const;
-
-export const footer = {
-  navLabel: "Footer",
-  blurb: "Every Chog is an AI trader: its traits are its strategy, and the $CHOG market keeps score.",
-  /** Two columns: the four verbs and the rest of the app. */
-  columns: [
-    {
-      title: "Play",
-      links: [
-        { href: links.league, label: "League" },
-        { href: links.versus, label: "Versus" },
-        { href: links.bell, label: "Daily Bell" },
-        { href: links.heist, label: HEIST_TITLE },
-      ],
-    },
-    {
-      title: "App",
-      links: [
-        { href: links.app, label: "Your Chogs" },
-        { href: links.traits, label: "Traits" },
-        { href: links.stats, label: "Stats" },
-        { href: links.guard, label: "Guard" },
-        { href: "/docs", label: "Docs" },
-        { href: "#faq", label: "FAQ" },
-      ],
-    },
-  ],
-  disclaimer: "Built for Chogathon 2026. Not affiliated with Chog.",
-  notes: [
-    "League, Versus, Time Machine and Daily Bell results replay real hourly $CHOG candles with the pool's 1% fee and price impact. Points have no cash value.",
-    "Chog wallets and AnimrTradeGuard are live on Monad mainnet; a Chog's AI trades on-chain only if its holder opts in.",
-    "Chog images load from the collection's on-chain metadata (IPFS).",
-  ],
 } as const;
 
 // ---------------------------------------------------------------- four verbs

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { heroDisplayFont, heroTextFont } from "@/components/hero/fonts";
-import { V2_FOOTER_LINKS } from "./nav";
+import { SiteFooter } from "@/components/site-footer/site-footer";
 import { V2HeaderActions } from "./mobile-menu";
 import { V2NavLinks } from "./nav-links";
 import "@/app/design-v2.css";
@@ -20,9 +20,9 @@ type AppShellProps = {
    * it can also frame pages outside the wagmi providers (the 404, previews).
    */
   wallet?: ReactNode;
-  /** Replaces the footer's default line (build credit + "Not affiliated with Chog"). */
+  /** Replaces the footer's credit line ("© 2026 Animr · Built for Chogathon 2026 on Monad · Not affiliated with Chog"). */
   footerNote?: ReactNode;
-  /** Extra footer content under the note: contract addresses, honesty notes. */
+  /** Extra footer content under the honesty note. The note and contract chips are built into the footer already. */
   footerExtra?: ReactNode;
   /** Pins the nav highlight (style-guide previews). Normally it follows the URL. */
   activeHref?: string;
@@ -73,32 +73,7 @@ export function V2Header({ wallet, activeHref }: { wallet?: ReactNode; activeHre
   );
 }
 
+/** The site footer (components/site-footer), shared with the landing page. Kept under this name for older imports. */
 export function V2Footer({ note, extra }: { note?: ReactNode; extra?: ReactNode }) {
-  return (
-    <footer className="v2-footer">
-      <div className="v2-shell">
-        <div className="v2-footer-row">
-          <nav aria-label="Footer">
-            <ul className="v2-footer-links">
-              {V2_FOOTER_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="v2-footer-link">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <p className="v2-footer-tag">
-            {note ?? (
-              <>
-                Animr · Built for Chogathon 2026 on Monad <span aria-hidden="true">·</span> Not affiliated with Chog
-              </>
-            )}
-          </p>
-        </div>
-        {extra != null && <div className="v2-footer-note">{extra}</div>}
-      </div>
-    </footer>
-  );
+  return <SiteFooter note={note} extra={extra} />;
 }

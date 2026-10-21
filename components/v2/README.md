@@ -21,7 +21,6 @@ import { ConnectButton } from "@/components/connect-button";
 <Providers>
   <AppShell
     wallet={<Suspense fallback={<span className="btn btn-primary opacity-50">Connect wallet</span>}><ConnectButton /></Suspense>}
-    footerExtra={/* the honesty note + contract links from components/app-footer.tsx */}
   >
     {children}
   </AppShell>
@@ -126,7 +125,7 @@ All are server-safe; they have no hooks, so they also render inside client compo
 
 | Component | Props |
 | --- | --- |
-| `AppShell` | `children`, `wallet?`, `footerNote?`, `footerExtra?`, `activeHref?` (preview only). Also exported: `V2Header`, `V2Footer`, `V2Brand`, `V2NavLinks` (client), `v2FontClassName`, `V2_NAV_LINKS`, `V2_FOOTER_LINKS`, `isV2NavActive` |
+| `AppShell` | `children`, `wallet?`, `footerNote?`, `footerExtra?`, `activeHref?` (preview only). The footer is the shared `SiteFooter` (components/site-footer: links in footer-links.ts, honesty note and contract chips built in), also used by the landing page. Also exported: `V2Header`, `V2Footer`, `V2Brand`, `V2NavLinks` (client), `v2FontClassName`, `V2_NAV_LINKS`, `V2_FOOTER_LINKS`, `isV2NavActive` |
 | `Kicker` | `dot?` (live states only). Sentence case, no dot by default |
 | `PageHeader` | `kicker?` (rendered without a dot), `title`, `lead?`, `actions?`, `aside?` (a right column from 1024px), `fade?` (true). Renders the page's single `<h1>` |
 | `SectionTitle` | `kicker?`, `title`, `description?`, `action?`, `id?`, `as?: "h2" \| "h3"` |
