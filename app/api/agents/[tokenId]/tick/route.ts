@@ -1,4 +1,4 @@
-import { AgentBusyError, publicErrorMessage, runAgentOnce } from "@/lib/agent/engine";
+import { AgentBusyError, UnfundedAgentError, publicErrorMessage, runAgentOnce } from "@/lib/agent/engine";
 import type { AgentDetailView } from "@/lib/agent/receipts";
 import { getStore, parseTokenId } from "@/lib/agent/store";
 import { MANUAL_RUN_INTERVAL_MS } from "@/lib/agent/types";
@@ -13,8 +13,8 @@ export const maxDuration = 60;
 /** "Think now" runs per network per 10 minutes, across all Chogs. */
 const RUNS_PER_NETWORK = 6;
 /**
- * Every "Think now" is one paid 0G call (~$0.002): a global daily cap (ANIMR_MANUAL_RUNS_PER_DAY,
- * default 400, about $0.80) bounds what anyone can make the app spend. Scheduled runs don't count.
+ * Every "Think now" is one paid 0G call (its exact cost is on the decision's receipt): a global daily cap
+ * (ANIMR_MANUAL_RUNS_PER_DAY, default 400 runs) bounds what anyone can make the app spend. Scheduled runs don't count.
  */
 const RUNS_PER_DAY = Number(process.env.ANIMR_MANUAL_RUNS_PER_DAY) || 400;
 
@@ -68,12 +68,14 @@ export async function POST(request: Request, ctx: RouteContext<"/api/agents/[tok
       return tooManyRequests("The AIs have used today's on-demand thinking budget. They still think at the Daily Bell.", midnight - now);
     }
 
-    await runAgentOnce(agent);
+    // An unfunded paper agent (empty wallet) re-checks its wallet and refuses to think: there is nothing to trade.
+    await runAgentOnce(agent, { skipUnfunded: true });
     return Response.json((await agentDetailView(tokenId)) satisfies AgentDetailView);
   } catch (error) {
     // A failed run records no decision, so free the slot (lastDecisionAt still throttles a run that did record one).
     if (claim) await getStore().releaseLock(claimKey, claim).catch(() => {});
     if (error instanceof AgentBusyError) return tooManyRequests(error.message, 5_000);
+    if (error instanceof UnfundedAgentError) return Response.json({ error: error.message }, { status: 409 });
     return Response.json({ error: publicErrorMessage(error, "The agent failed to run.") }, { status: 500 });
   }
 }

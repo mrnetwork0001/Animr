@@ -175,7 +175,7 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
 
 1. **Activation.** The NFT owner signs a plain-text message: Chog, account, owner and issue time, valid for 10 minutes. Smart-wallet signatures (ERC-1271 and ERC-6492) are accepted.
    - The server checks `ownerOf` on-chain and recomputes the TBA.
-   - A new paper agent starts from the $CHOG in the wallet, or from a 1,000 $CHOG demo bankroll if the wallet is empty.
+   - A new paper agent starts from the real $CHOG and WMON in the wallet. With an empty wallet it is "unfunded": it does not trade, and the UI says "Fund this Chog's wallet to start". Its next run after funding starts the paper book from those balances.
 2. **Brain** (`lib/agent/brain.ts`): `glm-5.3` on the 0G Compute Router, through the AI SDK's OpenAI-compatible provider.
    - The prompt carries the genome as a character sheet and the genome's own reflex for this moment. Traits are brand-safe.
    - Output is a schema-validated JSON object: action, size, slippage, confidence, thesis and a 24h forecast. The LLM timeout is 20 seconds.

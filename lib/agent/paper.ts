@@ -1,20 +1,48 @@
-import type { MarketSnapshot, Portfolio, Trade } from "./types";
+import type { AgentRecord, MarketSnapshot, Portfolio, Trade } from "./types";
 
 /** Swap fee of the deepest $CHOG pool (CHOG/WMON 1% on Capricorn), charged on every paper fill. */
 export const PAPER_FEE_BPS = 100;
-
-const DEFAULT_START_CHOG = 1000;
 
 /** An order the paper venue refuses; its message is safe to show to users. */
 export class PaperTradeError extends Error {
   name = "PaperTradeError";
 }
 
-/** Demo bankroll for new paper agents whose account holds no $CHOG: ANIMR_PAPER_START_CHOG $CHOG (default 1000) and 0 MON. */
-export function paperStartPortfolio(): Portfolio {
-  const configured = Number(process.env.ANIMR_PAPER_START_CHOG);
-  const chog = Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_START_CHOG;
-  return { chog: toAmount(chog), quote: "0" };
+/** What an unfunded paper agent shows and says instead of trading. */
+export const UNFUNDED_MESSAGE = "Fund this Chog's wallet to start";
+
+export const EMPTY_PORTFOLIO: Portfolio = { chog: "0", quote: "0" };
+
+/** Holds nothing: no $CHOG and no quote asset. */
+export function isEmptyPortfolio(portfolio: Portfolio): boolean {
+  return !(Number(portfolio.chog) > 0) && !(Number(portfolio.quote) > 0);
+}
+
+/**
+ * A paper agent with nothing to trade: its wallet held no $CHOG or WMON when its paper book was due to start. It
+ * doesn't trade (nor think on demand or on the hourly tick) until the wallet is funded; every run re-reads the wallet.
+ */
+export function isUnfunded(agent: Pick<AgentRecord, "mode" | "portfolio" | "bankroll">): boolean {
+  return agent.mode === "paper" && (agent.bankroll !== "wallet" || isEmptyPortfolio(agent.portfolio));
+}
+
+/**
+ * Migration for stored agents. Paper books used to start from an invented 1,000 $CHOG "demo bankroll" when the
+ * wallet was empty (bankroll "demo", or no bankroll field on the oldest records). There is no invented money any
+ * more: such a book reads as unfunded (empty, value 0, no result vs holding) until its wallet holds real $CHOG or
+ * WMON, when its next run restarts the book from those balances. Applied on every read; idempotent.
+ */
+export function migrateAgent(agent: AgentRecord): AgentRecord {
+  if (agent.mode !== "paper" || agent.bankroll === "wallet" || agent.bankroll === "unfunded") return agent;
+  return {
+    ...agent,
+    bankroll: "unfunded",
+    portfolio: EMPTY_PORTFOLIO,
+    startValueChog: 0,
+    lastValueChog: 0,
+    pnlPct: 0,
+    lastValueUsd: null,
+  };
 }
 
 /** Decimal string in whole-token units, without exponent notation or float noise. */

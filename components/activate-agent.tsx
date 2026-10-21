@@ -83,7 +83,7 @@ export function ActivateAgent({
       Sign one message to prove you hold this Chog. It&apos;s free: no transaction, no gas, no token approval.{" "}
       {reactivate
         ? "The agent picks up its paper portfolio and decision history where it left off."
-        : "The agent then paper-trades: it starts from the $CHOG this Chog's wallet holds right now (or a demo bankroll if the wallet is empty) and simulates every trade, so no tokens move until its holder switches it on-chain."}{" "}
+        : "The agent then paper-trades: it starts from the real $CHOG and WMON this Chog's wallet holds (an empty wallet waits until it's funded) and simulates every trade, so no tokens move until its holder switches it on-chain."}{" "}
       Every decision it makes shows up here.
     </>
   );

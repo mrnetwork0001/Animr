@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge, EmptyState, PillLink, StatRow, pillClass } from "@/components/v2/primitives";
+import { UNFUNDED_MESSAGE, isUnfunded } from "@/lib/agent/paper";
 import type { AgentRecord } from "@/lib/agent/types";
 import { formatAmount, formatPct, formatUsd } from "@/lib/format";
 import { useConnection } from "wagmi";
@@ -13,9 +14,12 @@ import { fetchLeaderboard, leaderboardKey } from "./leaderboard-api";
 import { Callout } from "./onchain/ui";
 import { PnlBadge } from "./pnl-badge";
 
-/** Best result vs holding first; the API already sorts, this keeps the ranking honest if it ever doesn't. */
+/**
+ * Best result vs holding first, unfunded paper agents (nothing to trade, no result) last; the API already sorts, this
+ * keeps the ranking honest if it ever doesn't.
+ */
 function rankAgents(agents: AgentRecord[]): AgentRecord[] {
-  const score = (a: AgentRecord) => (Number.isFinite(a.pnlPct) ? a.pnlPct : -Infinity);
+  const score = (a: AgentRecord) => (isUnfunded(a) || !Number.isFinite(a.pnlPct) ? -Infinity : a.pnlPct);
   return [...agents].sort((a, b) => score(b) - score(a) || 0);
 }
 
@@ -31,16 +35,18 @@ function useLeaderboard() {
 }
 
 /**
- * The header's numbers, from the same query (one cache entry): AIs awake, the $CHOG value they manage and the best
- * result vs holding (the real-wallet count sits on the board's filter). Nothing until there is a claimed AI.
+ * The header's numbers, from the same query (one cache entry): AIs awake, the real $CHOG value managed on-chain (paper
+ * books are simulations, so they never count; hidden until an AI trades on-chain) and the best result vs holding
+ * (unfunded agents have none). Nothing until there is a claimed AI.
  */
 export function LeaderboardStats() {
   const { data } = useLeaderboard();
   const agents = data?.agents ?? [];
   const awake = agents.filter((a) => a.active).length;
-  const managed = agents.reduce((sum, a) => sum + (Number.isFinite(a.lastValueChog) ? a.lastValueChog : 0), 0);
+  const onchain = agents.filter((a) => a.mode === "onchain");
+  const managed = onchain.reduce((sum, a) => sum + (Number.isFinite(a.lastValueChog) ? a.lastValueChog : 0), 0);
   const best = agents.reduce<number | null>(
-    (top, a) => (Number.isFinite(a.pnlPct) && (top === null || a.pnlPct > top) ? a.pnlPct : top),
+    (top, a) => (!isUnfunded(a) && Number.isFinite(a.pnlPct) && (top === null || a.pnlPct > top) ? a.pnlPct : top),
     null,
   );
   if (agents.length === 0) return null;
@@ -50,7 +56,9 @@ export function LeaderboardStats() {
       size="sm"
       stats={[
         { key: "awake", label: "AIs awake", value: `${awake}`, hint: `of ${agents.length}` },
-        { key: "managed", label: "Managed", hint: "$CHOG value", value: formatAmount(managed, 0) },
+        ...(onchain.length > 0
+          ? [{ key: "managed", label: "Managed on-chain", hint: "real $CHOG value", value: formatAmount(managed, 0) }]
+          : []),
         {
           key: "best",
           label: "Best vs holding",
@@ -194,8 +202,8 @@ export function LeaderboardTable({ nameNumbers }: { nameNumbers?: readonly numbe
         </div>
       )}
       <p className="v2-note mt-3">
-        vs holding: the AI&apos;s portfolio value against simply holding the $CHOG it started with. Paper fills move no
-        tokens.
+        vs holding: the AI&apos;s portfolio value against simply holding what its wallet held when it started. Paper
+        agents simulate trades on their wallet&apos;s real balances; no tokens move.
       </p>
     </section>
   );
@@ -240,6 +248,8 @@ function LeaderboardRow({
   nameNumber: number;
   mine: boolean;
 }) {
+  // A paper agent whose wallet holds no $CHOG or WMON: no value, no result vs holding, no trades.
+  const unfunded = isUnfunded(agent);
   return (
     <tr className={mine ? "is-highlight" : undefined}>
       <td className={`is-rank ${rank <= 3 ? "text-[var(--v2-ink)]" : ""}`}>
@@ -248,7 +258,7 @@ function LeaderboardRow({
       </td>
       <td className="w-full max-w-0 sm:max-w-none">
         <Link href={`/chog/${agent.tokenId}`} className="v2-table-cell-chog group">
-          <ChogAvatar src={agent.image} tokenId={agent.tokenId} />
+          <ChogAvatar src={agent.image} label={nameNumber > 0 ? `#${nameNumber}` : ""} />
           <span className="min-w-0">
             <span className="block truncate group-hover:text-[var(--v2-kicker)]">
               {agent.persona.name}
@@ -267,15 +277,30 @@ function LeaderboardRow({
       <td className="v2-hide-sm">
         <ModeBadge agent={agent} />
       </td>
-      <td className="is-num v2-hide-sm">
-        <span className="block">{formatAmount(agent.lastValueChog, 2)}</span>
-        <span className="block font-[var(--v2-font-text)] text-[11px] text-[var(--v2-faint)]">
-          $CHOG value, {formatUsd(agent.lastValueUsd)}
-        </span>
-      </td>
-      <td className="is-num">
-        <PnlBadge pct={agent.pnlPct} size="md" />
-      </td>
+      {unfunded ? (
+        <>
+          <td className="is-num v2-hide-sm text-[13px] text-[var(--v2-faint)]">—</td>
+          <td className="is-num text-[13px] text-[var(--v2-nav)]">
+            <span className="v2-hide-sm">{UNFUNDED_MESSAGE}</span>
+            {/* Phones: the short form, so the Chog's name keeps its room. */}
+            <span className="v2-show-sm whitespace-nowrap" title={UNFUNDED_MESSAGE}>
+              Fund to start
+            </span>
+          </td>
+        </>
+      ) : (
+        <>
+          <td className="is-num v2-hide-sm">
+            <span className="block">{formatAmount(agent.lastValueChog, 2)}</span>
+            <span className="block font-[var(--v2-font-text)] text-[11px] text-[var(--v2-faint)]">
+              {agent.mode === "onchain" ? "$CHOG value" : "Paper $CHOG value"}, {formatUsd(agent.lastValueUsd)}
+            </span>
+          </td>
+          <td className="is-num">
+            <PnlBadge pct={agent.pnlPct} size="md" />
+          </td>
+        </>
+      )}
       <td className="is-num v2-hide-sm">{formatAmount(agent.decisions, 0)}</td>
       <td className="is-num v2-hide-sm text-[13px] text-[var(--v2-faint)]">
         {agent.lastDecisionAt ? <TimeAgo iso={agent.lastDecisionAt} /> : "—"}
@@ -284,12 +309,13 @@ function LeaderboardRow({
   );
 }
 
-function ChogAvatar({ src, tokenId }: { src?: string; tokenId: string }) {
+/** `label`: the marketplace number ("#1468") shown when there is no image; never the token id. */
+function ChogAvatar({ src, label }: { src?: string; label: string }) {
   const [failedSrc, setFailedSrc] = useState<string>();
   if (!src || failedSrc === src) {
     return (
       <span aria-hidden className="v2-avatar grid place-items-center bg-[var(--v2-grad-tile)] text-[9px] tracking-tight text-white/85">
-        #{tokenId}
+        {label}
       </span>
     );
   }

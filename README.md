@@ -93,7 +93,7 @@ With no keys at all, everything except the LLM works. The League, Time Machine, 
 | `HOUSE_CHOG_TOKEN_ID` (`1399`), `OPERATOR_ADDRESS` | The House Chog (CHOG #891) and the AI key the heist's proof simulates from. |
 | `HEIST_DAILY_USD_CAP` (default 3), `HEIST_ADMIN_SECRET`, `HEIST_IP_SALT` | The heist's daily 0G budget, Hall of Fame moderation, and the IP-hash key. |
 | `ORACLE_PURSE_CHOG` (default 5000, `0` turns it off) | The Oracle Purse a settled live Bell shows as "on its way" until a transfer is recorded. |
-| `ANIMR_MANUAL_RUNS_PER_DAY` (default 400), `ANIMR_PAPER_START_CHOG`, `ANIMR_MOCK_MARKET` | The "Think now" cap, the paper bankroll and a simulated market for demos. |
+| `ANIMR_MANUAL_RUNS_PER_DAY` (default 400) | The "Think now" cap. |
 
 The full list with comments, including the heist and Purse variables, is in [`.env.example`](.env.example).
 

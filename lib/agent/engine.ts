@@ -1,5 +1,4 @@
-import { type Address, erc20Abi, formatUnits } from "viem";
-import { publicClient } from "../clients";
+import type { Address } from "viem";
 import { appConfig } from "../config";
 import { houseChogTokenId } from "../heist/config";
 import { fetchNftMetadata } from "../nft";
@@ -7,7 +6,16 @@ import { decide, type BrainDecision } from "./brain";
 import { getMarketSnapshot } from "./market";
 import { OnchainTradeError, type TradeHold, executeOnchainTrade, readVaultPortfolio } from "./onchain";
 import { derivePersona } from "./persona";
-import { type PaperFill, PaperTradeError, paperStartPortfolio, portfolioValueChog, simulatePaperTrade } from "./paper";
+import {
+  EMPTY_PORTFOLIO,
+  type PaperFill,
+  PaperTradeError,
+  UNFUNDED_MESSAGE,
+  isEmptyPortfolio,
+  isUnfunded,
+  portfolioValueChog,
+  simulatePaperTrade,
+} from "./paper";
 import { MAX_DECISIONS_PER_AGENT, getStore } from "./store";
 import type {
   AgentDetailResponse,
@@ -32,6 +40,11 @@ export class AgentBusyError extends Error {
 /** A required on-chain read failed; the message is safe to show and the client can retry. */
 export class ChainReadError extends Error {
   name = "ChainReadError";
+}
+
+/** An unfunded paper agent asked to run where a run without a trade is pointless (on demand, the hourly tick). */
+export class UnfundedAgentError extends Error {
+  name = "UnfundedAgentError";
 }
 
 /** A mode switch the API refuses; the message is safe to show and `status` is the HTTP status. */
@@ -112,7 +125,8 @@ export function publicErrorMessage(error: unknown, fallback = "Something went wr
     error instanceof AgentBusyError ||
     error instanceof ChainReadError ||
     error instanceof OnchainTradeError ||
-    error instanceof ModeSwitchError
+    error instanceof ModeSwitchError ||
+    error instanceof UnfundedAgentError
   ) {
     return error.message;
   }
@@ -121,11 +135,46 @@ export function publicErrorMessage(error: unknown, fallback = "Something went wr
 }
 
 /** The vault's real CHOG and WMON (quote); a failed read is a ChainReadError. */
-function readVault(agent: AgentRecord): Promise<Portfolio> {
+function readVault(agent: Pick<AgentRecord, "tokenId" | "account">): Promise<Portfolio> {
   return readVaultPortfolio(agent.account).catch((error) => {
     console.error(`[animr] vault read failed for Chog #${agent.tokenId}:`, error);
     throw new ChainReadError(`Couldn't read Chog #${agent.tokenId}'s wallet on-chain. Try again in a moment.`);
   });
+}
+
+type PaperBook = Pick<
+  AgentRecord,
+  "portfolio" | "bankroll" | "fundedAt" | "startValueChog" | "lastValueChog" | "pnlPct" | "lastValueUsd"
+>;
+
+/**
+ * A paper book on the wallet's REAL balances (its $CHOG and WMON, read on-chain now): paper trades are simulated,
+ * the money they start from is not. An empty wallet gives an unfunded book (the agent doesn't trade). Null when the
+ * wallet's WMON can't be valued (no $CHOG price right now).
+ */
+function paperBook(vault: Portfolio, market: MarketSnapshot): PaperBook | null {
+  if (isEmptyPortfolio(vault)) {
+    return {
+      portfolio: EMPTY_PORTFOLIO,
+      bankroll: "unfunded",
+      fundedAt: undefined,
+      startValueChog: 0,
+      lastValueChog: 0,
+      pnlPct: 0,
+      lastValueUsd: null,
+    };
+  }
+  const value = portfolioValueChog(vault, market.priceQuote);
+  if (value === null) return null;
+  return {
+    portfolio: vault,
+    bankroll: "wallet",
+    fundedAt: new Date().toISOString(),
+    startValueChog: round(value),
+    lastValueChog: round(value),
+    pnlPct: 0,
+    lastValueUsd: market.priceUsd === null ? null : round(value * market.priceUsd),
+  };
 }
 
 /**
@@ -170,19 +219,47 @@ export type RunOptions = {
    * callers that stop waiting for the run then, like the Daily Bell.
    */
   deadline?: number;
+  /**
+   * An unfunded paper agent (its wallet held no $CHOG or WMON) throws UnfundedAgentError instead of thinking: for
+   * "Think now" and the hourly tick. Without it (the Daily Bell) it still makes its call, but never trades.
+   */
+  skipUnfunded?: boolean;
 };
 
-/** One decision cycle: snapshot -> decide -> execute -> revalue -> persist. */
+/**
+ * One decision cycle: snapshot -> decide -> execute -> revalue -> persist. An unfunded paper agent first re-reads
+ * its wallet: once it holds real $CHOG or WMON, the paper book starts from those balances (a new PnL baseline).
+ */
 export function runAgentOnce(agent: AgentRecord, options: RunOptions = {}): Promise<Decision> {
   return withAgentLock(agent.tokenId, 0, async () => {
     const store = getStore();
     const stored = (await store.getAgent(agent.tokenId)) ?? agent;
+    const onchain = stored.mode === "onchain";
     const [market, history, vault] = await Promise.all([
       getMarketSnapshot(appConfig.chogToken),
       store.listDecisions(stored.tokenId, MAX_DECISIONS_PER_AGENT),
-      stored.mode === "onchain" ? readVault(stored) : undefined,
+      onchain
+        ? readVault(stored)
+        : isUnfunded(stored)
+          ? // An unreadable wallet keeps the book unfunded for this run.
+            readVault(stored).catch(() => undefined)
+          : undefined,
     ]);
-    const current = vault ? syncVault(stored, vault, market.priceQuote) : stored;
+    let current = stored;
+    if (onchain && vault) current = syncVault(stored, vault, market.priceQuote);
+    else if (vault) {
+      const book = paperBook(vault, market);
+      if (book?.bankroll === "wallet") {
+        current = { ...stored, ...book };
+        console.info(`[animr] Chog #${stored.tokenId}: wallet funded, paper book starts at ${book.startValueChog} $CHOG-eq`);
+      }
+    }
+    const unfunded = isUnfunded(current);
+    if (unfunded && options.skipUnfunded) {
+      throw new UnfundedAgentError(
+        `${UNFUNDED_MESSAGE}: its AI paper-trades the real $CHOG and WMON in its wallet, and the wallet holds none.`,
+      );
+    }
     const brain = await decide({
       tokenId: current.tokenId,
       persona: current.persona,
@@ -198,7 +275,9 @@ export function runAgentOnce(agent: AgentRecord, options: RunOptions = {}): Prom
     let error: string | undefined;
     let late = false;
     const ruled = houseDipRule(current, brain.action, market);
-    if (ruled) {
+    // Unfunded: the call stands (the Daily Bell scores it), but there is nothing real to simulate a trade on.
+    const idle = unfunded && brain.action !== "hold";
+    if (ruled || idle) {
       // The House Chog's mandate: no real-money sell into a dip. Nothing is sent; recorded as a hold.
     } else if (brain.action !== "hold" && current.mode === "onchain" && options.deadline !== undefined && Date.now() > options.deadline) {
       late = true;
@@ -218,12 +297,14 @@ export function runAgentOnce(agent: AgentRecord, options: RunOptions = {}): Prom
       id: crypto.randomUUID(),
       tokenId: current.tokenId,
       at,
-      action: held || late || ruled ? "hold" : brain.action,
-      sizeBps: held || late || ruled ? 0 : (execution?.filledBps ?? brain.sizeBps),
+      action: held || late || ruled || idle ? "hold" : brain.action,
+      sizeBps: held || late || ruled || idle ? 0 : (execution?.filledBps ?? brain.sizeBps),
       maxSlippageBps: brain.maxSlippageBps,
       confidence: brain.confidence,
       thesis: ruled
         ? `${brain.thesis} (${ruled}: no transaction sent, holding.)`
+        : idle
+        ? `${brain.thesis} (Its wallet holds no $CHOG or WMON, so no paper trade: ${UNFUNDED_MESSAGE.toLowerCase()}.)`
         : held
         ? `${brain.thesis} (AnimrTradeGuard: ${held}, holding.)`
         : late
@@ -267,7 +348,7 @@ async function runListedAgent(agent: AgentRecord, deadline?: number): Promise<Ti
     return { tokenId: agent.tokenId, action: "error", error: "Skipped: out of time for this run" };
   }
   try {
-    const decision = await runAgentOnce(agent);
+    const decision = await runAgentOnce(agent, { skipUnfunded: true });
     return {
       tokenId: agent.tokenId,
       action: decision.action,
@@ -275,6 +356,9 @@ async function runListedAgent(agent: AgentRecord, deadline?: number): Promise<Ti
       ...(decision.error && { error: decision.error }),
     };
   } catch (error) {
+    if (error instanceof UnfundedAgentError) {
+      return { tokenId: agent.tokenId, action: "error", error: `Skipped: ${UNFUNDED_MESSAGE.toLowerCase()}` };
+    }
     return { tokenId: agent.tokenId, action: "error", error: publicErrorMessage(error, "Agent run failed") };
   }
 }
@@ -301,7 +385,7 @@ export async function runAllAgents(options: { deadline?: number; concurrency?: n
 
 /**
  * Switches a verified owner's agent between paper and on-chain trading and resets the PnL baseline to the vault's
- * real value now (on-chain: its CHOG and WMON; paper: the same, or the demo bankroll if the vault is empty). The
+ * real value now (its CHOG and WMON; paper with an empty vault: an unfunded book that doesn't trade). The
  * caller has verified the owner's signature and, for "onchain", checkOnchainReady(). Same mode: no change.
  */
 export function switchAgentMode(params: {
@@ -322,22 +406,17 @@ export function switchAgentMode(params: {
     if (agent.mode === mode) return agent;
 
     const [market, vault] = await Promise.all([getMarketSnapshot(appConfig.chogToken), readVault(agent)]);
-    const empty = !(Number(vault.chog) > 0) && !(Number(vault.quote) > 0);
-    const portfolio = mode === "paper" && empty ? paperStartPortfolio() : vault;
-    const value = portfolioValueChog(portfolio, market.priceQuote);
-    if (value === null) {
+    const book = paperBook(vault, market);
+    if (book === null) {
       throw new ModeSwitchError("There's no $CHOG price right now to value the wallet's WMON. Try again in a minute.", 503);
     }
     const next: AgentRecord = {
       ...agent,
+      ...book,
+      // On-chain the book is the vault itself; fundedAt only marks a paper book's start.
+      ...(mode === "onchain" && { bankroll: "wallet" as const, fundedAt: undefined }),
       owner,
       mode,
-      portfolio,
-      bankroll: mode === "paper" && empty ? "demo" : "wallet",
-      startValueChog: round(value),
-      lastValueChog: round(value),
-      pnlPct: 0,
-      lastValueUsd: market.priceUsd === null ? null : round(value * market.priceUsd),
       modeChangedAt: new Date().toISOString(),
       modeSignedAt: signedAt,
     };
@@ -348,31 +427,9 @@ export function switchAgentMode(params: {
 }
 
 /**
- * A new agent's paper portfolio: the $CHOG its account holds on-chain, or the demo
- * bankroll (ANIMR_PAPER_START_CHOG) when the account holds none.
- */
-async function startingPortfolio(account: Address): Promise<{ portfolio: Portfolio; bankroll: "wallet" | "demo" }> {
-  const token = appConfig.chogToken;
-  if (token) {
-    let raw: bigint;
-    let decimals: number;
-    try {
-      [raw, decimals] = await Promise.all([
-        publicClient.readContract({ address: token, abi: erc20Abi, functionName: "balanceOf", args: [account] }),
-        publicClient.readContract({ address: token, abi: erc20Abi, functionName: "decimals" }),
-      ]);
-    } catch (error) {
-      console.error("[animr] $CHOG balance read failed:", error);
-      throw new ChainReadError("Couldn't read the $CHOG in this Chog's wallet. Try again in a moment.");
-    }
-    if (raw > BigInt(0)) return { portfolio: { chog: formatUnits(raw, decimals), quote: "0" }, bankroll: "wallet" };
-  }
-  return { portfolio: paperStartPortfolio(), bankroll: "demo" };
-}
-
-/**
- * Creates the paper agent for a verified owner, or re-activates an existing one
- * (new owner after a sale, same portfolio and history).
+ * Creates the paper agent for a verified owner, its paper book on the wallet's real $CHOG and WMON (unfunded, so
+ * not trading, while the wallet holds neither), or re-activates an existing one (new owner after a sale, same
+ * portfolio and history).
  */
 export function activateAgent(params: { tokenId: string; account: Address; owner: Address }): Promise<AgentRecord> {
   const { tokenId, account, owner } = params;
@@ -396,8 +453,8 @@ export function activateAgent(params: { tokenId: string; account: Address; owner
         image: metadata?.image ?? existing.image,
       };
     } else {
-      const { portfolio, bankroll } = await startingPortfolio(account);
-      const startValueChog = Number(portfolio.chog);
+      // Starts from the wallet's real balances; with WMON but no price to value it, unfunded until the next run.
+      const book = paperBook(await readVault({ tokenId, account }), market) ?? paperBook(EMPTY_PORTFOLIO, market)!;
       agent = {
         tokenId,
         account,
@@ -406,12 +463,7 @@ export function activateAgent(params: { tokenId: string; account: Address; owner
         active: true,
         mode: "paper",
         persona: derivePersona(tokenId, metadata),
-        portfolio,
-        bankroll,
-        startValueChog,
-        lastValueChog: startValueChog,
-        pnlPct: 0,
-        lastValueUsd: market.priceUsd === null ? null : round(startValueChog * market.priceUsd),
+        ...book,
         decisions: 0,
         lastDecisionAt: null,
         ...(metadata?.image && { image: metadata.image }),
@@ -428,11 +480,12 @@ export async function getAgentDetail(tokenId: string, limit = 50): Promise<Agent
   return { agent, decisions };
 }
 
-/** All agents, best PnL first (ties: larger portfolio, then lower token id). */
+/** All agents, best PnL first (ties: larger portfolio, then lower token id); unfunded paper agents last. */
 export async function getLeaderboard(): Promise<LeaderboardResponse> {
   const agents = await getStore().listAgents();
   agents.sort(
     (a, b) =>
+      Number(isUnfunded(a)) - Number(isUnfunded(b)) ||
       b.pnlPct - a.pnlPct ||
       b.lastValueChog - a.lastValueChog ||
       a.tokenId.length - b.tokenId.length ||

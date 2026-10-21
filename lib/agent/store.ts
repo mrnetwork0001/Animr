@@ -3,11 +3,13 @@ import path from "node:path";
 import { Redis } from "@upstash/redis";
 import { maxUint256 } from "viem";
 import { redisKey } from "../kv";
+import { migrateAgent } from "./paper";
 import type { AgentRecord, Decision } from "./types";
 
 /** Decision history kept per agent (oldest entries are dropped). */
 export const MAX_DECISIONS_PER_AGENT = 200;
 
+/** Reads pass every AgentRecord through migrateAgent (old demo-bankroll paper books read as unfunded). */
 export interface AgentStore {
   readonly kind: "redis" | "file";
   getAgent(tokenId: string): Promise<AgentRecord | null>;
@@ -42,8 +44,9 @@ class RedisStore implements AgentStore {
   readonly kind = "redis";
   constructor(private readonly redis: Redis) {}
 
-  getAgent(tokenId: string) {
-    return this.redis.hget<AgentRecord>(AGENTS_KEY, tokenId);
+  async getAgent(tokenId: string) {
+    const agent = await this.redis.hget<AgentRecord>(AGENTS_KEY, tokenId);
+    return agent ? migrateAgent(agent) : null;
   }
 
   async saveAgent(agent: AgentRecord) {
@@ -51,7 +54,7 @@ class RedisStore implements AgentStore {
   }
 
   async listAgents() {
-    return Object.values((await this.redis.hgetall<Record<string, AgentRecord>>(AGENTS_KEY)) ?? {});
+    return Object.values((await this.redis.hgetall<Record<string, AgentRecord>>(AGENTS_KEY)) ?? {}).map(migrateAgent);
   }
 
   async addDecision(decision: Decision) {
@@ -115,7 +118,8 @@ class FileStore implements AgentStore {
   }
 
   async getAgent(tokenId: string) {
-    return (await this.read()).agents[tokenId] ?? null;
+    const agent = (await this.read()).agents[tokenId];
+    return agent ? migrateAgent(agent) : null;
   }
 
   saveAgent(agent: AgentRecord) {
@@ -125,7 +129,7 @@ class FileStore implements AgentStore {
   }
 
   async listAgents() {
-    return Object.values((await this.read()).agents);
+    return Object.values((await this.read()).agents).map(migrateAgent);
   }
 
   addDecision(decision: Decision) {

@@ -157,7 +157,7 @@ const DUST_SHARE = 1e-4;
 export const REPLAY = {
   /** Bump when lib/dna/backtest.ts changes how a replay plays out. */
   engineRev: 2,
-  /** Every Chog starts with the same demo bankroll as a new paper agent. */
+  /** Every Chog's replay starts from the same notional 1,000 $CHOG stack. */
   startChog: 1000,
   /** CHOG/WMON 1% pool depth for price impact (Oct 2026: ~$90k, ~4.3M WMON across both sides). */
   liquidityWmon: 4_000_000,

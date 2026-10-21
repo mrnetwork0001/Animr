@@ -22,6 +22,7 @@ import {
   type Portfolio,
   type TradingStyle,
 } from "@/lib/agent/types";
+import { UNFUNDED_MESSAGE, isUnfunded } from "@/lib/agent/paper";
 import { traitSafety } from "@/lib/brand-safety";
 import { chogLabel, nameNumberOf } from "@/lib/chog-id";
 import { publicClient } from "@/lib/clients";
@@ -120,11 +121,14 @@ const priceOf = (d: Decision) => d.market?.priceQuote ?? d.trade?.price;
 
 /** Portfolio value ($CHOG-equivalent) before the first and after each decision, oldest -> newest. */
 function valueHistory(agent: AgentRecord, decisions: Decision[]): number[] {
-  const oldestFirst = [...decisions].reverse();
+  // A paper book counts from when it started on the wallet's real balances: earlier runs held nothing.
+  const since = agent.mode === "paper" && agent.fundedAt ? Date.parse(agent.fundedAt) : null;
+  const own = since === null ? decisions : decisions.filter((d) => Date.parse(d.at) >= since);
+  const oldestFirst = [...own].reverse();
   const oldest = oldestFirst[0];
-  // With the full history the series starts at the activation value the PnL is measured against.
+  // With the full history the series starts at the value the PnL is measured against.
   const start =
-    decisions.length >= agent.decisions
+    decisions.length >= agent.decisions || own.length < decisions.length
       ? agent.startValueChog
       : oldest
         ? valueInChog(oldest.portfolioBefore, priceOf(oldest))
@@ -176,6 +180,8 @@ export function AgentProfile({
   });
   const agent = detail.data?.agent ?? null;
   const decisions = detail.data?.decisions ?? [];
+  // A paper agent whose wallet holds no $CHOG or WMON: it doesn't trade until the wallet is funded.
+  const unfunded = agent !== null && isUnfunded(agent);
 
   const metadata = useQuery({
     queryKey: ["nft-metadata", nft, tokenId],
@@ -355,8 +361,8 @@ export function AgentProfile({
         {
           key: "edge",
           label: "vs holding",
-          value: formatPct(Math.abs(agent.pnlPct) < 0.005 ? 0 : agent.pnlPct),
-          tone: agent.pnlPct >= 0.005 ? "up" : agent.pnlPct <= -0.005 ? "down" : undefined,
+          value: unfunded ? "—" : formatPct(Math.abs(agent.pnlPct) < 0.005 ? 0 : agent.pnlPct),
+          tone: unfunded ? undefined : agent.pnlPct >= 0.005 ? "up" : agent.pnlPct <= -0.005 ? "down" : undefined,
         },
         {
           key: "decisions",
@@ -392,11 +398,6 @@ export function AgentProfile({
               {agent?.mode === "paper" && (
                 <span title="Every trade is simulated at live prices, so no tokens move. Its holder can switch it to real trades through AnimrTradeGuard.">
                   <Badge dot>Paper trading</Badge>
-                </span>
-              )}
-              {agent?.mode === "paper" && agent.bankroll !== "wallet" && (
-                <span title="This agent started from a demo bankroll, not from the $CHOG in its wallet.">
-                  <Badge tone="warning">Demo bankroll</Badge>
                 </span>
               )}
             </div>
@@ -514,8 +515,12 @@ export function AgentProfile({
             </Callout>
           ) : agent ? (
             <>
-              <PerformanceCard agent={agent} decisions={decisions} />
-              {dnaShown && <BrainVsInstinct agent={agent} />}
+              {unfunded ? (
+                <FundWalletCard account={agent.account} />
+              ) : (
+                <PerformanceCard agent={agent} decisions={decisions} />
+              )}
+              {dnaShown && !unfunded && <BrainVsInstinct agent={agent} />}
             </>
           ) : HAS_DNA ? (
             hidden ? (
@@ -538,8 +543,8 @@ export function AgentProfile({
                         (<span className="v2-mono text-[var(--v2-ink)]">{shortAddress(account)}</span>)
                       </>
                     )}
-                    . It belongs to the NFT, not to any person, and the agent&apos;s paper portfolio starts from this
-                    balance (an empty wallet gets a demo bankroll).
+                    . It belongs to the NFT, not to any person, and the agent&apos;s paper trades start from this real
+                    balance. With an empty wallet it waits until you fund it.
                   </>,
                   <>The holder signs one free message to wake its AI agent.</>,
                   <>
@@ -715,9 +720,11 @@ export function AgentProfile({
                 decisions={decisions}
                 providers={detail.data?.providers}
                 emptyHint={
-                  agent.active
-                    ? "Hit “Think now”, or it thinks on its own at the next Daily Bell (15:00 UTC)."
-                    : "The agent is paused."
+                  !agent.active
+                    ? "The agent is paused."
+                    : unfunded
+                      ? `${UNFUNDED_MESSAGE}: it has nothing to trade yet.`
+                      : "Hit “Think now”, or it thinks on its own at the next Daily Bell (15:00 UTC)."
                 }
               />
             </section>
@@ -780,6 +787,26 @@ function ThinkButton({
       {pending ? <Spinner /> : <SparkIcon className="v2-btn-icon text-[var(--v2-teal)]" />}
       {pending ? "Thinking…" : waitSec > 0 ? `Think again in ${formatWait(waitSec)}` : "Think now"}
     </button>
+  );
+}
+
+/**
+ * A paper agent whose wallet holds no $CHOG or WMON. There is no invented bankroll: its paper trades start from the
+ * wallet's real balances, so it waits. Its next run (hourly, or "Think now") re-reads the wallet and starts.
+ */
+function FundWalletCard({ account }: { account: Address }) {
+  return (
+    <section aria-labelledby="fund-title" className="v2-card v2-card--roomy">
+      <h2 id="fund-title" className="v2-h3">
+        {UNFUNDED_MESSAGE}
+      </h2>
+      <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-nav)]">
+        Its AI paper-trades the real $CHOG and WMON in this Chog&apos;s wallet, and the wallet holds none. Send $CHOG
+        or WMON to <span className="v2-mono text-[var(--v2-ink)]">{shortAddress(account)}</span>: its next run starts
+        from that balance and ranks it vs holding.
+      </p>
+      <p className="v2-note mt-4">Until then it doesn&apos;t trade, and the leaderboard shows no result for it.</p>
+    </section>
   );
 }
 
@@ -855,11 +882,17 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
       />
       <p className="v2-note mt-5">
         {paper ? (
-          `Paper portfolio, started from ${
-            agent.bankroll === "wallet" ? "the $CHOG in this Chog's wallet" : "a demo bankroll"
-          }. Trades are simulated at ${
-            simulatedMarket ? "prices from a simulated demo market" : "market prices"
-          }, so no tokens move.`
+          <>
+            Paper book, started from the real $CHOG and WMON in this Chog&apos;s wallet
+            {agent.fundedAt && (
+              <>
+                {" "}
+                <TimeAgo iso={agent.fundedAt} />
+              </>
+            )}
+            . Trades are simulated at {simulatedMarket ? "prices from a simulated market" : "market prices"}, so no
+            tokens move.
+          </>
         ) : (
           <>
             Real $CHOG in this Chog&apos;s wallet, traded through AnimrTradeGuard; balances are read on-chain.
@@ -877,8 +910,8 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
 }
 
 /**
- * A claimed agent's brain, from its newest LLM receipt, as chips: "glm-5.3 · 0G Compute · TeeML provider, 0G Foundation ·
- * $0.0018/call". The provider's tier comes from the API's labels (it describes the provider, not a check of the call);
+ * A claimed agent's brain, from its newest LLM receipt, as chips: "<model> · 0G Compute · <provider tier> · <cost from
+ * that receipt>/call" (model, tier and cost are read from the receipt, never fixed here). The provider's tier comes from the API's labels (it describes the provider, not a check of the call);
  * "TEE verified" only when that receipt says so (teeVerified === true).
  */
 function BrainLine({

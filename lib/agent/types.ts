@@ -116,11 +116,14 @@ export type AgentRecord = {
   /** Current holdings (paper balances in paper mode, last on-chain read otherwise). */
   portfolio: Portfolio;
   /**
-   * Where the starting paper $CHOG came from: the account's on-chain balance at activation ("wallet"),
-   * or the demo bankroll because the account held none ("demo"; also assumed when missing).
+   * Paper mode: "wallet" once the paper book started from the wallet's real $CHOG and WMON; "unfunded" while the
+   * wallet held neither (the agent doesn't trade; see isUnfunded in ./paper). There is no invented bankroll: stored
+   * books from the old "demo" bankroll (or with no field) are read as "unfunded" (migrateAgent in ./paper).
    */
-  bankroll?: "wallet" | "demo";
-  /** Portfolio value at activation, in $CHOG-equivalent units. */
+  bankroll?: "wallet" | "unfunded";
+  /** Paper mode: ISO time the current paper book started from the wallet's real balances. */
+  fundedAt?: string;
+  /** Portfolio value at activation (paper: when the book started), in $CHOG-equivalent units. */
   startValueChog: number;
   /** Latest portfolio value, in $CHOG-equivalent units. */
   lastValueChog: number;
