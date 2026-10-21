@@ -3,10 +3,9 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { BreedPicker } from "@/components/breed/picker";
 import { BreedView } from "@/components/breed/breed-view";
-import { parseChogId } from "@/components/dna/shared";
 import { EmptyState, PageHeader, Skeleton } from "@/components/v2";
 import { breed } from "@/lib/breed/breed";
-import { breedPair } from "@/lib/breed/pair";
+import { readBreedQuery } from "@/lib/breed/pair";
 import { childName } from "@/lib/breed/genetics";
 import { allChogs, getChog } from "@/lib/dna/chogs";
 import { chogName } from "@/lib/dna/population";
@@ -17,7 +16,10 @@ export const viewport: Viewport = { themeColor: "#0d0c11" };
 const LEAD = "Pick two Chogs. Their child takes each trait from one parent, gets its own Trading DNA, and trades the same real $CHOG chart.";
 
 export async function generateMetadata({ searchParams }: PageProps<"/breed">): Promise<Metadata> {
-  const { a, b } = breedPair(await searchParams);
+  const { pair } = readBreedQuery(await searchParams);
+  // Not a pair (an id that isn't a Chog, or one Chog twice): the generic page, never a substitute parent.
+  if (!pair) return { title: "Breed two Chogs", description: LEAD };
+  const { a, b } = pair;
   // Hidden Chogs ("Hide my Chog") are never named in link previews: request data, so after connection().
   await connection();
   const [hiddenA, hiddenB] = await Promise.all([isHiddenChog(a), isHiddenChog(b)]);
@@ -54,26 +56,11 @@ export default function BreedPage({ searchParams }: PageProps<"/breed">) {
 }
 
 async function Breed({ searchParams, nameNumbers }: Pick<PageProps<"/breed">, "searchParams"> & { nameNumbers: number[] }) {
-  const raw = await searchParams;
-  const pair = breedPair(raw);
-  const picker = <BreedPicker key={`${pair.a}-${pair.b}`} initial={pair} nameNumbers={nameNumbers} />;
-  const asked = [raw.a, raw.b].map((v) => (Array.isArray(v) ? v[0] : v));
-  if (asked.some((v) => v !== undefined && parseChogId(v) === null)) {
-    return (
-      <>
-        {picker}
-        <EmptyState title="That's not a Chog" body="Token ids run from 1 to 1,969. Pick two parents above." />
-      </>
-    );
-  }
-  if (pair.a === pair.b) {
-    return (
-      <>
-        {picker}
-        <EmptyState title="A Chog can't breed with itself" body="Pick two different parents above." />
-      </>
-    );
-  }
+  const { pair, text, self } = readBreedQuery(await searchParams);
+  const picker = <BreedPicker key={`${text.a}-${text.b}`} initial={text} self={self} nameNumbers={nameNumbers} />;
+  // An id that isn't a Chog, or one Chog twice: the picker says so inline (the same messages its form shows), and no
+  // other Chog is bred in its place.
+  if (!pair) return picker;
   await connection();
   const [hiddenA, hiddenB] = await Promise.all([isHiddenChog(pair.a), isHiddenChog(pair.b)]);
   if (hiddenA || hiddenB) {

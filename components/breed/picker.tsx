@@ -1,25 +1,36 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type FormEvent, useId, useState, useTransition } from "react";
+import { type FormEvent, useId, useRef, useState, useTransition } from "react";
 import { randomChogId } from "@/components/dna/shared";
 import { useHiddenChogs } from "@/components/hidden-chogs";
 import { pillClass } from "@/components/v2/primitives";
+import { SELF_BREED } from "@/lib/breed/pair";
 import { type ChogQuery, chogQueryText, parseChogQuery } from "@/lib/chog-id";
 
 type Side = "a" | "b";
 
-/** "Pick two parents": token ids or marketplace names ("CHOG #1462"), or a random pair. Navigates to /breed?a=&b=. */
-export function BreedPicker({ initial, nameNumbers }: { initial?: { a: number; b: number }; nameNumbers: readonly number[] }) {
+/**
+ * "Pick two parents": token ids or marketplace names ("CHOG #1462"), or a random pair. Navigates to /breed?a=&b=.
+ * `initial` is what the URL asked for, as typed; `self` opens with the same-Chog message (a direct link to one Chog twice).
+ * An id that isn't a Chog shows its message under its field only (never repeated under the form).
+ */
+export function BreedPicker({
+  initial,
+  self = false,
+  nameNumbers,
+}: {
+  initial?: { a: string; b: string };
+  self?: boolean;
+  nameNumbers: readonly number[];
+}) {
   const router = useRouter();
   const hidden = useHiddenChogs();
   const [pending, startTransition] = useTransition();
-  const [text, setText] = useState<Record<Side, string>>({
-    a: initial ? String(initial.a) : "",
-    b: initial ? String(initial.b) : "",
-  });
-  const [problem, setProblem] = useState<string | null>(null);
+  const [text, setText] = useState<Record<Side, string>>({ a: initial?.a ?? "", b: initial?.b ?? "" });
+  const [problem, setProblem] = useState<string | null>(self ? SELF_BREED : null);
   const errorId = useId();
+  const form = useRef<HTMLFormElement>(null);
   const parsed: Record<Side, ChogQuery> = { a: parseChogQuery(text.a, nameNumbers), b: parseChogQuery(text.b, nameNumbers) };
 
   const go = (a: number, b: number) => {
@@ -31,11 +42,13 @@ export function BreedPicker({ initial, nameNumbers }: { initial?: { a: number; b
     event.preventDefault();
     const a = parsed.a;
     const b = parsed.b;
-    if (a.kind !== "ok" || b.kind !== "ok") {
-      const bad = a.kind === "invalid" ? a : b.kind === "invalid" ? b : null;
-      return setProblem(bad?.kind === "invalid" ? bad.message : "Name both parents, or try a random pair.");
+    if (a.kind === "invalid" || b.kind === "invalid") {
+      // Its field already says what's wrong: take the visitor there rather than repeat it here.
+      setProblem(null);
+      return form.current?.querySelector<HTMLInputElement>('input[aria-invalid="true"]')?.focus();
     }
-    if (a.tokenId === b.tokenId) return setProblem("A Chog can't breed with itself. Pick two different Chogs.");
+    if (a.kind !== "ok" || b.kind !== "ok") return setProblem("Name both parents, or try a random pair.");
+    if (a.tokenId === b.tokenId) return setProblem(SELF_BREED);
     go(a.tokenId, b.tokenId);
   };
 
@@ -47,7 +60,7 @@ export function BreedPicker({ initial, nameNumbers }: { initial?: { a: number; b
   };
 
   return (
-    <form onSubmit={submit} noValidate aria-describedby={problem ? errorId : undefined} aria-busy={pending} className="v2-card v2-card--tight">
+    <form ref={form} onSubmit={submit} noValidate aria-describedby={problem ? errorId : undefined} aria-busy={pending} className="v2-card v2-card--tight">
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] md:items-end">
         <Field side="a" value={text.a} parsed={parsed.a} onChange={(v) => setText((t) => ({ ...t, a: v }))} />
         <span aria-hidden className="hidden pb-3 text-center text-lg text-[var(--v2-faint)] md:block">

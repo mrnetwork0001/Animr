@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { connection } from "next/server";
 import { signedPct } from "@/components/dna/shared";
 import { type BreedResult, breed } from "@/lib/breed/breed";
-import { breedPair } from "@/lib/breed/pair";
+import { readBreedQuery } from "@/lib/breed/pair";
 import { chogArt } from "@/lib/og/art";
 import { C, ogOptions, toneOf } from "@/lib/og/theme";
 import { ChogFace, Frame, SIM_NOTE } from "@/lib/og/ui";
@@ -90,9 +90,10 @@ function Generic() {
 export async function GET(request: Request) {
   await connection();
   const query = Object.fromEntries(new URL(request.url).searchParams);
-  const { a, b } = breedPair(query);
-  const hidden = a === b || (await isHiddenChog(a)) || (await isHiddenChog(b));
-  if (hidden) return new ImageResponse(<Generic />, ogOptions(600));
+  const { pair } = readBreedQuery(query);
+  // Not a pair (an id that isn't a Chog, or one Chog twice) or a hidden Chog: the generic card, never a substitute.
+  if (!pair || (await isHiddenChog(pair.a)) || (await isHiddenChog(pair.b))) return new ImageResponse(<Generic />, ogOptions(600));
+  const { a, b } = pair;
   try {
     const [result, artA, artB] = await Promise.all([breed(a, b), chogArt(a), chogArt(b)]);
     // A card missing art is retried soon; a complete one is good for an hour (the candles move hourly).
