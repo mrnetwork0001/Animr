@@ -15,16 +15,17 @@ export type V2NavLink = {
 export const V2_NAV_LINKS: readonly V2NavLink[] = [
   // A Chog's own page (/chog/N) is where the lookup leads.
   { href: "/app", label: "Your Chogs", short: "Chogs", match: ["/app", "/chog"] },
-  // Traits and the claimed-AI board (/leaderboard) are League tabs.
-  { href: "/league", label: "League", short: "League", match: ["/league", "/traits", "/leaderboard"] },
-  // Two-Chog races, plus the one-Chog Time Machine at /replay.
-  { href: "/versus", label: "Versus", short: "Versus", match: ["/versus", "/replay"] },
+  // Traits, Chogs for sale (/market) and the claimed-AI board (/leaderboard) are League tabs.
+  { href: "/league", label: "League", short: "League", match: ["/league", "/traits", "/market", "/leaderboard"] },
+  // Two-Chog races, the one-Chog Time Machine at /replay and Breed (/breed).
+  { href: "/versus", label: "Versus", short: "Versus", match: ["/versus", "/replay", "/breed"] },
   { href: "/bell", label: "Daily Bell", short: "Bell", match: ["/bell"] },
   { href: "/heist", label: HEIST_TITLE, short: "Heist", match: ["/heist"] },
   { href: "/guard", label: "Guard", short: "Guard", match: ["/guard"] },
 ];
 
 export const V2_FOOTER_LINKS: readonly { href: string; label: string }[] = [
+  { href: "/tour", label: "Judge tour" },
   { href: "/stats", label: "Stats" },
   { href: "/traits", label: "Traits" },
   { href: "/#faq", label: "FAQ" },
