@@ -13,9 +13,10 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/agents/[tok
   const tokenId = parseTokenId((await ctx.params).tokenId);
   if (!tokenId) return Response.json({ error: "Token id must be a non-negative integer." }, { status: 400 });
   try {
-    // Polled by every open profile: a few seconds at the CDN absorbs that (a run or claim answers with fresh data).
+    // Polled by every open profile: a few seconds at the CDN absorbs that. No stale-while-revalidate: after a claim
+    // or a mode switch the holder's next poll must not get the old state back (it made the stepper revert for 30 s).
     return Response.json((await agentDetailView(tokenId)) satisfies AgentDetailView, {
-      headers: { "Cache-Control": "public, max-age=0, s-maxage=5, stale-while-revalidate=30" },
+      headers: { "Cache-Control": "public, max-age=0, s-maxage=5" },
     });
   } catch (error) {
     return Response.json({ error: publicErrorMessage(error, "Could not load this agent.") }, { status: 500 });
