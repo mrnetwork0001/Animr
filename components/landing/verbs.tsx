@@ -1,80 +1,100 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ArrowRightIcon, BellIcon, ChartIcon, IconTile, LeagueIcon, MaskIcon, RewindIcon } from "@/components/v2";
 import { type Verb, links, showcaseIds, verbs, verbsSection } from "./content";
 import { RobNote } from "./house-status";
 import { Icon } from "./icons";
 import { Section } from "./primitives";
 import { houseChog, showcaseChog } from "./showcase";
 
+const VERB_ICONS: Record<Verb["key"], ReactNode> = {
+  meet: <LeagueIcon />,
+  rewind: <RewindIcon />,
+  ride: <BellIcon />,
+  rob: <MaskIcon />,
+};
+
 /** Meet, Rewind, Ride, Rob: what each one is, what you do in under a minute, and the way in. */
-export function Verbs() {
+export function Verbs({ index }: { index?: number }) {
   const house = houseChog();
   const replayChog = showcaseChog(showcaseIds.hero);
   return (
-    <Section id={verbsSection.id} eyebrow={verbsSection.eyebrow} title={verbsSection.title} lede={verbsSection.lede}>
-      <ol className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {verbs.map((verb) => {
+    <Section
+      id={verbsSection.id}
+      index={index}
+      kicker={verbsSection.eyebrow}
+      title={verbsSection.title}
+      lede={verbsSection.lede}
+    >
+      <ol className="lp-verbs">
+        {verbs.map((verb, i) => {
           // Rewind's one-Chog sub-flow: the Time Machine on the hero's Chog.
           const secondary =
             verb.key === "rewind" && replayChog
               ? { label: `Time Machine: ${replayChog.name}`, href: links.replay(replayChog.tokenId) }
               : verb.secondary;
           // Rob's note says "moving in" until the House Chog's vault is live (read in the browser: house-status.tsx).
-          const note = verb.key === "rob" ? <RobNote house={house && { label: house.label, name: house.name }} /> : undefined;
-          return <VerbCard key={verb.key} verb={verb} secondary={secondary} note={note} />;
+          const note =
+            verb.key === "rob" ? <RobNote house={house && { label: house.label, name: house.archetype }} /> : undefined;
+          return <VerbCard key={verb.key} verb={verb} step={i + 1} secondary={secondary} note={note} />;
         })}
       </ol>
 
-      <div className="landing-reveal mt-6 grid gap-4 rounded-2xl border border-line bg-surface/60 p-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center lg:gap-8">
-        <div>
-          <p className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-            <Icon name="trophy" className="size-4 text-accent-strong" />
-            {verbsSection.score.title}
-          </p>
-          <p className="mt-2 rounded-xl border border-line bg-background/60 px-4 py-2.5 font-mono text-xs text-foreground sm:text-sm">
-            {verbsSection.score.formula}
-          </p>
+      <div className="v2-card lp-score lp-reveal">
+        <div className="lp-score-head">
+          <IconTile size="sm">
+            <ChartIcon />
+          </IconTile>
+          <p className="v2-overline">{verbsSection.score.title}</p>
         </div>
-        <p className="text-sm leading-relaxed text-pretty text-muted">{verbsSection.score.body}</p>
+        <p className="lp-formula">{verbsSection.score.formula}</p>
+        <p className="lp-score-body">{verbsSection.score.body}</p>
       </div>
     </Section>
   );
 }
 
-function VerbCard({ verb, secondary, note }: { verb: Verb; secondary?: { label: string; href: string }; note?: ReactNode }) {
+function VerbCard({
+  verb,
+  step,
+  secondary,
+  note,
+}: {
+  verb: Verb;
+  step: number;
+  secondary?: { label: string; href: string };
+  note?: ReactNode;
+}) {
   return (
-    <li className="landing-reveal card relative flex flex-col p-5 transition-colors hover:border-line-strong sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong ring-1 ring-accent/25 ring-inset">
-            <Icon name={verb.icon} className="size-5" />
-          </span>
-          <span className="eyebrow">{verb.verb}</span>
+    <li className="v2-card lp-verb lp-reveal">
+      <div className="lp-verb-top">
+        <IconTile size="lg" tone={verb.key === "rob" ? "violet" : "teal"}>
+          {VERB_ICONS[verb.key]}
+        </IconTile>
+        <span className="lp-verb-step" aria-hidden="true">
+          {String(step).padStart(2, "0")}
         </span>
-        <span className="chip font-mono tabular-nums">
-          <Icon name="clock" className="size-3.5" />
-          <span className="sr-only">A first try takes about</span>
+      </div>
+      <div className="lp-verb-meta">
+        <span className="v2-kicker">{verb.verb}</span>
+        <span className="v2-chip lp-time">
+          <Icon name="clock" className="lp-time-icon" />
+          <span className="v2-sr">A first try takes about</span>
           {verb.time}
         </span>
       </div>
-      <h3 className="mt-4 text-lg font-semibold tracking-tight">{verb.title}</h3>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-pretty text-muted">{verb.body}</p>
+      <h3 className="lp-verb-title">{verb.title}</h3>
+      <p className="lp-verb-body">{verb.body}</p>
       {note}
       {secondary && (
-        <Link
-          href={secondary.href}
-          className="mt-3 self-start text-sm text-muted underline decoration-line-strong underline-offset-4 transition-colors hover:text-foreground"
-        >
+        <Link href={secondary.href} className="lp-sub-link">
           {secondary.label}
         </Link>
       )}
       {/* Last in the card, so the four primary links line up across the row. */}
-      <Link
-        href={verb.cta.href}
-        className="mt-5 inline-flex items-center gap-1.5 self-start rounded text-sm font-semibold text-accent-strong hover:underline"
-      >
+      <Link href={verb.cta.href} className="lp-go">
         {verb.cta.label}
-        <Icon name="arrowRight" className="size-4" strokeWidth={2} />
+        <ArrowRightIcon className="lp-go-arrow" />
       </Link>
     </li>
   );

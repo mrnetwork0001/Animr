@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { HEIST_TITLE } from "@/lib/heist/config";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ArrowRightIcon, MaskIcon } from "@/components/v2/icons";
+import { IconTile, StatRow } from "@/components/v2/primitives";
+import { HEIST_TITLE } from "@/lib/heist/config";
 import { links, safety, verbsSection } from "./content";
-import { Icon } from "./icons";
 import { StatusBadge } from "./primitives";
 import { Rich } from "./rich";
 
@@ -13,7 +14,7 @@ import { Rich } from "./rich";
 // read /heist and its "Act as the AI" check use) once the page is idle. Until it answers "open" (its wallet is
 // deployed, initialized and holds $CHOG), every House surface here says "moving in".
 
-/** The picked House Chog, from the server: its dual label and persona name. */
+/** The picked House Chog, from the server: its dual label and the name to show (its genome's archetype). */
 export type HouseProps = { label: string; name: string } | null;
 
 let openRequest: Promise<boolean> | undefined;
@@ -59,35 +60,36 @@ export function HouseChogCard({ house }: { house: HouseProps }) {
   const open = useHouseOpen(house !== null);
   const live = open && house !== null;
   return (
-    <div
-      className={`landing-reveal flex flex-col gap-3 rounded-2xl border p-5 sm:p-6 ${
-        live ? "border-line bg-surface/60" : "border-warning/25 bg-warning/5"
-      }`}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {live ? (
-          <StatusBadge status="live" label={copy.label} />
-        ) : (
-          <StatusBadge status="moving" label={copy.movingIn} />
-        )}
-        <span className="font-mono text-xs text-muted">{house ? copy.movedIn(house.label, house.name) : copy.label}</span>
+    <article className="v2-card lp-house lp-reveal" aria-labelledby="house-title">
+      <div className="lp-card-status">
+        {live ? <StatusBadge status="live" label={copy.label} /> : <StatusBadge status="moving" label={copy.movingIn} />}
+        <span className="lp-card-status-note">{house ? house.label : copy.kicker}</span>
       </div>
-      <h3 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
-        <Icon name="lock" className="size-5 text-accent-strong" />
-        {copy.title}
-      </h3>
-      <p className="text-sm leading-relaxed text-pretty text-muted">{copy.text}</p>
-      {!live && (
-        <p className="text-sm leading-relaxed text-pretty text-foreground">{house ? copy.pickedText : copy.movingInText}</p>
-      )}
-      <Link
-        href={links.heist}
-        className="mt-auto inline-flex items-center gap-1.5 self-start pt-1 text-sm font-semibold text-accent-strong hover:underline"
-      >
+      <div className="lp-card-titlerow">
+        <IconTile size="lg" tone="violet">
+          <MaskIcon />
+        </IconTile>
+        <div>
+          <p className="v2-kicker">{house ? `${copy.kicker} · ${house.name}` : copy.kicker}</p>
+          <h3 id="house-title" className="lp-card-h3">
+            {copy.title}
+          </h3>
+        </div>
+      </div>
+      <p className="lp-card-p">{copy.text}</p>
+      <StatRow
+        size="sm"
+        inline
+        className="lp-house-limits"
+        stats={copy.limits.map((limit) => ({ key: limit.key, value: limit.value, label: limit.label }))}
+      />
+      <p className="lp-card-note">{copy.limitsNote}</p>
+      {!live && <p className="lp-card-p lp-card-p--ink">{house ? copy.pickedText : copy.movingInText}</p>}
+      <Link href={links.heist} className="lp-go lp-go--end">
         {HEIST_TITLE}
-        <Icon name="arrowRight" className="size-4" strokeWidth={2} />
+        <ArrowRightIcon className="lp-go-arrow" />
       </Link>
-    </div>
+    </article>
   );
 }
 
@@ -101,11 +103,7 @@ export function RobNote({ house }: { house: HouseProps }) {
       ? verbsSection.houseMovedIn(house.label, house.name)
       : verbsSection.houseMovingInPicked(house.label, house.name);
   return (
-    <p
-      className={`mt-4 rounded-xl border px-3 py-2 text-xs leading-relaxed text-pretty ${
-        live ? "border-line bg-surface-2/60 text-muted" : "border-warning/30 bg-warning/5 text-muted"
-      }`}
-    >
+    <p className={`lp-note ${live ? "" : "lp-note--warning"}`}>
       <Rich text={note} />
     </p>
   );

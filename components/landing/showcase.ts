@@ -332,7 +332,8 @@ export function guardLink(): GuardLink | null {
   return address ? { address, short: shortAddress(address), href: explorerAddressUrl(address) } : null;
 }
 
-export type HouseShowcase = { tokenId: number; label: string; name: string };
+/** `archetype` is what its genome makes it ("Paper Paws" for token 1399); `name` is its persona name. */
+export type HouseShowcase = { tokenId: number; label: string; name: string; archetype: string };
 
 /**
  * HOUSE_CHOG_TOKEN_ID with both its numbers and its persona name, or null while the team is still picking it. Being
@@ -341,5 +342,7 @@ export type HouseShowcase = { tokenId: number; label: string; name: string };
 export function houseChog(): HouseShowcase | null {
   const tokenId = houseChogTokenId();
   const chog = tokenId === null ? undefined : getChog(tokenId);
-  return tokenId !== null && chog ? { tokenId, label: chogLabel(tokenId, { metadataName: chog.name }), name: nameOf(chog) } : null;
+  return tokenId !== null && chog
+    ? { tokenId, label: chogLabel(tokenId, { metadataName: chog.name }), name: nameOf(chog), archetype: genomeOf(chog).archetype }
+    : null;
 }

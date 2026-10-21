@@ -1,12 +1,16 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { Badge, type BadgeTone, Kicker } from "@/components/v2/primitives";
 import type { TradingStyle } from "@/lib/agent/types";
 import { styles as styleCopy } from "./content";
 import { Rich } from "./rich";
 
-/** Page-width container shared by every landing section. */
-export function Container({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`mx-auto w-full max-w-6xl px-4 sm:px-6 ${className}`}>{children}</div>;
+// Shared pieces for the landing sections below the hero, in the v2 language (app/design-v2.css) plus
+// the landing's own layout classes (landing.css, prefix `lp-`).
+
+/** The landing's content column: the hero canvas's content width on wide screens, v2 gutters always. */
+export function Shell({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`lp-shell ${className}`}>{children}</div>;
 }
 
 /**
@@ -17,106 +21,96 @@ export function AnyLink({ href, ...props }: Omit<ComponentProps<"a">, "href"> & 
   return href.startsWith("#") ? <a href={href} {...props} /> : <Link href={href} {...props} />;
 }
 
-type SectionProps = {
+type SectionHeadProps = {
   id: string;
-  eyebrow: string;
+  /** Its place on the page: 1 → "01". */
+  index?: number;
+  kicker: string;
   title: string;
   /** May use **bold** / `code` (see rich.tsx). */
   lede?: string;
-  children: ReactNode;
   className?: string;
-  /** Header alignment; centered for short, punchy sections. */
-  align?: "start" | "center";
 };
 
-/**
- * A titled page section: anchor target, landmark labelled by its heading, consistent rhythm. Anchor
- * jumps clear the sticky header through html's scroll-padding-top (landing.css).
- */
-export function Section({ id, eyebrow, title, lede, children, className = "", align = "start" }: SectionProps) {
-  const headingId = `${id}-title`;
-  const centered = align === "center";
+/** A section's head: a hairline, the index and teal kicker, then the DM Sans title with the lede beside it. */
+export function SectionHead({ id, index, kicker, title, lede, className = "" }: SectionHeadProps) {
   return (
-    <section id={id} aria-labelledby={headingId} className={`py-14 sm:py-20 ${className}`}>
-      <Container>
-        <header className={`landing-reveal max-w-3xl ${centered ? "mx-auto text-center" : ""}`}>
-          <p className="eyebrow">{eyebrow}</p>
-          <h2
-            id={headingId}
-            className="mt-3 text-3xl leading-[1.1] font-semibold tracking-tight text-balance sm:text-4xl lg:text-[2.75rem]"
-          >
-            {title}
-          </h2>
-          {lede && (
-            <p className="mt-5 text-lg leading-relaxed text-pretty text-muted">
-              <Rich text={lede} />
-            </p>
-          )}
-        </header>
+    <header className={`lp-head lp-reveal ${className}`}>
+      <div className="lp-head-meta">
+        {index != null && (
+          <span className="lp-index" aria-hidden="true">
+            {String(index).padStart(2, "0")}
+          </span>
+        )}
+        <Kicker dot>{kicker}</Kicker>
+      </div>
+      <h2 id={`${id}-title`} className="lp-h2">
+        {title}
+      </h2>
+      {lede && (
+        <p className="lp-lead">
+          <Rich text={lede} />
+        </p>
+      )}
+    </header>
+  );
+}
+
+type SectionProps = Omit<SectionHeadProps, "className"> & {
+  children: ReactNode;
+  className?: string;
+};
+
+/** A titled page section: anchor target, landmark labelled by its heading, the landing's rhythm. */
+export function Section({ id, index, kicker, title, lede, children, className = "" }: SectionProps) {
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className={`lp-section ${className}`}>
+      <Shell>
+        <SectionHead id={id} index={index} kicker={kicker} title={title} lede={lede} />
         {children}
-      </Container>
+      </Shell>
     </section>
   );
 }
 
-const STYLE_TONE: Record<TradingStyle, string> = {
-  aggressive: "bg-orange-300/10 text-orange-300 ring-orange-300/30",
-  balanced: "bg-accent/15 text-accent-strong ring-accent/35",
-  cautious: "bg-sky-300/10 text-sky-300 ring-sky-300/30",
+/** Styles on the v2 palette: no new hues (aggressive = violet, balanced = teal, cautious = neutral). */
+const STYLE_TONE: Record<TradingStyle, BadgeTone> = {
+  aggressive: "violet",
+  balanced: "teal",
+  cautious: "neutral",
 };
 
-/** Text and highlight colors per style, matching StyleBadge. */
+/** Text colour per style, matching StyleBadge (landing.css). */
 export const STYLE_TEXT: Record<TradingStyle, string> = {
-  aggressive: "text-orange-300",
-  balanced: "text-accent-strong",
-  cautious: "text-sky-300",
+  aggressive: "lp-tone-violet",
+  balanced: "lp-tone-teal",
+  cautious: "lp-tone-neutral",
 };
 
-export const STYLE_HIGHLIGHT: Record<TradingStyle, string> = {
-  aggressive: "bg-orange-300/10 text-orange-300 ring-orange-300/40",
-  balanced: "bg-accent/15 text-accent-strong ring-accent/40",
-  cautious: "bg-sky-300/10 text-sky-300 ring-sky-300/40",
-};
-
-/** Persona style pill, color-coded: aggressive = warm, balanced = Animr purple, cautious = cool. */
+/** Persona style capsule. */
 export function StyleBadge({ style, className = "" }: { style: TradingStyle; className?: string }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide ring-1 ring-inset ${STYLE_TONE[style]} ${className}`}
-    >
-      {styleCopy[style].label.toLowerCase()}
-    </span>
+    <Badge tone={STYLE_TONE[style]} className={className}>
+      {styleCopy[style].label}
+    </Badge>
   );
 }
 
 /** live: on Monad mainnet today. simulated: replayed on real data. moving: the House Chog isn't in yet. */
 export type Status = "live" | "simulated" | "moving";
 
-const STATUS: Record<Status, { tone: string; dot: string; label: string }> = {
-  live: { tone: "bg-success/10 text-success ring-success/30", dot: "bg-success", label: "Live" },
-  simulated: { tone: "bg-accent/10 text-accent-strong ring-accent/30", dot: "bg-accent-strong", label: "Simulated" },
-  moving: { tone: "bg-warning/10 text-warning ring-warning/30", dot: "bg-warning", label: "Moving in" },
+const STATUS: Record<Status, { tone: BadgeTone; label: string; live?: boolean }> = {
+  live: { tone: "success", label: "Live", live: true },
+  simulated: { tone: "violet", label: "Simulated" },
+  moving: { tone: "warning", label: "Moving in" },
 };
 
-/** A small uppercase status pill: "Live", "Simulated" or "Moving in" (or a custom label in that tone). */
+/** A status capsule: "Live" (pulsing), "Simulated" or "Moving in", or a custom label in that tone. */
 export function StatusBadge({ status, label, className = "" }: { status: Status; label?: string; className?: string }) {
-  const { tone, dot, label: fallback } = STATUS[status];
+  const { tone, label: fallback, live } = STATUS[status];
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wider uppercase ring-1 ring-inset ${tone} ${className}`}
-    >
-      <span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
+    <Badge tone={tone} dot live={live} className={className}>
       {label ?? fallback}
-    </span>
-  );
-}
-
-/** Small pulsing dot for "thinking" / live indicators. */
-export function PulseDot({ className = "bg-success" }: { className?: string }) {
-  return (
-    <span aria-hidden className="relative flex size-2">
-      <span className={`landing-ping absolute inset-0 rounded-full opacity-60 ${className}`} />
-      <span className={`relative size-2 rounded-full ${className}`} />
-    </span>
+    </Badge>
   );
 }

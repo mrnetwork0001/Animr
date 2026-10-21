@@ -53,7 +53,7 @@ export function ChogImage({
     <span className={`relative block aspect-square overflow-hidden bg-surface-2 ${className}`}>
       <span
         aria-hidden
-        className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_35%,rgb(131_110_249/0.28),transparent_65%)] font-mono text-xs text-subtle"
+        className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_50%_35%,rgb(111_90_220/0.3),transparent_65%)] font-mono text-xs text-subtle"
       >
         {fallbackLabel}
       </span>

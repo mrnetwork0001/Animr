@@ -3,28 +3,28 @@ import { icons } from "./icons";
 
 type Node = (typeof diagram.nodes)[number];
 
-const ALWAYS_STROKE = "stroke-accent";
-const OPT_IN_STROKE = "stroke-success";
+const ALWAYS_STROKE = "lp-flow-always";
+const OPT_IN_STROKE = "lp-flow-optin";
 
 /**
  * NFT → wallet → AI mind → trade guard → Capricorn pool, with the swap output returning to the
  * wallet. Two drawings of the same flow: a row for wide screens, a column for narrow ones
- * (SVG text doesn't reflow). All of it is live on Monad mainnet; solid = always on, dashed = the
- * holder's opt-in (real-wallet trades through AnimrTradeGuard).
+ * (SVG text doesn't reflow). All of it is live on Monad mainnet; solid teal = always on, dashed violet =
+ * the holder's opt-in (real-wallet trades through AnimrTradeGuard). Colours: landing.css (lp-flow-*).
  */
 export function FlowDiagram() {
   return (
-    <figure className="landing-reveal card mt-6 grid gap-8 p-5 sm:p-8 md:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] md:items-center md:gap-12 lg:grid-cols-1 lg:gap-8">
-      <figcaption className="md:col-start-2 md:row-start-1 lg:col-start-1">
-        <p className="eyebrow">{diagram.eyebrow}</p>
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight text-balance">{diagram.title}</h3>
-        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-pretty text-muted">
+    <figure className="v2-card v2-card--roomy lp-flowfig lp-reveal">
+      <figcaption className="lp-flowfig-cap">
+        <p className="v2-kicker">{diagram.eyebrow}</p>
+        <h3 className="lp-h3-lg">{diagram.title}</h3>
+        <p className="lp-card-p">
           {/* Who trades for real stands out from the caption: only Chogs whose holder opted in. */}
-          {diagram.caption} <span className="font-medium text-foreground">{diagram.today}</span>
+          {diagram.caption} <span className="lp-strong">{diagram.today}</span>
         </p>
         <Legend />
       </figcaption>
-      <div className="md:col-start-1 md:row-start-1 lg:row-start-2">
+      <div className="lp-flowfig-art">
         <HorizontalFlow />
         <VerticalFlow />
       </div>
@@ -34,15 +34,15 @@ export function FlowDiagram() {
 
 function Legend() {
   return (
-    <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted">
-      <li className="flex items-center gap-2">
-        <svg viewBox="0 0 28 4" className="h-1 w-7" aria-hidden>
+    <ul className="v2-legend lp-flow-legend">
+      <li>
+        <svg viewBox="0 0 28 4" className="lp-legend-line" aria-hidden>
           <line x1="0" y1="2" x2="28" y2="2" className={ALWAYS_STROKE} strokeWidth="2" />
         </svg>
         {diagram.legend.always}
       </li>
-      <li className="flex items-center gap-2">
-        <svg viewBox="0 0 28 4" className="h-1 w-7" aria-hidden>
+      <li>
+        <svg viewBox="0 0 28 4" className="lp-legend-line" aria-hidden>
           <line x1="0" y1="2" x2="28" y2="2" className={OPT_IN_STROKE} strokeWidth="2" strokeDasharray="5 4" />
         </svg>
         {diagram.legend.optIn}
@@ -61,7 +61,7 @@ function NodeBox({ node, width, height }: { node: Node; width: number; height: n
       rx="16"
       strokeWidth="1.25"
       strokeDasharray={node.optIn ? "5 4" : undefined}
-      className={node.optIn ? "fill-success/5 stroke-success/60" : "fill-surface-2 stroke-line-strong"}
+      className={node.optIn ? "lp-node lp-node--optin" : "lp-node"}
     />
   );
 }
@@ -69,7 +69,7 @@ function NodeBox({ node, width, height }: { node: Node; width: number; height: n
 function NodeIcon({ node, x, y }: { node: Node; x: number; y: number }) {
   return (
     <g transform={`translate(${x} ${y})`}>
-      <rect width="36" height="36" rx="10" className={node.optIn ? "fill-success/15" : "fill-accent/15"} />
+      <rect width="36" height="36" rx="10" className={node.optIn ? "lp-node-tile lp-node-tile--optin" : "lp-node-tile"} />
       <svg
         x="8"
         y="8"
@@ -81,7 +81,7 @@ function NodeIcon({ node, x, y }: { node: Node; x: number; y: number }) {
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={node.optIn ? "text-success" : "text-accent-strong"}
+        className={node.optIn ? "lp-node-glyph lp-node-glyph--optin" : "lp-node-glyph"}
       >
         {icons[node.icon]}
       </svg>
@@ -95,8 +95,8 @@ const BADGE_W = Math.round(16 + diagram.badge.length * 6.8);
 function Badge({ x, y }: { x: number; y: number }) {
   return (
     <g transform={`translate(${x} ${y})`}>
-      <rect width={BADGE_W} height="18" rx="9" strokeWidth="1" className="fill-success/15 stroke-success/50" />
-      <text x={BADGE_W / 2} y="12.5" textAnchor="middle" className="fill-success text-[9px] font-semibold tracking-[0.12em]">
+      <rect width={BADGE_W} height="18" rx="9" strokeWidth="1" className="lp-optin-badge" />
+      <text x={BADGE_W / 2} y="12.5" textAnchor="middle" className="lp-optin-badge-text">
         {diagram.badge}
       </text>
     </g>
@@ -135,7 +135,7 @@ function HorizontalFlow() {
       role="img"
       aria-labelledby="flow-row-title"
       aria-describedby="flow-row-desc"
-      className="hidden h-auto w-full font-sans lg:block"
+      className="lp-flow-row"
     >
       <title id="flow-row-title">{diagram.srTitle}</title>
       <desc id="flow-row-desc">{diagram.srDescription}</desc>
@@ -151,10 +151,10 @@ function HorizontalFlow() {
               x2={x2 - 6}
               y2={midY}
               strokeWidth="1.75"
-              className={edge.optIn ? `${OPT_IN_STROKE} landing-dashed` : ALWAYS_STROKE}
+              className={edge.optIn ? `${OPT_IN_STROKE} lp-dashed` : ALWAYS_STROKE}
             />
             <Chevron d={`M${x2 - 11} ${midY - 5}L${x2 - 5} ${midY}L${x2 - 11} ${midY + 5}`} optIn={edge.optIn} />
-            <text x={(x1 + x2) / 2} y={midY - 12} textAnchor="middle" className="fill-subtle font-mono text-[11px]">
+            <text x={(x1 + x2) / 2} y={midY - 12} textAnchor="middle" className="lp-svg-mono lp-svg-faint">
               {edge.label}
             </text>
           </g>
@@ -166,10 +166,10 @@ function HorizontalFlow() {
         d={`M${poolX} ${bottom + 6}V${laneY - 10}Q${poolX} ${laneY} ${poolX - 10} ${laneY}H${walletX + 10}Q${walletX} ${laneY} ${walletX} ${laneY - 10}V${bottom + 7}`}
         fill="none"
         strokeWidth="1.75"
-        className={`${OPT_IN_STROKE} landing-dashed`}
+        className={`${OPT_IN_STROKE} lp-dashed`}
       />
       <Chevron d={`M${walletX - 5} ${bottom + 12}L${walletX} ${bottom + 6}L${walletX + 5} ${bottom + 12}`} optIn />
-      <text x={(walletX + poolX) / 2} y={laneY + 26} textAnchor="middle" className="fill-muted text-[13px]">
+      <text x={(walletX + poolX) / 2} y={laneY + 26} textAnchor="middle" className="lp-svg-return">
         {diagram.returnLabel}
       </text>
 
@@ -178,13 +178,13 @@ function HorizontalFlow() {
           <NodeBox node={node} width={nodeW} height={nodeH} />
           <NodeIcon node={node} x={16} y={16} />
           {node.optIn && <Badge x={nodeW - 16 - BADGE_W} y={18} />}
-          <text x="16" y="78" className="fill-foreground text-[15px] font-semibold">
+          <text x="16" y="78" className="lp-svg-title">
             {node.title}
           </text>
-          <text x="16" y="98" className="fill-muted font-mono text-[11px]">
+          <text x="16" y="98" className="lp-svg-mono lp-svg-muted">
             {node.lines[0]}
           </text>
-          <text x="16" y="114" className="fill-subtle font-mono text-[11px]">
+          <text x="16" y="114" className="lp-svg-mono lp-svg-faint">
             {node.lines[1]}
           </text>
         </g>
@@ -211,7 +211,7 @@ function VerticalFlow() {
       role="img"
       aria-labelledby="flow-column-title"
       aria-describedby="flow-column-desc"
-      className="mx-auto h-auto w-full max-w-[22rem] font-sans lg:hidden"
+      className="lp-flow-col"
     >
       <title id="flow-column-title">{diagram.srTitle}</title>
       <desc id="flow-column-desc">{diagram.srDescription}</desc>
@@ -227,10 +227,10 @@ function VerticalFlow() {
               x2={midX}
               y2={y2 - 6}
               strokeWidth="1.75"
-              className={edge.optIn ? `${OPT_IN_STROKE} landing-dashed` : ALWAYS_STROKE}
+              className={edge.optIn ? `${OPT_IN_STROKE} lp-dashed` : ALWAYS_STROKE}
             />
             <Chevron d={`M${midX - 5} ${y2 - 11}L${midX} ${y2 - 5}L${midX + 5} ${y2 - 11}`} optIn={edge.optIn} />
-            <text x={midX + 14} y={(y1 + y2) / 2 + 4} className="fill-subtle font-mono text-[12px]">
+            <text x={midX + 14} y={(y1 + y2) / 2 + 4} className="lp-svg-mono lp-svg-faint lp-svg-12">
               {edge.label}
             </text>
           </g>
@@ -242,13 +242,13 @@ function VerticalFlow() {
         d={`M${nodeW + 6} ${poolY}H${laneX - 10}Q${laneX} ${poolY} ${laneX} ${poolY - 10}V${walletY + 10}Q${laneX} ${walletY} ${laneX - 10} ${walletY}H${nodeW + 7}`}
         fill="none"
         strokeWidth="1.75"
-        className={`${OPT_IN_STROKE} landing-dashed`}
+        className={`${OPT_IN_STROKE} lp-dashed`}
       />
       <Chevron d={`M${nodeW + 12} ${walletY - 5}L${nodeW + 6} ${walletY}L${nodeW + 12} ${walletY + 5}`} optIn />
       <text
         transform={`translate(${laneX + 20} ${(walletY + poolY) / 2}) rotate(-90)`}
         textAnchor="middle"
-        className="fill-muted text-[12px]"
+        className="lp-svg-return lp-svg-12"
       >
         {diagram.returnLabel}
       </text>
@@ -258,13 +258,13 @@ function VerticalFlow() {
           <NodeBox node={node} width={nodeW} height={nodeH} />
           <NodeIcon node={node} x={14} y={14} />
           {node.optIn && <Badge x={nodeW - 14 - BADGE_W} y={14} />}
-          <text x="64" y="34" className="fill-foreground text-[16px] font-semibold">
+          <text x="64" y="34" className="lp-svg-title lp-svg-16">
             {node.title}
           </text>
-          <text x="64" y="57" className="fill-muted font-mono text-[12px]">
+          <text x="64" y="57" className="lp-svg-mono lp-svg-muted lp-svg-12">
             {node.lines[0]}
           </text>
-          <text x="64" y="76" className="fill-subtle font-mono text-[12px]">
+          <text x="64" y="76" className="lp-svg-mono lp-svg-faint lp-svg-12">
             {node.lines[1]}
           </text>
         </g>

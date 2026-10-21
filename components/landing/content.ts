@@ -113,29 +113,12 @@ export const meta = {
   },
 } as const;
 
-// ---------------------------------------------------------------- header and footer
+// ---------------------------------------------------------------- footer (the header is the hero's: components/hero)
 
 export const brand = {
   name: "Animr",
   homeLabel: "Animr home",
-  skipLink: "Skip to content",
 } as const;
-
-/**
- * In-page anchors, in page order. Each href matches a section id below. Four items fit the header
- * from md; `wide` items join them from lg. The phone menu lists them all.
- */
-export const nav: readonly { href: string; label: string; wide?: boolean }[] = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#nft-is-the-app", label: "Why the NFT" },
-  { href: "#minds", label: "Trait DNA", wide: true },
-  { href: "#safety", label: "Safety" },
-  { href: "#ai-receipts", label: "0G receipts", wide: true },
-  { href: "#faq", label: "FAQ" },
-];
-
-/** Phone menu: the button keeps one name (aria-expanded carries open/closed); the panel is a nav. */
-export const menu = { button: "Menu", label: "Sections" } as const;
 
 export const footer = {
   navLabel: "Footer",
@@ -171,41 +154,6 @@ export const footer = {
   ],
 } as const;
 
-// ---------------------------------------------------------------- hero
-
-export const hero = {
-  eyebrow: "Chogathon 2026 · 1,969 Chogs on Monad",
-  title: "Every Chog is an AI trader.",
-  /** The rest of the tagline, right under the title. */
-  subtitle: "Its traits are its strategy, and the $CHOG market keeps score.",
-  lede: "Each Chog Genesis NFT's 13 on-chain traits compile into a trading genome, and the NFT owns the ERC-6551 wallet it trades from. One score for all 1,969: **$CHOG stacked vs just holding**.",
-  /** Sits right under the buttons: what runs today, in plain words. */
-  status:
-    "**Live on Monad:** every genome replays on real $CHOG candles, the Daily Bell rings at 15:00 UTC, and AnimrTradeGuard is deployed for holders who want real-wallet trades. No wallet needed to explore.",
-  randomHint: "Opens a random Chog's replay on the real chart.",
-  visual: {
-    label: (label: string, name: string) => `${label}, ${name}: its traits, its strategy and its score`,
-    callTitle: "replay call",
-    /** Under the speech bubble: these lines are the genome's rules talking, not the LLM. */
-    callSource: "its genome on real candles (simulated)",
-    rows: { strategy: "Strategy", wallet: "Wallet", score: "Score" },
-    vsHolding: "vs just holding",
-    rank: (rank: number, total: number) => `#${rank} of ${total.toLocaleString("en-US")}`,
-  },
-} as const;
-
-/** The stat band under the hero, filled from the League computed at build time (showcase.ts). */
-export const statBand = {
-  beat: "of all 1,969 Chogs beat just holding $CHOG",
-  median: "median edge vs holding",
-  best: "best edge",
-  worst: "worst edge",
-  caption: (total: number, version: string, window: string) =>
-    `All ${total.toLocaleString("en-US")} genomes, computed when this page was built: genome ${version} on hourly CHOG/WMON candles, ${window}.`,
-  liveCaption: (total: number, version: string, window: string) =>
-    `All ${total.toLocaleString("en-US")} genomes in today's League: genome ${version} on hourly CHOG/WMON candles, ${window}.`,
-} as const;
-
 // ---------------------------------------------------------------- four verbs
 
 export type Verb = {
@@ -223,7 +171,8 @@ export type Verb = {
 export const verbsSection = {
   id: "how-it-works",
   eyebrow: "How it works · four ways in",
-  title: "Meet it. Rewind it. Ride it. Rob it.",
+  // No-break spaces keep each "verb it." pair on one line.
+  title: "Meet\u00a0it. Rewind\u00a0it. Ride\u00a0it. Rob\u00a0it.",
   lede: "Each takes under a minute, and none needs a wallet. Every number on Animr is the same score: **$CHOG stacked vs just holding**.",
   score: {
     title: "The one score",
@@ -236,7 +185,8 @@ export const verbsSection = {
   houseMovingInPicked: (label: string, name: string) =>
     `**Moving in:** ${label} · ${name}. Its AI already takes your best lines; the live check switches on once its wallet holds $CHOG.`,
   /** Only once GET /api/heist says the House is "open" (its wallet is ready and holds $CHOG). */
-  houseMovedIn: (label: string, name: string) => `**House Chog:** ${label} · ${name}`,
+  houseMovedIn: (label: string, name: string) =>
+    `**House Chog:** ${label} · ${name}. It trades two-way under the guard's limits and can never withdraw.`,
 } as const;
 
 export const verbs: readonly Verb[] = [
@@ -345,16 +295,31 @@ export const safety = {
   lede: "The AI never holds the keys to a Chog's wallet. It gets one narrow door: **AnimrTradeGuard**, a contract on Monad mainnet that lets it make bounded swaps and nothing else.",
   deployed: {
     label: "Live",
+    network: "Monad mainnet",
     title: "AnimrTradeGuard is deployed",
     text: "On Monad mainnet and fork-tested against live mainnet state. A holder opts in from the Chog's page: create its wallet, grant the guard, set limits, deposit.",
     explorer: "View on Monadscan",
     status: "Guard status",
+    /** README "Contracts" and ARCHITECTURE §8: deployment day, the fork-test suite, source verification. */
+    facts: [
+      { key: "tests", value: "37/37", spoken: "37 of 37", label: "Foundry tests pass" },
+      { key: "deployed", value: "Oct 19", label: "deployed, 2026" },
+      { key: "source", value: "Sourcify", label: "source verified" },
+    ],
   },
   house: {
     label: "Guarded",
     movingIn: "Moving in",
+    kicker: "The House Chog",
     title: "The House Chog trades real $CHOG",
-    text: "Its AI trades the $CHOG in its own wallet through the guard: every trade is capped, every swap lands back in the same wallet, and nothing can be withdrawn. That's the vault the heist room dares you to empty.",
+    text: "Its AI trades the $CHOG in its own wallet two-way, buying dips and selling only into sharp pumps, through the guard: every trade is capped, every swap lands back in the same wallet, and nothing can be withdrawn. That's the vault the heist room dares you to empty.",
+    /** The House Chog's own limits (README, ARCHITECTURE §7): its owner's settings under the guard's ceilings. */
+    limits: [
+      { key: "trade", value: "10%", label: "max per trade" },
+      { key: "day", value: "30%", label: "max per day" },
+      { key: "buyOnly", value: "Off", label: "buy-only switch" },
+    ],
+    limitsNote: "Buy-only is an optional owner switch that makes the guard refuse every sell. The House Chog leaves it off.",
     movingInText: "The team is picking which Chog keeps the vault. Until it moves in, the heist room already takes your best lines.",
     /** The House Chog is picked, its wallet isn't ready or funded yet. */
     pickedText: "Its wallet goes live once it holds $CHOG. Until then, the heist room already takes your best lines.",
@@ -399,7 +364,7 @@ export const safety = {
     "One venue: $CHOG ⇄ WMON on the Capricorn pool that holds ~95% of $CHOG liquidity. The output always lands back in the same wallet.",
     "Holder-set limits under hard ceilings: at most 50% of a balance per trade, 100% of the vault per day, 2% slippage, and a minimum gap between trades.",
     "A floor from the pool's 30-minute TWAP on every fill, so a sandwich can't drain a trade, plus a deadline on every trade.",
-    "Optional buy-only mode: a holder can have the guard refuse every sell, so the AI can only stack $CHOG.",
+    "Optional buy-only mode: a holder can have the guard refuse every sell, so the AI can only stack $CHOG. It's off by default, and off for the House Chog.",
     "The holder can switch the AI off or revoke the guard at any time. An admin pause can stop trading but never move funds.",
     "Sold the Chog? The seller's grant, limits and buy-only mode go dormant, and the buyer opts in under their own limits.",
   ],

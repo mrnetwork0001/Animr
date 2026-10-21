@@ -1,25 +1,31 @@
+import type { ReactNode } from "react";
+import { IconTile, SparkIcon } from "@/components/v2";
 import { ChogImage } from "./chog-image";
 import { builtOn, labels, receipts, showcaseIds, thought } from "./content";
-import { Icon } from "./icons";
+import { Icon, type IconName } from "./icons";
 import { Section, StyleBadge } from "./primitives";
 import { Rich } from "./rich";
 import { type ShowcaseChog, showcaseChog } from "./showcase";
 
+function PointIcon({ name }: { name: IconName }): ReactNode {
+  return <Icon name={name} className="lp-glyph" strokeWidth={1.4} />;
+}
+
 /** Decisions on 0G Compute, each LLM call with its receipt and provider label; the fallback and guardrails behind them. */
-export function Receipts() {
+export function Receipts({ index }: { index?: number }) {
   const chog = showcaseChog(showcaseIds.receipt);
   return (
-    <Section id={receipts.id} eyebrow={receipts.eyebrow} title={receipts.title} lede={receipts.lede}>
-      <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-14">
-        <ul className="space-y-4">
+    <Section id={receipts.id} index={index} kicker={receipts.eyebrow} title={receipts.title} lede={receipts.lede}>
+      <div className="lp-receipts">
+        <ul className="lp-points">
           {receipts.points.map((point) => (
-            <li key={point.title} className="landing-reveal flex gap-4">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-strong ring-1 ring-accent/25 ring-inset">
-                <Icon name={point.icon} className="size-5" />
-              </span>
+            <li key={point.title} className="lp-reveal">
+              <IconTile size="sm">
+                <PointIcon name={point.icon} />
+              </IconTile>
               <div>
-                <h3 className="font-semibold tracking-tight">{point.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-pretty text-muted">
+                <h3 className="lp-point-title">{point.title}</h3>
+                <p className="lp-card-p">
                   <Rich text={point.body} />
                 </p>
               </div>
@@ -43,83 +49,80 @@ export function Receipts() {
 function DecisionCard({ chog }: { chog: ShowcaseChog }) {
   const { card } = receipts;
   return (
-    <div className="landing-reveal">
-      <div className="card p-4 sm:p-5">
-        <div className="flex items-center gap-3">
+    <div className="lp-reveal">
+      <div className="v2-card lp-decision">
+        <div className="lp-decision-head">
           <ChogImage
             src={chog.image.src}
             fallbackSrc={chog.image.fallbackSrc}
             alt={chog.label}
-            size={80}
+            size={96}
             fallbackLabel={`#${chog.tokenId}`}
-            className="size-10 shrink-0 rounded-xl"
+            className="lp-avatar"
           />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">
-              {chog.name} <span className="font-normal text-subtle">· {chog.label}</span>
+          <div className="lp-min0 lp-grow">
+            <p className="lp-decision-name">
+              {chog.name} <span className="lp-faint">· {chog.label}</span>
             </p>
-            <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+            <p className="lp-decision-sub">
               {card.title} · {chog.archetype}
-              <StyleBadge style={chog.style} className="py-0 text-[10px]" />
+              <StyleBadge style={chog.style} />
             </p>
           </div>
-          <span className="ml-auto shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[11px] font-medium text-accent-strong">
-            {card.badge}
-          </span>
+          <span className="v2-badge v2-badge--violet lp-hide-xs">{card.badge}</span>
         </div>
 
-        <article className="mt-4 rounded-xl border border-line bg-surface-2/40 p-4">
-          <span className="rounded-md bg-surface-2 px-2 py-0.5 font-mono text-xs font-semibold tracking-wider text-muted uppercase ring-1 ring-line ring-inset">
-            {thought.action}
-          </span>
-          <p className="mt-3 text-sm leading-relaxed text-foreground">{thought.text}</p>
-          <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-subtle">
-            <div className="flex gap-1.5">
+        <article className="lp-thought">
+          <div className="lp-thought-head">
+            <span className="v2-badge">{thought.action}</span>
+            <SparkIcon className="lp-thought-spark" />
+          </div>
+          <p className="lp-thought-text">{thought.text}</p>
+          <dl className="lp-thought-meta">
+            <div>
               <dt>{card.decidedByLabel}</dt>
-              <dd className="text-muted">{labels.decidedBy}</dd>
+              <dd>{labels.decidedBy}</dd>
             </div>
           </dl>
-          <p className="mt-1.5 text-[11px] text-subtle">{thought.source}</p>
+          <p className="lp-card-note">{thought.source}</p>
         </article>
 
         {/* The receipt: monospace values; field descriptions in plain italics. */}
-        <div className="relative mt-4 rounded-xl border border-line bg-background/60 px-4 pt-4 pb-3">
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <p className="flex items-center gap-2 text-xs font-semibold tracking-wider text-accent-strong uppercase">
-              <Icon name="receipt" className="size-4" />
+        <div className="lp-receipt">
+          <div className="lp-receipt-head">
+            <p className="lp-receipt-title">
+              <Icon name="receipt" className="lp-receipt-icon" strokeWidth={1.6} />
               {card.receiptTitle}
             </p>
-            <span className="flex items-center gap-1.5 text-[11px] font-medium text-success">
-              <Icon name="check" className="size-3.5" strokeWidth={2.5} />
+            <span className="lp-receipt-stored">
+              <Icon name="check" className="lp-check-icon" strokeWidth={2.5} />
               {card.stored}
             </span>
           </div>
-          <dl className="mt-3 divide-y divide-dashed divide-line text-xs">
+          <dl className="lp-receipt-rows">
             {card.receipt.map((row) => (
-              <div key={row.label} className="flex items-center justify-between gap-4 py-2">
-                <dt className="font-mono text-subtle">{row.label}</dt>
-                <dd className={row.field ? "text-right text-muted italic" : "font-mono text-foreground tabular-nums"}>
-                  {row.value}
-                </dd>
+              <div key={row.label}>
+                <dt>{row.label}</dt>
+                <dd className={row.field ? "lp-receipt-field" : "lp-receipt-value"}>{row.value}</dd>
               </div>
             ))}
           </dl>
         </div>
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-subtle">{card.note}</p>
+      <p className="lp-card-note lp-decision-note">{card.note}</p>
     </div>
   );
 }
 
 function BuiltOn() {
   return (
-    <div className="landing-reveal mt-16">
-      <h3 className="text-center text-xs font-semibold tracking-[0.16em] text-subtle uppercase">{builtOn.title}</h3>
-      <ul className="mt-5 flex flex-wrap justify-center gap-3">
+    <div className="lp-built lp-reveal">
+      <h3 className="v2-overline lp-built-title">{builtOn.title}</h3>
+      <ul className="lp-built-list">
         {builtOn.items.map((item) => (
-          <li key={item.name} className="rounded-xl border border-line bg-surface/70 px-4 py-3 text-center">
-            <p className="text-sm font-semibold text-foreground">{item.name}</p>
-            <p className="mt-0.5 text-xs text-muted">{item.role}</p>
+          <li key={item.name}>
+            <p className="lp-built-name">{item.name}</p>
+            <p className="lp-built-role">{item.role}</p>
           </li>
         ))}
       </ul>

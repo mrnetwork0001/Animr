@@ -7,17 +7,14 @@ export function Rich({ text }: { text: string }) {
   return text.split(MARKUP).map((part, index) => {
     if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={index} className="font-semibold text-foreground">
+        <strong key={index} className="lp-strong">
           {part.slice(2, -2)}
         </strong>
       );
     }
     if (part.length > 2 && part.startsWith("`") && part.endsWith("`")) {
       return (
-        <code
-          key={index}
-          className="rounded-md border border-line bg-surface-2 px-1.5 py-px font-mono text-[0.88em] text-accent-strong"
-        >
+        <code key={index} className="lp-code">
           {part.slice(1, -1)}
         </code>
       );

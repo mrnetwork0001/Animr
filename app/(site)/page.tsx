@@ -1,13 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { AnimrHero } from "@/components/hero/animr-hero";
 import { brand, meta } from "@/components/landing/content";
 import { Faq } from "@/components/landing/faq";
 import { FinalCta } from "@/components/landing/final-cta";
 import { Gate } from "@/components/landing/gate";
-import { Hero } from "@/components/landing/hero";
+import { LandingFooter } from "@/components/landing/landing-footer";
 import { Minds } from "@/components/landing/minds";
 import { Receipts } from "@/components/landing/receipts";
 import { Safety } from "@/components/landing/safety";
 import { Verbs } from "@/components/landing/verbs";
+import "@/app/design-v2.css";
+import "@/components/landing/landing.css";
 
 export const metadata: Metadata = {
   // Absolute: the root layout's "%s · Animr" template would repeat the brand.
@@ -30,23 +33,30 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0d0c11",
+};
+
 /**
- * The landing page: the tagline and "Random Chog" in the first screen, the four verbs (Meet, Rewind,
- * Ride, Rob), then the why and the safety on scroll. Static and server-rendered: every Chog, name and
- * League number on it is computed from committed data when the page is built (components/landing/
- * showcase.ts). The only client code is Random Chog, the phone menu and the image fallbacks.
+ * The landing page: the approved hero (components/hero) as the first screen, then the four verbs
+ * (Meet, Rewind, Ride, Rob), why the NFT is the app, Trait DNA, safety, 0G receipts, the FAQ and the
+ * final call, all in the v2 language (app/design-v2.css + components/landing/landing.css) on the
+ * hero's near-black and grid. Static and server-rendered: every Chog, name and League number on it is
+ * computed from committed data when the page is built (components/landing/showcase.ts). The client code
+ * is the hero's motion and menu, Random Chog, the House Chog's live status and the image fallbacks.
  */
 export default function LandingPage() {
   return (
-    <>
-      <Hero />
-      <Verbs />
-      <Gate />
-      <Minds />
-      <Safety />
-      <Receipts />
-      <Faq />
-      <FinalCta />
-    </>
+    <AnimrHero className="v2-page lp-root" footer={<LandingFooter />}>
+      <div className="lp-body">
+        <Verbs index={1} />
+        <Gate index={2} />
+        <Minds index={3} />
+        <Safety index={4} />
+        <Receipts index={5} />
+        <Faq index={6} />
+        <FinalCta />
+      </div>
+    </AnimrHero>
   );
 }

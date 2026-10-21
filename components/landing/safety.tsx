@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRightIcon, ExternalIcon, GuardIcon, IconTile, StatRow } from "@/components/v2";
 import { labels, links, safety } from "./content";
 import { FlowDiagram } from "./flow-diagram";
 import { HouseChogCard } from "./house-status";
@@ -8,19 +9,19 @@ import { Rich } from "./rich";
 import { type GuardLink, guardLink, houseChog } from "./showcase";
 
 /** AnimrTradeGuard, live on Monad: the deployment, the House Chog (live state read in the browser), real vs simulated, and the rules. */
-export function Safety() {
+export function Safety({ index }: { index?: number }) {
   const guard = guardLink();
   const house = houseChog();
   return (
-    <Section id={safety.id} eyebrow={safety.eyebrow} title={safety.title} lede={safety.lede}>
-      <div className="mt-12 grid gap-4 md:grid-cols-2">
+    <Section id={safety.id} index={index} kicker={safety.eyebrow} title={safety.title} lede={safety.lede}>
+      <div className="lp-grid-2">
         <Deployed guard={guard} />
-        <HouseChogCard house={house && { label: house.label, name: house.name }} />
+        <HouseChogCard house={house && { label: house.label, name: house.archetype }} />
       </div>
 
       <RealVsSimulated />
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <div className="lp-rules-row">
         <Permissions />
         <Checklist guard={guard} />
       </div>
@@ -33,52 +34,51 @@ export function Safety() {
 function Deployed({ guard }: { guard: GuardLink | null }) {
   const { deployed } = safety;
   return (
-    <div className="landing-reveal flex flex-col gap-3 rounded-2xl border border-success/25 bg-success/5 p-5 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <article className="v2-card v2-card--feature lp-deployed lp-reveal" aria-labelledby="guard-deployed-title">
+      <div className="lp-card-status">
         <StatusBadge status="live" label={deployed.label} />
-        <span className="font-mono text-xs text-muted">Monad mainnet</span>
+        <span className="lp-card-status-note">{deployed.network}</span>
       </div>
-      <h3 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
-        <Icon name="shield" className="size-5 text-success" />
-        {deployed.title}
-      </h3>
-      <p className="text-sm leading-relaxed text-pretty text-muted">{deployed.text}</p>
+      <div className="lp-card-titlerow">
+        <IconTile size="lg">
+          <GuardIcon />
+        </IconTile>
+        <div>
+          <p className="v2-kicker">AnimrTradeGuard</p>
+          <h3 id="guard-deployed-title" className="lp-card-h3">
+            {deployed.title}
+          </h3>
+        </div>
+      </div>
+      <p className="lp-card-p">{deployed.text}</p>
+      <StatRow size="sm" inline className="lp-house-limits" stats={deployed.facts} />
       {guard && (
-        <p className="font-mono text-xs break-all text-foreground sm:text-sm">
+        <p className="lp-address">
+          <span className="v2-overline">Contract</span>
           {guard.href ? (
-            <a
-              href={guard.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent"
-            >
+            <a href={guard.href} target="_blank" rel="noopener noreferrer" className="lp-address-link">
               {guard.address}
-              <span className="sr-only"> ({labels.explorerHint})</span>
+              <span className="v2-sr"> ({labels.explorerHint})</span>
             </a>
           ) : (
-            guard.address
+            <span className="lp-address-link">{guard.address}</span>
           )}
         </p>
       )}
-      <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-sm font-semibold">
+      <div className="lp-card-actions">
         {guard?.href && (
-          <a
-            href={guard.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-accent-strong hover:underline"
-          >
+          <a href={guard.href} target="_blank" rel="noopener noreferrer" className="v2-btn-glass v2-btn--sm">
             {deployed.explorer}
-            <Icon name="external" className="size-4" strokeWidth={2} />
-            <span className="sr-only"> ({labels.newTab})</span>
+            <ExternalIcon className="v2-btn-icon" />
+            <span className="v2-sr"> ({labels.newTab})</span>
           </a>
         )}
-        <Link href={links.guard} className="inline-flex items-center gap-1.5 text-muted transition-colors hover:text-foreground">
+        <Link href={links.guard} className="v2-btn-ghost v2-btn--sm">
           {deployed.status}
-          <Icon name="arrowRight" className="size-4" strokeWidth={2} />
+          <ArrowRightIcon className="v2-btn-icon" />
         </Link>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -90,19 +90,15 @@ function RealVsSimulated() {
     { status: "simulated" as const, ...realVsSim.simulated },
   ];
   return (
-    <div className="landing-reveal card mt-4 overflow-hidden">
-      <h3 className="border-b border-line px-5 py-4 text-lg font-semibold tracking-tight sm:px-6">{realVsSim.title}</h3>
-      <div className="grid md:grid-cols-2">
-        {columns.map((column, index) => (
-          <div key={column.label} className={`p-5 sm:p-6 ${index > 0 ? "border-t border-line md:border-t-0 md:border-l" : ""}`}>
+    <div className="v2-card v2-card--flush lp-realsim lp-reveal">
+      <h3 className="lp-realsim-title">{realVsSim.title}</h3>
+      <div className="lp-realsim-cols">
+        {columns.map((column) => (
+          <div key={column.label} className="lp-realsim-col">
             <StatusBadge status={column.status} label={column.label} />
-            <ul className="mt-4 space-y-2.5">
+            <ul className="lp-dots">
               {column.items.map((item) => (
-                <li key={item} className="flex gap-3 text-sm leading-relaxed text-pretty text-muted">
-                  <span
-                    aria-hidden
-                    className={`mt-[0.55rem] size-1.5 shrink-0 rounded-full ${column.status === "live" ? "bg-success" : "bg-accent-strong"}`}
-                  />
+                <li key={item} className={column.status === "live" ? "lp-dot--live" : "lp-dot--sim"}>
                   {item}
                 </li>
               ))}
@@ -117,24 +113,24 @@ function RealVsSimulated() {
 /** What the AI's key can and can't do through the guard. */
 function Permissions() {
   return (
-    <div className="landing-reveal card flex-1 p-6 sm:p-7">
-      <h3 className="text-sm font-semibold tracking-wider text-success uppercase">{safety.can.title}</h3>
-      <ul className="mt-4 space-y-3">
+    <div className="v2-card lp-perms lp-reveal">
+      <h3 className="lp-perms-title lp-perms-title--can">{safety.can.title}</h3>
+      <ul className="lp-perm-list">
         {safety.can.items.map((item) => (
-          <li key={item} className="flex gap-3 text-sm leading-relaxed text-foreground">
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-              <Icon name="check" className="size-3.5" strokeWidth={2.5} />
+          <li key={item}>
+            <span className="lp-perm-mark lp-perm-mark--can">
+              <Icon name="check" className="lp-perm-icon" strokeWidth={2.5} />
             </span>
             {item}
           </li>
         ))}
       </ul>
-      <h3 className="mt-8 text-sm font-semibold tracking-wider text-danger uppercase">{safety.cannot.title}</h3>
-      <ul className="mt-4 space-y-3">
+      <h3 className="lp-perms-title lp-perms-title--cannot">{safety.cannot.title}</h3>
+      <ul className="lp-perm-list lp-perm-list--muted">
         {safety.cannot.items.map((item) => (
-          <li key={item} className="flex gap-3 text-sm leading-relaxed text-muted">
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-danger/15 text-danger">
-              <Icon name="x" className="size-3.5" strokeWidth={2.5} />
+          <li key={item}>
+            <span className="lp-perm-mark lp-perm-mark--cannot">
+              <Icon name="x" className="lp-perm-icon" strokeWidth={2.5} />
             </span>
             {item}
           </li>
@@ -147,40 +143,30 @@ function Permissions() {
 /** The rules AnimrTradeGuard enforces on-chain. */
 function Checklist({ guard }: { guard: GuardLink | null }) {
   return (
-    <div className="landing-reveal card relative flex flex-col p-6 sm:p-7">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
-          <Icon name="shield" className="size-5 text-accent-strong" />
-          {safety.checklistTitle}
-        </h3>
+    <div className="v2-card lp-checklist lp-reveal">
+      <div className="lp-checklist-head">
+        <h3 className="lp-card-h3">{safety.checklistTitle}</h3>
         <StatusBadge status="live" />
       </div>
-      <ul className="mt-5 flex-1 space-y-3.5">
+      <ol className="lp-numbered">
         {safety.checklist.map((item) => (
-          <li key={item} className="flex gap-3 text-sm leading-relaxed text-pretty text-muted">
-            <Icon name="lock" className="mt-0.5 size-4 text-accent-strong" />
+          <li key={item}>
             <span>
               <Rich text={item} />
             </span>
           </li>
         ))}
-      </ul>
+      </ol>
       {guard && (
-        <p className="mt-6 flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl border border-line bg-surface-2/60 px-4 py-3 text-sm text-foreground">
-          <Icon name="check" className="size-4 text-success" strokeWidth={2.5} />
+        <p className="lp-checklist-foot">
+          <Icon name="check" className="lp-check-icon" strokeWidth={2.5} />
           AnimrTradeGuard on Monad mainnet:
           {guard.href ? (
-            <a
-              href={guard.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={guard.address}
-              className="font-mono text-accent-strong hover:underline"
-            >
-              {guard.short} ↗<span className="sr-only"> ({labels.explorerHint})</span>
+            <a href={guard.href} target="_blank" rel="noopener noreferrer" title={guard.address} className="lp-mono-link">
+              {guard.short} ↗<span className="v2-sr"> ({labels.explorerHint})</span>
             </a>
           ) : (
-            <span className="font-mono">{guard.short}</span>
+            <span className="v2-mono">{guard.short}</span>
           )}
         </p>
       )}
