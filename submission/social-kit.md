@@ -49,12 +49,11 @@ This copy is for bringing real people to Animr before judging. Post it from the 
 
 | Placeholder | Fill with |
 | --- | --- |
-| `<APP_URL>` | The production domain (`https://…`), never a preview or deployment URL |
 | `<id>` | An unflagged Chog's token ID, from the table above or checked with `jq` |
-| `CHOG #<n> · token <id>` | The label on the Chog's genome card, Chog page or Versus card. **Not the Bell page:** Bell cards may show "Chog #<token id>", which is the token ID, not the CHOG # name. Take the token ID from the Bell, then read "CHOG #n · token id" at `<APP_URL>/chog/<token id>` |
+| `CHOG #<n> · token <id>` | The label on the Chog's genome card, Chog page or Versus card. **Not the Bell page:** Bell cards may show "Chog #<token id>", which is the token ID, not the CHOG # name. Take the token ID from the Bell, then read "CHOG #n · token id" at `https://useanimr.vercel.app/chog/<token id>` |
 | `<boutId>` | The ID in the link that **Share this bout** copies after you play a Versus bout. The card shows how the race ended. |
 | `<bullPct>`, `<bearPct>` | `/api/bell/today`, once `kind` is `"live"` (command below the table) |
-| `<actualPct>`, Oracle, `<callPct>` | The settled Bell at `<APP_URL>/bell/2026-10-21`. For the Oracle's name, open `/chog/<its token id>` (see the row above) |
+| `<actualPct>`, Oracle, `<callPct>` | The settled Bell at `https://useanimr.vercel.app/bell/2026-10-21`. For the Oracle's name, open `/chog/<its token id>` (see the row above) |
 | `<PURSE_AMOUNT>`, `<EXPLORER_TX_URL>` | The Purse script's output, and the transfer on the Bell page, once confirmed |
 | `<CONTACT>` | The same contact as in `judge-instructions.md` |
 
@@ -86,7 +85,7 @@ What kind of trader is your Chog?
 
 Animr turns all 1,969 Chog Genesis NFTs into traders: each one's traits compile into its trading strategy, and the real $CHOG market keeps score. No wallet needed.
 
-<APP_URL>
+https://useanimr.vercel.app
 
 A Chogathon 2026 entry. Not affiliated with Chog. 1/7
 ```
@@ -97,7 +96,7 @@ Meet: eyes pick the signal (laser eyes chase breakouts, side-eyes fade the crowd
 
 The League ranks all 1,969 against just holding $CHOG, simulated on real candles.
 
-<APP_URL>/league
+https://useanimr.vercel.app/league
 
 2/7
 ```
@@ -108,7 +107,7 @@ Rewind: press play and watch a Chog trade the real hourly CHOG/WMON chart, trade
 
 Simulated on real $CHOG candles (1% fee + impact): a replay of its rules, not a track record.
 
-<APP_URL>/replay/<id>
+https://useanimr.vercel.app/replay/<id>
 
 3/7
 ```
@@ -119,7 +118,7 @@ VERSUS: two Chogs, the same hidden 48 hours of real $CHOG history. Call the one 
 
 This one: CHOG #<n> · token <id> vs CHOG #<n> · token <id>. Your turn, points only:
 
-<APP_URL>/versus/<boutId>
+https://useanimr.vercel.app/versus/<boutId>
 
 4/7
 ```
@@ -129,7 +128,7 @@ This one: CHOG #<n> · token <id> vs CHOG #<n> · token <id>. Your turn, points 
 Ride: every day at 15:00 UTC the Daily Bell rings. All 1,969 Chogs call $CHOG for the next 24 hours, you ride the one you trust (no wallet, points only), and the real market settles every call.
 
 Today's Bell is live:
-<APP_URL>/bell
+https://useanimr.vercel.app/bell
 
 5/7
 ```
@@ -140,7 +139,7 @@ Rob this Chog: the House Chog keeps real $CHOG in its own ERC-6551 wallet on Mon
 
 The AI can be fooled. The NFT can't.
 
-<APP_URL>/heist
+https://useanimr.vercel.app/heist
 
 6/7
 ```
@@ -151,7 +150,7 @@ Rob this Chog: talk the House Chog's AI out of its $CHOG. It's still moving in: 
 
 The AI can be fooled. The NFT can't.
 
-<APP_URL>/heist
+https://useanimr.vercel.app/heist
 
 6/7
 ```
@@ -160,7 +159,7 @@ The AI can be fooled. The NFT can't.
 ```text
 Holders: wake your Chog's AI with one free signature. It thinks with glm-5.3 on 0G Compute, with a 0G receipt for every LLM decision. Real trades go only through our guard contract: the AI can trade, never withdraw.
 
-<APP_URL>/guard
+https://useanimr.vercel.app/guard
 
 Not affiliated with Chog. 7/7
 ```
@@ -172,11 +171,11 @@ Post this in the channel a mod names, once. Discord shows a preview for every li
 ```text
 **Animr: what kind of trader is your Chog?**
 Our Chogathon 2026 entry, built on the real Chog Genesis collection on Monad mainnet. Every Chog's traits compile into its own trading strategy, and the real $CHOG market keeps score. Nothing to connect to try it:
-- **Meet:** look up any Chog by token ID or CHOG # name: <APP_URL>/app
-- **Rewind:** watch it trade the real CHOG/WMON chart, simulated on real candles (1% fee + impact): <APP_URL>/replay/<id>
-- **Ride:** the Daily Bell rings at 15:00 UTC. Ride the Chog you trust for points (no cash value): <APP_URL>/bell
-- **Rob:** try to talk the House Chog's AI out of its $CHOG, then watch Monad refuse: <APP_URL>/heist
-Holders can wake their Chog's AI with one free signature, or hide their Chog from Animr's public pages at any time on <APP_URL>/stats.
+- **Meet:** look up any Chog by token ID or CHOG # name: https://useanimr.vercel.app/app
+- **Rewind:** watch it trade the real CHOG/WMON chart, simulated on real candles (1% fee + impact): https://useanimr.vercel.app/replay/<id>
+- **Ride:** the Daily Bell rings at 15:00 UTC. Ride the Chog you trust for points (no cash value): https://useanimr.vercel.app/bell
+- **Rob:** try to talk the House Chog's AI out of its $CHOG, then watch Monad refuse: https://useanimr.vercel.app/heist
+Holders can wake their Chog's AI with one free signature, or hide their Chog from Animr's public pages at any time on https://useanimr.vercel.app/stats.
 Feedback, good or bad, is very welcome here or at <CONTACT>. Not affiliated with Chog.
 ```
 
@@ -185,15 +184,15 @@ Feedback, good or bad, is very welcome here or at <CONTACT>. Not affiliated with
 Use one per conversation, and only where it answers what people are already discussing.
 
 ```text
-What kind of trader is your Chog? Its traits pick the signal, the trigger and the size. Look it up by token ID or CHOG # name, no wallet needed: <APP_URL>/app
+What kind of trader is your Chog? Its traits pick the signal, the trigger and the size. Look it up by token ID or CHOG # name, no wallet needed: https://useanimr.vercel.app/app
 ```
 
 ```text
-Today's Daily Bell: all 1,969 Chogs called $CHOG for the next 24 hours, and the real market settles every call. Ride one, points only: <APP_URL>/bell
+Today's Daily Bell: all 1,969 Chogs called $CHOG for the next 24 hours, and the real market settles every call. Ride one, points only: https://useanimr.vercel.app/bell
 ```
 
 ```text
-The AI can be fooled. The NFT can't. Try to talk the House Chog out of its $CHOG, then watch Monad say no: <APP_URL>/heist
+The AI can be fooled. The NFT can't. Try to talk the House Chog out of its $CHOG, then watch Monad say no: https://useanimr.vercel.app/heist
 ```
 
 The third one needs the House Chog live on `/heist`.
@@ -201,7 +200,7 @@ The third one needs the House Chog live on `/heist`.
 ## Pinned explainer (2 lines, 276/280)
 
 ```text
-Animr: every Chog is an AI trader. Its traits are its strategy; the $CHOG market keeps score. Meet, rewind, ride, rob. No wallet needed: <APP_URL>
+Animr: every Chog is an AI trader. Its traits are its strategy; the $CHOG market keeps score. Meet, rewind, ride, rob. No wallet needed: https://useanimr.vercel.app
 Replays are simulated on real $CHOG candles (1% fee + impact). Points have no cash value. Not affiliated with Chog.
 ```
 
@@ -211,22 +210,22 @@ Replays are simulated on real $CHOG candles (1% fee + impact). Points have no ca
 ```text
 The Daily Bell just rang: <bullPct>% of Chogs called $CHOG up for the next 24 hours, <bearPct>% down. Ride the one you trust until 03:00 UTC, points only. The real market settles every call tomorrow after 15:00 UTC.
 
-<APP_URL>/bell
+https://useanimr.vercel.app/bell
 ```
 
 **Last call:** Wed, around 23:00 (183/280).
 ```text
 Four hours left to ride today's Daily Bell. Pick the Chog you trust; the real $CHOG price settles every call tomorrow after 15:00 UTC. Points only, no wallet.
 
-<APP_URL>/bell
+https://useanimr.vercel.app/bell
 ```
 
 **Bell settled:** Thu, once `/bell/2026-10-21` says settled (237/280). Name the Oracle of the Day only, and never Most Rekt or a holder. Read its "CHOG #n · token id" label from `/chog/<token id>`, not from the Bell card.
 ```text
 The first live Daily Bell is settled: $CHOG moved <actualPct>% in 24 hours. Oracle of the Day: CHOG #<n> · token <id>, which called <callPct>%.
 
-Today's Bell is already open: <APP_URL>/bell
-How the herd called it: <APP_URL>/bell/2026-10-21
+Today's Bell is already open: https://useanimr.vercel.app/bell
+How the herd called it: https://useanimr.vercel.app/bell/2026-10-21
 ```
 
 **Purse:** post this reply only once the transfer is confirmed (142/280). If the script paid a runner-up because the Oracle was the House Chog or a hidden Chog, name the Chog the script printed instead of the Oracle.

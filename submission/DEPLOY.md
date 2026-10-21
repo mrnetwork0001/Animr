@@ -1,6 +1,6 @@
 # Deploy Animr on Vercel
 
-The owner's guide: you run every step yourself. All times are UTC. Wherever this guide says `<APP_URL>`, use your production domain, for example `https://animr.vercel.app`.
+The owner's guide: you run every step yourself. All times are UTC. The production domain is `https://useanimr.vercel.app`; every URL below uses it.
 
 > **Never paste your whole `.env.local` into Vercel.** It holds `HOUSE_PRIVATE_KEY`, which must never leave your laptop. It also holds a Redis pair that would override the Marketplace one. Paste only the blocks in step 4.
 
@@ -69,7 +69,7 @@ gh repo create animr --public --source=. --push     # or --private, then invite 
    - **Build and Output Settings:** leave every override off. The build is `next build` through `npm run build`, the output is the Next.js default, and the install is `npm install` from `package-lock.json`.
    - **Environment Variables:** leave empty for now. Step 4 adds them with the right types.
 3. Click **Deploy**. The first build takes a few minutes. It works without any variables; it just isn't wired up yet.
-4. Note the **production domain** shown on the project's Overview. That domain is your `<APP_URL>`. Never share or schedule a deployment URL (`animr-<hash>-<team>.vercel.app` or `…-git-…`): Vercel Authentication protects those, so visitors and cron-job.org would hit a login page.
+4. Note the **production domain** shown on the project's Overview. That domain is `https://useanimr.vercel.app`. Never share or schedule a deployment URL (`animr-<hash>-<team>.vercel.app` or `…-git-…`): Vercel Authentication protects those, so visitors and cron-job.org would hit a login page.
 5. **Settings → Build and Deployment → Node.js Version:** choose **24.x**, Vercel's default. 22.x also works: Next 16 needs Node 20.9 or later. Your laptop runs Node 26, which Vercel doesn't offer.
 6. **Settings → Functions:**
    - Make sure **Fluid Compute** is on. It's the default for new projects. `/api/bell/cron` and `/api/bell/today` export `maxDuration = 300`, which is the Hobby maximum with Fluid compute.
@@ -259,8 +259,8 @@ You create two jobs:
 
 | Job | URL | Schedule (UTC) | Why |
 | --- | --- | --- | --- |
-| Animr Bell pulse | `<APP_URL>/api/bell/cron` | Minutes **1 and 11** of every hour (`1,11 * * * *`) | Rings at 15:01 sharp. Settles at 15:11 the next day. Catches up anything a late or missed run left behind. |
-| Animr agent tick | `<APP_URL>/api/agent/tick` | Minute **30** of every hour (`30 * * * *`) | Every awake (claimed) agent thinks once: one 0G call each, about $0.002, so about $0.05 per agent per day with the Bell. Minute 30 stays clear of the 15:01 ring. |
+| Animr Bell pulse | `https://useanimr.vercel.app/api/bell/cron` | Minutes **1 and 11** of every hour (`1,11 * * * *`) | Rings at 15:01 sharp. Settles at 15:11 the next day. Catches up anything a late or missed run left behind. |
+| Animr agent tick | `https://useanimr.vercel.app/api/agent/tick` | Minute **30** of every hour (`30 * * * *`) | Every awake (claimed) agent thinks once: one 0G call each, about $0.002, so about $0.05 per agent per day with the Bell. Minute 30 stays clear of the 15:01 ring. |
 
 To set them up:
 
@@ -275,7 +275,7 @@ To set them up:
    - **Headers:** add one with key `Authorization` and value `Bearer <CRON_SECRET>`: the word `Bearer`, one space, then the secret, with no quotes.
    - **Timeout:** the most it offers. That's 30 seconds on the free plan.
 7. **Notifications:** turn on email on failure (after 3 failures in a row) and email when the job gets disabled automatically.
-8. Save. Repeat steps 2–7 for `Animr agent tick` with `<APP_URL>/api/agent/tick` at minute `30`.
+8. Save. Repeat steps 2–7 for `Animr agent tick` with `https://useanimr.vercel.app/api/agent/tick` at minute `30`.
 9. Run each job once, with the console's test run or with the curl commands in step 6. Expect HTTP 200 and a JSON body.
 
 Good to know:
@@ -288,7 +288,7 @@ Good to know:
 Set two shell variables first. The secret prompt stays hidden, so nothing lands in your history:
 
 ```bash
-APP=https://<your production domain>
+APP=https://useanimr.vercel.app
 read -rs CRON_SECRET   # paste the secret, press Enter
 ```
 
@@ -302,7 +302,7 @@ Then open each URL in an incognito window:
 | `/replay/1820` | "CHOG #1312 · token 1820" and its genome card. Press play: trades appear on the real hourly chart, and the run ends with its edge over holding, labelled "Simulated on real $CHOG candles (1% fee + impact)". |
 | `/versus` | "Two Chogs. 48 hidden hours. Who stacks more $CHOG?" Pick one, watch the race, then the real dates appear, with points. **Share this bout** copies a `/versus/<id>` link. |
 | `/bell` | "Every Chog calls $CHOG. The market settles it." Before Wed 15:01 it shows the latest **replayed** Bell (Oct 20, labelled as a replay). From 15:01 it shows today's **live** Bell: 1,969 calls and a ride button. Run command 3 below first: on a fresh deploy it builds the 14 replayed Bells in one go. Otherwise the first visit builds them and can take about 25 seconds; if it says the first Bell hasn't rung yet, reload a minute later. |
-| `/heist` | "Rob this Chog". Until step 8 is done and the House Chog's wallet holds $CHOG, it says the House Chog is **moving in**: its AI already chats, but the mainnet check is off. After that, **Act as the AI** shows the theft attempt failing with `NotAuthorized()` at a pinned block, and a guarded sell as allowed but landing back in the same wallet. |
+| `/heist` | "Rob this Chog". Until step 8 is done and the House Chog's wallet holds $CHOG, it says the House Chog is **moving in**: its AI already chats, but the mainnet check is off. After that, **Run the check** shows the theft attempt failing with `NotAuthorized()` at a pinned block, and a guarded sell as allowed but landing back in the same wallet. |
 | `/guard` | "The AI can trade. It can never withdraw." It reads `0x92D3…987b` live: operator `0x2523…9cC2`, not paused, admin `0xc742…960C` once you've called `acceptAdmin()` (until then, the handover shows as pending). The House Chog card says moving in until step 8. |
 | `/stats` | "Animr by the numbers". Counters start near zero, which is right for a fresh `production` namespace. |
 | `/leaderboard` | "Live agents". Empty until someone wakes a Chog's AI on production. |
@@ -345,9 +345,9 @@ If the Bell hasn't rung by 15:05, run `curl -s -H "Authorization: Bearer $CRON_S
 
 ## 7. Judges' view
 
-- The production domain is public under Vercel's default Deployment Protection, which covers previews and deployment URLs only. Check `<APP_URL>` in an incognito window and on your phone.
+- The production domain is public under Vercel's default Deployment Protection, which covers previews and deployment URLs only. Check `https://useanimr.vercel.app` in an incognito window and on your phone.
 - If an incognito visit to the production domain hits a Vercel login, the protection scope is **All Deployments** (a team default can set that). Switch it to **Standard Protection** under **Settings → Deployment Protection**.
-- Fill `<APP_URL>` in `description.md`, `judge-instructions.md` and the social kit with the production domain only.
+- `https://useanimr.vercel.app` is filled in `description.md`, `judge-instructions.md` and the social kit. Use the production domain only.
 
 ## 8. Deploy and fund the House Chog's wallet
 
@@ -403,7 +403,7 @@ The deployment has no complete Redis pair. Either it isn't connected, it's scope
 
 **0G is napping.** Symptoms: "The House Chog is napping", template replies, or agents deciding without 0G receipts. The causes:
 
-- **The heist's daily budget is spent** (`HEIST_DAILY_USD_CAP`, default $3). It resets at 00:00 UTC, and raising it needs a redeploy. **Act as the AI** still runs the full mainnet check while it naps.
+- **The heist's daily budget is spent** (`HEIST_DAILY_USD_CAP`, default $3). It resets at 00:00 UTC, and raising it needs a redeploy. **Run the check** still runs the full mainnet check while it naps.
 - **The key is missing or wrong, or the account is out of credit.** Test the key with the command below. One call costs a fraction of a cent.
   ```bash
   read -rs ZG_API_KEY
