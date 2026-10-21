@@ -221,7 +221,6 @@ export function sharedStateMissing(): boolean {
 export function countersOf(stats: DayStats, now = Date.now()): HeistCounters {
   return {
     day: utcDay(now),
-    stolenChog: 0,
     attemptsToday: stats.attempts,
     cavesToday: stats.caves,
     refusalsToday: stats.refusals,

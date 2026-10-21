@@ -58,8 +58,6 @@ export type DefenderProfile = {
 export type HeistCounters = {
   /** UTC day, YYYY-MM-DD. */
   day: string;
-  /** Always 0: the heist only ever simulates, nothing is broadcast. */
-  stolenChog: number;
   /** Messages sent to the House Chog today (all visitors). */
   attemptsToday: number;
   /** Times its AI agreed to send $CHOG today. */
