@@ -8,6 +8,9 @@ import { activationMessage } from "@/lib/agent/auth";
 import type { ActivateRequest, AgentDetailResponse } from "@/lib/agent/types";
 import { shortAddress } from "@/lib/format";
 import { walletErrorMessage } from "@/lib/wagmi";
+import { Spinner } from "./onchain/ui";
+import { SparkIcon } from "./v2/icons";
+import { IconTile, pillClass } from "./v2/primitives";
 
 type ActivateAgentProps = {
   tokenId: string;
@@ -19,6 +22,8 @@ type ActivateAgentProps = {
   reactivate?: boolean;
   /** Receives the activate response; the caller updates/refetches its profile with it. */
   onActivated?: (response: AgentDetailResponse) => void;
+  /** Inside another panel (the on-chain stepper): no card of its own. */
+  embedded?: boolean;
 };
 
 function apiErrorMessage(body: unknown): string | undefined {
@@ -30,7 +35,14 @@ function apiErrorMessage(body: unknown): string | undefined {
 }
 
 /** Owner signs a free activation message; the API verifies it and starts the agent. */
-export function ActivateAgent({ tokenId, account, owner, reactivate = false, onActivated }: ActivateAgentProps) {
+export function ActivateAgent({
+  tokenId,
+  account,
+  owner,
+  reactivate = false,
+  onActivated,
+  embedded = false,
+}: ActivateAgentProps) {
   const [phase, setPhase] = useState<"sign" | "submit">("sign");
   const { mutateAsync: signMessage } = useSignMessage();
 
@@ -66,38 +78,70 @@ export function ActivateAgent({ tokenId, account, owner, reactivate = false, onA
       ? "Sign & reactivate"
       : "Sign & activate";
 
-  return (
-    <section className="card border-accent/40 bg-linear-to-br from-accent/15 via-accent/5 to-transparent p-5 sm:p-6">
-      <h2 className="text-lg font-semibold">
-        {reactivate ? `Wake Chog #${tokenId}'s AI back up` : `Activate Chog #${tokenId}'s AI`}
-      </h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        Sign one message to prove you hold this Chog. It&apos;s free: no transaction, no gas, no token approval.{" "}
-        {reactivate
-          ? "The agent picks up its paper portfolio and decision history where it left off."
-          : "The agent then paper-trades: it starts from the $CHOG this Chog's wallet holds right now (or a demo bankroll if the wallet is empty) and simulates every trade, so no tokens move until on-chain execution ships."}{" "}
-        Every decision it makes shows up here.
-      </p>
+  const copy = (
+    <>
+      Sign one message to prove you hold this Chog. It&apos;s free: no transaction, no gas, no token approval.{" "}
+      {reactivate
+        ? "The agent picks up its paper portfolio and decision history where it left off."
+        : "The agent then paper-trades: it starts from the $CHOG this Chog's wallet holds right now (or a demo bankroll if the wallet is empty) and simulates every trade, so no tokens move until its holder switches it on-chain."}{" "}
+      Every decision it makes shows up here.
+    </>
+  );
+
+  const action = (
+    <>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={() => activate.mutate()}
           disabled={activate.isPending}
-          className="btn btn-primary px-4 py-2.5 disabled:cursor-wait"
+          aria-busy={activate.isPending || undefined}
+          className={`${pillClass("primary", embedded ? "sm" : "md")} disabled:cursor-wait`}
         >
-          {activate.isPending && (
-            <span aria-hidden className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          )}
+          {activate.isPending ? <Spinner /> : <SparkIcon className="v2-btn-icon" />}
           {label}
         </button>
-        <span className="font-mono text-xs text-subtle">signing as {shortAddress(owner)}</span>
+        <span className="text-xs text-[var(--v2-faint)]">
+          signing as <span className="v2-mono text-[var(--v2-nav)]">{shortAddress(owner)}</span>
+        </span>
       </div>
       <div aria-live="polite">
         {activate.isError && (
-          <p className="mt-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {walletErrorMessage(activate.error)}
-          </p>
+          <div role="alert" className="v2-toast v2-toast--danger mt-3 shadow-none">
+            <div>
+              <span className="v2-toast-title">Couldn&apos;t wake the agent</span>
+              {walletErrorMessage(activate.error)}
+            </div>
+            <span />
+          </div>
         )}
+      </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div>
+        <p className="text-sm leading-relaxed text-[var(--v2-nav)]">{copy}</p>
+        {action}
+      </div>
+    );
+  }
+
+  return (
+    <section id="wake" aria-labelledby="wake-title" className="v2-card v2-card--feature scroll-mt-28">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+        <IconTile size="lg">
+          <SparkIcon />
+        </IconTile>
+        <div className="min-w-0 flex-1">
+          <p className="v2-kicker">Free · one signature</p>
+          <h2 id="wake-title" className="v2-h3 mt-2">
+            {reactivate ? `Wake Chog #${tokenId}'s AI back up` : `Wake Chog #${tokenId}'s AI`}
+          </h2>
+          <p className="mt-2 max-w-[68ch] text-[15px] leading-relaxed text-[var(--v2-nav)]">{copy}</p>
+          {action}
+        </div>
       </div>
     </section>
   );

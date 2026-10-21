@@ -15,6 +15,7 @@ import {
   revokeGuardRequest,
 } from "@/lib/contracts/animr-trade-guard";
 import { type TokenBoundAccountParams, createAndInitializeAccountRequest } from "@/lib/erc6551";
+import { Badge } from "@/components/v2/primitives";
 import { formatAmount } from "@/lib/format";
 import { requestAgentMode } from "./agent-mode";
 import { FundVault } from "./fund-vault";
@@ -47,7 +48,7 @@ export type Ctx = {
 };
 
 function ActHint({ ctx }: { ctx: Ctx }) {
-  return ctx.actHint ? <p className="mt-3 text-sm text-subtle">{ctx.actHint}</p> : null;
+  return ctx.actHint ? <p className="mt-3 text-sm text-[var(--v2-faint)]">{ctx.actHint}</p> : null;
 }
 
 export function CreateAccountPanel({ ctx, params }: { ctx: Ctx; params: TokenBoundAccountParams | undefined }) {
@@ -77,19 +78,19 @@ export function CreateAccountPanel({ ctx, params }: { ctx: Ctx; params: TokenBou
 
   return (
     <>
-      <p className="text-sm leading-relaxed text-muted">
+      <p className="text-sm leading-relaxed text-[var(--v2-nav)]">
         {finishing
           ? "This wallet was created but never initialized, so it can't hold permissions yet. One transaction finishes the setup."
           : "Deploys the Chog's account through the ERC-6551 registry and initializes it, in one transaction. Tokens sent to the address earlier are already safe there."}{" "}
         It doesn&apos;t change who controls the wallet: whoever holds the Chog does.
       </p>
       {!params && (
-        <p className="mt-2 text-sm text-warning">
+        <p className="mt-2 text-sm text-[var(--v2-warning)]">
           Missing config: NEXT_PUBLIC_CHOG_NFT_ADDRESS and NEXT_PUBLIC_TBA_IMPLEMENTATION.
         </p>
       )}
       {ctx.canAct ? (
-        <button type="button" onClick={start} disabled={!request || tx.busy} className="btn btn-primary mt-3">
+        <button type="button" onClick={start} disabled={!request || tx.busy} className="v2-btn-primary v2-btn--sm mt-4">
           {tx.busy && tx.progress.origin === "step" && <Spinner />}
           {label}
         </button>
@@ -129,18 +130,18 @@ export function GrantGuardPanel({ ctx }: { ctx: Ctx }) {
 
   return (
     <>
-      <p className="text-sm leading-relaxed text-muted">
+      <p className="text-sm leading-relaxed text-[var(--v2-nav)]">
         The Chog&apos;s wallet is a Tokenbound account. This sends{" "}
-        <code className="font-mono text-foreground">setPermissions([guard], [true])</code> to it, so AnimrTradeGuard
+        <code className="v2-mono text-[var(--v2-kicker)]">setPermissions([guard], [true])</code> to it, so AnimrTradeGuard
         (never the AI&apos;s key) may execute for it. The guard only ever makes the wallet approve the pool&apos;s
         router, swap, and reset the approval, with the output landing back here.
       </p>
-      <p className="mt-2 text-xs leading-relaxed text-subtle">
+      <p className="v2-note mt-2">
         Guard <AddressLink address={guard} />. Send it from the wallet that holds the Chog, directly: a permission set
         through a relayer or a batch contract doesn&apos;t count. It lapses automatically if the Chog is sold.
       </p>
       {ctx.canAct ? (
-        <button type="button" onClick={grant} disabled={tx.busy} className="btn btn-primary mt-3">
+        <button type="button" onClick={grant} disabled={tx.busy} className="v2-btn-primary v2-btn--sm mt-4">
           {tx.busy && tx.progress.origin === "step" && <Spinner />}
           Authorize the guard
         </button>
@@ -185,7 +186,7 @@ export function ConfigurePanel({ ctx }: { ctx: Ctx }) {
   const initial = initialLimits(previous);
   return (
     <>
-      <p className="text-sm leading-relaxed text-muted">
+      <p className="text-sm leading-relaxed text-[var(--v2-nav)]">
         {reenable
           ? "Trading is disabled for this vault. Save limits to turn it back on (these are your previous ones)."
           : "The guard checks these on every trade, on-chain. Change them any time; each change is one transaction."}
@@ -239,16 +240,12 @@ export function GoOnchainPanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQ
   const modeSwitch = useModeSwitch(ctx);
   const agent = agentQuery.data?.agent ?? null;
 
-  if (agentQuery.isPending) return <p className="text-sm text-muted">Checking the agent…</p>;
+  if (agentQuery.isPending) return <p className="text-sm text-[var(--v2-nav)]">Checking the agent…</p>;
   if (!agentQuery.data) {
     return (
-      <p className="text-sm text-danger">
+      <p className="text-sm text-[var(--v2-danger)]">
         Couldn&apos;t load the agent: {describeTxError(agentQuery.error)}{" "}
-        <button
-          type="button"
-          onClick={() => agentQuery.refetch()}
-          className="btn btn-secondary ml-1 px-2.5 py-1 text-xs"
-        >
+        <button type="button" onClick={() => agentQuery.refetch()} className="v2-btn-glass v2-btn--sm ml-1 h-8">
           Retry
         </button>
       </p>
@@ -257,13 +254,14 @@ export function GoOnchainPanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQ
   if (!agent || !agent.active) {
     return (
       <>
-        <p className="text-sm leading-relaxed text-muted">
+        <p className="text-sm leading-relaxed text-[var(--v2-nav)]">
           The vault is ready. {agent ? "The agent is paused: wake it first" : "Wake the Chog's AI first"} (one free
           signature), then switch it to on-chain.
         </p>
         {ctx.canAct && ctx.viewer ? (
           <div className="mt-3">
             <ActivateAgent
+              embedded
               tokenId={String(ctx.tokenId)}
               account={ctx.tba}
               owner={ctx.viewer}
@@ -279,9 +277,9 @@ export function GoOnchainPanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQ
   }
   return (
     <>
-      <p className="text-sm leading-relaxed text-muted">
+      <p className="text-sm leading-relaxed text-[var(--v2-nav)]">
         Everything on-chain is in place. Sign one free message (no gas) to switch{" "}
-        <span className="text-foreground">{agent.persona.name}</span> from paper to on-chain: from its next decision,
+        <span className="text-[var(--v2-ink)]">{agent.persona.name}</span> from paper to on-chain: from its next decision,
         its trades execute as real $CHOG swaps in this wallet, through the guard and within your limits. Its PnL
         restarts from the vault&apos;s value at the switch.
       </p>
@@ -290,7 +288,7 @@ export function GoOnchainPanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQ
           type="button"
           onClick={() => modeSwitch.mutate("onchain")}
           disabled={modeSwitch.isPending}
-          className="btn btn-primary mt-3"
+          className="v2-btn-primary v2-btn--sm mt-4"
         >
           {modeSwitch.isPending && <Spinner />}
           {modeSwitch.isPending
@@ -303,9 +301,9 @@ export function GoOnchainPanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQ
         <ActHint ctx={ctx} />
       )}
       {modeSwitch.isError && (
-        <p role="alert" className="mt-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+        <Callout tone="danger" title="Couldn't switch modes">
           {describeTxError(modeSwitch.error)}
-        </p>
+        </Callout>
       )}
     </>
   );
@@ -323,15 +321,17 @@ export function LivePanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQueryR
 
   return (
     <>
-      <div className="rounded-xl border border-success/30 bg-success/5 p-4">
-        <p className="flex items-center gap-2 text-sm font-medium text-success">
-          <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-success" />
+      <div className="rounded-[var(--v2-r-md)] border border-[rgb(98_224_166/0.3)] bg-[rgb(98_224_166/0.05)] p-4">
+        <p className="flex flex-wrap items-center gap-2 text-sm font-[520] text-[var(--v2-success)]">
+          <Badge tone="success" live>
+            Live
+          </Badge>
           {agent?.persona.name ?? "The AI"} trades the real $CHOG in this wallet
         </p>
-        {limits && <p className="mt-1.5 text-sm text-muted">{describeLimits(limits)}</p>}
-        <p className="mt-1 text-sm text-muted">
-          Vault: <span className="font-mono text-foreground">{fmt(setup.balances.chog, 2)}</span> $CHOG ·{" "}
-          <span className="font-mono text-foreground">{fmt(setup.balances.wmon, 4)}</span> WMON
+        {limits && <p className="mt-2 text-sm text-[var(--v2-nav)]">{describeLimits(limits)}</p>}
+        <p className="mt-1 text-sm text-[var(--v2-nav)]">
+          Vault: <span className="v2-num text-[var(--v2-ink)]">{fmt(setup.balances.chog, 2)}</span> $CHOG ·{" "}
+          <span className="v2-num text-[var(--v2-ink)]">{fmt(setup.balances.wmon, 4)}</span> WMON
         </p>
       </div>
       {ctx.canAct ? (
@@ -340,7 +340,7 @@ export function LivePanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQueryR
             type="button"
             onClick={() => setEditing((value) => !value)}
             aria-expanded={editing}
-            className="btn btn-secondary"
+            className="v2-btn-glass v2-btn--sm"
           >
             Edit limits
           </button>
@@ -348,7 +348,7 @@ export function LivePanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQueryR
             type="button"
             onClick={() => setTopUp((value) => !value)}
             aria-expanded={topUp}
-            className="btn btn-secondary"
+            className="v2-btn-glass v2-btn--sm"
           >
             Add funds
           </button>
@@ -356,7 +356,7 @@ export function LivePanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQueryR
             type="button"
             onClick={() => modeSwitch.mutate("paper")}
             disabled={modeSwitch.isPending}
-            className="btn btn-ghost"
+            className="v2-btn-ghost v2-btn--sm"
           >
             {modeSwitch.isPending
               ? modeSwitch.phase === "sign"
@@ -369,12 +369,12 @@ export function LivePanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQueryR
         <ActHint ctx={ctx} />
       )}
       {modeSwitch.isError && (
-        <p role="alert" className="mt-3 text-sm text-danger">
+        <p role="alert" className="mt-3 text-sm text-[var(--v2-danger)]">
           {describeTxError(modeSwitch.error)}
         </p>
       )}
       {editing && ctx.canAct && limits && (
-        <div className="mt-4 rounded-xl border border-line bg-surface-2/50 p-4">
+        <div className="mt-4 rounded-[var(--v2-r-md)] border border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.025)] p-4">
           <LimitsForm
             initial={limits}
             disabled={tx.busy}
@@ -436,16 +436,17 @@ export function StopControls({ ctx }: { ctx: Ctx }) {
   }
 
   return (
-    <div className="rounded-xl border border-line p-4">
-      <h3 className="text-sm font-semibold">Stop the AI</h3>
-      <p className="mt-1 text-xs leading-relaxed text-muted">
-        <span className="text-foreground">Disable</span> turns trading off and keeps the guard&apos;s permission (save
-        limits again to resume). <span className="text-foreground">Revoke</span> removes the guard&apos;s permission
+    <div className="rounded-[var(--v2-r-lg)] border border-[var(--v2-line)] p-4 sm:p-5">
+      <p className="v2-overline">Kill switch</p>
+      <h3 className="mt-1.5 text-[15px] font-[520] text-[var(--v2-ink)]">Stop the AI</h3>
+      <p className="mt-1 text-[13px] leading-relaxed text-[var(--v2-nav)]">
+        <span className="text-[var(--v2-ink)]">Disable</span> turns trading off and keeps the guard&apos;s permission (save
+        limits again to resume). <span className="text-[var(--v2-ink)]">Revoke</span> removes the guard&apos;s permission
         from the wallet entirely. Either takes effect from the next block; your tokens stay where they are.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {disable && (
-          <button type="button" onClick={() => run("disable")} disabled={tx.busy} className="btn btn-secondary">
+          <button type="button" onClick={() => run("disable")} disabled={tx.busy} className="v2-btn-glass v2-btn--sm">
             Disable trading
           </button>
         )}
@@ -454,7 +455,7 @@ export function StopControls({ ctx }: { ctx: Ctx }) {
             type="button"
             onClick={() => run("revoke")}
             disabled={tx.busy}
-            className="btn btn-secondary text-danger hover:border-danger"
+            className="v2-btn-glass v2-btn--sm text-[var(--v2-danger)] hover:border-[rgb(255_122_138/0.5)]"
           >
             Revoke the guard
           </button>
@@ -499,7 +500,7 @@ export function OperatorWarning({ ctx }: { ctx: Ctx }) {
       vault until it&apos;s removed.
       {ctx.canAct && (
         <span className="mt-3 block">
-          <button type="button" onClick={revokeOperator} disabled={tx.busy} className="btn btn-secondary">
+          <button type="button" onClick={revokeOperator} disabled={tx.busy} className="v2-btn-glass v2-btn--sm">
             Revoke the operator&apos;s access
           </button>
         </span>

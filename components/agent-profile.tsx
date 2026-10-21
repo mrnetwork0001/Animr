@@ -2,7 +2,7 @@
 
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { type ReactNode, useState } from "react";
+import { type CSSProperties, type ReactNode, useState } from "react";
 import { type Address, erc20Abi, erc721Abi, formatUnits } from "viem";
 import { useConnection } from "wagmi";
 import {
@@ -27,7 +27,7 @@ import { chogLabel, nameNumberOf } from "@/lib/chog-id";
 import { publicClient } from "@/lib/clients";
 import { appConfig } from "@/lib/config";
 import { computeTokenBoundAccount, getTokenBoundAccountStatus } from "@/lib/erc6551";
-import { explorerAddressUrl, formatAmount, formatUsd, shortAddress } from "@/lib/format";
+import { explorerAddressUrl, formatAmount, formatPct, formatUsd, shortAddress } from "@/lib/format";
 import { fetchNftMetadata } from "@/lib/nft";
 import { isContractRevert, isZeroDataError, walletErrorMessage } from "@/lib/wagmi";
 import { ActivateAgent } from "./activate-agent";
@@ -42,11 +42,21 @@ import { chogThumbUrl } from "./dna/thumb-url";
 import { HouseBuyOnly } from "./house-buy-only";
 import { HiddenChogNotice } from "./stats/hidden-notice";
 import { GuardOnboarding } from "./onchain/guard-onboarding";
+import { Callout, Spinner } from "./onchain/ui";
 import { VaultPanel } from "./onchain/vault-panel";
 import { PnlBadge } from "./pnl-badge";
 import { Sparkline } from "./sparkline";
-
-const LABEL = "text-[11px] font-medium uppercase tracking-wider text-subtle";
+import { ExternalIcon, RewindIcon, SparkIcon, WalletIcon } from "./v2/icons";
+import {
+  Badge,
+  type BadgeTone,
+  IconTile,
+  PillLink,
+  SectionTitle,
+  StatRow,
+  type V2Stat,
+  pillClass,
+} from "./v2/primitives";
 
 /** Chog Genesis (ids 1-1969) is the collection the trait DNA, the League and the Daily Bell cover. */
 const HAS_DNA = appConfig.tokenIdRange.max === BigInt(1969);
@@ -56,12 +66,6 @@ const HAS_DNA = appConfig.tokenIdRange.max === BigInt(1969);
  * metadata snapshot: its AI's name (the rule activation applies) and its trait genome's archetype.
  */
 export type ChogDna = { name: string; archetype: string; style: TradingStyle };
-
-const STYLE_TONE: Record<TradingStyle, string> = {
-  aggressive: "bg-warning/10 text-warning ring-warning/25",
-  balanced: "bg-accent/10 text-accent-strong ring-accent/30",
-  cautious: "bg-sky-400/10 text-sky-300 ring-sky-400/25",
-};
 
 const agentKey = (tokenId: string) => ["/api/agents", tokenId] as const;
 
@@ -290,17 +294,17 @@ export function AgentProfile({
     } else if (notMinted) {
       activation = (
         <Hint>
-          Token {tokenId} hasn&apos;t been minted (<code className="font-mono">ownerOf</code> reverted), so nobody can
+          Token {tokenId} hasn&apos;t been minted (<code className="v2-mono">ownerOf</code> reverted), so nobody can
           activate its AI yet.
         </Hint>
       );
     } else if (owner.isError) {
       activation = (
         <Hint>
-          <span className="text-danger">
+          <span className="text-[var(--v2-danger)]">
             Couldn&apos;t read the holder of {label}: {walletErrorMessage(owner.error)}
           </span>{" "}
-          <button type="button" onClick={() => owner.refetch()} className="btn btn-secondary ml-1 px-2.5 py-1 text-xs">
+          <button type="button" onClick={() => owner.refetch()} className={`${pillClass("glass", "sm")} ml-1 h-8`}>
             Retry
           </button>
         </Hint>
@@ -309,7 +313,7 @@ export function AgentProfile({
       activation = (
         <Hint>
           Only the holder of {label} can activate its AI. The connected wallet (
-          <span className="font-mono text-foreground">{shortAddress(viewer)}</span>) doesn&apos;t hold it.
+          <span className="v2-mono text-[var(--v2-ink)]">{shortAddress(viewer)}</span>) doesn&apos;t hold it.
         </Hint>
       );
     } else {
@@ -325,6 +329,50 @@ export function AgentProfile({
     }
   }
 
+  const style = agent?.persona.style ?? dna?.style;
+  const latestLlm = decisions.find((decision) => decision.decidedBy === "llm");
+  const walletChog =
+    !token || !account ? "—" : balance.data !== undefined ? formatAmount(balance.data, 2) : balance.isError ? "Unknown" : "…";
+  const accountText = !account
+    ? "Not configured"
+    : accountStatus.isPending
+      ? "…"
+      : accountStatus.isError
+        ? "Unknown"
+        : accountStatus.data === "ready"
+          ? "Deployed"
+          : accountStatus.data === "uninitialized"
+            ? "Needs setup"
+            : "Not deployed yet";
+  const stats: V2Stat[] = agent
+    ? [
+        { key: "value", label: "Portfolio value", hint: "$CHOG-eq", value: formatAmount(agent.lastValueChog, 2) },
+        {
+          key: "edge",
+          label: "Edge vs holding",
+          value: formatPct(Math.abs(agent.pnlPct) < 0.005 ? 0 : agent.pnlPct),
+          tone: agent.pnlPct >= 0.005 ? "up" : agent.pnlPct <= -0.005 ? "down" : undefined,
+        },
+        { key: "wallet", label: "Wallet $CHOG", hint: "on-chain", value: walletChog },
+        { key: "decisions", label: "Decisions", value: formatAmount(agent.decisions, 0) },
+        {
+          key: "last",
+          label: "Last thought",
+          value: agent.lastDecisionAt ? <TimeAgo iso={agent.lastDecisionAt} /> : "—",
+        },
+      ]
+    : [
+        { key: "wallet", label: "Wallet $CHOG", hint: "on-chain", value: walletChog },
+        { key: "account", label: "Wallet contract", value: accountText },
+        {
+          key: "brain",
+          label: "Brain",
+          value: detail.isPending ? "…" : HAS_DNA ? "Instinct" : "Asleep",
+          hint: HAS_DNA ? "trait genome" : undefined,
+        },
+        ...(style ? [{ key: "style", label: "Trading style", value: STYLE_LABEL[style] ?? style }] : []),
+      ];
+
   return (
     <div className="space-y-6">
       <ConfigNotice
@@ -332,75 +380,74 @@ export function AgentProfile({
         title="Setup incomplete: this Chog's wallet, holder check and activation are unavailable"
       />
 
-      <section className="card flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
+      {/* ---- Portrait header: CHOG #n · token id, its AI's persona and genome, the actions. */}
+      <header className="relative grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8 xl:grid-cols-[auto_minmax(0,1fr)_auto] xl:items-end xl:gap-12">
         <ChogImage src={image} tokenId={tokenId} alt={label} pending={metadata.isLoading} />
-        <div className="min-w-0 flex-1">
+
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusChip agent={agent} pending={detail.isPending} failed={detail.isError && !detail.data} wild={HAS_DNA} />
+            <StatusBadge agent={agent} pending={detail.isPending} failed={detail.isError && !detail.data} wild={HAS_DNA} />
             {agent?.mode === "onchain" && (
-              <span
-                className="chip border-success/40 text-success"
-                title="The AI trades the real $CHOG in this Chog's wallet through AnimrTradeGuard, which can never withdraw."
-              >
-                Real $CHOG · AnimrTradeGuard
+              <span title="The AI trades the real $CHOG in this Chog's wallet through AnimrTradeGuard, which can never withdraw.">
+                <Badge tone="success" dot>
+                  Real $CHOG · AnimrTradeGuard
+                </Badge>
               </span>
             )}
             {agent?.mode === "paper" && (
-              <span
-                className="chip"
-                title="Every trade is simulated at live prices, so no tokens move. Its holder can switch it to real trades through AnimrTradeGuard."
-              >
-                Paper trading
+              <span title="Every trade is simulated at live prices, so no tokens move. Its holder can switch it to real trades through AnimrTradeGuard.">
+                <Badge dot>Paper trading</Badge>
               </span>
             )}
             {agent?.mode === "paper" && agent.bankroll !== "wallet" && (
-              <span
-                className="chip border-warning/40 text-warning"
-                title="This agent started from a demo bankroll, not from the $CHOG in its wallet."
-              >
-                Demo bankroll
+              <span title="This agent started from a demo bankroll, not from the $CHOG in its wallet.">
+                <Badge tone="warning">Demo bankroll</Badge>
               </span>
             )}
           </div>
+
           {/* Both numbers, always: "CHOG #1462 · token 1" (marketplaces show the first, the contract uses the second). */}
-          <h1 className="mt-3 flex min-w-0 flex-wrap items-baseline gap-x-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-            <span className="min-w-0 truncate">{heading}</span>
-            <span className="text-lg font-normal whitespace-nowrap text-muted sm:text-xl">
+          <h1 className="v2-h1 mt-4 flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-[clamp(38px,3.6vw+18px,68px)]">
+            <span className="v2-ink-fade min-w-0 break-words">{heading}</span>
+            <span className="v2-num text-[0.42em] tracking-normal whitespace-nowrap text-[var(--v2-faint)]">
               <span aria-hidden>· </span>token {tokenId}
             </span>
           </h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
-            {agent ? (
+
+          <p className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[length:var(--v2-fs-lead)] text-[var(--v2-nav)]">
+            {agent || dna ? (
               <>
-                <span className="font-medium text-foreground">{agent.persona.name}</span>
-                {dna && <span>· {dna.archetype}</span>}
-                <StyleChip style={agent.persona.style} />
-              </>
-            ) : dna ? (
-              <>
-                <span className="font-medium text-foreground">{dna.name}</span>
-                <span>· {dna.archetype}</span>
-                <StyleChip style={dna.style} />
+                <span className="text-[var(--v2-faint)]">{agent ? "Its AI" : "Its AI, once woken"}</span>
+                <span className="font-[480] text-[var(--v2-ink)]">{agent?.persona.name ?? dna?.name}</span>
+                {dna && (
+                  <>
+                    <span aria-hidden className="text-[var(--v2-faint)]">
+                      ·
+                    </span>
+                    <span>{dna.archetype}</span>
+                  </>
+                )}
+                {style && <StyleBadge style={style} />}
               </>
             ) : (
               <span>Its trading persona is derived from its traits on activation.</span>
             )}
           </p>
-          {agent && <BrainLine decisions={decisions} providers={detail.data?.providers} />}
+
           {(nft || metadataName) && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-subtle">
+            <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[13px] text-[var(--v2-faint)]">
               {nft &&
                 (owner.data ? (
                   <>
                     <span>
                       Held by <AddressLink address={owner.data} />
                     </span>
-                    {isOwner && <span className="chip border-accent/40 text-accent-strong">You</span>}
+                    {isOwner && <Badge tone="teal">You</Badge>}
                   </>
                 ) : notMinted ? (
-                  <span className="chip border-danger/40 text-danger">Not minted</span>
+                  <Badge tone="danger">Not minted</Badge>
                 ) : owner.isError ? (
-                  <span className="text-danger">Holder unavailable</span>
+                  <span className="text-[var(--v2-danger)]">Holder unavailable</span>
                 ) : (
                   <span>Checking holder…</span>
                 ))}
@@ -408,52 +455,71 @@ export function AgentProfile({
                 <>
                   {nft && <span aria-hidden>·</span>}
                   <span>
-                    Marketplace name: <span className="font-mono">{metadataName}</span>
+                    Marketplace name: <span className="v2-mono">{metadataName}</span>
                   </span>
                 </>
               )}
             </div>
           )}
+          {agent && <BrainLine latest={latestLlm} hasDecisions={decisions.length > 0} providers={detail.data?.providers} />}
         </div>
-        {wildChog ? (
-          <div className="flex flex-col items-start gap-2 sm:max-w-60 sm:items-stretch">
-            <Link href={`/replay/${tokenId}`} className="btn btn-primary px-4 py-2.5">
-              <span aria-hidden>▶</span> Watch it trade
-            </Link>
-            <BuyPortfolioButton
-              tokenId={tokenId}
-              variant="secondary"
-              caption="Its trait DNA, wallet and Bell record transfer with the NFT."
-            />
-          </div>
-        ) : (
-          <BuyPortfolioButton tokenId={tokenId} className="sm:max-w-60" />
-        )}
-      </section>
+
+        <div className="flex flex-col items-start gap-3 sm:col-span-2 sm:flex-row sm:flex-wrap sm:items-start xl:col-span-1 xl:flex-col xl:items-stretch">
+          {wildChog ? (
+            <>
+              {/* Its holder's one primary action is waking the AI (the card below), so this one turns glass. */}
+              <PillLink href={`/replay/${tokenId}`} variant={isOwner ? "glass" : "primary"} arrow>
+                Watch it trade
+              </PillLink>
+              <BuyPortfolioButton
+                tokenId={tokenId}
+                variant="secondary"
+                caption="Its trait DNA, wallet and Bell record transfer with the NFT."
+              />
+            </>
+          ) : (
+            <>
+              <BuyPortfolioButton tokenId={tokenId} />
+              {dnaShown && (
+                <PillLink href={`/replay/${tokenId}`} variant="glass" className="xl:order-first">
+                  <RewindIcon className="v2-btn-icon" />
+                  Time Machine
+                </PillLink>
+              )}
+            </>
+          )}
+        </div>
+      </header>
+
+      <StatRow stats={stats} size="sm" boxed className="!mt-8" />
 
       {activation}
 
-      {/* Phones stack the headline card, the side column (Bell call first), then the rest; from lg the
+      {/* Phones stack the main column's first block, the side column (Bell call first), then the rest; from lg the
           side column spans both rows. */}
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[auto_1fr]">
+      <div className="grid items-start gap-6 pt-2 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] lg:grid-rows-[auto_1fr]">
         <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-1">
           {detail.isPending ? (
-            <div className="card h-72 animate-pulse" role="status">
-              <span className="sr-only">Loading agent…</span>
+            <div role="status" className="v2-card space-y-4">
+              <span className="v2-sr">Loading agent…</span>
+              <span aria-hidden className="v2-skeleton v2-skeleton--text w-32" />
+              <span aria-hidden className="v2-skeleton v2-skeleton--title w-64" />
+              <span aria-hidden className="v2-skeleton h-36" />
             </div>
           ) : !detail.data ? (
-            <section role="alert" className="card border-danger/40 p-6">
-              <p className="font-medium text-danger">Couldn&apos;t load this Chog&apos;s agent</p>
-              <p className="mt-1 break-words font-mono text-xs text-muted">{detail.error?.message}</p>
-              <button
-                type="button"
-                onClick={() => detail.refetch()}
-                disabled={detail.isFetching}
-                className="btn btn-secondary mt-4"
-              >
-                {detail.isFetching ? "Retrying…" : "Try again"}
-              </button>
-            </section>
+            <Callout tone="danger" title="Couldn't load this Chog's agent">
+              <span className="v2-mono text-xs break-words">{detail.error?.message}</span>
+              <span className="mt-3 block">
+                <button
+                  type="button"
+                  onClick={() => detail.refetch()}
+                  disabled={detail.isFetching}
+                  className={pillClass("glass", "sm")}
+                >
+                  {detail.isFetching ? "Retrying…" : "Try again"}
+                </button>
+              </span>
+            </Callout>
           ) : agent ? (
             <>
               <PerformanceCard agent={agent} decisions={decisions} />
@@ -466,31 +532,41 @@ export function AgentProfile({
               <WildChogCard tokenId={chogId} account={account} />
             )
           ) : (
-            <section className="rounded-2xl border border-dashed border-line p-6">
-              <h2 className="text-lg font-semibold">This Chog&apos;s AI is asleep</h2>
-              <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">
-                <li>
-                  Deposit $CHOG into the Chog&apos;s own wallet
-                  {account && (
-                    <>
-                      {" "}
-                      (<span className="font-mono text-foreground">{shortAddress(account)}</span>)
-                    </>
-                  )}
-                  . It belongs to the NFT, not to any person, and the agent&apos;s paper portfolio starts from this
-                  balance (an empty wallet gets a demo bankroll).
-                </li>
-                <li>The holder signs one free message to wake its AI agent.</li>
-                <li>
-                  The agent trades on its own and climbs the leaderboard. Sell the NFT and the trader and its portfolio
-                  go with it.
-                </li>
+            <section aria-labelledby="asleep-title" className="v2-card">
+              <p className="v2-kicker">Asleep</p>
+              <h2 id="asleep-title" className="v2-h3 mt-2">
+                This Chog&apos;s AI is asleep
+              </h2>
+              <ol className="mt-4 space-y-3 text-[15px] leading-relaxed text-[var(--v2-nav)]">
+                {[
+                  <>
+                    Deposit $CHOG into the Chog&apos;s own wallet
+                    {account && (
+                      <>
+                        {" "}
+                        (<span className="v2-mono text-[var(--v2-ink)]">{shortAddress(account)}</span>)
+                      </>
+                    )}
+                    . It belongs to the NFT, not to any person, and the agent&apos;s paper portfolio starts from this
+                    balance (an empty wallet gets a demo bankroll).
+                  </>,
+                  <>The holder signs one free message to wake its AI agent.</>,
+                  <>
+                    The agent trades on its own and climbs the leaderboard. Sell the NFT and the trader and its
+                    portfolio go with it.
+                  </>,
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="v2-num mt-px text-[var(--v2-teal)]">{i + 1}</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ol>
             </section>
           )}
         </div>
 
-        <aside className="min-w-0 space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <aside aria-label="Wallet, Bell call and traits" className="min-w-0 space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           {dnaShown && (
             // A link target: the dashboard's "Its Bell call" goes to /chog/N#bell.
             <div id="bell" className="scroll-mt-28 md:scroll-mt-24">
@@ -498,11 +574,21 @@ export function AgentProfile({
             </div>
           )}
 
-          <section className="card p-5">
-            <h2 className={LABEL}>Chog wallet · ERC-6551</h2>
+          <section aria-labelledby="wallet-title" className="v2-card">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="v2-kicker">Chog wallet · ERC-6551</p>
+                <h2 id="wallet-title" className="v2-h3 mt-1.5">
+                  Its own wallet
+                </h2>
+              </div>
+              <IconTile size="sm">
+                <WalletIcon />
+              </IconTile>
+            </div>
             {account ? (
               <>
-                <p className="mt-2 rounded-xl border border-line bg-surface-2 px-3 py-2 font-mono text-[13px] break-all text-foreground">
+                <p className="v2-mono mt-4 rounded-[var(--v2-r-md)] border border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.03)] px-3.5 py-2.5 text-[13px] leading-relaxed break-all text-[var(--v2-ink)]">
                   {account}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -512,44 +598,35 @@ export function AgentProfile({
                       href={explorerAddressUrl(account)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-ghost px-2.5 py-1 text-xs"
+                      className={`${pillClass("glass", "sm")} h-8 px-3 text-xs`}
                     >
-                      Explorer ↗
+                      Explorer
+                      <ExternalIcon className="size-3.5" />
                     </a>
                   )}
                 </div>
-                <dl className="mt-4 space-y-2 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-subtle">Account contract</dt>
-                    <dd className={`text-right ${accountStatus.data === "uninitialized" ? "text-warning" : ""}`}>
-                      {accountStatus.isPending
-                        ? "…"
-                        : accountStatus.isError
-                          ? "Unknown"
-                          : accountStatus.data === "ready"
-                            ? "Deployed"
-                            : accountStatus.data === "uninitialized"
-                              ? "Needs setup"
-                              : "Not deployed yet"}
+                <dl className="v2-kv mt-5">
+                  <div>
+                    <dt>Account contract</dt>
+                    <dd className={accountStatus.data === "uninitialized" ? "text-[var(--v2-warning)]" : ""}>
+                      {accountText}
                     </dd>
                   </div>
                   {token && (
-                    <div className="flex items-center justify-between gap-3">
-                      <dt className="text-subtle">On-chain $CHOG</dt>
-                      <dd className="text-right font-mono tabular-nums">
-                        {balance.data !== undefined ? formatAmount(balance.data, 2) : balance.isError ? "Unknown" : "…"}
-                      </dd>
+                    <div>
+                      <dt>On-chain $CHOG</dt>
+                      <dd className="v2-num text-[15px]">{walletChog}</dd>
                     </div>
                   )}
                 </dl>
-                <p className="mt-3 text-xs leading-relaxed text-subtle">
+                <p className="v2-note mt-3">
                   Whoever holds {label} controls this wallet.
                   {accountStatus.data === "none" && " $CHOG sent here before deployment is safe and usable once it is."}
                   {accountStatus.data === "uninitialized" && (
                     <>
                       {" "}
                       It was created but never initialized, so it can&apos;t be used yet:{" "}
-                      <Link href={`/app?id=${tokenId}#lookup`} className="text-accent-strong hover:underline">
+                      <Link href={`/app?id=${tokenId}#lookup`} className="v2-link">
                         finish its setup
                       </Link>{" "}
                       from the dashboard.
@@ -557,14 +634,16 @@ export function AgentProfile({
                   )}
                 </p>
                 {accountMismatch && agent && (
-                  <p className="mt-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
-                    The agent was activated for {shortAddress(agent.account)}, which differs from the address computed
-                    from the current config. Check NEXT_PUBLIC_TBA_IMPLEMENTATION and NEXT_PUBLIC_TBA_SALT.
-                  </p>
+                  <div className="mt-3">
+                    <Callout tone="warning" title="Account mismatch">
+                      The agent was activated for {shortAddress(agent.account)}, which differs from the address computed
+                      from the current config. Check NEXT_PUBLIC_TBA_IMPLEMENTATION and NEXT_PUBLIC_TBA_SALT.
+                    </Callout>
+                  </div>
                 )}
               </>
             ) : (
-              <p className="mt-2 text-sm leading-relaxed text-muted">
+              <p className="mt-3 text-sm leading-relaxed text-[var(--v2-nav)]">
                 Not configured: set NEXT_PUBLIC_CHOG_NFT_ADDRESS and NEXT_PUBLIC_TBA_IMPLEMENTATION to derive this
                 Chog&apos;s wallet address.
               </p>
@@ -579,16 +658,19 @@ export function AgentProfile({
           {agent && <PersonaCard persona={agent.persona} />}
 
           {traits.length > 0 && (
-            <section className="card p-5">
-              <h2 className={LABEL}>Traits</h2>
-              <ul className="mt-3 flex flex-wrap gap-1.5">
+            <section aria-labelledby="traits-title" className="v2-card">
+              <p className="v2-kicker">Genome inputs</p>
+              <h2 id="traits-title" className="v2-h3 mt-1.5">
+                Traits
+              </h2>
+              <ul className="mt-4 flex flex-wrap gap-1.5">
                 {traits.map(([key, value], i) => (
-                  <li key={`${key}-${i}`} className="chip">
-                    <span className="text-subtle">{key}</span> <span className="text-foreground">{value}</span>
+                  <li key={`${key}-${i}`} className="v2-chip">
+                    <span className="text-[var(--v2-faint)]">{key}</span> <span className="text-[var(--v2-ink)]">{value}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-subtle">
+              <p className="v2-note mt-4">
                 {HAS_DNA
                   ? "These traits compile into its trading genome, so a new holder inherits the same trader."
                   : "The persona is derived from these traits, so a new holder inherits the same trader."}
@@ -599,62 +681,68 @@ export function AgentProfile({
 
         <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-2">
           {agent && (
-            <section className="card min-w-0 p-5 sm:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold">AI thoughts</h2>
-                  <p className="text-xs text-subtle">Every decision, newest first. Refreshes every 15s.</p>
-                </div>
-                {agent.active && agent.mode !== "onchain" && (
-                  <ThinkButton
-                    pending={tick.isPending}
-                    throttle={throttle}
-                    lastDecisionAt={agent.lastDecisionAt}
-                    onClick={() => tick.mutate()}
-                  />
-                )}
-                {agent.active && agent.mode === "onchain" && (
-                  <p className="max-w-56 text-xs text-subtle">
-                    Trades real $CHOG, so it thinks on its schedule only: no one can pick the moment it trades.
-                  </p>
-                )}
-              </div>
+            <section aria-labelledby="thoughts-title" className="v2-card v2-card--roomy min-w-0 max-sm:px-3.5">
+              <SectionTitle
+                id="thoughts-title"
+                kicker="AI thoughts"
+                title="Every decision, with its receipt"
+                description="Newest first, refreshed every 15s. LLM calls carry their 0G Compute receipt: model, provider tier and cost."
+                className="!mb-5"
+                action={
+                  agent.active && agent.mode !== "onchain" ? (
+                    <ThinkButton
+                      pending={tick.isPending}
+                      throttle={throttle}
+                      lastDecisionAt={agent.lastDecisionAt}
+                      onClick={() => tick.mutate()}
+                    />
+                  ) : agent.active && agent.mode === "onchain" ? (
+                    <p className="v2-note max-w-60">
+                      Trades real $CHOG, so it thinks on its schedule only: no one can pick the moment it trades.
+                    </p>
+                  ) : undefined
+                }
+              />
               <div aria-live="polite">
-                {tick.isError &&
-                  (throttled ? (
-                    // Static text: the per-second countdown lives on the button, outside this live region.
-                    <p className="mt-4 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
-                      This Chog thought recently, so it can&apos;t think on demand just yet.
-                      {tick.error.message && !/^Request failed/.test(tick.error.message) && (
-                        <span className="mt-0.5 block text-xs text-muted">{tick.error.message}</span>
-                      )}
-                    </p>
-                  ) : (
-                    <p className="mt-4 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-                      Couldn&apos;t think right now: {tick.error.message}
-                    </p>
-                  ))}
+                {tick.isError && (
+                  <div className="mb-4">
+                    {throttled ? (
+                      // Static text: the per-second countdown lives on the button, outside this live region.
+                      <Callout tone="warning" title="This Chog thought recently">
+                        It can&apos;t think on demand just yet.
+                        {tick.error.message && !/^Request failed/.test(tick.error.message) && (
+                          <span className="mt-0.5 block text-xs">{tick.error.message}</span>
+                        )}
+                      </Callout>
+                    ) : (
+                      <Callout tone="danger" title="Couldn't think right now">
+                        {tick.error.message}
+                      </Callout>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="mt-4">
-                <DecisionFeed
-                  decisions={decisions}
-                  providers={detail.data?.providers}
-                  emptyHint={
-                    agent.active
-                      ? "No thoughts yet. Hit “Think now”, or it thinks on its own at the next Daily Bell (15:00 UTC)."
-                      : "No thoughts yet. The agent is paused."
-                  }
-                />
-              </div>
+              <DecisionFeed
+                decisions={decisions}
+                providers={detail.data?.providers}
+                emptyHint={
+                  agent.active
+                    ? "Hit “Think now”, or it thinks on its own at the next Daily Bell (15:00 UTC)."
+                    : "The agent is paused."
+                }
+              />
             </section>
           )}
 
-          {/* The House Chog's holder: buy-only mode, its extra step (create its wallet -> grant the guard -> limits +
-              buy-only -> deposit), next to the guard onboarding below. */}
-          {HAS_DNA && house && computedAccount && isOwner && <HouseBuyOnly tokenId={chogId} tba={computedAccount} />}
-          {/* The holder's on-chain setup (AnimrTradeGuard; a "launching" card only on a deployment without a guard). */}
+          {/* The holder's on-chain setup (AnimrTradeGuard; a "launching" card only on a deployment without a guard). The
+              House Chog's holder also gets the optional buy-only row, left off: the House Chog trades two-way. */}
           {HAS_DNA && computedAccount && isOwner && (
-            <GuardOnboarding tokenId={chogId} tba={computedAccount} owner={owner.data} />
+            <GuardOnboarding
+              tokenId={chogId}
+              tba={computedAccount}
+              owner={owner.data}
+              buyOnly={house ? <HouseBuyOnly tokenId={chogId} tba={computedAccount} embedded /> : undefined}
+            />
           )}
           {dnaShown && <TimeMachineTeaser tokenId={chogId} />}
           {dnaShown && <GenomeCard tokenId={chogId} hideIdentity />}
@@ -698,10 +786,8 @@ function ThinkButton({
       : 0;
   const waitSec = Math.max(0, fromThrottle, fromInterval);
   return (
-    <button type="button" onClick={onClick} disabled={pending || waitSec > 0} className="btn btn-primary">
-      {pending && (
-        <span aria-hidden className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-      )}
+    <button type="button" onClick={onClick} disabled={pending || waitSec > 0} className={pillClass("glass", "sm")}>
+      {pending ? <Spinner /> : <SparkIcon className="v2-btn-icon text-[var(--v2-teal)]" />}
       {pending ? "Thinking…" : waitSec > 0 ? `Think again in ${formatWait(waitSec)}` : "Think now"}
     </button>
   );
@@ -719,36 +805,53 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
       : "Portfolio value in $CHOG-equivalent across decisions";
 
   return (
-    <section className="card p-5 sm:p-6">
-      <h2 className="sr-only">Performance</h2>
+    <section aria-labelledby="performance-title" className="v2-card v2-card--feature v2-card--roomy">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className={LABEL}>Portfolio value</p>
-          <p className="mt-1 font-mono text-3xl tabular-nums">
-            {formatAmount(agent.lastValueChog, 2)} <span className="text-base text-muted">$CHOG-eq</span>
+          <p className="v2-kicker">Portfolio</p>
+          <h2 id="performance-title" className="v2-sr">
+            Performance
+          </h2>
+          <p className="mt-2 flex flex-wrap items-baseline gap-x-2">
+            <span className="v2-num text-[length:var(--v2-fs-stat)] leading-none text-[var(--v2-ink)]">
+              {formatAmount(agent.lastValueChog, 2)}
+            </span>
+            <span className="text-[15px] text-[var(--v2-nav)]">$CHOG-eq</span>
           </p>
-          <p className="mt-1 text-sm text-subtle">
+          <p className="mt-2 text-[13px] text-[var(--v2-faint)]">
             ≈ {formatUsd(agent.lastValueUsd)} · started at{" "}
-            <span className="font-mono">{formatAmount(agent.startValueChog, 2)}</span>
+            <span className="v2-num text-[var(--v2-nav)]">{formatAmount(agent.startValueChog, 2)}</span>
           </p>
         </div>
         <div className="sm:text-right">
-          <p className={LABEL}>Edge vs. holding $CHOG</p>
+          <p className="text-[13px] text-[var(--v2-nav)]">Edge vs. holding $CHOG</p>
           <PnlBadge pct={agent.pnlPct} size="lg" className="mt-2" />
         </div>
       </div>
 
-      <Sparkline values={history} baseline={agent.startValueChog} label={label} className="mt-6 h-24" />
+      <Sparkline values={history} baseline={agent.startValueChog} label={label} className="mt-7 h-32 sm:h-40" />
+      <ul className="v2-legend mt-4" aria-hidden>
+        <li>
+          <span className="v2-legend-swatch" />
+          Portfolio value
+        </li>
+        <li>
+          <span className="v2-legend-swatch" style={{ "--v2-swatch": "var(--v2-chart-2)" } as CSSProperties} />
+          Starting value
+        </li>
+      </ul>
 
-      <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-4">
-        <Stat label={paper ? "Paper $CHOG" : "$CHOG"}>{formatAmount(agent.portfolio.chog, 2)}</Stat>
-        {/* On-chain the quote leg is WMON (wrapped MON, 1:1), the token AnimrTradeGuard swaps against. */}
-        <Stat label={paper ? "Paper MON" : "WMON"}>{formatAmount(agent.portfolio.quote, 4)}</Stat>
-        <Stat label="Decisions">{agent.decisions}</Stat>
-        <Stat label="Last thought">{agent.lastDecisionAt ? <TimeAgo iso={agent.lastDecisionAt} /> : "—"}</Stat>
-      </dl>
-      <p className="mt-4 text-xs text-subtle">
-        Activated <TimeAgo iso={agent.activatedAt} />.{" "}
+      <StatRow
+        size="sm"
+        className="mt-6 border-t border-[var(--v2-line-soft)] pt-5"
+        stats={[
+          { key: "chog", label: paper ? "Paper $CHOG" : "$CHOG", value: formatAmount(agent.portfolio.chog, 2) },
+          // On-chain the quote leg is WMON (wrapped MON, 1:1), the token AnimrTradeGuard swaps against.
+          { key: "quote", label: paper ? "Paper MON" : "WMON", value: formatAmount(agent.portfolio.quote, 4) },
+          { key: "since", label: "Activated", value: <TimeAgo iso={agent.activatedAt} /> },
+        ]}
+      />
+      <p className="v2-note mt-5">
         {paper ? (
           `Paper portfolio, started from ${
             agent.bankroll === "wallet" ? "the $CHOG in this Chog's wallet" : "a demo bankroll"
@@ -772,88 +875,89 @@ function PerformanceCard({ agent, decisions }: { agent: AgentRecord; decisions: 
 }
 
 /**
- * A claimed agent's brain, from its newest LLM receipt: "glm-5.3 · 0G Compute · TEE enclave (TeeML), 0G Foundation ·
+ * A claimed agent's brain, from its newest LLM receipt, as chips: "glm-5.3 · 0G Compute · TeeML provider, 0G Foundation ·
  * $0.0018/call". The provider's tier comes from the API's labels (it describes the provider, not a check of the call);
  * "TEE verified" only when that receipt says so (teeVerified === true).
  */
-function BrainLine({ decisions, providers }: { decisions: Decision[]; providers?: ProviderLabels }) {
-  const latest = decisions.find((decision) => decision.decidedBy === "llm");
+function BrainLine({
+  latest,
+  hasDecisions,
+  providers,
+}: {
+  latest: Decision | undefined;
+  hasDecisions: boolean;
+  providers?: ProviderLabels;
+}) {
   if (!latest) {
     return (
-      <p className="mt-1.5 text-xs text-subtle">
-        <span className="text-muted">Brain:</span> an LLM on 0G Compute
-        {decisions.length > 0 ? " · its recent calls came from its trait instinct (rules) instead" : " · from its first decision"}
+      <p className="mt-3 text-[13px] text-[var(--v2-faint)]">
+        <span className="text-[var(--v2-nav)]">Brain:</span> an LLM on 0G Compute
+        {hasDecisions ? " · its recent calls came from its trait instinct (rules) instead" : " · from its first decision"}
       </p>
     );
   }
   const label = providerLabelOf(providers, latest.zg?.provider);
   const cost = receiptCostUsd(latest);
   return (
-    <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-subtle">
-      <span className="text-muted">Brain:</span>
-      <span className="font-medium text-foreground/90">{latest.model ?? "LLM"}</span>
-      <span aria-hidden>·</span>
-      <span>0G Compute</span>
+    <div className="mt-4 flex flex-wrap items-center gap-1.5" aria-label="Its brain, from its latest 0G receipt">
+      <span className="v2-overline mr-1">Brain</span>
+      <span className="v2-chip text-[var(--v2-ink)]">
+        <SparkIcon aria-hidden className="size-3.5 text-[var(--v2-teal)]" />
+        {latest.model ?? "LLM"}
+      </span>
+      <span className="v2-chip">0G Compute</span>
       {label && (
-        <>
-          <span aria-hidden>·</span>
-          <span title={PROVIDER_TEXT[label.label].long}>
-            {PROVIDER_TEXT[label.label].short}
-            {label.name && `, ${label.name}`}
-          </span>
-        </>
+        <span className="v2-chip" title={PROVIDER_TEXT[label.label].long}>
+          {PROVIDER_TEXT[label.label].short}
+          {label.name && <span className="text-[var(--v2-faint)]">· {label.name}</span>}
+        </span>
       )}
       {cost !== null && (
-        <>
-          <span aria-hidden>·</span>
-          <span className="font-mono tabular-nums" title="What its latest decision cost on 0G Compute">
-            {formatCallCost(cost)}/call
-          </span>
-        </>
+        <span className="v2-chip v2-num" title="What its latest decision cost on 0G Compute">
+          {formatCallCost(cost)}
+          <span className="text-[var(--v2-faint)]">/call</span>
+        </span>
       )}
-      {isTeeVerified(latest) && <span className="text-success">· TEE verified</span>}
-    </p>
+      {isTeeVerified(latest) && (
+        <Badge tone="success" dot>
+          TEE verified
+        </Badge>
+      )}
+    </div>
   );
 }
 
 function PersonaCard({ persona }: { persona: Persona }) {
   return (
-    <section className="card p-5">
-      <h2 className={LABEL}>Persona</h2>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <p className="text-lg font-semibold">{persona.name}</p>
-        <StyleChip style={persona.style} />
+    <section aria-labelledby="persona-title" className="v2-card">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="v2-kicker">Persona</p>
+          <h2 id="persona-title" className="v2-h3 mt-1.5">
+            {persona.name}
+          </h2>
+        </div>
+        <StyleBadge style={persona.style} />
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{persona.description}</p>
-      <p className="mt-3 text-xs text-subtle">
-        Trades at most{" "}
-        <span className="font-mono text-foreground">{formatAmount(persona.maxTradeBps / 100, 2)}%</span> of a balance
-        per decision.
-      </p>
+      <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-nav)]">{persona.description}</p>
+      <dl className="v2-kv mt-4 border-t border-[var(--v2-line-soft)] pt-4">
+        <div>
+          <dt>Largest trade</dt>
+          <dd className="v2-num text-[15px]">{formatAmount(persona.maxTradeBps / 100, 2)}% of a balance</dd>
+        </div>
+      </dl>
     </section>
   );
 }
 
-function Stat({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <dt className={LABEL}>{label}</dt>
-      <dd className="mt-1 font-mono text-sm tabular-nums">{children}</dd>
-    </div>
-  );
+const STYLE_LABEL: Record<TradingStyle, string> = { aggressive: "Aggressive", balanced: "Balanced", cautious: "Cautious" };
+const STYLE_TONE: Record<TradingStyle, BadgeTone> = { aggressive: "warning", balanced: "violet", cautious: "teal" };
+
+function StyleBadge({ style }: { style: TradingStyle }) {
+  return <Badge tone={STYLE_TONE[style] ?? "neutral"}>{style}</Badge>;
 }
 
-function StyleChip({ style }: { style: TradingStyle }) {
-  return (
-    <span
-      className={`rounded px-1.5 py-px text-[10px] uppercase tracking-wider ring-1 ring-inset ${STYLE_TONE[style] ?? STYLE_TONE.balanced}`}
-    >
-      {style}
-    </span>
-  );
-}
-
-function StatusChip({
+function StatusBadge({
   agent,
   pending,
   failed,
@@ -865,22 +969,25 @@ function StatusChip({
   /** Unclaimed Chogs with trait DNA aren't asleep: their instinct trades in the League. */
   wild: boolean;
 }) {
-  const [text, tone] = pending
-    ? ["Loading…", "animate-pulse"]
-    : failed
-      ? ["Status unknown", ""]
-      : !agent
-        ? wild
-          ? ["Wild · trading on instinct", "border-accent/40 text-accent-strong"]
-          : ["Not activated", ""]
-        : agent.active
-          ? ["AI active", "border-success/40 text-success"]
-          : ["Paused", "border-warning/40 text-warning"];
-  return (
-    <span className={`chip ${tone}`}>
-      {agent?.active && !pending && <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-success" />}
-      {text}
-    </span>
+  if (pending) return <Badge>Loading…</Badge>;
+  if (failed) return <Badge>Status unknown</Badge>;
+  if (!agent) {
+    return wild ? (
+      <Badge tone="violet" dot>
+        Wild · trading on instinct
+      </Badge>
+    ) : (
+      <Badge dot>Not activated</Badge>
+    );
+  }
+  return agent.active ? (
+    <Badge tone="teal" live>
+      AI active
+    </Badge>
+  ) : (
+    <Badge tone="warning" dot>
+      Paused
+    </Badge>
   );
 }
 
@@ -888,8 +995,14 @@ function StatusChip({
 function ChogImage({ src, tokenId, alt, pending }: { src?: string; tokenId: string; alt: string; pending: boolean }) {
   const [failed, setFailed] = useState<string[]>([]);
   const current = (src ? [chogThumbUrl(src, 288), src] : []).find((candidate) => !failed.includes(candidate));
+  const frame = "v2-avatar v2-avatar--xl size-32 rounded-[22px] sm:size-[168px] sm:rounded-[26px] xl:size-[212px] xl:rounded-[30px]";
   return (
-    <div className="relative size-28 shrink-0 overflow-hidden rounded-2xl bg-linear-to-br from-accent/50 to-accent/5 ring-1 ring-line sm:size-36">
+    <div className="relative w-fit">
+      {/* One soft violet/teal bloom behind the portrait, the hero's colours. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(closest-side,rgb(111_90_220/0.32),rgb(159_240_236/0.06)_60%,transparent)] blur-xl"
+      />
       {current ? (
         // NFT images live on arbitrary hosts (IPFS gateways etc.), so next/image's allowlist doesn't fit.
         // eslint-disable-next-line @next/next/no-img-element
@@ -900,13 +1013,15 @@ function ChogImage({ src, tokenId, alt, pending }: { src?: string; tokenId: stri
           decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setFailed((list) => [...list, current])}
-          className="size-full object-cover"
+          className={frame}
         />
       ) : (
         <span
-          className={`flex size-full items-center justify-center font-mono text-lg text-white/80 ${pending ? "animate-pulse" : ""}`}
+          role="img"
+          aria-label={alt}
+          className={`${frame} grid place-items-center bg-[var(--v2-grad-tile)] text-white/80 ${pending ? "animate-pulse" : ""}`}
         >
-          #{tokenId}
+          <span className="v2-num text-2xl">#{tokenId}</span>
         </span>
       )}
     </div>
@@ -925,7 +1040,7 @@ function CopyButton({ value }: { value: string }) {
     setTimeout(() => setState("idle"), 1500);
   };
   return (
-    <button type="button" onClick={copy} className="btn btn-secondary px-2.5 py-1 text-xs">
+    <button type="button" onClick={copy} className={`${pillClass("glass", "sm")} h-8 px-3 text-xs`}>
       <span aria-live="polite">{state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : "Copy address"}</span>
     </button>
   );
@@ -938,34 +1053,35 @@ function AddressLink({ address }: { address: Address }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-mono text-muted underline-offset-2 hover:text-foreground hover:underline"
+      className="v2-mono text-[var(--v2-nav)] underline-offset-[3px] hover:text-[var(--v2-ink)] hover:underline"
     >
       {shortAddress(address)}
     </a>
   ) : (
-    <span className="font-mono text-muted">{shortAddress(address)}</span>
+    <span className="v2-mono text-[var(--v2-nav)]">{shortAddress(address)}</span>
   );
 }
 
 function Hint({ children }: { children: ReactNode }) {
-  return <div className="card px-5 py-4 text-sm leading-relaxed text-muted">{children}</div>;
+  return <div className="v2-card v2-card--tight px-5 text-[15px] leading-relaxed text-[var(--v2-nav)]">{children}</div>;
 }
 
 export function AgentProfileSkeleton() {
   return (
-    <div role="status" className="space-y-6">
-      <span className="sr-only">Loading Chog…</span>
-      <div aria-hidden className="card flex items-center gap-5 p-6">
-        <div className="size-28 shrink-0 animate-pulse rounded-2xl bg-surface-2 sm:size-36" />
-        <div className="flex-1 space-y-3">
-          <div className="h-4 w-24 animate-pulse rounded bg-surface-2" />
-          <div className="h-7 w-48 animate-pulse rounded bg-surface-2" />
-          <div className="h-4 w-32 animate-pulse rounded bg-surface-2" />
+    <div role="status" className="space-y-8">
+      <span className="v2-sr">Loading Chog…</span>
+      <div aria-hidden className="grid gap-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-8">
+        <span className="v2-skeleton size-32 rounded-[22px] sm:size-[168px] sm:rounded-[26px] xl:size-[212px] xl:rounded-[30px]" />
+        <div className="space-y-4">
+          <span className="v2-skeleton h-6 w-44 rounded-full" />
+          <span className="v2-skeleton h-14 w-72 max-w-full" />
+          <span className="v2-skeleton v2-skeleton--text w-56" />
         </div>
       </div>
-      <div aria-hidden className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="card h-72 animate-pulse" />
-        <div className="card h-48 animate-pulse" />
+      <span aria-hidden className="v2-skeleton block h-[104px] rounded-[var(--v2-r-lg)]" />
+      <div aria-hidden className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
+        <span className="v2-skeleton v2-skeleton--card h-80" />
+        <span className="v2-skeleton v2-skeleton--card h-64" />
       </div>
     </div>
   );

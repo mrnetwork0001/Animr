@@ -1,5 +1,6 @@
 import { GUARD_LIMIT_CEILINGS, animrTradeGuardAddress } from "@/lib/contracts/animr-trade-guard";
 import { explorerAddressUrl, shortAddress } from "@/lib/format";
+import "@/app/design-v2.css";
 
 // No hooks: renders from Server and Client Components alike (reusable on the landing page).
 
@@ -20,7 +21,7 @@ const ENFORCED = [
 ] as const;
 
 type GuardGuaranteesProps = {
-  /** "card" wraps it in a .card; "plain" for use inside another card. */
+  /** "card" wraps it in a v2 glass card; "plain" for use inside another card. */
   variant?: "card" | "plain";
   /** Defaults to "live" once NEXT_PUBLIC_TRADE_GUARD_ADDRESS is set, else "launching". */
   status?: "live" | "launching";
@@ -43,36 +44,30 @@ export function GuardGuarantees({
   const Sub = Heading === "h2" ? "h3" : "h4";
   const guardHref = animrTradeGuardAddress ? explorerAddressUrl(animrTradeGuardAddress) : undefined;
   return (
-    <section className={`${variant === "card" ? "card p-5 sm:p-6" : ""} ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Heading className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <ShieldIcon className="size-5 text-accent-strong" />
+    <section className={`${variant === "card" ? "v2-card v2-card--roomy" : ""} ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Heading className="flex items-center gap-2.5 text-[length:var(--v2-fs-h3)] font-[520] tracking-[-0.012em] text-[var(--v2-ink)]">
+          <ShieldIcon className="size-5 text-[var(--v2-teal)]" />
           Trades, never withdraws
         </Heading>
         {state === "live" ? (
-          <span className="chip border-success/40 text-success">
-            <span aria-hidden className="size-1.5 rounded-full bg-success" />
-            Guard deployed
-          </span>
+          <span className="v2-badge v2-badge--success v2-badge--dot">Guard deployed</span>
         ) : (
-          <span className="chip border-warning/40 text-warning">
-            <span aria-hidden className="size-1.5 rounded-full bg-warning" />
-            Launching
-          </span>
+          <span className="v2-badge v2-badge--warning v2-badge--dot">Launching</span>
         )}
       </div>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
+      <p className="mt-2 max-w-[66ch] text-[15px] leading-relaxed text-[var(--v2-nav)]">
         The AI never holds the keys to a Chog&apos;s wallet. It gets one narrow door:{" "}
-        <span className="text-foreground">AnimrTradeGuard</span>, a contract that can only make bounded swaps, and every
-        swap&apos;s output lands back in the same wallet.
+        <span className="text-[var(--v2-ink)]">AnimrTradeGuard</span>, a contract that can only make bounded swaps, and
+        every swap&apos;s output lands back in the same wallet.
       </p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid gap-5 sm:grid-cols-2">
         <div>
-          <Sub className="text-xs font-semibold tracking-wider text-success uppercase">The AI can</Sub>
-          <ul className="mt-2 space-y-2">
+          <Sub className="v2-overline text-[var(--v2-success)]">The AI can</Sub>
+          <ul className="mt-3 space-y-2.5">
             {CAN.map((item) => (
-              <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-foreground">
+              <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-[var(--v2-ink)]">
                 <Mark ok />
                 {item}
               </li>
@@ -80,10 +75,10 @@ export function GuardGuarantees({
           </ul>
         </div>
         <div>
-          <Sub className="text-xs font-semibold tracking-wider text-danger uppercase">The AI can never</Sub>
-          <ul className="mt-2 space-y-2">
+          <Sub className="v2-overline text-[var(--v2-danger)]">The AI can never</Sub>
+          <ul className="mt-3 space-y-2.5">
             {CANNOT.map((item) => (
-              <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-muted">
+              <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-[var(--v2-muted)]">
                 <Mark ok={false} />
                 {item}
               </li>
@@ -93,33 +88,31 @@ export function GuardGuarantees({
       </div>
 
       {!compact && (
-        <ul className="mt-4 space-y-1.5 border-t border-line pt-4">
+        <ul className="mt-5 space-y-2 border-t border-[var(--v2-line-soft)] pt-5">
           {ENFORCED.map((item) => (
-            <li key={item} className="flex gap-2.5 text-xs leading-relaxed text-muted">
-              <span aria-hidden className="mt-1.5 size-1 shrink-0 rounded-full bg-accent-strong" />
+            <li key={item} className="flex gap-2.5 text-[13px] leading-relaxed text-[var(--v2-nav)]">
+              <span
+                aria-hidden
+                className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[var(--v2-teal)] shadow-[0_0_6px_rgb(159_240_236/0.7)]"
+              />
               {item}
             </li>
           ))}
         </ul>
       )}
 
-      <p className="mt-4 text-xs leading-relaxed text-subtle">
+      <p className="v2-note mt-5">
         Limits bound what the AI can do, not whether it profits: trading can lose value.
         {animrTradeGuardAddress && (
           <>
             {" "}
             Guard contract:{" "}
             {guardHref ? (
-              <a
-                href={guardHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-muted underline-offset-2 hover:text-foreground hover:underline"
-              >
+              <a href={guardHref} target="_blank" rel="noopener noreferrer" className="v2-link v2-mono">
                 {shortAddress(animrTradeGuardAddress)} ↗
               </a>
             ) : (
-              <span className="font-mono">{shortAddress(animrTradeGuardAddress)}</span>
+              <span className="v2-mono">{shortAddress(animrTradeGuardAddress)}</span>
             )}
           </>
         )}
@@ -132,16 +125,13 @@ function Mark({ ok }: { ok: boolean }) {
   return (
     <span
       aria-hidden
-      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${ok ? "bg-success/15 text-success" : "bg-danger/15 text-danger"}`}
+      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border ${
+        ok
+          ? "border-[rgb(98_224_166/0.32)] bg-[rgb(98_224_166/0.1)] text-[var(--v2-success)]"
+          : "border-[rgb(255_122_138/0.3)] bg-[rgb(255_122_138/0.08)] text-[var(--v2-danger)]"
+      }`}
     >
-      <svg
-        viewBox="0 0 16 16"
-        className="size-3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      >
+      <svg viewBox="0 0 16 16" className="size-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
         {ok ? <path d="m3.5 8.5 3 3 6-7" strokeLinejoin="round" /> : <path d="m4.5 4.5 7 7m0-7-7 7" />}
       </svg>
     </span>

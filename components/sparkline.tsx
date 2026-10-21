@@ -1,4 +1,5 @@
 import { useId } from "react";
+import "@/app/design-v2.css";
 
 // viewBox units; the SVG stretches to its container (preserveAspectRatio="none").
 const W = 100;
@@ -16,7 +17,10 @@ type SparklineProps = {
   className?: string;
 };
 
-/** Dependency-free inline SVG sparkline, drawn in the accent color. */
+/**
+ * Dependency-free inline SVG sparkline in the v2 chart recipe: the subject in teal with a soft area and one glow,
+ * the reference line dashed violet, three faint grid lines and a hollow end marker.
+ */
 export function Sparkline({ values, label, baseline, className = "h-16" }: SparklineProps) {
   const gradientId = `spark${useId().replace(/[^\w-]/g, "")}`;
   const points = values.filter(Number.isFinite);
@@ -26,7 +30,7 @@ export function Sparkline({ values, label, baseline, className = "h-16" }: Spark
       <div
         role="img"
         aria-label={`${label}: not enough data yet`}
-        className={`flex items-center justify-center rounded-lg border border-dashed border-line text-xs text-subtle ${className}`}
+        className={`flex items-center justify-center rounded-[var(--v2-r-md)] border border-dashed border-[var(--v2-line)] text-xs text-[var(--v2-faint)] ${className}`}
       >
         Not enough data to chart yet
       </div>
@@ -45,7 +49,7 @@ export function Sparkline({ values, label, baseline, className = "h-16" }: Spark
   const last = points[points.length - 1];
 
   return (
-    <div className={`relative text-accent ${className}`}>
+    <div className={`v2-chart relative ${className}`}>
       <svg
         role="img"
         aria-label={label}
@@ -56,10 +60,13 @@ export function Sparkline({ values, label, baseline, className = "h-16" }: Spark
         <title>{label}</title>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--v2-chart-1)" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="var(--v2-chart-1)" stopOpacity="0" />
           </linearGradient>
         </defs>
+        {[PAD, H / 2, H - PAD].map((gy) => (
+          <line key={gy} className="grid" x1="0" x2={W} y1={gy} y2={gy} strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        ))}
         <path d={area} fill={`url(#${gradientId})`} />
         {hasBaseline && (
           <line
@@ -67,26 +74,27 @@ export function Sparkline({ values, label, baseline, className = "h-16" }: Spark
             x2={W}
             y1={y(baseline)}
             y2={y(baseline)}
-            className="stroke-subtle"
-            strokeWidth="1"
-            strokeDasharray="3 3"
+            stroke="var(--v2-chart-2)"
+            strokeWidth="1.6"
+            strokeDasharray="4 5"
             vectorEffect="non-scaling-stroke"
           />
         )}
         <path
           d={line}
           fill="none"
-          stroke="currentColor"
+          stroke="var(--v2-chart-1)"
           strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
+          style={{ filter: "drop-shadow(0 0 6px rgb(159 240 236 / .45))" }}
         />
       </svg>
-      {/* An HTML dot stays round however the SVG is stretched. */}
+      {/* An HTML marker stays round however the SVG is stretched. */}
       <span
         aria-hidden
-        className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent ring-4 ring-accent/25"
+        className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--v2-chart-1)] bg-[#0d0c11]"
         style={{ left: "100%", top: `${(y(last) / H) * 100}%` }}
       />
     </div>

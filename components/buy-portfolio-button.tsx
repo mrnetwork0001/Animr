@@ -1,3 +1,5 @@
+import { ExternalIcon } from "@/components/v2/icons";
+import { pillClass } from "@/components/v2/primitives";
 import { appConfig } from "@/lib/config";
 import { marketplaceUrl } from "@/lib/format";
 
@@ -10,16 +12,20 @@ export function BuyPortfolioButton({
 }: {
   tokenId: string;
   className?: string;
+  /** "primary" is the violet pill (one per view); "secondary" the glass one. */
   variant?: "primary" | "secondary";
   caption?: string;
 }) {
   const href = appConfig.chogNft ? marketplaceUrl(appConfig.chogNft, tokenId) : undefined;
+  const pill = pillClass(variant === "primary" ? "primary" : "glass");
 
   return (
     <div className={className}>
       {href ? (
-        <a href={href} target="_blank" rel="noopener noreferrer" className={`btn ${variant === "primary" ? "btn-primary" : "btn-secondary"} px-4 py-2.5`}>
-          Buy this Portfolio <span aria-hidden>↗</span>
+        <a href={href} target="_blank" rel="noopener noreferrer" className={pill}>
+          Buy this Portfolio
+          <ExternalIcon className="v2-btn-icon" />
+          <span className="v2-sr"> (opens the marketplace in a new tab)</span>
         </a>
       ) : (
         <span
@@ -30,12 +36,12 @@ export function BuyPortfolioButton({
               : "Chog NFT contract not configured (NEXT_PUBLIC_CHOG_NFT_ADDRESS)."
           }
         >
-          <button type="button" disabled className="btn btn-secondary pointer-events-none px-4 py-2.5">
+          <button type="button" disabled className={pillClass("glass")}>
             Buy this Portfolio
           </button>
         </span>
       )}
-      <p className="mt-2 text-xs text-muted">{caption}</p>
+      {caption && <p className="v2-note mt-2.5 max-w-[34ch]">{caption}</p>}
     </div>
   );
 }

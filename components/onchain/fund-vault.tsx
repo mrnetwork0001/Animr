@@ -71,9 +71,9 @@ export function FundVault({ tba, viewer, canAct, balances, tx }: FundVaultProps)
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted">
-        The vault holds <span className="font-mono text-foreground">{fmt(balances.chog, 2)}</span> $CHOG and{" "}
-        <span className="font-mono text-foreground">{fmt(balances.wmon)}</span> WMON. Deposits stay in the Chog&apos;s
+      <p className="text-sm leading-relaxed text-[var(--v2-nav)]">
+        The vault holds <span className="v2-num text-[var(--v2-ink)]">{fmt(balances.chog, 2)}</span> $CHOG and{" "}
+        <span className="v2-num text-[var(--v2-ink)]">{fmt(balances.wmon)}</span> WMON. Deposits stay in the Chog&apos;s
         wallet: whoever holds the Chog controls them, and the AI can only swap them.
       </p>
       {canAct && viewer ? (
@@ -82,7 +82,7 @@ export function FundVault({ tba, viewer, canAct, balances, tx }: FundVaultProps)
           <WrapAndDepositForm tba={tba} viewer={viewer} monBalance={wallet.data?.mon} tx={tx} />
         </>
       ) : (
-        <p className="text-sm text-subtle">The holder deposits from their wallet.</p>
+        <p className="text-sm text-[var(--v2-faint)]">The holder deposits from their wallet.</p>
       )}
       {balances.mon > BigInt(0) && (
         <WrapInVault tba={tba} viewer={canAct ? viewer : undefined} amount={balances.mon} tx={tx} />
@@ -93,8 +93,8 @@ export function FundVault({ tba, viewer, canAct, balances, tx }: FundVaultProps)
 
 function Box({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-2/50 p-4">
-      <h4 className="text-sm font-medium">{title}</h4>
+    <div className="rounded-[var(--v2-r-md)] border border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.025)] p-4">
+      <h4 className="text-sm font-[520] text-[var(--v2-ink)]">{title}</h4>
       {children}
     </div>
   );
@@ -129,14 +129,14 @@ function AmountInput({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         disabled={disabled}
-        className="input pr-14 font-mono"
+        className="v2-input v2-num pr-16 text-[16px]"
       />
       {max !== undefined && max > BigInt(0) && (
         <button
           type="button"
           onClick={() => onChange(formatUnits(max, DECIMALS))}
           disabled={disabled}
-          className="absolute inset-y-0 right-2 my-auto h-7 rounded-md px-2 text-xs font-semibold text-accent-strong hover:bg-accent/15"
+          className="absolute inset-y-0 right-2 my-auto h-8 rounded-full px-3 text-xs font-[520] text-[var(--v2-kicker)] hover:bg-[rgb(159_240_236/0.1)]"
         >
           Max
         </button>
@@ -208,7 +208,7 @@ function DepositForm({
               role="radio"
               aria-checked={token === key}
               onClick={() => setToken(key)}
-              className={`chip transition-colors hover:text-foreground ${token === key ? "border-accent bg-accent/15 text-foreground" : ""}`}
+              className={`v2-chip cursor-pointer ${token === key ? "is-active" : ""}`}
             >
               {TOKENS[key].label}
             </button>
@@ -224,15 +224,15 @@ function DepositForm({
             error={check.error}
             disabled={tx.busy}
           />
-          <button type="submit" disabled={check.value === undefined || tx.busy} className="btn btn-primary">
+          <button type="submit" disabled={check.value === undefined || tx.busy} className="v2-btn-primary h-12">
             Deposit
           </button>
         </div>
-        <p className="mt-2 text-xs text-subtle">
-          Your wallet: <span className="font-mono">{available === undefined ? "…" : fmt(available)}</span> {label}
+        <p className="v2-help mt-2 block">
+          Your wallet: <span className="v2-num text-[var(--v2-nav)]">{available === undefined ? "…" : fmt(available)}</span> {label}
         </p>
         {check.error && (
-          <p id={errorId} role="alert" className="mt-1 text-xs text-danger">
+          <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--v2-danger)]">
             {check.error}
           </p>
         )}
@@ -308,7 +308,7 @@ function WrapAndDepositForm({
   return (
     <form onSubmit={submit}>
       <Box title={`Only have ${MON}? Wrap & deposit`}>
-        <p className="mt-1 text-xs leading-relaxed text-subtle">
+        <p className="v2-help mt-1 block leading-relaxed">
           Two transactions: wrap {MON} into WMON (1:1, WMON&apos;s <code className="font-mono">deposit()</code>), then
           send the WMON to the vault. If the second one is cancelled, the WMON stays in your wallet and the Deposit form
           above can send it.
@@ -323,16 +323,16 @@ function WrapAndDepositForm({
             error={check.error}
             disabled={tx.busy}
           />
-          <button type="submit" disabled={check.value === undefined || tx.busy} className="btn btn-secondary">
+          <button type="submit" disabled={check.value === undefined || tx.busy} className="v2-btn-glass h-12">
             Wrap &amp; deposit
           </button>
         </div>
-        <p className="mt-2 text-xs text-subtle">
-          Your wallet: <span className="font-mono">{monBalance === undefined ? "…" : fmt(monBalance)}</span> {MON}
+        <p className="v2-help mt-2 block">
+          Your wallet: <span className="v2-num text-[var(--v2-nav)]">{monBalance === undefined ? "…" : fmt(monBalance)}</span> {MON}
           {monBalance !== undefined && " (Max keeps 0.1 for gas)"}
         </p>
         {check.error && (
-          <p id={errorId} role="alert" className="mt-1 text-xs text-danger">
+          <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--v2-danger)]">
             {check.error}
           </p>
         )}
@@ -388,13 +388,13 @@ function WrapInVault({
 
   return (
     <Box title={`${fmt(amount)} ${MON} is sitting idle in the vault`}>
-      <p className="mt-1 text-xs leading-relaxed text-subtle">
+      <p className="v2-help mt-1 block leading-relaxed">
         The guard trades WMON, not native {MON}. The holder can have the Chog&apos;s wallet wrap it in place (one
         transaction through the wallet&apos;s own <code className="font-mono">execute()</code>; nothing leaves the
         wallet).
       </p>
       {viewer && (
-        <button type="button" onClick={wrap} disabled={tx.busy} className="btn btn-secondary mt-3">
+        <button type="button" onClick={wrap} disabled={tx.busy} className="v2-btn-glass v2-btn--sm mt-3">
           Wrap {fmt(amount)} {MON} in the vault
         </button>
       )}

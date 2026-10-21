@@ -7,6 +7,7 @@ import { waitForTransactionReceipt } from "wagmi/actions";
 import { appConfig } from "@/lib/config";
 import { explorerTxUrl } from "@/lib/format";
 import { OutcomeError, TxRevertedError, describeTxError } from "./tx-errors";
+import "@/app/design-v2.css";
 
 export const chainId = appConfig.chain.id;
 
@@ -108,13 +109,7 @@ function TxLinks({ hashes }: { hashes: Hash[] }) {
         const href = explorerTxUrl(hash);
         if (!href) return null;
         return (
-          <a
-            key={hash}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
+          <a key={hash} href={href} target="_blank" rel="noopener noreferrer" className="v2-link text-[13px]">
             {hashes.length > 1 ? `Transaction ${i + 1} ↗` : "View transaction ↗"}
           </a>
         );
@@ -124,14 +119,25 @@ function TxLinks({ hashes }: { hashes: Hash[] }) {
 }
 
 /**
- * Status line for a TxPlan in flight, with explorer links for every hash sent. With `origin`, it renders only for
- * plans started with that origin (one flow, several places in the UI).
+ * Status panel for a TxPlan in flight (an inline v2 toast: teal while pending, green when confirmed and verified,
+ * red on failure), with explorer links for every hash sent. With `origin`, it renders only for plans started with
+ * that origin (one flow, several places in the UI).
  */
 export function TxStatus({ progress, origin }: { progress: TxProgress; origin?: string }) {
   if (progress.phase === "idle") return null;
   if (origin !== undefined && progress.origin !== origin) return null;
   const pending = progress.phase === "wallet" || progress.phase === "confirming" || progress.phase === "verifying";
-  const tone = progress.phase === "done" ? "text-success" : progress.phase === "error" ? "text-danger" : "text-muted";
+  const tone = progress.phase === "done" ? "v2-toast--success" : progress.phase === "error" ? "v2-toast--danger" : "";
+  const title =
+    progress.phase === "wallet"
+      ? "Waiting for your wallet"
+      : progress.phase === "confirming"
+        ? "Submitted"
+        : progress.phase === "verifying"
+          ? "Confirmed"
+          : progress.phase === "done"
+            ? "Done"
+            : "Didn't go through";
   const lead =
     "total" in progress && progress.total > 1 ? `Step ${progress.step} of ${progress.total} · ${progress.label}: ` : "";
   const text =
@@ -142,18 +148,26 @@ export function TxStatus({ progress, origin }: { progress: TxProgress; origin?: 
       : progress.phase === "confirming"
         ? lead
           ? `${lead}submitted, waiting for confirmation…`
-          : "Submitted. Waiting for confirmation…"
+          : "Waiting for confirmation…"
         : progress.phase === "verifying"
-          ? "Confirmed. Checking the result on-chain…"
+          ? "Checking the result on-chain…"
           : progress.message;
   return (
-    <p role="status" className={`mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm ${tone}`}>
-      {pending && (
-        <span aria-hidden className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+    <div role="status" className={`v2-toast ${tone} mt-3 shadow-none`}>
+      <div className="min-w-0">
+        <span className="v2-toast-title">{title}</span>
+        <span className="break-words">{text}</span>
+        {progress.hashes.length > 0 && (
+          <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+            <TxLinks hashes={progress.hashes} />
+          </span>
+        )}
+      </div>
+      {pending ? (
+        <span aria-hidden className="mt-1 size-3.5 animate-spin rounded-full border-2 border-[var(--v2-teal)] border-t-transparent" />
+      ) : (
+        <span />
       )}
-      {progress.phase === "done" && <span aria-hidden>✓</span>}
-      <span>{text}</span>
-      <TxLinks hashes={progress.hashes} />
-    </p>
+    </div>
   );
 }

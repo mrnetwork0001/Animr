@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { maxUint256 } from "viem";
 import { AgentProfile, AgentProfileSkeleton, type ChogDna } from "@/components/agent-profile";
 import { ChogJump } from "@/components/chog-jump";
+import { PillLink } from "@/components/v2";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
 import { chogLabel } from "@/lib/chog-id";
 import { appConfig } from "@/lib/config";
@@ -44,6 +44,8 @@ function metadataNameOf(tokenId: string): string | undefined {
   return HAS_SNAPSHOT ? getChog(Number(tokenId))?.name || undefined : undefined;
 }
 
+export const viewport: Viewport = { themeColor: "#0d0c11" };
+
 export async function generateMetadata({ params }: PageProps<"/chog/[tokenId]">): Promise<Metadata> {
   const tokenId = parseTokenId((await params).tokenId);
   if (!tokenId) return { title: "Chog not found" };
@@ -58,17 +60,19 @@ export default function ChogPage({ params }: PageProps<"/chog/[tokenId]">) {
   // Token id -> name number ("CHOG #1462" is token 1), so the header search finds a Chog by either.
   const nameNumbers = HAS_SNAPSHOT ? allChogs().map((chog) => Number(chog.metadataId) || 0) : undefined;
   return (
-    <div className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-20 sm:px-6 sm:pt-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <Link href="/league" className="inline-flex text-sm text-muted transition-colors hover:text-foreground">
-          ← The League
-        </Link>
+    <div className="v2-shell flex-1 pt-5 pb-20 sm:pt-7 sm:pb-28">
+      <nav aria-label="Chog navigation" className="flex flex-wrap items-center justify-between gap-3">
+        <PillLink href="/league" variant="ghost" size="sm" className="-ml-3">
+          <span aria-hidden>←</span> The League
+        </PillLink>
         {nameNumbers && <ChogJump nameNumbers={nameNumbers} />}
-      </div>
+      </nav>
       {/* params are request data under Cache Components, so they're read inside the boundary. */}
-      <Suspense fallback={<AgentProfileSkeleton />}>
-        <Profile params={params} />
-      </Suspense>
+      <div className="mt-4 sm:mt-6">
+        <Suspense fallback={<AgentProfileSkeleton />}>
+          <Profile params={params} />
+        </Suspense>
+      </div>
     </div>
   );
 }
