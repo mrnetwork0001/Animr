@@ -84,17 +84,29 @@ export const heroCards: readonly HeroCard[] = [
   { key: "guard", href: "/guard", kicker: "AnimrTradeGuard", title: ["The AI can trade,", "but it can never withdraw."] },
 ];
 
-/** Text wordmarks only (no third-party logo files), styled per word in hero.css. */
-export const heroBuiltOn = {
+/**
+ * The "Built on" row. Each logo is the brand's own file, stored in public/landing/logos (never hotlinked),
+ * width × height = the SVG's own viewBox, so the browser reserves the right box before it loads:
+ * - Monad: "Full Logo White" (the horizontal lockup) from the Monad Brand and Media Kit,
+ *   https://monad.xyz/brand-and-media-kit. Its guidelines forbid recolouring, lowering opacity and filters,
+ *   so it (and the others, for one even row) is drawn as supplied, in white, at full opacity.
+ * - 0G: "White-OG-Logo" from the 0G brand kit, https://0g.ai/brandkit.
+ * - Tokenbound: the wordmark from https://tokenbound.org/tokenbound-wordmark.svg, its fill set to white.
+ * - ERC-6551 has no official logo (the standard's GitHub org uses a personal avatar), so it stays a text mark.
+ */
+export type HeroBuiltOnMark =
+  | { kind: "logo"; key: "monad" | "0g" | "tokenbound"; name: string; src: string; width: number; height: number }
+  | { kind: "text"; key: "erc6551"; name: string };
+
+export const heroBuiltOn: { label: string; marks: readonly HeroBuiltOnMark[] } = {
   label: "Built on",
   marks: [
-    { text: "Monad", style: "italic" },
-    { text: "0G Compute", style: "italic" },
-    { text: "erc-6551", style: "tracked" },
-    // Written in sentence case so screen readers say the word; hero.css sets it in capitals.
-    { text: "Tokenbound", style: "caps" },
+    { kind: "logo", key: "monad", name: "Monad", src: "/landing/logos/monad.svg", width: 423, height: 80 },
+    { kind: "logo", key: "0g", name: "0G", src: "/landing/logos/0g.svg", width: 248, height: 120 },
+    { kind: "text", key: "erc6551", name: "ERC-6551" },
+    { kind: "logo", key: "tokenbound", name: "Tokenbound", src: "/landing/logos/tokenbound.svg", width: 401, height: 51 },
   ],
-} as const;
+};
 
 /** The artwork: a 5 s, 960×960 H.264 loop (muted, no audio track) and its 1200×1200 WebP still. */
 export const heroMedia = {

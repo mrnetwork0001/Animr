@@ -242,8 +242,21 @@ export async function AnimrHero({ className = "", children, footer }: AnimrHeroP
                 </p>
                 <ul className="hx-logos-list" aria-labelledby="hx-built-on">
                   {heroBuiltOn.marks.map((mark) => (
-                    <li key={mark.text} className={`hx-mark hx-mark--${mark.style}`} data-hx="logo">
-                      {mark.text}
+                    <li key={mark.key} className={`hx-mark hx-mark--${mark.key}`} data-hx="logo">
+                      {mark.kind === "logo" ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- a few-hundred-byte SVG: nothing to resize
+                        <img
+                          className="hx-mark-img"
+                          src={mark.src}
+                          alt={mark.name}
+                          width={mark.width}
+                          height={mark.height}
+                          decoding="async"
+                          draggable={false}
+                        />
+                      ) : (
+                        mark.name
+                      )}
                     </li>
                   ))}
                 </ul>

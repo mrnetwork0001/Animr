@@ -34,7 +34,7 @@
   --hx-wordmark: #bdbdc1;
   --hx-ai: #9ff0ec;
   --hx-kicker: #bdf7ee;
-  --hx-logo: #bcbcbf;
+  --hx-logo: #ffffff;
   /* Footnote and "Built on": 6:1 on the background. */
   --hx-faint: #8f8e96;
   --hx-violet-a: #4d19b1;
@@ -769,28 +769,45 @@ body:has(.hx-page) {
   list-style: none;
 }
 
+/* Each brand's own logo file, as supplied: white, full opacity, no filter (Monad's guidelines forbid
+   recolouring, fading or filtering its logo, so the whole row follows suit). --h is the drawn height in
+   design units, set per logo so the letterforms read at one optical size; the row centres them. */
 .hx-mark {
+  --h: 30;
+  display: flex;
+  align-items: center;
+  height: calc(var(--h) * var(--k));
   color: var(--hx-logo);
-  font-family: var(--hx-font-display), ui-sans-serif, system-ui, sans-serif;
-  font-size: calc(36 * var(--k));
   line-height: 1;
   white-space: nowrap;
 }
-.hx-mark--italic {
-  font-style: italic;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+.hx-mark-img {
+  display: block;
+  width: auto;
+  height: 100%;
+  user-select: none;
 }
-.hx-mark--tracked {
-  font-weight: 400;
-  letter-spacing: 0.24em;
-  margin-right: -0.24em;
+/* Monad's letters are 80% of its lockup's height, the mark the full height. */
+.hx-mark--monad {
+  --h: 38;
 }
-.hx-mark--caps {
-  font-style: italic;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+/* 0G's two glyphs fill their box. */
+.hx-mark--0g {
+  --h: 32;
+}
+/* Ascender height (x-height is 70% of it); a heavy wordmark, so it sits a little smaller. */
+.hx-mark--tokenbound {
+  --h: 26;
+}
+/* ERC-6551 has no official logo: a plain typographic mark, trimmed to its cap height so it centres. */
+.hx-mark--erc6551 {
+  --h: 30;
+  font-family: var(--hx-font-display), ui-sans-serif, system-ui, sans-serif;
+  font-size: calc(32 * var(--k));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-right: -0.08em;
+  text-box: trim-both cap alphabetic;
 }
 
 /* Phones: always a clean 2×2 instead of an uneven wrap. */
@@ -801,8 +818,12 @@ body:has(.hx-page) {
     justify-content: center;
     justify-items: center;
   }
+  /* Same cap as the row's text had: 0.15vw per design unit. */
   .hx-mark {
-    font-size: min(calc(36 * var(--k)), 5.4vw);
+    height: min(calc(var(--h) * var(--k)), calc(var(--h) * 0.15vw));
+  }
+  .hx-mark--erc6551 {
+    font-size: min(calc(32 * var(--k)), 4.8vw);
   }
 }
 
