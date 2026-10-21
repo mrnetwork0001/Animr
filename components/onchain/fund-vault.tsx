@@ -55,14 +55,36 @@ type FundVaultProps = {
   canAct: boolean;
   /** The vault's balances from the latest setup read. */
   balances: VaultBalances;
+  /** The vault's buy-only lock (it then only ever spends WMON). */
+  buyOnly?: boolean;
   tx: TxFlow;
 };
+
+/** Which token the vault still lacks for two-way trading, if exactly one is missing (undefined when funded or empty). */
+export function missingToken(balances: VaultBalances, buyOnly?: boolean): TokenKey | undefined {
+  const noChog = balances.chog === BigInt(0);
+  const noWmon = balances.wmon === BigInt(0);
+  if (noWmon && !noChog) return "wmon";
+  if (noChog && !noWmon && !buyOnly) return "chog";
+  return undefined;
+}
+
+/** Why the missing token matters, in the holder's terms. */
+function missingNote(missing: TokenKey, buyOnly?: boolean): string {
+  if (missing === "wmon") {
+    return buyOnly
+      ? "This vault is buy-only, so WMON is the only token its AI can spend."
+      : "With $CHOG alone the AI can sell into pumps but can't buy dips. Add WMON so it trades both ways from the start.";
+  }
+  return "With WMON alone the AI can buy $CHOG but has nothing to sell. Add $CHOG so it trades both ways.";
+}
 
 /**
  * Deposit $CHOG / WMON into the Chog's wallet, wrap MON into WMON on the way, or wrap native MON that already sits
  * in the wallet. The guard trades only CHOG and WMON, so native MON in the vault is idle.
  */
-export function FundVault({ tba, viewer, canAct, balances, tx }: FundVaultProps) {
+export function FundVault({ tba, viewer, canAct, balances, buyOnly, tx }: FundVaultProps) {
+  const missing = missingToken(balances, buyOnly);
   const wallet = useQuery({
     queryKey: viewer ? onchainKeys.wallet(viewer) : ["onchain", "wallet", null],
     queryFn: viewer ? () => readVaultBalances(publicClient, viewer) : skipToken,
@@ -75,10 +97,11 @@ export function FundVault({ tba, viewer, canAct, balances, tx }: FundVaultProps)
         The vault holds <span className="v2-num text-[var(--v2-ink)]">{fmt(balances.chog, 2)}</span> $CHOG and{" "}
         <span className="v2-num text-[var(--v2-ink)]">{fmt(balances.wmon)}</span> WMON. Deposits stay in the Chog&apos;s
         wallet: whoever holds the Chog controls them, and the AI can only swap them.
+        {missing && <> {missingNote(missing, buyOnly)}</>}
       </p>
       {canAct && viewer ? (
         <>
-          <DepositForm tba={tba} viewer={viewer} wallet={wallet.data} tx={tx} />
+          <DepositForm tba={tba} viewer={viewer} wallet={wallet.data} tx={tx} defaultToken={missing ?? "chog"} />
           <WrapAndDepositForm tba={tba} viewer={viewer} monBalance={wallet.data?.mon} tx={tx} />
         </>
       ) : (
@@ -150,14 +173,17 @@ function DepositForm({
   viewer,
   wallet,
   tx,
+  defaultToken,
 }: {
   tba: Address;
   viewer: Address;
   wallet: VaultBalances | undefined;
   tx: TxFlow;
+  /** Preselected: the token the vault still lacks. */
+  defaultToken: TokenKey;
 }) {
   const config = useConfig();
-  const [token, setToken] = useState<TokenKey>("chog");
+  const [token, setToken] = useState<TokenKey>(defaultToken);
   const [amount, setAmount] = useState("");
   const errorId = useId();
   const available = wallet?.[token];

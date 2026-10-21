@@ -35,7 +35,7 @@ export const SETUP_STEPS: readonly { id: SetupStep; title: string; summary: stri
   {
     id: "fund",
     title: "Fund the vault",
-    summary: "Deposit $CHOG and/or WMON. The guard trades only these two tokens.",
+    summary: "Deposit $CHOG and WMON (or wrap MON here): with both, the AI can sell pumps and buy dips. The guard trades only these two tokens.",
   },
   {
     id: "go-onchain",

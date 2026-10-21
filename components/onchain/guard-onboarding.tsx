@@ -2,8 +2,8 @@
 
 import { type UseQueryResult, skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { type ReactNode, useId } from "react";
-import { type Address, erc721Abi, isAddressEqual } from "viem";
+import { type ReactNode, useId, useState } from "react";
+import { type Address, erc721Abi, formatUnits, isAddressEqual } from "viem";
 import { useConnection, useSwitchChain } from "wagmi";
 import { ConnectButton, useIsClient } from "@/components/connect-button";
 import { Badge, Meter } from "@/components/v2/primitives";
@@ -12,9 +12,9 @@ import { publicClient } from "@/lib/clients";
 import { appConfig } from "@/lib/config";
 import { animrTradeGuardAddress } from "@/lib/contracts/animr-trade-guard";
 import { type TokenBoundAccountParams, computeTokenBoundAccount } from "@/lib/erc6551";
-import { shortAddress } from "@/lib/format";
+import { formatAmount, shortAddress } from "@/lib/format";
 import { walletErrorMessage } from "@/lib/wagmi";
-import { FundVault } from "./fund-vault";
+import { FundVault, missingToken } from "./fund-vault";
 import { agentKey, fetchAgentDetail, holderKey, onchainKeys, readOnchainSetup, retryTransient } from "./queries";
 import {
   type Ctx,
@@ -425,6 +425,8 @@ function Stepper({
   const live = state.step === "live";
   // The guard's go-onchain step drives both "Wake the AI" and the switch; its panel renders in whichever is current.
   const panelRow: RowId = state.step === "go-onchain" ? (agentActive ? "go-onchain" : "wake") : state.step;
+  // A finished "Fund the vault" row can reopen: a holder who deposited one token adds the other here.
+  const [fundOpen, setFundOpen] = useState(false);
   let n = 0;
   return (
     <>
@@ -472,6 +474,8 @@ function Stepper({
                   </div>
                 ) : optionalOpen ? (
                   <div className="mt-3">{buyOnly}</div>
+                ) : row.id === "fund" && row.status === "done" && !live ? (
+                  <FundedRow ctx={ctx} open={fundOpen} onToggle={() => setFundOpen((value) => !value)} />
                 ) : (
                   row.status === "todo" && <p className="mt-1 text-[13px] text-[var(--v2-faint)]">{row.summary}</p>
                 )}
@@ -487,6 +491,37 @@ function Stepper({
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * The finished "Fund the vault" row: what the vault holds, a nudge when only one of the two tokens is in (the AI
+ * then trades one way), and the deposit panel on demand.
+ */
+function FundedRow({ ctx, open, onToggle }: { ctx: Ctx; open: boolean; onToggle: () => void }) {
+  const { balances, buyOnly } = ctx.setup;
+  const missing = missingToken(balances, buyOnly);
+  const fmt = (value: bigint, digits: number) => formatAmount(formatUnits(value, 18), digits);
+  return (
+    <div className="mt-1">
+      <p className="text-[13px] text-[var(--v2-nav)]">
+        Holds <span className="v2-num text-[var(--v2-ink)]">{fmt(balances.chog, 2)}</span> $CHOG and{" "}
+        <span className="v2-num text-[var(--v2-ink)]">{fmt(balances.wmon, 4)}</span> WMON.
+        {missing === "wmon" && !buyOnly && " With $CHOG alone it can sell but not buy: add WMON to trade both ways."}
+        {missing === "chog" && " With WMON alone it can buy but has nothing to sell: add $CHOG to trade both ways."}
+      </p>
+      {ctx.canAct && (
+        <button type="button" onClick={onToggle} aria-expanded={open} className="v2-btn-glass v2-btn--sm mt-2">
+          {open ? "Hide deposits" : missing ? `Add ${missing === "wmon" ? "WMON" : "$CHOG"}` : "Add funds"}
+        </button>
+      )}
+      {open && (
+        <div className="mt-3 rounded-[var(--v2-r-lg)] border border-[var(--v2-line)] bg-[rgb(255_255_255/0.025)] p-4 sm:p-5">
+          <FundVault tba={ctx.tba} viewer={ctx.viewer} canAct={ctx.canAct} balances={balances} buyOnly={buyOnly} tx={ctx.tx} />
+          <TxStatus progress={ctx.tx.progress} origin="step" />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -539,7 +574,14 @@ function StepPanel({
       return <ConfigurePanel ctx={ctx} />;
     case "fund":
       return (
-        <FundVault tba={ctx.tba} viewer={ctx.viewer} canAct={ctx.canAct} balances={ctx.setup.balances} tx={ctx.tx} />
+        <FundVault
+          tba={ctx.tba}
+          viewer={ctx.viewer}
+          canAct={ctx.canAct}
+          balances={ctx.setup.balances}
+          buyOnly={ctx.setup.buyOnly}
+          tx={ctx.tx}
+        />
       );
     case "go-onchain":
       return <GoOnchainPanel ctx={ctx} agentQuery={agentQuery} />;

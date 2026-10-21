@@ -17,7 +17,7 @@ import {
 import { type TokenBoundAccountParams, createAndInitializeAccountRequest } from "@/lib/erc6551";
 import { formatAmount } from "@/lib/format";
 import { requestAgentMode } from "./agent-mode";
-import { FundVault } from "./fund-vault";
+import { FundVault, missingToken } from "./fund-vault";
 import { LimitsForm } from "./limits-form";
 import { type OnchainSetup, agentKey } from "./queries";
 import { type SetupAction, canStop, describeLimits, initialLimits } from "./setup-steps";
@@ -257,6 +257,7 @@ export function GoOnchainPanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQ
           The vault is ready. {agent ? "The agent is paused: wake it first" : "Wake the Chog's AI first"} (one free
           signature), then switch it to on-chain.
         </p>
+        <OneWayNote ctx={ctx} />
         {ctx.canAct && ctx.viewer ? (
           <div className="mt-3">
             <ActivateAgent
@@ -305,6 +306,20 @@ export function GoOnchainPanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQ
         </Callout>
       )}
     </>
+  );
+}
+
+/** The vault holds only one of the two tokens (and isn't buy-only): the AI would trade one way until the other is added. */
+function OneWayNote({ ctx }: { ctx: Ctx }) {
+  const { balances, buyOnly } = ctx.setup;
+  const missing = missingToken(balances, buyOnly);
+  if (!missing || (missing === "wmon" && buyOnly)) return null;
+  return (
+    <p className="mt-2 text-sm leading-relaxed text-[var(--v2-warning)]">
+      {missing === "wmon"
+        ? "It holds $CHOG but no WMON, so the AI can sell but not buy. Add WMON under “Fund the vault” above to let it trade both ways."
+        : "It holds WMON but no $CHOG, so the AI can buy but has nothing to sell. Add $CHOG under “Fund the vault” above."}
+    </p>
   );
 }
 
