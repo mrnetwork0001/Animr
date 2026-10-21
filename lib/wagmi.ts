@@ -1,5 +1,6 @@
-import { type Transport, createConfig, http, injected } from "wagmi";
+import { type Transport, createConfig, createStorage, http, injected, noopStorage } from "wagmi";
 import { appConfig } from "./config";
+import { privyEnabled } from "./privy";
 
 // appConfig.chain is typed as the union of both Monad networks, so the computed
 // key needs a cast to satisfy the per-chain transports record.
@@ -9,19 +10,26 @@ const transports = { [appConfig.chain.id]: http(appConfig.rpcUrl) } as Record<
 >;
 
 /**
- * Only the configured Monad network. `injected()` covers any browser wallet; with
- * EIP-6963 discovery (on by default) MetaMask, Rabby, Phantom, Backpack… also
- * show up as their own named connectors.
+ * Only the configured Monad network.
+ *
+ * Without Privy: `injected()` covers any browser wallet; with EIP-6963 discovery (on by default) MetaMask, Rabby,
+ * Phantom, Backpack… also show up as their own named connectors.
+ *
+ * With Privy (lib/privy.ts): no connectors of our own. The Privy island registers one injected connector wrapping the
+ * active Privy wallet's EIP-1193 provider and marks it connected. Privy keeps the session, so wagmi stores nothing.
  */
 export const wagmiConfig = createConfig({
   chains: [appConfig.chain],
-  connectors: [injected()],
+  connectors: privyEnabled ? [] : [injected()],
+  multiInjectedProviderDiscovery: !privyEnabled,
   transports,
   // Render "disconnected" on the server and reconnect after mount (keeps routes static).
   ssr: true,
   // Persist connections in the browser only; on the server, zustand's persist middleware
-  // would touch Node's experimental localStorage and log a warning.
-  storage: typeof window === "undefined" ? null : undefined,
+  // would touch Node's experimental localStorage and log a warning. With Privy, a storage that keeps
+  // nothing: the island restores the connection from Privy's session (and `ssr` needs a storage).
+  storage:
+    typeof window === "undefined" ? null : privyEnabled ? createStorage({ storage: noopStorage }) : undefined,
 });
 
 declare module "wagmi" {
