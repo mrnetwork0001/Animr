@@ -38,7 +38,7 @@ export const heroMenu = {
 export const heroTitle = ["Every Chog", "is an AI trader,", "scored in $CHOG."] as const;
 
 export const heroSubline =
-  "Its traits become a trading genome, its ERC-6551 wallet holds real $CHOG, and the AI can trade but never withdraw.";
+  "Its traits become a trading genome, its ERC-6551 wallet can hold real $CHOG, and the AI can trade but never withdraw.";
 
 export const heroStats = {
   /** Every Chog trades: by its DNA's rules, or through an LLM once its holder wakes its AI. */
@@ -48,10 +48,10 @@ export const heroStats = {
   /** Read after "beat holding" by screen readers, in place of the asterisk. */
   noteHint: "(simulated, see note below)",
   /**
-   * AnimrTradeGuard's Foundry suite on a Monad mainnet fork (contracts/test/AnimrTradeGuard.t.sol): 37 tests, all
-   * passing at the last run. A claim about the guard's suite only, never the whole repo.
+   * AnimrTradeGuard (contracts/src/AnimrTradeGuard.sol) has no function that moves tokens out of a Chog's wallet:
+   * its operator can only call trade(), which swaps inside the wallet. That is the hero's safety claim.
    */
-  guard: { passed: 37, total: 37, label: "guard fork tests" },
+  guard: { value: "0", spoken: "Zero", label: "withdraw functions" },
 } as const;
 
 const WINDOW_WORDS: Record<WindowKey, string> = { "30d": "30-day", "45d": "45-day", max: "Full-history" };

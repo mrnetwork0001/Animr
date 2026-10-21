@@ -69,7 +69,6 @@ export async function AnimrHero({ className = "", children, footer }: AnimrHeroP
   }
 
   const league = await leagueHeadline();
-  const { passed, total } = heroStats.guard;
   const stats: Stat[] = [
     {
       key: "traders",
@@ -90,8 +89,8 @@ export async function AnimrHero({ className = "", children, footer }: AnimrHeroP
       : []),
     {
       key: "guard",
-      value: `${passed}/${total}`,
-      spoken: `${passed} of ${total}`,
+      value: heroStats.guard.value,
+      spoken: heroStats.guard.spoken,
       label: heroStats.guard.label,
     },
   ];
