@@ -9,6 +9,7 @@ import {
   useDisconnect,
   useSwitchChain,
 } from "wagmi";
+import { pillClass } from "@/components/v2/primitives";
 import { appConfig } from "@/lib/config";
 import { explorerAddressUrl, shortAddress } from "@/lib/format";
 import { walletErrorMessage } from "@/lib/wagmi";
@@ -48,7 +49,24 @@ const INSTALL_LINKS = [
   { name: "Backpack", href: "https://backpack.app" },
 ] as const;
 
-export function ConnectButton({ className = "" }: { className?: string }) {
+/** The header slot's Suspense fallback: the disconnected button's shape, inert. */
+export function ConnectButtonFallback({ size = "sm" }: { size?: "sm" | "md" }) {
+  return (
+    <span aria-hidden className={`${pillClass("primary", size)} opacity-50`}>
+      Connect wallet
+    </span>
+  );
+}
+
+/** The floating panel under the wallet button: dark glass, right-aligned, never wider than the screen. */
+const PANEL =
+  "v2-glass--strong absolute top-full right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2*var(--v2-gutter)))] rounded-[var(--v2-r-lg)] text-sm";
+
+/**
+ * The wallet button: "Connect wallet" (a violet pill), then the network chip and the address with its panel (copy,
+ * explorer, switch network, disconnect). `size` follows the v2 pills: "sm" (36px) in the header, "md" (46px) in pages.
+ */
+export function ConnectButton({ className = "", size = "md" }: { className?: string; size?: "sm" | "md" }) {
   const isClient = useIsClient();
   const connection = useConnection();
   const connect = useConnect();
@@ -123,9 +141,9 @@ export function ConnectButton({ className = "" }: { className?: string }) {
             type="button"
             onClick={switchToTarget}
             disabled={switchChain.isPending}
-            className="btn border-warning/40 bg-warning/10 text-warning hover:bg-warning/20"
+            className={`${pillClass("glass", size)} border-[rgb(242_193_107/0.4)] bg-[rgb(242_193_107/0.08)] text-[var(--v2-warning)] hover:border-[var(--v2-warning)]`}
           >
-            <span aria-hidden className="size-2 rounded-full bg-warning" />
+            <span aria-hidden className="size-2 rounded-full bg-[var(--v2-warning)] shadow-[0_0_8px_var(--v2-warning)]" />
             {switchChain.isPending ? (
               "Switching…"
             ) : (
@@ -136,8 +154,8 @@ export function ConnectButton({ className = "" }: { className?: string }) {
             )}
           </button>
         ) : (
-          <span className="chip hidden sm:inline-flex" title={`Chain ID ${target.id}`}>
-            <span aria-hidden className="size-2 rounded-full bg-success" />
+          <span className="v2-chip hidden sm:inline-flex" title={`Chain ID ${target.id}`}>
+            <span aria-hidden className="size-1.5 rounded-full bg-[var(--v2-success)] shadow-[0_0_8px_var(--v2-success)]" />
             {target.name}
           </span>
         )}
@@ -146,29 +164,27 @@ export function ConnectButton({ className = "" }: { className?: string }) {
           aria-expanded={open}
           aria-controls={open ? panelId : undefined}
           onClick={() => setOpen((value) => !value)}
-          className="btn btn-secondary font-mono font-medium"
+          className={`${pillClass("glass", size)} gap-2 pr-3 pl-2.5`}
         >
           <AddressAvatar address={connected.address} />
-          {shortAddress(connected.address)}
+          <span className="v2-mono">{shortAddress(connected.address)}</span>
           <Chevron />
         </button>
         {open && (
           <div
             id={panelId}
-            className="card absolute top-full right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-surface p-4 text-sm"
+            className={`${PANEL} p-4`}
           >
-            <p className="text-xs text-subtle">
+            <p className="v2-note">
               Connected with{" "}
               {connected.connector.id === "injected" ? "your browser wallet" : connected.connector.name}
             </p>
-            <p className="mt-1 font-mono text-[13px] break-all text-foreground">
-              {connected.address}
-            </p>
+            <p className="v2-mono mt-1.5 text-[13px] break-all text-[var(--v2-ink)]">{connected.address}</p>
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
                 onClick={() => copyAddress(connected.address)}
-                className="btn btn-secondary flex-1 px-2 py-1.5 text-xs"
+                className={`${pillClass("glass", "sm")} flex-1 px-3`}
               >
                 {copied ? "Copied" : "Copy address"}
               </button>
@@ -177,37 +193,35 @@ export function ConnectButton({ className = "" }: { className?: string }) {
                   href={explorer}
                   target="_blank"
                   rel="noreferrer"
-                  className="btn btn-secondary flex-1 px-2 py-1.5 text-xs"
+                  className={`${pillClass("glass", "sm")} flex-1 px-3`}
                 >
-                  Explorer ↗
+                  Explorer <span aria-hidden>↗</span>
                 </a>
               )}
             </div>
-            <div className="mt-3 border-t border-line pt-3">
+            <div className="mt-4 border-t border-[var(--v2-line-soft)] pt-3">
               {wrongChain ? (
                 <>
-                  <p className="text-warning">
+                  <p className="text-[var(--v2-warning)]">
                     Wrong network (chain {connected.chainId}). Animr runs on {target.name}.
                   </p>
                   <button
                     type="button"
                     onClick={switchToTarget}
                     disabled={switchChain.isPending}
-                    className="btn btn-primary mt-2 w-full"
+                    className={`${pillClass("primary", "sm", true)} mt-3`}
                   >
                     {switchChain.isPending ? "Switching…" : `Switch to ${target.name}`}
                   </button>
                 </>
               ) : (
-                <p className="flex items-center gap-2 text-muted">
-                  <span aria-hidden className="size-2 rounded-full bg-success" />
+                <p className="flex items-center gap-2 text-[var(--v2-nav)]">
+                  <span aria-hidden className="size-1.5 rounded-full bg-[var(--v2-success)] shadow-[0_0_8px_var(--v2-success)]" />
                   {target.name} · chain {target.id}
                 </p>
               )}
               {switchChain.isError && (
-                <p className="mt-2 text-xs text-danger">
-                  {walletErrorMessage(switchChain.error)}
-                </p>
+                <p className="mt-2 text-xs text-[var(--v2-danger)]">{walletErrorMessage(switchChain.error)}</p>
               )}
             </div>
             <button
@@ -216,7 +230,7 @@ export function ConnectButton({ className = "" }: { className?: string }) {
                 setOpen(false);
                 disconnect.mutate();
               }}
-              className="btn btn-ghost mt-3 w-full text-danger"
+              className={`${pillClass("ghost", "sm", true)} mt-2 text-[var(--v2-danger)] hover:text-[var(--v2-danger)]`}
             >
               Disconnect
             </button>
@@ -238,19 +252,19 @@ export function ConnectButton({ className = "" }: { className?: string }) {
           if (wallets.length === 1) connectWith(wallets[0]);
           else setOpen((value) => !value);
         }}
-        className="btn btn-primary"
+        className={pillClass("primary", size)}
       >
         {busy ? "Connecting…" : "Connect wallet"}
       </button>
       {open && (
         <div
           id={panelId}
-          className="card absolute top-full right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-surface p-3 text-sm"
+          className={`${PANEL} p-3`}
         >
           {wallets.length === 0 ? (
             <div className="p-1">
-              <p className="font-medium text-foreground">No browser wallet found</p>
-              <p className="mt-1 text-muted">
+              <p className="font-medium text-[var(--v2-ink)]">No browser wallet found</p>
+              <p className="mt-1 text-[var(--v2-nav)]">
                 Install a wallet that supports {target.name}, then reload this page. On a phone,
                 open Animr in your wallet app&apos;s browser.
               </p>
@@ -261,16 +275,16 @@ export function ConnectButton({ className = "" }: { className?: string }) {
                     href={link.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn btn-secondary px-2 py-1.5 text-xs"
+                    className={`${pillClass("glass", "sm")} px-3`}
                   >
-                    {link.name} ↗
+                    {link.name} <span aria-hidden>↗</span>
                   </a>
                 ))}
               </div>
             </div>
           ) : (
             <>
-              <p className="px-1 pb-2 text-xs text-subtle">Choose a wallet</p>
+              <p className="v2-note px-2 pb-2">Choose a wallet</p>
               <ul className="space-y-1">
                 {wallets.map((wallet) => (
                   <li key={wallet.uid}>
@@ -278,13 +292,13 @@ export function ConnectButton({ className = "" }: { className?: string }) {
                       type="button"
                       onClick={() => connectWith(wallet)}
                       disabled={connect.isPending}
-                      className="btn btn-ghost w-full justify-start px-2 text-foreground"
+                      className={`${pillClass("ghost", "sm", true)} justify-start px-2.5 text-[var(--v2-ink)]`}
                     >
                       {wallet.icon ? (
                         // eslint-disable-next-line @next/next/no-img-element -- EIP-6963 icons are data: URIs
                         <img src={wallet.icon} alt="" className="size-5 rounded" />
                       ) : (
-                        <span aria-hidden className="size-5 rounded bg-accent/30" />
+                        <span aria-hidden className="size-5 rounded [background:var(--v2-grad-tile)]" />
                       )}
                       {wallet.id === "injected" ? "Browser wallet" : wallet.name}
                     </button>
@@ -294,7 +308,7 @@ export function ConnectButton({ className = "" }: { className?: string }) {
             </>
           )}
           {connect.isError && (
-            <p className="mt-2 px-1 text-xs text-danger">{walletErrorMessage(connect.error)}</p>
+            <p className="mt-2 px-2 text-xs text-[var(--v2-danger)]">{walletErrorMessage(connect.error)}</p>
           )}
         </div>
       )}
@@ -317,7 +331,7 @@ function AddressAvatar({ address }: { address: string }) {
 
 function Chevron() {
   return (
-    <svg aria-hidden viewBox="0 0 16 16" className="size-3.5 text-subtle" fill="none">
+    <svg aria-hidden viewBox="0 0 16 16" className="size-3.5 text-[var(--v2-faint)]" fill="none">
       <path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );

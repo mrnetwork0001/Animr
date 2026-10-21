@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { type FormEvent, type ReactNode, useEffect, useEffectEvent, useId, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import {
   type Address,
   type Hash,
@@ -24,6 +24,8 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
+import { ExternalIcon } from "@/components/v2/icons";
+import { Badge, PageHeader, Skeleton, Toast, pillClass } from "@/components/v2/primitives";
 import { isFlaggedTokenId, traitSafety } from "@/lib/brand-safety";
 import { type ChogQueryHit, chogLabel, chogQueryText, nameNumberOf, parseChogQuery } from "@/lib/chog-id";
 import { publicClient } from "@/lib/clients";
@@ -134,17 +136,29 @@ function useDebounced<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
+/** The dashboard's title block, rendered by ChogLookup around its search box (the PageHeader's aside). */
+export type LookupHeader = { kicker: ReactNode; title: ReactNode; lead: ReactNode };
+
+/** Where the lookup lives: #lookup is a link target (/app?id=7#lookup), clear of the sticky header (two rows below 1100px). */
+const LOOKUP_ANCHOR = { id: "lookup", scroll: "scroll-mt-36 min-[1100px]:scroll-mt-24" } as const;
+/** The title block sits level with the (taller) search box rather than on its baseline. */
+const HEADER_CLASS = "lg:items-center";
+
 /**
  * Token ID or name input → the Chog's ERC-6551 wallet, its balances and the owner's actions. `metadataIds[i]` is
  * token i+1's name number ("CHOG #1462" is token 1): either number finds a Chog, and the other reading of a typed
  * number is offered next to the result, which always shows both ("CHOG #1462 · token 1").
+ *
+ * It renders the page's header (one h1, from `header`) with the search box as its aside, then the result under it:
+ * the input and the result share state, so both live in this one client component.
  */
-export function ChogLookup({ metadataIds }: { metadataIds?: readonly number[] } = {}) {
+export function ChogLookup({ metadataIds, header }: { metadataIds?: readonly number[]; header: LookupHeader }) {
   const searchParams = useSearchParams();
   const [input, setInput] = useState(() => searchParams.get("id") ?? "");
   const parsed = parseLookup(input, metadataIds);
   const tokenId = useDebounced(parsed.kind === "valid" ? parsed.id : "", 300);
   const hint = parsed.kind === "valid" ? <ReadingHint parsed={parsed} onPick={setInput} /> : undefined;
+  const resultRef = useRef<HTMLDivElement>(null);
 
   // Mirror the lookup in ?id= so it can be shared.
   useEffect(() => {
@@ -155,54 +169,59 @@ export function ChogLookup({ metadataIds }: { metadataIds?: readonly number[] } 
   }, [tokenId]);
 
   const { chogNft, accountImplementation } = appConfig;
+  const configured = Boolean(chogNft && accountImplementation);
   return (
-    <div className="space-y-4">
-      <LookupCard
-        value={input}
-        onChange={setInput}
-        error={parsed.kind === "invalid" ? parsed.message : undefined}
-        hint={hint}
-        named={Boolean(BOUNDED && metadataIds?.length)}
-        disabled={!chogNft || !accountImplementation}
+    <>
+      <PageHeader
+        {...header}
+        className={HEADER_CLASS}
+        aside={
+          <LookupCard
+            value={input}
+            onChange={setInput}
+            onSubmit={() => resultRef.current?.scrollIntoView({ block: "nearest" })}
+            error={parsed.kind === "invalid" ? parsed.message : undefined}
+            hint={hint}
+            named={Boolean(BOUNDED && metadataIds?.length)}
+            disabled={!configured}
+          >
+            {configured && !tokenId && BOUNDED && (
+              <>
+                <p className="v2-help m-0 mt-3">
+                  Token IDs run {MIN_ID.toString()}–{MAX_ID.toString()}, names look like CHOG #1462. Or{" "}
+                  <button type="button" onClick={() => setInput(randomTokenId())} className="v2-link">
+                    pick a random Chog
+                  </button>
+                  .
+                </p>
+                <ExampleChogs onPick={setInput} metadataIds={metadataIds} />
+                <AwakeNow metadataIds={metadataIds} />
+              </>
+            )}
+            {configured && !tokenId && !BOUNDED && <p className="v2-help m-0 mt-3">Enter a token ID above.</p>}
+          </LookupCard>
+        }
       />
-      {!chogNft || !accountImplementation ? (
-        <ConfigNotice />
-      ) : tokenId ? (
-        <ChogResult
-          key={tokenId}
-          nameNumber={BOUNDED ? metadataIds?.[Number(tokenId) - 1] || undefined : undefined}
-          params={{
-            implementation: accountImplementation,
-            tokenContract: chogNft,
-            tokenId: BigInt(tokenId),
-            chainId,
-            salt: appConfig.salt,
-          }}
-        />
-      ) : (
-        <div className="rounded-2xl border border-dashed border-line px-5 py-8 text-center text-sm text-subtle">
-          {BOUNDED ? (
-            <>
-              <p>
-                Enter a token ID above ({MIN_ID.toString()}–{MAX_ID.toString()}) or a name like CHOG #1462, or{" "}
-                <button
-                  type="button"
-                  onClick={() => setInput(randomTokenId())}
-                  className="font-medium text-accent-strong hover:underline"
-                >
-                  pick a random Chog
-                </button>
-                .
-              </p>
-              <ExampleChogs onPick={setInput} metadataIds={metadataIds} />
-              <AwakeNow metadataIds={metadataIds} />
-            </>
-          ) : (
-            "Enter a token ID above."
-          )}
-        </div>
-      )}
-    </div>
+      <div ref={resultRef} className="scroll-mt-36 min-[1100px]:scroll-mt-24">
+        {!chogNft || !accountImplementation ? (
+          <ConfigNotice className="mt-10" />
+        ) : tokenId ? (
+          <section aria-label="Lookup result" className="mt-10">
+            <ChogResult
+              key={tokenId}
+              nameNumber={BOUNDED ? metadataIds?.[Number(tokenId) - 1] || undefined : undefined}
+              params={{
+                implementation: accountImplementation,
+                tokenContract: chogNft,
+                tokenId: BigInt(tokenId),
+                chainId,
+                salt: appConfig.salt,
+              }}
+            />
+          </section>
+        ) : null}
+      </div>
+    </>
   );
 }
 
@@ -225,18 +244,24 @@ const idsOf = (tokenId: string | number, metadataIds?: readonly number[]) =>
 
 function ExampleChogs({ onPick, metadataIds }: { onPick: (id: string) => void; metadataIds?: readonly number[] }) {
   return (
-    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-      <span className="text-xs text-subtle">Try</span>
-      {EXAMPLE_CHOGS.map((chog) => (
-        <button
-          key={chog.id}
-          type="button"
-          onClick={() => onPick(chog.id)}
-          className="chip px-3 py-1 transition-colors hover:border-accent/50 hover:text-foreground"
-        >
-          {chog.name} <span className="font-mono text-[11px] text-subtle">{idsOf(chog.id, metadataIds)}</span>
-        </button>
-      ))}
+    <div className="mt-5">
+      <p className="v2-overline">Try</p>
+      <ul className="m-0 mt-2 list-none divide-y divide-[var(--v2-line-soft)] p-0">
+        {EXAMPLE_CHOGS.map((chog) => (
+          <li key={chog.id}>
+            <button
+              type="button"
+              onClick={() => onPick(chog.id)}
+              className="group -mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-baseline justify-between gap-3 rounded-[var(--v2-r-xs)] px-2 py-2 text-left transition-colors hover:bg-white/[0.04]"
+            >
+              <span className="text-[length:var(--v2-fs-sm)] text-[var(--v2-ink)] group-hover:text-[var(--v2-kicker)]">
+                {chog.name}
+              </span>
+              <span className="v2-num text-xs whitespace-nowrap text-[var(--v2-faint)]">{idsOf(chog.id, metadataIds)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -247,18 +272,17 @@ function AwakeNow({ metadataIds }: { metadataIds?: readonly number[] }) {
   const awake = (leaderboard.data?.agents ?? []).filter((agent) => agent.active).slice(0, 4);
   if (awake.length === 0) return null;
   return (
-    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-      <span className="text-xs text-subtle">Awake now</span>
-      {awake.map((agent) => (
-        <Link
-          key={agent.tokenId}
-          href={`/chog/${agent.tokenId}`}
-          className="chip px-3 py-1 transition-colors hover:border-success/50 hover:text-foreground"
-        >
-          <span aria-hidden className="size-1.5 rounded-full bg-success" />
-          {agent.persona.name} <span className="font-mono text-[11px] text-subtle">{idsOf(agent.tokenId, metadataIds)}</span>
-        </Link>
-      ))}
+    <div className="mt-4">
+      <p className="v2-overline">Awake now</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {awake.map((agent) => (
+          <Link key={agent.tokenId} href={`/chog/${agent.tokenId}`} className="v2-chip h-auto min-h-7 py-1">
+            <span aria-hidden className="size-1.5 rounded-full bg-[var(--v2-success)] shadow-[0_0_8px_var(--v2-success)]" />
+            {agent.persona.name}{" "}
+            <span className="v2-num text-[11px] text-[var(--v2-faint)]">{idsOf(agent.tokenId, metadataIds)}</span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
@@ -279,26 +303,22 @@ function ReadingHint({
   const found =
     via === "name" ? (
       <>
-        <span className="font-mono text-foreground">CHOG #{nameNumber}</span> is token {id}.
+        <span className="font-medium text-[var(--v2-ink)]">CHOG #{nameNumber}</span> is token {id}.
       </>
     ) : nameNumber ? (
       <>
-        Token {id} is <span className="font-mono text-foreground">CHOG #{nameNumber}</span>.
+        Token {id} is <span className="font-medium text-[var(--v2-ink)]">CHOG #{nameNumber}</span>.
       </>
     ) : null;
   return (
-    <p className="mt-2 text-sm text-muted">
+    <p className="m-0 mt-3 text-[length:var(--v2-fs-sm)] leading-relaxed text-[var(--v2-nav)]">
       {found}
       {other && (
         <>
           {" "}
-          Looking for {other.via === "name" ? <span className="font-mono">CHOG #{other.nameNumber}</span> : `token ${other.tokenId}`}
+          Looking for {other.via === "name" ? <span className="font-medium text-[var(--v2-ink)]">CHOG #{other.nameNumber}</span> : `token ${other.tokenId}`}
           ?{" "}
-          <button
-            type="button"
-            onClick={() => onPick(chogQueryText(other))}
-            className="font-medium text-accent-strong hover:underline"
-          >
+          <button type="button" onClick={() => onPick(chogQueryText(other))} className="v2-link">
             Show {chogLabel(other.tokenId, { number: other.nameNumber })} →
           </button>
         </>
@@ -307,77 +327,115 @@ function ReadingHint({
   );
 }
 
-/** Suspense fallback with the same footprint as the lookup card. */
-export function ChogLookupSkeleton() {
-  return <LookupCard value="" onChange={() => {}} named={BOUNDED} disabled />;
+/** Suspense fallback: the same header, with an inert search box of the same footprint. */
+export function ChogLookupSkeleton({ header }: { header: LookupHeader }) {
+  return (
+    <PageHeader
+      {...header}
+      className={HEADER_CLASS}
+      aside={
+        <LookupCard value="" onChange={() => {}} named={BOUNDED} disabled>
+          {BOUNDED && <Skeleton variant="text" className="mt-4 w-4/5" />}
+        </LookupCard>
+      }
+    />
+  );
 }
 
 function LookupCard({
   value,
   onChange,
+  onSubmit,
   error,
   hint,
   named = false,
   disabled = false,
+  children,
 }: {
   value: string;
   onChange: (value: string) => void;
+  /** After the keyboard's Search key or "Find" (the lookup itself runs as you type). */
+  onSubmit?: () => void;
   error?: string;
   hint?: ReactNode;
   /** Names ("CHOG #1462") are accepted too: a text keyboard and no "#" prefix (that would read as a name). */
   named?: boolean;
   disabled?: boolean;
+  /** Under the box: suggestions while it's empty. */
+  children?: ReactNode;
 }) {
   const errorId = useId();
+  const inputId = useId();
+  const headingId = useId();
   return (
-    <div className="card p-5 sm:p-6">
-      <h2 className="text-lg font-semibold">Look up a Chog</h2>
-      <p className="mt-1 text-sm text-muted">
+    <div
+      id={LOOKUP_ANCHOR.id}
+      role="region"
+      aria-labelledby={headingId}
+      className={`v2-card v2-card--roomy ${LOOKUP_ANCHOR.scroll}`}
+    >
+      <h2 id={headingId} className="v2-h3">
+        Look up a Chog
+      </h2>
+      <p className="m-0 mt-1.5 text-[length:var(--v2-fs-sm)] leading-relaxed text-pretty text-[var(--v2-nav)]">
         By token ID or by the name marketplaces show (CHOG #1462). Every Chog NFT has its own wallet address, computed
         locally from the ERC-6551 registry, before it is even deployed.
       </p>
-      {/* The lookup runs as you type; submitting (the keyboard's Search key) just closes the keyboard. */}
+      {/* The lookup runs as you type; submitting (Find, or the keyboard's Search key) closes the keyboard. */}
       <form
         role="search"
+        aria-labelledby={headingId}
         onSubmit={(event) => {
           event.preventDefault();
           event.currentTarget.querySelector("input")?.blur();
+          onSubmit?.();
         }}
+        className="v2-input-group mt-5"
       >
-        <label className="relative mt-4 block">
-          <span className="sr-only">{named ? "Chog token ID or name" : "Chog token ID"}</span>
-          {!named && (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 left-4 flex items-center font-mono text-lg text-subtle"
-            >
-              #
-            </span>
-          )}
-          <input
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            disabled={disabled}
-            inputMode={named ? "text" : "numeric"}
-            enterKeyHint="search"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder={named ? "Token ID (1) or name (CHOG #1462)" : "Token ID, e.g. 42"}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? errorId : undefined}
-            className={`input font-mono text-lg ${named ? "" : "pl-9"}`}
-          />
+        <label htmlFor={inputId} className="v2-sr">
+          {named ? "Chog token ID or name" : "Chog token ID"}
         </label>
+        {!named && (
+          <span aria-hidden className="v2-num pl-4 text-lg text-[var(--v2-faint)]">
+            #
+          </span>
+        )}
+        <input
+          id={inputId}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          inputMode={named ? "text" : "numeric"}
+          enterKeyHint="search"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder={named ? "Token ID or CHOG #1462" : "Token ID, e.g. 42"}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          className={`v2-input min-w-0 flex-1 text-[17px] ${named ? "" : "pl-1"}`}
+        />
+        <button type="submit" disabled={disabled} className={pillClass("primary")}>
+          Find
+        </button>
       </form>
       {error && (
-        <p id={errorId} role="alert" className="mt-2 text-sm text-danger">
+        <p id={errorId} role="alert" className="m-0 mt-3 text-[length:var(--v2-fs-sm)] text-[var(--v2-danger)]">
           {error}
         </p>
       )}
       {!error && hint}
+      {children}
     </div>
   );
 }
+
+/** A section of the result card: hairline on top, the card's padding. */
+const SECTION = "border-t border-[var(--v2-line-soft)] p-5 sm:p-6";
+/** A section's small heading. */
+const SECTION_TITLE = "v2-kicker m-0";
+/** A nested panel inside the card (owner actions). */
+const PANEL = "rounded-[var(--v2-r-md)] border border-[var(--v2-line-soft)] bg-white/[0.02] p-4 sm:p-5";
+const TEXT = "m-0 text-[length:var(--v2-fs-sm)] leading-relaxed text-pretty text-[var(--v2-nav)]";
 
 function ChogResult({ params, nameNumber }: { params: TokenBoundAccountParams; nameNumber?: number }) {
   let tba: Address;
@@ -385,13 +443,10 @@ function ChogResult({ params, nameNumber }: { params: TokenBoundAccountParams; n
     tba = computeTokenBoundAccount(params);
   } catch (error) {
     return (
-      <div role="alert" className="card border-danger/40 p-5 text-sm">
-        <p className="font-medium text-danger">Couldn&apos;t compute the wallet address.</p>
-        <p className="mt-1 text-muted">
-          Check <code className="font-mono">NEXT_PUBLIC_TBA_SALT</code> (a 32-byte hex value) and
-          the configured addresses. {error instanceof Error ? error.message.split("\n")[0] : ""}
-        </p>
-      </div>
+      <Toast tone="danger" title="Couldn't compute the wallet address.">
+        Check <code className="v2-mono">NEXT_PUBLIC_TBA_SALT</code> (a 32-byte hex value) and the configured addresses.{" "}
+        {error instanceof Error ? error.message.split("\n")[0] : ""}
+      </Toast>
     );
   }
   return <ChogDetails params={params} tba={tba} nameNumber={nameNumber} />;
@@ -474,167 +529,175 @@ function ChogDetails({ params, tba, nameNumber }: { params: TokenBoundAccountPar
     ? { balance: chog.data[0], decimals: chog.data[1], symbol: chog.data[2] }
     : undefined;
   const tokenLabel = `$${tokenInfo?.symbol ?? "CHOG"}`;
+  const exists = !notMinted && !noNftContract;
 
   return (
-    <article className="card">
-      {/* Identity */}
-      <div className="flex items-start gap-4 p-5 sm:gap-5 sm:p-6">
-        <ChogImage
-          key={meta?.image}
-          image={meta?.image}
-          alt={idLabel}
-          id={id}
-          loading={metadata.isPending}
-        />
-        <div className="min-w-0 flex-1">
-          <h3 className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-xl font-semibold sm:text-2xl">
-            <span className="min-w-0 truncate">{heading}</span>
-            {named && (
-              <span className="text-base font-normal whitespace-nowrap text-muted sm:text-lg">
-                <span aria-hidden>· </span>token {id}
-              </span>
-            )}
-          </h3>
-          {metadataName && (
-            <p className="mt-0.5 text-xs text-subtle">
-              Marketplace name: <span className="font-mono">{metadataName}</span>
-            </p>
-          )}
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-            {owner.isPending ? (
-              <span className="inline-block h-4 w-40 animate-pulse rounded bg-surface-2" />
-            ) : ownerAddress ? (
-              <>
-                <span>
-                  Owned by <AddressLink address={ownerAddress} />
+    <article className="v2-card v2-card--flush v2-card--feature">
+      {/* Identity, and the way on: its profile */}
+      <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:p-6 lg:p-7">
+        <div className="flex min-w-0 flex-1 items-start gap-4 sm:gap-6">
+          <ChogImage key={meta?.image} image={meta?.image} alt={idLabel} id={id} loading={metadata.isPending} />
+          <div className="min-w-0 flex-1">
+            <p className="v2-kicker m-0">Lookup result</p>
+            <h2 className="v2-h2 mt-2 flex min-w-0 flex-wrap items-baseline gap-x-3 text-[clamp(26px,1.4vw+18px,36px)]">
+              <span className="min-w-0 truncate">{heading}</span>
+              {named && (
+                <span className="text-[0.6em] whitespace-nowrap text-[var(--v2-faint)]">
+                  <span aria-hidden>· </span>token {id}
                 </span>
-                {isOwner && <span className="chip border-accent/40 text-accent-strong">You</span>}
-              </>
-            ) : notMinted ? (
-              <span className="chip border-danger/40 text-danger">Not minted</span>
-            ) : (
-              <span className="text-danger">Owner unavailable</span>
+              )}
+            </h2>
+            {metadataName && (
+              <p className="v2-note mt-1">
+                Marketplace name: <span className="v2-mono">{metadataName}</span>
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[length:var(--v2-fs-sm)] text-[var(--v2-nav)]">
+              {owner.isPending ? (
+                <Skeleton variant="text" className="w-44" />
+              ) : ownerAddress ? (
+                <>
+                  <span>
+                    Owned by <AddressLink address={ownerAddress} />
+                  </span>
+                  {isOwner && <Badge tone="teal">You</Badge>}
+                </>
+              ) : notMinted ? (
+                <Badge tone="danger">Not minted</Badge>
+              ) : (
+                <span className="text-[var(--v2-danger)]">Owner unavailable</span>
+              )}
+            </div>
+            {meta && meta.attributes.length > 0 && (
+              <ul className="m-0 mt-4 hidden list-none flex-wrap gap-1.5 p-0 sm:flex">
+                {/* Flagged values show under their neutral names; hidden ones aren't shown (lib/brand-safety.ts). */}
+                {meta.attributes
+                  .map((attr) => ({ type: attr.trait_type, verdict: traitSafety(attr.trait_type, attr.value) }))
+                  .filter(({ verdict }) => verdict.action !== "hide")
+                  .slice(0, 6)
+                  .map(({ type, verdict }, index) => (
+                    <li key={`${type}-${index}`} className="v2-chip">
+                      <span className="text-[var(--v2-faint)]">{type}</span> {verdict.display}
+                    </li>
+                  ))}
+              </ul>
             )}
           </div>
-          {meta && meta.attributes.length > 0 && (
-            <ul className="mt-3 hidden flex-wrap gap-1.5 sm:flex">
-              {/* Flagged values show under their neutral names; hidden ones aren't shown (lib/brand-safety.ts). */}
-              {meta.attributes
-                .map((attr) => ({ type: attr.trait_type, verdict: traitSafety(attr.trait_type, attr.value) }))
-                .filter(({ verdict }) => verdict.action !== "hide")
-                .slice(0, 6)
-                .map(({ type, verdict }, index) => (
-                  <li key={`${type}-${index}`} className="chip">
-                    <span className="text-subtle">{type}</span> {verdict.display}
-                  </li>
-                ))}
-            </ul>
-          )}
         </div>
+        {exists && (
+          <div className="flex shrink-0 flex-wrap gap-2 max-sm:[&>*]:flex-1 max-sm:[&>*]:px-4 sm:flex-col sm:items-stretch">
+            <Link href={`/chog/${id}`} className={pillClass("primary")}>
+              Open its profile <span aria-hidden>→</span>
+            </Link>
+            {buyUrl && !isOwner && (
+              <a href={buyUrl} target="_blank" rel="noreferrer" className={pillClass("glass")}>
+                Buy this Portfolio <span aria-hidden>↗</span>
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Its trading DNA: archetype, League rank, today's Bell call (Chog Genesis only). */}
       <LookupDna tokenId={id} />
 
-      {/* The token-bound account */}
-      <section className="border-t border-line px-5 py-5 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h4 className="text-sm font-medium text-muted">Chog wallet · ERC-6551 token-bound account</h4>
-          <DeploymentChip status={status} failed={accountStatus.isError} />
-        </div>
-        <div className="mt-2 flex items-center gap-2 rounded-xl border border-line bg-surface-2 py-2 pr-2 pl-3">
-          <code className="min-w-0 flex-1 font-mono text-[13px] break-all text-foreground sm:text-[15px]">
-            {tba}
-          </code>
-          <CopyButton value={tba} />
-          {tbaUrl && (
-            <a
-              href={tbaUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-ghost px-2 py-1 text-xs"
-              aria-label="View the wallet on the block explorer"
-            >
-              ↗
-            </a>
-          )}
-        </div>
-        <p className="mt-2 text-xs text-subtle">
-          {status === "none"
-            ? "Not deployed yet. Funds sent here are already safe: the account can be created at exactly this address at any time."
-            : status === "uninitialized"
-              ? "Created but never initialized, so nobody can use it yet. Funds sent here are safe, and one setup transaction makes it usable."
-              : "Whoever owns this NFT controls this wallet. Sell the Chog and the wallet goes with it."}
-        </p>
-        <DerivationDetails params={params} />
-      </section>
-
-      {/* Balances, or why there are none */}
-      <section className="border-t border-line px-5 py-5 sm:px-6">
-        {notMinted ? (
-          <p className="text-sm text-muted">
-            Token {id} hasn&apos;t been minted (<code className="font-mono">ownerOf</code> reverted).
-            Its wallet address is still deterministic, but nobody can control it yet.
-          </p>
-        ) : noNftContract ? (
-          <p className="text-sm text-danger">
-            No contract answered at <code className="font-mono">NEXT_PUBLIC_CHOG_NFT_ADDRESS</code>{" "}
-            ({shortAddress(nft)}) on {appConfig.chain.name}. Check the address and network.
-          </p>
-        ) : owner.isError ? (
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            <p className="text-danger">
-              Couldn&apos;t read the NFT: {walletErrorMessage(owner.error)}
-            </p>
-            <button type="button" onClick={() => owner.refetch()} className="btn btn-secondary py-1">
-              Retry
-            </button>
+      {/* The token-bound account and what's in it */}
+      <div className={`${SECTION} grid gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]`}>
+        <section aria-label="Chog wallet" className="min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className={SECTION_TITLE}>Chog wallet · ERC-6551 token-bound account</h3>
+            <DeploymentBadge status={status} failed={accountStatus.isError} />
           </div>
-        ) : (
-          <>
-            <dl className="grid grid-cols-2 gap-3">
-              <Stat
-                label={tokenLabel}
-                value={!token ? "—" : tokenInfo ? formatBalance(tokenInfo.balance, tokenInfo.decimals) : undefined}
-                error={chog.isError ? walletErrorMessage(chog.error) : undefined}
-              />
-              <Stat
-                label={nativeSymbol}
-                value={native.data ? formatBalance(native.data.value, native.data.decimals) : undefined}
-                error={native.isError ? walletErrorMessage(native.error) : undefined}
-              />
-            </dl>
-            {!token && (
-              <ConfigNotice keys={["chogToken"]} title="$CHOG token not configured" className="mt-3" />
+          <div className="mt-3 flex items-center gap-2 rounded-[var(--v2-r-md)] border border-[var(--v2-line)] bg-white/[0.03] py-2 pr-2 pl-4 shadow-[var(--v2-glass-glow)]">
+            <code className="v2-mono min-w-0 flex-1 text-[13px] break-all text-[var(--v2-ink)] sm:text-[15px]">{tba}</code>
+            <CopyButton value={tba} />
+            {tbaUrl && (
+              <a
+                href={tbaUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={`${pillClass("glass", "sm")} v2-btn--icon`}
+                aria-label="View the wallet on the block explorer"
+              >
+                <ExternalIcon className="size-4" />
+              </a>
             )}
-          </>
-        )}
-      </section>
+          </div>
+          <p className="v2-note mt-2.5">
+            {status === "none"
+              ? "Not deployed yet. Funds sent here are already safe: the account can be created at exactly this address at any time."
+              : status === "uninitialized"
+                ? "Created but never initialized, so nobody can use it yet. Funds sent here are safe, and one setup transaction makes it usable."
+                : "Whoever owns this NFT controls this wallet. Sell the Chog and the wallet goes with it."}
+          </p>
+          <DerivationDetails params={params} />
+        </section>
+
+        {/* Balances, or why there are none */}
+        <section aria-label="Balances" className="min-w-0">
+          <h3 className={SECTION_TITLE}>In its wallet</h3>
+          <div className="mt-3">
+            {notMinted ? (
+              <p className={TEXT}>
+                Token {id} hasn&apos;t been minted (<code className="v2-mono">ownerOf</code> reverted). Its wallet address is
+                still deterministic, but nobody can control it yet.
+              </p>
+            ) : noNftContract ? (
+              <p className={`${TEXT} text-[var(--v2-danger)]`}>
+                No contract answered at <code className="v2-mono">NEXT_PUBLIC_CHOG_NFT_ADDRESS</code> ({shortAddress(nft)})
+                on {appConfig.chain.name}. Check the address and network.
+              </p>
+            ) : owner.isError ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className={`${TEXT} text-[var(--v2-danger)]`}>Couldn&apos;t read the NFT: {walletErrorMessage(owner.error)}</p>
+                <button type="button" onClick={() => owner.refetch()} className={pillClass("glass", "sm")}>
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <>
+                <dl className="v2-stats v2-stats--inline">
+                  <Stat
+                    label={tokenLabel}
+                    value={!token ? "—" : tokenInfo ? formatBalance(tokenInfo.balance, tokenInfo.decimals) : undefined}
+                    error={chog.isError ? walletErrorMessage(chog.error) : undefined}
+                  />
+                  <Stat
+                    label={nativeSymbol}
+                    value={native.data ? formatBalance(native.data.value, native.data.decimals) : undefined}
+                    error={native.isError ? walletErrorMessage(native.error) : undefined}
+                  />
+                </dl>
+                {!token && <ConfigNotice keys={["chogToken"]} title="$CHOG token not configured" className="mt-4" />}
+              </>
+            )}
+          </div>
+        </section>
+      </div>
 
       {/* Owner actions */}
-      {!notMinted && !noNftContract && (
-        <section className="border-t border-line px-5 py-5 sm:px-6">
-          <h4 className="text-sm font-medium text-muted">Manage this wallet</h4>
+      {exists && (
+        <section aria-label="Manage this wallet" className={SECTION}>
+          <h3 className={SECTION_TITLE}>Manage this wallet</h3>
           <div className="mt-3">
             {!isClient ? (
-              <p className="text-sm text-subtle">Checking your wallet…</p>
+              <p className={TEXT}>Checking your wallet…</p>
             ) : !account ? (
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted">
-                  Connect the wallet that owns {idLabel} to create its account and deposit{" "}
-                  {tokenLabel}.
+                <p className={TEXT}>
+                  Connect the wallet that owns {idLabel} to create its account and deposit {tokenLabel}.
                 </p>
                 {/* ml-auto keeps the button (and its right-aligned panel) on the right when wrapped. */}
-                <ConnectButton className="ml-auto" />
+                <ConnectButton className="ml-auto" size="sm" />
               </div>
             ) : !onTargetChain ? (
               <SwitchNetworkPrompt />
             ) : owner.isPending ? (
-              <p className="text-sm text-subtle">Checking ownership…</p>
+              <p className={TEXT}>Checking ownership…</p>
             ) : owner.isError ? (
-              <p className="text-sm text-subtle">Ownership couldn&apos;t be checked yet. Retry above.</p>
+              <p className={TEXT}>Ownership couldn&apos;t be checked yet. Retry above.</p>
             ) : !isOwner ? (
-              <p className="text-sm text-muted">
+              <p className={TEXT}>
                 You&apos;re connected as <AddressLink address={account} />. Only the owner of {idLabel}
                 {ownerAddress && (
                   <>
@@ -653,8 +716,8 @@ function ChogDetails({ params, tba, nameNumber }: { params: TokenBoundAccountPar
                   onConfirmed={refresh}
                 />
                 {!token ? (
-                  <div className="rounded-xl border border-line bg-surface-2/50 p-4">
-                    <h5 className="font-medium">Deposit {tokenLabel}</h5>
+                  <div className={PANEL}>
+                    <h4 className="v2-h3 text-base">Deposit {tokenLabel}</h4>
                     <ConfigNotice keys={["chogToken"]} title="$CHOG token not configured" className="mt-3" />
                   </div>
                 ) : tokenInfo ? (
@@ -667,7 +730,7 @@ function ChogDetails({ params, tba, nameNumber }: { params: TokenBoundAccountPar
                     onConfirmed={refresh}
                   />
                 ) : (
-                  <div className="rounded-xl border border-line bg-surface-2/50 p-4 text-sm text-subtle">
+                  <div className={`${PANEL} ${TEXT}`}>
                     {chog.isError ? `Couldn't load ${tokenLabel}: ${walletErrorMessage(chog.error)}` : `Loading ${tokenLabel}…`}
                   </div>
                 )}
@@ -678,23 +741,11 @@ function ChogDetails({ params, tba, nameNumber }: { params: TokenBoundAccountPar
       )}
 
       {/* Agent */}
-      {!notMinted && !noNftContract && (
-        <div className="flex flex-col gap-3 rounded-b-2xl border-t border-line bg-surface-2/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <p className="text-sm text-muted">
-            Its holder can claim it: an AI on 0G Compute then manages this wallet&apos;s {tokenLabel}, with paper fills
-            at live prices or real trades through AnimrTradeGuard. Whoever holds the NFT owns the portfolio.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {buyUrl && !isOwner && (
-              <a href={buyUrl} target="_blank" rel="noreferrer" className="btn btn-secondary">
-                Buy this Portfolio ↗
-              </a>
-            )}
-            <Link href={`/chog/${id}`} className="btn btn-primary">
-              Open its profile →
-            </Link>
-          </div>
-        </div>
+      {exists && (
+        <p className={`${TEXT} border-t border-[var(--v2-line-soft)] bg-white/[0.015] px-5 py-4 sm:px-6`}>
+          Its holder can claim it: an AI on 0G Compute then manages this wallet&apos;s {tokenLabel}, with paper fills at
+          live prices or real trades through AnimrTradeGuard. Whoever holds the NFT owns the portfolio.
+        </p>
       )}
     </article>
   );
@@ -717,10 +768,10 @@ function ChogImage({
   const src = image && !useOriginal ? chogThumbUrl(image, 288) : image;
   const waiting = loading || (Boolean(image) && status === "loading");
   return (
-    <div className="relative size-20 shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-2 sm:size-28">
+    <div className="v2-avatar v2-avatar--lg sm:size-[132px] sm:rounded-[24px] sm:shadow-[0_0_0_6px_rgb(255_255_255/0.02),0_30px_60px_-30px_rgb(111_90_220/0.6)]">
       <div
-        className={`flex size-full items-center justify-center bg-linear-to-br from-accent/35 to-accent-deep/10 font-mono text-sm text-foreground/80 ${
-          waiting ? "animate-pulse" : ""
+        className={`v2-num flex size-full items-center justify-center bg-[radial-gradient(circle_at_50%_35%,rgb(111_90_220/0.35),transparent_70%)] text-sm text-white/70 ${
+          waiting ? "animate-pulse motion-reduce:animate-none" : ""
         }`}
       >
         #{id.length > 5 ? `${id.slice(0, 4)}…` : id}
@@ -744,24 +795,22 @@ function ChogImage({
   );
 }
 
-function DeploymentChip({ status, failed }: { status: TokenBoundAccountStatus | undefined; failed: boolean }) {
+function DeploymentBadge({ status, failed }: { status: TokenBoundAccountStatus | undefined; failed: boolean }) {
   if (status === "ready") {
     return (
-      <span className="chip border-success/40 text-success">
-        <span aria-hidden className="size-1.5 rounded-full bg-success" />
+      <Badge tone="success" dot>
         Deployed
-      </span>
+      </Badge>
     );
   }
   if (status) {
     return (
-      <span className="chip border-warning/40 text-warning">
-        <span aria-hidden className="size-1.5 rounded-full bg-warning" />
+      <Badge tone="warning" dot>
         {status === "uninitialized" ? "Needs setup" : "Not deployed yet"}
-      </span>
+      </Badge>
     );
   }
-  return <span className="chip">{failed ? "Status unavailable" : "Checking…"}</span>;
+  return <Badge>{failed ? "Status unavailable" : "Checking…"}</Badge>;
 }
 
 function DerivationDetails({ params }: { params: TokenBoundAccountParams }) {
@@ -774,19 +823,19 @@ function DerivationDetails({ params }: { params: TokenBoundAccountParams }) {
     ["salt", params.salt ?? "0x0"],
   ] as const;
   return (
-    <details className="mt-3 text-xs text-subtle">
-      <summary className="w-fit cursor-pointer select-none hover:text-muted">
+    <details className="group mt-3 text-[length:var(--v2-fs-xs)] text-[var(--v2-faint)]">
+      <summary className="w-fit cursor-pointer rounded select-none hover:text-[var(--v2-nav)]">
         How is this address derived?
       </summary>
-      <p className="mt-2">
-        CREATE2 from the ERC-6551 registry over an ERC-1167 proxy that embeds these values, so the
-        same inputs always give the same wallet:
+      <p className="m-0 mt-2 leading-relaxed">
+        CREATE2 from the ERC-6551 registry over an ERC-1167 proxy that embeds these values, so the same inputs always
+        give the same wallet:
       </p>
-      <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 font-mono">
+      <dl className="v2-mono m-0 mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 rounded-[var(--v2-r-sm)] border border-[var(--v2-line-soft)] bg-white/[0.02] p-3">
         {rows.map(([label, value]) => (
           <div key={label} className="contents">
             <dt>{label}</dt>
-            <dd className="break-all text-muted">{value}</dd>
+            <dd className="m-0 break-all text-[var(--v2-nav)]">{value}</dd>
           </div>
         ))}
       </dl>
@@ -796,31 +845,41 @@ function DerivationDetails({ params }: { params: TokenBoundAccountParams }) {
 
 const compactAmount = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 2 });
 
-/** Token balance for a half-width stat tile: 2 decimals from 1,000 and compact ("1.25M") from a million. */
+/** Token balance for a half-width stat: 2 decimals from 1,000 and compact ("1.25M") from a million. */
 function formatBalance(value: bigint, decimals: number): string {
   const amount = Number(formatUnits(value, decimals));
   if (amount >= 1_000_000) return compactAmount.format(amount);
   return formatAmount(amount, amount >= 1000 ? 2 : 4);
 }
 
+/** One balance in the v2 stat style: a DM Sans number over its label. */
 function Stat({ label, value, error }: { label: string; value?: string; error?: string }) {
   return (
-    <div className="rounded-xl border border-line bg-surface-2/60 p-3 sm:p-4">
-      <dt className="text-xs text-subtle">{label}</dt>
-      {/* wrap-anywhere: a whale-sized balance must wrap inside its half-width tile on phones. */}
-      <dd className="mt-1 font-mono text-lg tabular-nums wrap-anywhere sm:text-2xl">
-        {value ?? (error ? "—" : <span className="inline-block h-7 w-24 animate-pulse rounded bg-line/60" />)}
+    <div className="v2-stat">
+      <dt className="v2-stat-label">{label}</dt>
+      {/* wrap-anywhere: a whale-sized balance must wrap inside its half-width column on phones. */}
+      <dd className="v2-stat-value wrap-anywhere">
+        {value ??
+          (error ? (
+            <>
+              —
+              <span className="mt-1 block text-[length:var(--v2-fs-xs)] whitespace-normal text-[var(--v2-danger)]">
+                {error}
+              </span>
+            </>
+          ) : (
+            <Skeleton className="h-9 w-24" />
+          ))}
       </dd>
-      {error && value === undefined && <p className="mt-1 text-xs text-danger">{error}</p>}
     </div>
   );
 }
 
 function AddressLink({ address }: { address: Address }) {
   const href = explorerAddressUrl(address);
-  const label = <span className="font-mono">{shortAddress(address)}</span>;
+  const label = <span className="v2-mono">{shortAddress(address)}</span>;
   return href ? (
-    <a href={href} target="_blank" rel="noreferrer" className="text-foreground hover:underline" title={address}>
+    <a href={href} target="_blank" rel="noreferrer" className="v2-link font-normal" title={address}>
       {label}
     </a>
   ) : (
@@ -842,7 +901,7 @@ function CopyButton({ value }: { value: string }) {
           // Clipboard unavailable; the full address is selectable.
         }
       }}
-      className="btn btn-secondary px-2.5 py-1 text-xs"
+      className={`${pillClass("glass", "sm")} px-3.5`}
     >
       {copied ? "Copied" : "Copy"}
     </button>
@@ -853,19 +912,19 @@ function SwitchNetworkPrompt() {
   const switchChain = useSwitchChain();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-warning">
+      <p className={`${TEXT} text-[var(--v2-warning)]`}>
         Your wallet is on another network. Switch to {appConfig.chain.name} to manage this Chog.
       </p>
       <button
         type="button"
         onClick={() => switchChain.mutate({ chainId })}
         disabled={switchChain.isPending}
-        className="btn btn-primary"
+        className={pillClass("primary", "sm")}
       >
         {switchChain.isPending ? "Switching…" : `Switch to ${appConfig.chain.name}`}
       </button>
       {switchChain.isError && (
-        <p className="w-full text-xs text-danger">{walletErrorMessage(switchChain.error)}</p>
+        <p className="m-0 w-full text-xs text-[var(--v2-danger)]">{walletErrorMessage(switchChain.error)}</p>
       )}
     </div>
   );
@@ -905,16 +964,12 @@ function useContractTx(onConfirmed: () => void) {
   };
 }
 
+/** A transaction's progress as an inline v2 toast: signing, confirming, confirmed or failed, with its explorer link. */
 function TxStatus({ state, success }: { state: TxState; success: string }) {
   if (state.status === "idle") return null;
   const href = "hash" in state ? explorerTxUrl(state.hash) : undefined;
-  const pending = state.status === "signing" || state.status === "confirming";
   const tone =
-    state.status === "confirmed"
-      ? "text-success"
-      : state.status === "error" || state.status === "failed"
-        ? "text-danger"
-        : "text-muted";
+    state.status === "confirmed" ? "success" : state.status === "error" || state.status === "failed" ? "danger" : "info";
   const text = {
     signing: "Confirm the transaction in your wallet…",
     confirming: "Submitted. Waiting for confirmation…",
@@ -923,25 +978,18 @@ function TxStatus({ state, success }: { state: TxState; success: string }) {
     failed: "message" in state ? `Transaction failed: ${state.message}` : "",
   }[state.status];
   return (
-    <p role="status" className={`mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm ${tone}`}>
-      {pending && (
-        <span
-          aria-hidden
-          className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
-        />
-      )}
-      <span>{text}</span>
-      {href && (
-        <a
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-        >
-          View transaction ↗
-        </a>
-      )}
-    </p>
+    <Toast
+      tone={tone}
+      title={text}
+      className="mt-3"
+      action={
+        href ? (
+          <a href={href} target="_blank" rel="noreferrer" className="v2-link text-xs whitespace-nowrap">
+            View transaction <span aria-hidden>↗</span>
+          </a>
+        ) : undefined
+      }
+    />
   );
 }
 
@@ -963,9 +1011,9 @@ function CreateWalletAction({
   const request = status ? createAndInitializeAccountRequest(params, status) : null;
   const label = finishing ? "Finish wallet setup" : "Create wallet";
   return (
-    <div className="rounded-xl border border-line bg-surface-2/50 p-4">
-      <h5 className="font-medium">{label}</h5>
-      <p className="mt-1 text-sm text-muted">
+    <div className={PANEL}>
+      <h4 className="v2-h3 text-base">{label}</h4>
+      <p className={`${TEXT} mt-1`}>
         {status === "ready"
           ? "This Chog's account is live on-chain."
           : finishing
@@ -977,7 +1025,7 @@ function CreateWalletAction({
           type="button"
           disabled={!request || checking || tx.busy}
           onClick={() => request && tx.send({ ...request, chainId })}
-          className="btn btn-primary mt-3"
+          className={`${pillClass("primary", "sm")} mt-4`}
         >
           {tx.state.status === "signing"
             ? "Confirm in wallet…"
@@ -1041,10 +1089,10 @@ function DepositAction({
   }
 
   return (
-    <form onSubmit={submit} className="rounded-xl border border-line bg-surface-2/50 p-4">
-      <h5 className="font-medium">Deposit {label}</h5>
-      <p className="mt-1 text-sm text-muted">Send {label} from your wallet into this Chog&apos;s wallet.</p>
-      <div className="mt-3 flex gap-2">
+    <form onSubmit={submit} className={PANEL}>
+      <h4 className="v2-h3 text-base">Deposit {label}</h4>
+      <p className={`${TEXT} mt-1`}>Send {label} from your wallet into this Chog&apos;s wallet.</p>
+      <div className="mt-4 flex gap-2">
         <div className="relative min-w-0 flex-1">
           <input
             value={amount}
@@ -1055,31 +1103,31 @@ function DepositAction({
             aria-label={`Amount of ${label} to deposit`}
             aria-invalid={check.error ? true : undefined}
             aria-describedby={check.error ? errorId : undefined}
-            className="input pr-14 font-mono"
+            className="v2-input v2-num h-11 pr-16 text-base"
           />
           {walletBalance !== undefined && walletBalance > ZERO && (
             <button
               type="button"
               onClick={() => setAmount(formatUnits(walletBalance, decimals))}
-              className="absolute inset-y-0 right-2 my-auto h-7 rounded-md px-2 text-xs font-semibold text-accent-strong hover:bg-accent/15"
+              className="absolute inset-y-0 right-2 my-auto h-7 rounded-full px-2.5 text-xs font-medium text-[var(--v2-teal)] hover:bg-[rgb(159_240_236/0.1)]"
             >
               Max
             </button>
           )}
         </div>
-        <button type="submit" disabled={check.value === undefined || tx.busy} className="btn btn-primary">
+        <button type="submit" disabled={check.value === undefined || tx.busy} className={`${pillClass("primary")} h-11`}>
           {tx.state.status === "signing" ? "Confirm…" : tx.state.status === "confirming" ? "Sending…" : "Deposit"}
         </button>
       </div>
-      <p className="mt-2 text-xs text-subtle">
+      <p className="v2-note mt-2">
         Your balance:{" "}
-        <span className="font-mono">
+        <span className="v2-num text-[var(--v2-nav)]">
           {walletBalance === undefined ? "…" : formatAmount(formatUnits(walletBalance, decimals))}
         </span>{" "}
         {label}
       </p>
       {check.error && (
-        <p id={errorId} role="alert" className="mt-1 text-xs text-danger">
+        <p id={errorId} role="alert" className="m-0 mt-1 text-xs text-[var(--v2-danger)]">
           {check.error}
         </p>
       )}

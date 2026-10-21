@@ -1,22 +1,19 @@
 import { Suspense } from "react";
-import { AppNavLinks } from "./app-nav-links";
-import { ConnectButton } from "./connect-button";
-import { HeaderShell } from "./header-shell";
+import { V2Header } from "@/components/v2/app-shell";
+import { ConnectButton, ConnectButtonFallback } from "./connect-button";
 
 export { AnimrLogo } from "./header-shell";
 
 /**
- * Header for the app routes (app/(app)/layout.tsx); the landing page at / has its own. The frame is
- * server markup (components/header-shell.tsx) with two client islands: the current-page highlight
- * and the wallet button. The root 404 uses MinimalSiteHeader instead, which has neither.
+ * Retired: app/(app)/layout.tsx renders AppShell (components/v2), which brings this header itself. Kept as an alias
+ * (the v2 header with the wallet button) so older imports still render.
  */
 export function SiteHeader() {
   return (
-    <HeaderShell
-      nav={<AppNavLinks />}
-      actions={
-        <Suspense fallback={<span className="btn btn-primary opacity-50">Connect wallet</span>}>
-          <ConnectButton />
+    <V2Header
+      wallet={
+        <Suspense fallback={<ConnectButtonFallback />}>
+          <ConnectButton size="sm" />
         </Suspense>
       }
     />

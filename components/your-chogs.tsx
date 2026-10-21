@@ -3,16 +3,16 @@
 import { skipToken, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useId, useState, useSyncExternalStore } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import { useConnection } from "wagmi";
 import { shortAddress, timeAgo } from "@/lib/format";
 import type { HolderChog, HoldingsResponse } from "@/lib/holdings";
 import { ConnectButton, useIsClient } from "./connect-button";
+import { ArrowRightIcon, LeagueIcon, WalletIcon } from "@/components/v2/icons";
+import { Badge, Chip, EmptyState, SectionTitle, Skeleton, StatRow, Toast, type V2Stat, pillClass } from "@/components/v2/primitives";
 import { ChogThumb } from "./dna/chog-thumb";
-import { EdgeBadge } from "./dna/edge-badge";
 import { randomChogId } from "./dna/shared";
 import { useHiddenChogs } from "./hidden-chogs";
-import { PnlBadge } from "./pnl-badge";
 
 // "Your Chogs": a connected holder sees every Chog Genesis they hold, best League rank first, each with its art, both
 // numbers, its genome, its League place, its call on the latest Daily Bell and its AI, one tap from Rewind, Versus,
@@ -21,11 +21,11 @@ import { PnlBadge } from "./pnl-badge";
 
 /** Cards shown before "Show all". */
 const INITIAL_SHOWN = 6;
-const LABEL = "text-[11px] font-medium uppercase tracking-wider text-subtle";
-const PANEL = "rounded-2xl border border-accent/25 bg-accent/[0.04] p-5 sm:p-6";
 /** Every state carries the anchor the header's YourChogsLink points at (/app#your-chogs), clear of the sticky header. */
-const ANCHOR = { id: "your-chogs", scroll: "scroll-mt-28 md:scroll-mt-24" } as const;
-const SMALL_BTN = "btn btn-secondary px-2 py-1.5 text-xs";
+const ANCHOR = { id: "your-chogs", scroll: "scroll-mt-36 min-[1100px]:scroll-mt-24" } as const;
+/** A row label inside a card (Bell, AI). */
+const LABEL = "v2-overline pt-1";
+const SMALL_BTN = `${pillClass("glass", "sm")} px-2`;
 
 class HoldingsApiError extends Error {
   name = "HoldingsApiError";
@@ -155,17 +155,23 @@ export function YourChogs({
   }
   if (holdings.isError) {
     return (
-      <section role="alert" className={`card border-danger/40 p-5 ${className}`}>
-        <p className="font-medium text-danger">Couldn&apos;t load your Chogs</p>
-        <p className="mt-1 text-sm text-muted">{holdings.error.message}</p>
-        <button
-          type="button"
-          onClick={() => void holdings.refetch()}
-          disabled={holdings.isFetching}
-          className="btn btn-secondary mt-3"
+      <section id={ANCHOR.id} aria-label="Your Chogs" className={`${ANCHOR.scroll} ${className}`}>
+        <Toast
+          tone="danger"
+          title="Couldn't load your Chogs"
+          action={
+            <button
+              type="button"
+              onClick={() => void holdings.refetch()}
+              disabled={holdings.isFetching}
+              className={pillClass("glass", "sm")}
+            >
+              {holdings.isFetching ? "Trying again…" : "Try again"}
+            </button>
+          }
         >
-          {holdings.isFetching ? "Trying again…" : "Try again"}
-        </button>
+          {holdings.error.message}
+        </Toast>
       </section>
     );
   }
@@ -184,38 +190,49 @@ export function YourChogsLink({ className = "" }: { className?: string }) {
     <Link
       href="/app#your-chogs"
       title="Every Chog Genesis this wallet holds, with its League rank, Bell call and AI"
-      className={`chip border-accent/40 text-accent-strong transition-colors hover:border-accent hover:text-foreground ${className}`}
+      className={`v2-chip is-active ${className}`}
     >
-      Your Chogs <span className="font-mono text-foreground tabular-nums">{fmtInt(count)}</span>
+      Your Chogs <span className="v2-num text-[var(--v2-ink)]">{fmtInt(count)}</span>
     </Link>
   );
 }
 
-function ConnectPrompt({ className }: { className: string }) {
+/** "Your Chogs · 0x12…ab": every state's kicker. */
+function Kicker({ address }: { address?: string }) {
   return (
-    <div
-      id={ANCHOR.id}
-      className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-line px-5 py-4 ${ANCHOR.scroll} ${className}`}
-    >
-      <p className="max-w-2xl text-sm text-pretty text-muted">
-        <span className="font-medium text-foreground">Hold a Chog?</span> Connect your wallet and every Chog Genesis you
-        hold shows up here, ranked: its League place, its Daily Bell call and its AI.
-      </p>
-      {/* ml-auto keeps the button (and its right-aligned panel) on the right when wrapped. */}
-      <ConnectButton className="ml-auto" />
-    </div>
+    <>
+      Your Chogs
+      {address && <span className="font-normal text-[var(--v2-faint)]">· {shortAddress(address)}</span>}
+    </>
+  );
+}
+
+function ConnectPrompt({ className }: { className: string }) {
+  const headingId = useId();
+  return (
+    <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${className}`}>
+      <SectionTitle id={headingId} kicker={<Kicker />} title="Hold a Chog? Watch it trade." />
+      <EmptyState
+        icon={<WalletIcon />}
+        title="Connect to see your Chogs"
+        body="Every Chog Genesis you hold shows up here, ranked: its League place, its Daily Bell call and its AI."
+        actions={<ConnectButton />}
+        className="py-10"
+      />
+    </section>
   );
 }
 
 function PanelSkeleton({ className }: { className: string }) {
   return (
-    <section id={ANCHOR.id} role="status" aria-busy className={`${ANCHOR.scroll} ${PANEL} ${className}`}>
-      <span className="sr-only">Loading your Chogs…</span>
-      <div className="h-3 w-40 animate-pulse rounded bg-surface-2" />
-      <div className="mt-3 h-7 w-4/5 max-w-lg animate-pulse rounded bg-surface-2" />
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {["", "hidden sm:block", "hidden lg:block"].map((visibility, i) => (
-          <div key={i} className={`card h-56 animate-pulse ${visibility}`} />
+    <section id={ANCHOR.id} role="status" aria-busy className={`${ANCHOR.scroll} ${className}`}>
+      <span className="v2-sr">Loading your Chogs…</span>
+      <Skeleton variant="text" className="w-40" />
+      <Skeleton variant="title" className="mt-3 h-9 w-4/5 max-w-lg" />
+      <Skeleton className="mt-8 h-28 rounded-[var(--v2-r-lg)]" />
+      <div className="v2-grid v2-grid--3 mt-6">
+        {["", "hidden min-[720px]:block", "hidden lg:block"].map((visibility, i) => (
+          <Skeleton key={i} variant="card" className={`h-96 ${visibility}`} />
         ))}
       </div>
     </section>
@@ -247,19 +264,16 @@ export function YourChogsPanel({
   const best = visible[0]?.league ? visible[0] : undefined;
 
   return (
-    <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${PANEL} ${className}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="eyebrow">
-            Your Chogs <span className="font-mono tracking-normal normal-case">· {shortAddress(holdings.address)}</span>
-          </p>
-          <h2 id={headingId} className="mt-2 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-            {headline(chogs.length)}
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-pretty text-muted">
-            {plural ? "Their traits are their strategy" : "Its traits are its strategy"}, and the $CHOG market keeps score:
-            in the{" "}
-            <Link href="/league" className="font-medium text-accent-strong hover:underline">
+    <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${className}`}>
+      <SectionTitle
+        id={headingId}
+        kicker={<Kicker address={holdings.address} />}
+        title={headline(chogs.length)}
+        description={
+          <>
+            {plural ? "Their traits are their strategy" : "Its traits are its strategy"}, and the $CHOG market keeps
+            score: in the{" "}
+            <Link href="/league" className="v2-link">
               League
             </Link>{" "}
             {plural ? "each genome trades" : "its genome trades"} the real chart hour by hour.
@@ -269,24 +283,26 @@ export function YourChogsPanel({
                   ? " Wake one's AI and it starts trading for that Chog on 0G Compute, at live prices."
                   : ` ${asleep} of them still ${asleep === 1 ? "has its AI" : "have their AIs"} asleep.`
                 : " Wake its AI and it starts trading for it on 0G Compute, at live prices.")}
-          </p>
-        </div>
-        {onRefresh && (
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={refreshing}
-            className="btn btn-ghost shrink-0 px-2.5 py-1 text-xs"
-            title="Read your Chogs again (bought or sold one just now? It shows up within a minute)"
-          >
-            {refreshing ? "Refreshing…" : "Refresh"}
-          </button>
-        )}
-      </div>
+          </>
+        }
+        action={
+          onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={refreshing}
+              className={pillClass("ghost", "sm")}
+              title="Read your Chogs again (bought or sold one just now? It shows up within a minute)"
+            >
+              {refreshing ? "Refreshing…" : "Refresh"}
+            </button>
+          )
+        }
+      />
 
       <Highlights holdings={holdings} best={best} />
 
-      <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="v2-grid v2-grid--3 m-0 mt-6 list-none p-0">
         {shown.map((chog) => (
           <ChogCard
             key={chog.tokenId}
@@ -299,8 +315,8 @@ export function YourChogsPanel({
       </ul>
 
       {chogs.length > INITIAL_SHOWN && (
-        <div className="mt-4 text-center">
-          <button type="button" onClick={() => setShowAll((all) => !all)} className="btn btn-secondary">
+        <div className="mt-6 text-center">
+          <button type="button" onClick={() => setShowAll((all) => !all)} className={pillClass("glass")}>
             {showAll ? "Show fewer" : `Show all ${fmtInt(chogs.length)} Chogs`}
           </button>
         </div>
@@ -325,74 +341,74 @@ function Highlights({ holdings, best }: { holdings: HoldingsResponse; best?: Hol
 
   // One Chog gets its own numbers ("League rank", "Its AI"); several get the best of them and counts.
   const single = chogs.length === 1;
-  const tiles: ReactNode[] = [];
+  const stats: V2Stat[] = [];
   if (best?.league && league) {
-    tiles.push(
-      <Tile
-        key="best"
-        label={ranked.length > 1 ? "Best in the League" : "League rank"}
-        sub={ranked.length > 1 ? `of ${fmtInt(league.total)} · ${titleOf(best)}` : `of ${fmtInt(league.total)} Chogs`}
-      >
-        #{fmtInt(best.league.rank)}
-      </Tile>,
-    );
+    stats.push({
+      key: "best",
+      label: ranked.length > 1 ? "Best in the League" : "League rank",
+      hint: ranked.length > 1 ? `of ${fmtInt(league.total)} · ${titleOf(best)}` : `of ${fmtInt(league.total)} Chogs`,
+      value: `#${fmtInt(best.league.rank)}`,
+    });
   }
   if (ranked.length > 0) {
-    tiles.push(
-      ahead > 0 && ranked.length > 1 ? (
-        <Tile key="ahead" label="Ahead of holding $CHOG" sub="League window, simulated">
-          {ahead} of {fmtInt(ranked.length)}
-        </Tile>
-      ) : (
-        <Tile key="edge" label={ranked.length > 1 ? "Best edge vs holding" : "Edge vs holding $CHOG"} sub="League window, simulated">
-          {bestEdge === null ? (
-            "—"
-          ) : (
-            <span className={bestEdge >= 0.05 ? "text-success" : undefined}>{signedPct(bestEdge)}</span>
-          )}
-        </Tile>
-      ),
+    stats.push(
+      ahead > 0 && ranked.length > 1
+        ? {
+            key: "ahead",
+            label: "Ahead of holding $CHOG",
+            hint: "League window, simulated",
+            value: `${ahead} of ${fmtInt(ranked.length)}`,
+          }
+        : {
+            key: "edge",
+            label: ranked.length > 1 ? "Best edge vs holding" : "Edge vs holding $CHOG",
+            hint: "League window, simulated",
+            value: bestEdge === null ? "—" : signedPct(bestEdge),
+            tone: bestEdge === null ? undefined : toneOf(bestEdge),
+          },
     );
   }
-  tiles.push(
-    <Tile
-      key="awake"
-      label={single ? "Its AI" : "AIs awake"}
-      sub={awake > 0 ? "trading on 0G Compute" : single ? "wake it below" : "wake one below"}
-    >
-      {single ? (awake ? "Awake" : "Asleep") : `${awake} of ${fmtInt(chogs.length)}`}
-    </Tile>,
-  );
+  stats.push({
+    key: "awake",
+    label: single ? "Its AI" : "AIs awake",
+    hint: awake > 0 ? "trading on 0G Compute" : single ? "wake it below" : "wake one below",
+    value: single ? (awake ? "Awake" : "Asleep") : `${awake} of ${fmtInt(chogs.length)}`,
+  });
   if (bell && calls.length > 0) {
-    tiles.push(
-      <Tile
-        key="bell"
-        label={`${bell.kind === "replay" ? "Replayed Bell" : "Bell"} of ${bellDay(bell.day)}`}
-        sub={bell.status === "settled" && settled.length ? `${fmtInt(points)} pts, points only` : "settled by the market in 24h"}
-      >
-        {calls.length === 1 ? (
+    stats.push({
+      key: "bell",
+      label: `${bell.kind === "replay" ? "Replayed Bell" : "Bell"} of ${bellDay(bell.day)}`,
+      hint: bell.status === "settled" && settled.length ? `${fmtInt(points)} pts, points only` : "settled by the market in 24h",
+      value:
+        calls.length === 1 ? (
           <Forecast pct={calls[0].forecastPct} />
         ) : (
           <>
-            <span className="text-success">▲{up}</span> <span className="text-subtle">·</span>{" "}
-            <span className="text-danger">▼{down}</span>
+            <span className="v2-up">
+              <span aria-hidden className="mr-1 align-middle text-[0.5em]">
+                ▲
+              </span>
+              <span className="v2-sr">Up </span>
+              {up}
+            </span>{" "}
+            <span className="text-[var(--v2-faint)]">·</span>{" "}
+            <span className="v2-down">
+              <span aria-hidden className="mr-1 align-middle text-[0.5em]">
+                ▼
+              </span>
+              <span className="v2-sr">Down </span>
+              {down}
+            </span>
           </>
-        )}
-      </Tile>,
-    );
+        ),
+    });
   }
-  return <dl className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">{tiles}</dl>;
+  return <StatRow boxed stats={stats} className="[&_.v2-stat-label]:text-pretty" />;
 }
 
-function Tile({ label, sub, children }: { label: string; sub: string; children: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col rounded-xl border border-line bg-surface/70 px-3 py-2.5">
-      {/* Labels and captions wrap rather than truncate: two tiles share a phone's width. */}
-      <dt className={`${LABEL} leading-snug text-pretty`}>{label}</dt>
-      <dd className="mt-auto pt-1 font-mono text-lg font-semibold tabular-nums">{children}</dd>
-      <dd className="text-xs leading-snug text-pretty text-subtle">{sub}</dd>
-    </div>
-  );
+/** Signed changes only: green above +0.05, red below −0.05 (they print as +0.0% / −0.0% otherwise). */
+function toneOf(pct: number): "up" | "down" | undefined {
+  return pct >= 0.05 ? "up" : pct <= -0.05 ? "down" : undefined;
 }
 
 /** "+9.1%", "−4.2%" (a real minus), "0.0%". */
@@ -403,11 +419,11 @@ function signedPct(pct: number): string {
 
 function Forecast({ pct }: { pct: number }) {
   const sign = Math.abs(pct) < 0.05 ? 0 : Math.sign(pct);
-  const tone = sign > 0 ? "text-success" : sign < 0 ? "text-danger" : "text-muted";
+  const tone = sign > 0 ? "v2-up" : sign < 0 ? "v2-down" : "text-[var(--v2-nav)]";
   return (
-    <span className={`inline-flex items-center gap-0.5 font-mono font-semibold tabular-nums whitespace-nowrap ${tone}`}>
+    <span className={`v2-num inline-flex items-center gap-1 whitespace-nowrap ${tone}`}>
       {sign !== 0 && (
-        <span aria-hidden className="text-[0.65em]">
+        <span aria-hidden className="text-[0.6em]">
           {sign > 0 ? "▲" : "▼"}
         </span>
       )}
@@ -420,6 +436,22 @@ const MODE_LABEL: Record<NonNullable<HolderChog["agent"]>["mode"], string> = {
   paper: "paper trading",
   onchain: "real $CHOG",
 };
+
+/** Trading (on-chain, live), Paper (awake at live prices), Paused or Asleep. */
+function StatusBadge({ agent }: { agent: HolderChog["agent"] }) {
+  if (agent?.active) {
+    return agent.mode === "onchain" ? (
+      <Badge tone="teal" live>
+        Trading
+      </Badge>
+    ) : (
+      <Badge tone="warning" dot>
+        Paper
+      </Badge>
+    );
+  }
+  return <Badge>{agent ? "Paused" : "Asleep"}</Badge>;
+}
 
 function ChogCard({
   chog,
@@ -438,133 +470,126 @@ function ChogCard({
   const awake = Boolean(chog.agent?.active);
   const rank = chog.league?.rank;
   const topPct = rank && total ? Math.max(1, Math.ceil((rank / total) * 100)) : null;
+  const stats: V2Stat[] = chog.league
+    ? [
+        { key: "rank", label: "League", value: `#${fmtInt(chog.league.rank)}` },
+        { key: "edge", label: "vs holding", value: signedPct(chog.league.edgePct), tone: toneOf(chog.league.edgePct) },
+        { key: "trades", label: "Trades", value: fmtInt(chog.league.trades) },
+      ]
+    : [];
 
   return (
-    <li className={`card relative flex min-w-0 flex-col p-4 ${best ? "border-accent/50" : ""}`}>
-      {best && (
-        <span className="absolute -top-2.5 left-4 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold tracking-wider text-background uppercase">
-          Your best trader
-        </span>
-      )}
-      <div className="flex items-start gap-3">
+    <li className={`v2-card v2-card--interactive flex min-w-0 flex-col p-5 ${best ? "v2-card--feature" : ""}`}>
+      <div className="flex items-start gap-4">
         <Link href={profile} tabIndex={-1} aria-hidden className="shrink-0">
-          <ChogThumb image={chog.image} tokenId={tokenId} size={60} className="rounded-xl" />
+          <ChogThumb image={chog.image} tokenId={tokenId} size={88} className="v2-avatar size-[88px] rounded-[18px]" />
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             {/* Both numbers, always: read as "CHOG #1462 · token 1". */}
-            <h3 className="min-w-0 leading-snug font-semibold">
-              <Link href={profile} className="hover:underline">
+            <h3 className="m-0 min-w-0 text-[length:var(--v2-fs-h3)] leading-snug font-medium tracking-[-0.012em]">
+              <Link href={profile} className="text-[var(--v2-ink)] transition-colors hover:text-[var(--v2-kicker)]">
                 <span className="block truncate">{title}</span>
-                <span className="block font-mono text-xs font-normal text-subtle">
-                  <span className="sr-only">· </span>token {tokenId}
+                <span className="v2-mono block text-xs font-normal text-[var(--v2-faint)]">
+                  <span className="v2-sr">· </span>token {tokenId}
                 </span>
               </Link>
             </h3>
-            {rank !== undefined && (
-              <span
-                className="chip shrink-0 border-accent/40 px-2 font-mono text-accent-strong"
-                title={`League rank${total ? ` of ${fmtInt(total)}` : ""}, simulated on real $CHOG candles`}
-              >
-                #{fmtInt(rank)}
-              </span>
-            )}
+            <StatusBadge agent={chog.agent} />
           </div>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {chog.style && <span className="chip py-0 text-[11px] capitalize">{chog.style}</span>}
-            {topPct !== null && topPct <= 25 && (
-              <span className="chip border-success/35 py-0 text-[11px] text-success">Top {topPct}%</span>
-            )}
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {best && <Badge tone="violet">Your best trader</Badge>}
+            {chog.style && <Chip className="capitalize">{chog.style}</Chip>}
+            {topPct !== null && topPct <= 25 && <Badge tone="success">Top {topPct}%</Badge>}
             {chog.house && (
-              <Link href="/heist" className="chip border-warning/40 py-0 text-[11px] text-warning hover:border-warning">
+              <Link href="/heist" className="v2-badge v2-badge--warning">
                 House Chog
               </Link>
             )}
-            {chog.hidden && <span className="chip border-warning/40 py-0 text-[11px] text-warning">Hidden</span>}
+            {chog.hidden && <Badge tone="warning">Hidden</Badge>}
           </div>
         </div>
       </div>
-      <p className="mt-3 text-sm leading-snug text-pretty">
-        <span className="font-medium">{chog.name}</span>
-        {chog.archetype && <span className="text-muted"> · {chog.archetype}</span>}
+      <p className="m-0 mt-4 text-[length:var(--v2-fs-sm)] leading-snug text-pretty">
+        <span className="font-medium text-[var(--v2-ink)]">{chog.name}</span>
+        {chog.archetype && <span className="text-[var(--v2-nav)]"> · {chog.archetype}</span>}
       </p>
 
-      {chog.hidden && (
-        <p className="mt-3 text-xs leading-relaxed text-pretty text-muted">
+      {chog.hidden ? (
+        <p className="v2-note mt-3 text-pretty">
           Hidden from Animr&apos;s public pages, so its League place, replays and Bell calls stay off until you show it
           again.
         </p>
+      ) : chog.league ? (
+        <StatRow
+          size="sm"
+          inline
+          stats={stats}
+          className={`mt-4 [&_.v2-stat]:px-4 [&_.v2-stat:first-child]:pl-0 [&_.v2-stat:last-child]:pr-0`}
+        />
+      ) : (
+        <p className="v2-note mt-4">Not ranked in the League right now</p>
       )}
-      <dl className="mt-3 grid grid-cols-[3.25rem_minmax(0,1fr)] items-start gap-x-2 gap-y-2 text-sm">
-        {!chog.hidden && (
+
+      <dl className="m-0 mt-4 grid grid-cols-[2.75rem_minmax(0,1fr)] items-start gap-x-3 gap-y-3 border-t border-[var(--v2-line-soft)] pt-4 text-[length:var(--v2-fs-sm)]">
+        {!chog.hidden && bellLabel && (
           <>
-            <dt className={`${LABEL} pt-0.5`}>League</dt>
-            <dd className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              {chog.league ? (
-                <>
-                  <EdgeBadge pct={chog.league.edgePct} />
-                  <span className="text-xs text-subtle">vs holding · {fmtInt(chog.league.trades)} trades</span>
-                </>
+            <dt className={LABEL}>Bell</dt>
+            <dd className="m-0 min-w-0">
+              {chog.bell ? (
+                <Link href={`${profile}#bell`} className="group block" title={`${bellLabel}: its call on $CHOG over 24h`}>
+                  <span className="flex flex-wrap items-center gap-x-2">
+                    <Forecast pct={chog.bell.forecastPct} />
+                    <span className="text-xs text-[var(--v2-nav)]">{Math.round(chog.bell.conviction * 100)}% sure</span>
+                    {typeof chog.bell.points === "number" && (
+                      <span className="v2-num text-xs text-[var(--v2-ink)]">
+                        {fmtInt(chog.bell.points)} pts{chog.bell.hit ? " ✓" : ""}
+                      </span>
+                    )}
+                    <span className="text-[11px] text-[var(--v2-faint)]">
+                      {chog.bell.source === "llm" ? "by its AI" : "by its DNA"}
+                    </span>
+                  </span>
+                  {chog.bell.thesis && (
+                    <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--v2-faint)] group-hover:text-[var(--v2-nav)]">
+                      “{chog.bell.thesis}”
+                    </span>
+                  )}
+                </Link>
               ) : (
-                <span className="text-xs text-subtle">Not ranked right now</span>
+                <span className="text-xs text-[var(--v2-faint)]">No call on this Bell</span>
               )}
             </dd>
-            {bellLabel && (
-              <>
-                <dt className={`${LABEL} pt-0.5`}>Bell</dt>
-                <dd className="min-w-0">
-                  {chog.bell ? (
-                    <Link href={`${profile}#bell`} className="group block" title={`${bellLabel}: its call on $CHOG over 24h`}>
-                      <span className="flex flex-wrap items-center gap-x-2">
-                        <Forecast pct={chog.bell.forecastPct} />
-                        <span className="text-xs text-muted">{Math.round(chog.bell.conviction * 100)}% sure</span>
-                        {typeof chog.bell.points === "number" && (
-                          <span className="font-mono text-xs text-foreground">
-                            {fmtInt(chog.bell.points)} pts{chog.bell.hit ? " ✓" : ""}
-                          </span>
-                        )}
-                        <span className="text-[11px] text-subtle">
-                          {chog.bell.source === "llm" ? "by its AI" : "by its DNA"}
-                        </span>
-                      </span>
-                      {chog.bell.thesis && (
-                        <span className="mt-0.5 line-clamp-2 text-xs text-subtle group-hover:text-muted">
-                          “{chog.bell.thesis}”
-                        </span>
-                      )}
-                    </Link>
-                  ) : (
-                    <span className="text-xs text-subtle">No call on this Bell</span>
-                  )}
-                </dd>
-              </>
-            )}
           </>
         )}
-        <dt className={`${LABEL} pt-0.5`}>AI</dt>
-        <dd className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+        <dt className={LABEL}>AI</dt>
+        <dd className="m-0 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           {awake && chog.agent ? (
             <>
-              <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
-                <span aria-hidden className="size-1.5 rounded-full bg-success" />
-                Awake · {MODE_LABEL[chog.agent.mode]}
+              <span className="text-xs text-[var(--v2-ink)]">Awake · {MODE_LABEL[chog.agent.mode]}</span>
+              <span
+                title="AI edge vs. simply holding $CHOG"
+                className={`v2-num text-sm ${toneOf(chog.agent.pnlPct) === "up" ? "v2-up" : toneOf(chog.agent.pnlPct) === "down" ? "v2-down" : "text-[var(--v2-nav)]"}`}
+              >
+                {signedPct(chog.agent.pnlPct)}
+                <span className="ml-1 text-[11px] text-[var(--v2-faint)]">vs holding</span>
               </span>
-              <PnlBadge pct={chog.agent.pnlPct} />
             </>
           ) : (
-            <span className="text-xs text-muted">{chog.agent ? "Paused" : "Asleep"}</span>
+            <span className="text-xs text-[var(--v2-nav)]">{chog.agent ? "Paused" : "Asleep"}</span>
           )}
         </dd>
       </dl>
 
-      <div className="mt-auto flex flex-col gap-2 pt-4">
+      <div className="mt-auto flex flex-col gap-2 pt-5">
         {!awake && (
           <Link
             href={profile}
-            className="btn w-full border-accent/45 bg-accent/15 text-accent-strong hover:border-accent hover:bg-accent/25 hover:text-foreground"
+            className={`${pillClass("glass", "sm", true)} border-[var(--v2-line-teal)] text-[var(--v2-kicker)] hover:text-[var(--v2-ink)]`}
             title="Opens its page: sign one free message there and an AI on 0G Compute starts trading for it"
           >
             {chog.agent ? "Wake its AI back up" : "Wake its AI"}
+            <ArrowRightIcon className="v2-btn-icon size-4" />
           </Link>
         )}
         {chog.hidden ? (
@@ -579,7 +604,10 @@ function ChogCard({
         ) : (
           <div className="grid grid-cols-3 gap-2">
             <Link href={`/replay/${tokenId}`} className={SMALL_BTN} aria-label={`Rewind ${chog.label}: its Time Machine`}>
-              <span aria-hidden>▶</span> Rewind
+              <span aria-hidden className="text-[10px]">
+                ▶
+              </span>{" "}
+              Rewind
             </Link>
             <Link href={`/versus?a=${tokenId}`} className={SMALL_BTN} aria-label={`Versus: ${chog.label} against a random rival`}>
               Versus
@@ -599,7 +627,7 @@ function Footnote({ holdings }: { holdings: HoldingsResponse }) {
   const { league, ownership } = holdings;
   const read = now === null ? null : timeAgo(ownership.at, now);
   return (
-    <p className="mt-5 text-xs leading-relaxed text-pretty text-subtle">
+    <p className="v2-note mt-6 max-w-[90ch] text-pretty">
       {league && (
         <>
           League place and edge: {league.window.label}, {league.label} (1% fee + impact), not real trades.{" "}
@@ -607,7 +635,7 @@ function Footnote({ holdings }: { holdings: HoldingsResponse }) {
       )}
       Bell calls score points only.{" "}
       {ownership.stale ? (
-        <span className="text-warning">
+        <span className="text-[var(--v2-warning)]">
           Monad&apos;s RPC isn&apos;t answering right now: this list was read from the chain {read ?? "earlier"}.
         </span>
       ) : (
@@ -622,37 +650,40 @@ function EmptyPanel({ address, className }: { address: string; className: string
   const hidden = useHiddenChogs();
   const headingId = useId();
   return (
-    <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${PANEL} ${className}`}>
-      <p className="eyebrow">
-        Your Chogs <span className="font-mono tracking-normal normal-case">· {shortAddress(address)}</span>
+    <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${className}`}>
+      <SectionTitle id={headingId} kicker={<Kicker address={address} />} title="No Chog Genesis in this wallet yet" />
+      <EmptyState
+        icon={<LeagueIcon />}
+        title="All 1,969 are already trading"
+        body="Their traits are their strategy, and the $CHOG market keeps score. Meet a few, race two of them, or ride one at today's Bell. No Chog needed."
+        actions={
+          <>
+            {/* The draw happens on click (never while rendering): never a flagged or hidden Chog. */}
+            <button
+              type="button"
+              onClick={() => router.push(`/replay/${randomChogId(undefined, hidden)}`)}
+              className={pillClass("primary")}
+            >
+              <span aria-hidden className="text-xs">
+                ▶
+              </span>
+              Rewind a random Chog
+            </button>
+            <Link href="/league" className={pillClass("glass")}>
+              Meet the League
+            </Link>
+            <Link href="/versus" className={pillClass("glass")}>
+              Race two in Versus
+            </Link>
+            <Link href="/bell" className={pillClass("ghost")}>
+              Ride the Daily Bell
+            </Link>
+          </>
+        }
+      />
+      <p className="v2-note mt-3 text-center">
+        Holding one in another wallet? Switch to it in your wallet and it shows up here.
       </p>
-      <h2 id={headingId} className="mt-2 text-xl font-semibold tracking-tight text-balance sm:text-2xl">
-        No Chog Genesis in this wallet yet
-      </h2>
-      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-pretty text-muted">
-        All 1,969 are already trading: their traits are their strategy, and the $CHOG market keeps score. Meet a few,
-        race two of them, or ride one at today&apos;s Bell. No Chog needed.
-      </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {/* The draw happens on click (never while rendering): never a flagged or hidden Chog. */}
-        <button
-          type="button"
-          onClick={() => router.push(`/replay/${randomChogId(undefined, hidden)}`)}
-          className="btn btn-primary"
-        >
-          <span aria-hidden>▶</span> Rewind a random Chog
-        </button>
-        <Link href="/league" className="btn btn-secondary">
-          Meet the League
-        </Link>
-        <Link href="/versus" className="btn btn-secondary">
-          Race two in Versus
-        </Link>
-        <Link href="/bell" className="btn btn-ghost">
-          Ride the Daily Bell
-        </Link>
-      </div>
-      <p className="mt-3 text-xs text-subtle">Holding one in another wallet? Switch to it in your wallet and it shows up here.</p>
     </section>
   );
 }

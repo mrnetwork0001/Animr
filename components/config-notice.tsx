@@ -35,28 +35,27 @@ export function ConfigNotice({
   return (
     <div
       role="status"
-      className={`rounded-xl border border-warning/30 bg-warning/5 p-4 text-sm ${className}`}
+      className={`rounded-[var(--v2-r-lg)] border border-[rgb(242_193_107/0.3)] bg-[rgb(242_193_107/0.05)] p-5 text-[length:var(--v2-fs-sm)] shadow-[var(--v2-glass-glow)] ${className}`}
     >
-      <p className="flex items-center gap-2 font-medium text-warning">
-        <span aria-hidden className="size-1.5 rounded-full bg-warning" />
+      <p className="m-0 flex items-center gap-2 font-medium text-[var(--v2-warning)]">
+        <span aria-hidden className="size-1.5 rounded-full bg-[var(--v2-warning)] shadow-[0_0_8px_var(--v2-warning)]" />
         {title}
       </p>
-      <p className="mt-1.5 text-muted">
+      <p className="mt-2 mb-0 leading-relaxed text-pretty text-[var(--v2-nav)]">
         Add {missing.length === 1 ? "this variable" : "these variables"} to{" "}
-        <code className="font-mono text-foreground">.env.local</code> (see{" "}
-        <code className="font-mono text-foreground">.env.example</code>), then restart the dev
-        server or rebuild: <code className="font-mono">NEXT_PUBLIC_*</code> values are inlined at
-        build time.
+        <code className="v2-mono text-[var(--v2-ink)]">.env.local</code> (see{" "}
+        <code className="v2-mono text-[var(--v2-ink)]">.env.example</code>), then restart the dev server or rebuild:{" "}
+        <code className="v2-mono">NEXT_PUBLIC_*</code> values are inlined at build time.
       </p>
-      <ul className="mt-3 space-y-1.5">
+      <ul className="m-0 mt-3 list-none space-y-1.5 p-0">
         {missing.map((key) => (
           <li key={key} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-            <code className="font-mono text-[13px] text-foreground">{CONFIG_VARS[key].env}</code>
-            <span className="text-subtle">{CONFIG_VARS[key].what}</span>
+            <code className="v2-mono text-[13px] text-[var(--v2-ink)]">{CONFIG_VARS[key].env}</code>
+            <span className="text-[var(--v2-faint)]">{CONFIG_VARS[key].what}</span>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-subtle">
+      <p className="v2-note mt-3">
         Network: {appConfig.chain.name} (chain {appConfig.chain.id})
       </p>
     </div>
