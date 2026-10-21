@@ -7,9 +7,9 @@ import { useEffect } from "react";
  * without `sdk.actions.ready()` the splash never goes away. Everywhere else it costs nothing: a top-level
  * window that isn't a React Native WebView can't be a Mini App, so the SDK chunk is never fetched.
  *
- * Loading the SDK also bridges the client's wallet as an EIP-6963 provider. wagmi (lib/wagmi.ts) already
- * listens for EIP-6963 announcements, so asking again once the bridge is up adds the Farcaster wallet to
- * the connect menu with no extra connector package.
+ * Loading the SDK also bridges the client's wallet as an EIP-6963 provider. Both login paths listen for EIP-6963
+ * announcements (Privy's "detected wallets", or wagmi's discovery in lib/wagmi.ts without Privy), so asking again
+ * once the bridge is up adds the Farcaster wallet to the login options with no extra connector package.
  */
 export function MiniAppReady() {
   useEffect(() => {

@@ -9,25 +9,18 @@ import {
   useDisconnect,
   useSwitchChain,
 } from "wagmi";
+import { PrivyLoginButton } from "@/components/privy/login-button";
 import { pillClass } from "@/components/v2/primitives";
 import { appConfig } from "@/lib/config";
 import { explorerAddressUrl, shortAddress } from "@/lib/format";
+import { privyEnabled } from "@/lib/privy";
 import { walletErrorMessage } from "@/lib/wagmi";
+import { useIsClient } from "./use-is-client";
+
+// Many wallet-aware components import the hydration flag from here.
+export { useIsClient };
 
 const subscribeNothing = () => () => {};
-
-/**
- * False during SSR and hydration, true afterwards. The server always renders
- * "disconnected", and wagmi's hooks read the live store even while hydrating, so
- * wallet-dependent markup must wait for this to stay hydration-safe.
- */
-export function useIsClient(): boolean {
-  return useSyncExternalStore(
-    subscribeNothing,
-    () => true,
-    () => false,
-  );
-}
 
 function hasInjectedProvider() {
   return Boolean((window as { ethereum?: unknown }).ethereum);
@@ -49,8 +42,15 @@ const INSTALL_LINKS = [
   { name: "Backpack", href: "https://backpack.app" },
 ] as const;
 
-/** The header slot's Suspense fallback: the disconnected button's shape, inert. */
+/** The header slot's Suspense fallback: the logged-out button's shape, inert. */
 export function ConnectButtonFallback({ size = "sm" }: { size?: "sm" | "md" }) {
+  if (privyEnabled) {
+    return (
+      <span aria-hidden className={`${pillClass(size === "sm" ? "glass" : "primary", size)} opacity-50`}>
+        {size === "sm" ? "Log in" : "Connect wallet"}
+      </span>
+    );
+  }
   return (
     <span aria-hidden className={`${pillClass("primary", size)} opacity-50`}>
       Connect wallet
@@ -63,10 +63,18 @@ const PANEL =
   "v2-glass--strong absolute top-full right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2*var(--v2-gutter)))] rounded-[var(--v2-r-lg)] text-sm";
 
 /**
- * The wallet button: "Connect wallet" (a violet pill), then the network chip and the address with its panel (copy,
- * explorer, switch network, disconnect). `size` follows the v2 pills: "sm" (36px) in the header, "md" (46px) in pages.
+ * The login / wallet button used in the header and in page prompts. With NEXT_PUBLIC_PRIVY_APP_ID set it is Privy's
+ * "Log in" (components/privy/login-button.tsx); without it, the plain wagmi wallet menu below.
  */
-export function ConnectButton({ className = "", size = "md" }: { className?: string; size?: "sm" | "md" }) {
+export function ConnectButton(props: { className?: string; size?: "sm" | "md" }) {
+  return privyEnabled ? <PrivyLoginButton {...props} /> : <WagmiConnectButton {...props} />;
+}
+
+/**
+ * The fallback wallet button (no Privy app configured): "Connect wallet" (a violet pill), then the network chip and
+ * the address with its panel (copy, explorer, switch network, disconnect). `size` follows the v2 pills: "sm" (36px) in the header, "md" (46px) in pages.
+ */
+function WagmiConnectButton({ className = "", size = "md" }: { className?: string; size?: "sm" | "md" }) {
   const isClient = useIsClient();
   const connection = useConnection();
   const connect = useConnect();
