@@ -21,6 +21,8 @@ import {
   useVersusSampleMode,
   useVersusStats,
 } from "./api";
+import { RewindIcon } from "@/components/v2/icons";
+import { pillClass } from "@/components/v2/primitives";
 import { DiceIcon } from "./bits";
 import type { PlayKind } from "./ko-card";
 import { PickTwo } from "./pick-two";
@@ -230,16 +232,20 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
   const onScreen = current?.bout ?? preview;
 
   return (
-    <div ref={rootRef} className="scroll-mt-28 space-y-4 md:scroll-mt-24">
+    <div ref={rootRef} className="scroll-mt-28 space-y-5 md:scroll-mt-24">
       {sample && (
-        <p role="status" className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-2.5 text-xs text-warning">
-          Sample data: the VERSUS engine isn&apos;t answering on this server yet, so these races are a synthetic stand-in
-          (development only).
-        </p>
+        <div role="status" className="v2-toast v2-toast--warning">
+          <div>
+            <span className="v2-toast-title">Sample data</span>
+            The VERSUS engine isn&apos;t answering on this server yet, so these races are a synthetic stand-in
+            (development only).
+          </div>
+          <span />
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={randomBout} className="btn btn-primary">
+        <button type="button" onClick={randomBout} className={pillClass("glass")}>
           <DiceIcon /> Random bout
         </button>
         <button
@@ -247,7 +253,7 @@ export function VersusArena({ initialId, metadataIds }: { initialId?: string; me
           onClick={() => setFormOpen((open) => !open)}
           aria-expanded={formOpen}
           aria-controls={formOpen ? formId : undefined}
-          className="btn btn-secondary"
+          className={pillClass("ghost")}
         >
           Pick two Chogs
         </button>
@@ -274,8 +280,9 @@ function Stats() {
   if (!data || data.bouts < 10) return null;
   const format = (n: number) => new Intl.NumberFormat("en-US").format(n);
   return (
-    <p className="chip ml-auto">
-      {format(data.bouts)} bouts dealt · {format(data.picks)} picks
+    <p className="v2-chip ml-auto">
+      <span className="v2-num text-[var(--v2-ink)]">{format(data.bouts)}</span> bouts dealt ·{" "}
+      <span className="v2-num text-[var(--v2-ink)]">{format(data.picks)}</span> picks
     </p>
   );
 }
@@ -295,25 +302,26 @@ function DealError({
 }) {
   const missing = error instanceof VersusApiError && error.status === 404;
   return (
-    <div role="alert" className="card flex flex-col items-center px-6 py-10 text-center">
-      <p className="font-medium text-foreground">
-        {missing && shared ? "This bout can't be replayed here" : "Couldn't deal this bout"}
-      </p>
-      <p className="mt-1 max-w-md text-sm text-pretty text-muted">{error.message}</p>
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
-        <button type="button" onClick={onRandom} className="btn btn-primary">
+    <div role="alert" className="v2-empty">
+      <span className="v2-icon-tile v2-icon-tile--lg" aria-hidden>
+        <RewindIcon />
+      </span>
+      <p className="v2-empty-title">{missing && shared ? "This bout can't be replayed here" : "Couldn't deal this bout"}</p>
+      <p className="v2-empty-body">{error.message}</p>
+      <div className="v2-empty-actions">
+        <button type="button" onClick={onRandom} className={pillClass("primary")}>
           <DiceIcon /> Deal a random bout
         </button>
         {!missing && (
-          <button type="button" onClick={onRetry} disabled={retrying} className="btn btn-secondary">
+          <button type="button" onClick={onRetry} disabled={retrying} className={pillClass("glass")}>
             {retrying ? "Retrying…" : "Try again"}
           </button>
         )}
       </div>
-      <p className="mt-4 text-xs text-subtle">
+      <p className="v2-note">
         Meanwhile, every Chog is still trading:{" "}
-        <Link href="/league" className="font-medium text-accent-strong hover:underline">
-          meet all 1,969 in the League →
+        <Link href="/league" className="v2-link">
+          meet all 1,969 in the League
         </Link>
       </p>
     </div>
@@ -323,10 +331,10 @@ function DealError({
 /** Suspense fallback while the page reads its params. */
 export function VersusArenaSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div aria-hidden className="flex gap-2">
-        <span className="btn btn-primary opacity-50">Random bout</span>
-        <span className="btn btn-secondary opacity-50">Pick two Chogs</span>
+        <span className={`${pillClass("glass")} opacity-50`}>Random bout</span>
+        <span className={`${pillClass("ghost")} opacity-50`}>Pick two Chogs</span>
       </div>
       <TapeSkeleton />
     </div>

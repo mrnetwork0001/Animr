@@ -8,7 +8,7 @@ import { isNotFound, useBell, useTodayBell } from "./api";
 import { LABEL, LoadError, SampleBanner, SectionTitle, useBefore } from "./bits";
 import { CallCard, rideable } from "./call-card";
 import { FanPanel, REPLAY_GAME_ID } from "./fan-panel";
-import { scheduledDay, shiftDay } from "./format";
+import { formatDay, scheduledDay, shiftDay } from "./format";
 import { BellHero } from "./hero";
 import { PastBells } from "./past-bells";
 import { ReplayGame } from "./replay-game";
@@ -35,7 +35,7 @@ export function BellDashboard() {
   const game = pastDays.length > 0 && <ReplayGame days={pastDays} id={REPLAY_GAME_ID} />;
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-6">
       <SampleBanner />
       {today.isError && !noBellYet ? (
         <LoadError
@@ -49,15 +49,15 @@ export function BellDashboard() {
       )}
       <FanPanel bell={bell} />
 
-      <div className="grid items-start gap-x-8 gap-y-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 space-y-10">
+      <div className="v2-section grid items-start gap-x-10 gap-y-16 lg:grid-cols-[minmax(0,1fr)_23rem]">
+        <div className="min-w-0 space-y-16">
           {/* Open Bell: the ride comes first. Settled Bell (until the next ring): its verdict does. */}
           {bell?.status === "settled" && <Verdict bell={bell} />}
           {bell && <TodaysCalls bell={bell} />}
           {verdict && verdict !== bell && <Verdict bell={verdict} />}
           {game}
         </div>
-        <aside className="min-w-0 space-y-10">
+        <aside className="min-w-0 space-y-12 lg:sticky lg:top-[calc(var(--v2-header-h)+24px)]">
           <SeasonStandings />
           {pastDays.length > 0 && <PastBells days={pastDays} />}
         </aside>
@@ -85,6 +85,7 @@ function TodaysCalls({ bell }: { bell: BellSummary }) {
   return (
     <section aria-label={title}>
       <SectionTitle
+        kicker={`Bell of ${formatDay(bell.day)} · ${bell.calls.toLocaleString("en-US")} calls`}
         title={title}
         hint={
           ridesOpen
@@ -92,17 +93,17 @@ function TodaysCalls({ bell }: { bell: BellSummary }) {
             : `${settledLine} A ride you take now goes to the next Bell (15:00 UTC) and counts from its ring.`
         }
         action={
-          <Link href={`/bell/${bell.day}`} className="text-sm font-medium text-accent-strong hover:underline">
-            All {bell.calls.toLocaleString("en-US")} calls →
+          <Link href={`/bell/${bell.day}`} className="v2-btn-glass v2-btn--sm">
+            All {bell.calls.toLocaleString("en-US")} calls
           </Link>
         }
       />
       {featured.length > 0 && (
         <>
-          <h3 className={`${LABEL} mt-4`}>
+          <h3 className={LABEL}>
             {bell.featured.some((call) => call.claimed) ? "Featured · claimed AI agents and top oracles" : "Top oracles"}
           </h3>
-          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {featured.map((call) => (
               <CallCard key={call.tokenId} call={call} bell={bell} ride />
             ))}
@@ -111,8 +112,8 @@ function TodaysCalls({ bell }: { bell: BellSummary }) {
       )}
       {boldest.length > 0 && (
         <>
-          <h3 className={`${LABEL} mt-6`}>Boldest calls</h3>
-          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <h3 className={`${LABEL} mt-8`}>Boldest calls</h3>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {boldest.map((call) => (
               <CallCard key={call.tokenId} call={call} bell={bell} ride />
             ))}
@@ -120,14 +121,15 @@ function TodaysCalls({ bell }: { bell: BellSummary }) {
         </>
       )}
       {hidden > 0 && (
-        <button type="button" onClick={() => setExpanded(true)} className="btn btn-secondary mt-4 w-full">
+        <button type="button" onClick={() => setExpanded(true)} className="v2-btn-glass v2-btn--block mt-5">
           Show {hidden} more {hidden === 1 ? "call" : "calls"}
         </button>
       )}
       {featured.length + boldest.length === 0 && (
-        <p className="rounded-2xl border border-dashed border-line px-4 py-8 text-center text-sm text-subtle">
-          No calls at this Bell yet.
-        </p>
+        <div className="v2-empty">
+          <p className="v2-empty-title">No calls at this Bell yet</p>
+          <p className="v2-empty-body">Every Chog calls $CHOG at 15:00 UTC.</p>
+        </div>
       )}
     </section>
   );

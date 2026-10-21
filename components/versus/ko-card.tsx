@@ -5,6 +5,7 @@ import { type ReactNode, useCallback, useState } from "react";
 import type { FanState } from "@/lib/bell/types";
 import { VERSUS_COPY } from "@/lib/rewind/rules";
 import type { VersusBout, VersusRecord } from "@/lib/rewind/types";
+import { Badge, pillClass } from "@/components/v2/primitives";
 import { DiceIcon, Portrait, SIDE_TONE } from "./bits";
 import {
   type FighterLabel,
@@ -79,24 +80,46 @@ export function KoCard({
     [scrollIntoView],
   );
 
+  const winner = draw ? null : (result.winner as Side);
+  const [revealDates, ...revealRest] = reveal.label.split(": ");
+  const revealStory = revealRest.join(": ");
+
   return (
     <div
       ref={showCard}
       role="group"
       aria-label="Result"
-      className="vs-rise scroll-mt-28 rounded-2xl border border-line-strong bg-surface-2/60 p-4 md:scroll-mt-24 sm:p-6"
+      className="v2-card v2-card--feature vs-rise scroll-mt-28 md:scroll-mt-24"
     >
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
-        <span
-          aria-hidden
-          className={`vs-stamp inline-flex -rotate-3 items-center rounded-lg border-[3px] px-3 py-1 text-2xl font-black tracking-widest sm:text-3xl ${
-            draw ? "border-muted text-muted" : `${result.winner === "a" ? "border-accent-strong" : "border-warning"} ${SIDE_TONE[result.winner as Side].text}`
-          }`}
-        >
-          {draw ? "DRAW" : "K.O."}
-        </span>
-        <div className="min-w-0 flex-1 basis-56">
-          <p className="text-lg font-semibold tracking-tight text-balance sm:text-2xl">{koLine(bout, labels)}</p>
+      <div className="grid gap-6 md:grid-cols-[auto_minmax(0,1fr)] md:items-center md:gap-8">
+        <div className={`relative flex items-end gap-4 ${winner ? SIDE_TONE[winner].side : ""}`}>
+          {winner ? (
+            <Portrait
+              side={winner}
+              image={bout[winner].image}
+              tokenId={bout[winner].tokenId}
+              size={128}
+              box="size-24 sm:size-32"
+              large
+              alt={`${labels[winner].spoken}, the winner`}
+            />
+          ) : (
+            <span className="flex -space-x-5">
+              {SIDES.map((side) => (
+                <Portrait key={side} side={side} image={bout[side].image} tokenId={bout[side].tokenId} size={96} box="size-20 sm:size-24" large />
+              ))}
+            </span>
+          )}
+          <span aria-hidden className="vs-ko vs-stamp">
+            {draw ? "Draw" : "K.O."}
+          </span>
+        </div>
+        <div className="grid min-w-0 gap-3">
+          <p className="flex flex-wrap items-center gap-2">
+            {draw ? <Badge>Dead heat</Badge> : <Badge tone="success" dot>Winner</Badge>}
+            {winner && <span className={`text-sm font-medium ${SIDE_TONE[winner].text}`}>{labels[winner].title}</span>}
+          </p>
+          <p className="vs-ko-title">{koLine(bout, labels)}</p>
           <Verdict
             pick={pick}
             kind={kind}
@@ -111,70 +134,52 @@ export function KoCard({
       </div>
 
       {/* Both fighters side by side: a table, so a phone keeps every number on one line. */}
-      <div className="mt-5 overflow-hidden rounded-xl border border-line/70 bg-background/30">
-        <table className="w-full table-fixed text-xs sm:text-sm">
-          <caption className="sr-only">Both Chogs at the KO</caption>
+      <div className="v2-table-wrap mt-7">
+        <table className="v2-table vs-ko-table table-fixed">
+          <caption className="v2-sr">Both Chogs at the KO</caption>
           <colgroup>
-            <col className="w-[5.5rem] sm:w-36" />
+            <col className="w-[6.5rem] sm:w-40" />
             <col />
             <col />
           </colgroup>
           <thead>
             <tr>
-              <td />
+              <td className="bg-transparent" />
               {SIDES.map((side) => {
                 const won = result.winner === side;
                 return (
-                  <th key={side} scope="col" className={`px-2 pt-3 pb-2 text-left align-top font-normal sm:px-3 ${won ? "bg-white/[0.03]" : ""}`}>
-                    <span className="flex min-w-0 items-center gap-2">
-                      <Portrait
-                        side={side}
-                        image={bout[side].image}
-                        tokenId={bout[side].tokenId}
-                        size={32}
-                        className="hidden rounded-lg sm:block"
-                      />
+                  <th key={side} scope="col" className={`static text-left tracking-normal whitespace-normal normal-case ${won ? "bg-[rgb(255_255_255/0.035)]" : "bg-transparent"}`}>
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <Portrait side={side} image={bout[side].image} tokenId={bout[side].tokenId} size={32} className="hidden sm:block" />
                       <span className="min-w-0">
-                        <span className={`block truncate font-semibold ${SIDE_TONE[side].text}`}>{labels[side].title}</span>
-                        <span className="block truncate text-[10px] tracking-wider text-subtle uppercase">
-                          {won ? "Winner" : draw ? "Level" : "Runner-up"}
+                        <span className={`block text-[13.5px] leading-tight font-medium break-words ${SIDE_TONE[side].text}`}>
+                          {labels[side].title}
                         </span>
+                        <span className="mt-0.5 block text-[11px] font-normal">{won ? "Winner" : draw ? "Level" : "Runner-up"}</span>
                       </span>
                     </span>
-                    {pick === side && kind !== "watch" && (
-                      <span className={`mt-1.5 inline-flex rounded px-1 text-[9px] font-bold tracking-wider uppercase ring-1 ring-current/40 ${SIDE_TONE[side].text}`}>
-                        Your pick
-                      </span>
-                    )}
+                    {pick === side && kind !== "watch" && <span className={`mt-1.5 ${SIDE_TONE[side].tag}`}>Your pick</span>}
                   </th>
                 );
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-line/50 border-t border-line/50">
+          <tbody>
             {[
               {
                 label: "vs holding",
-                cell: (side: Side) => (
-                  <span className={`font-mono font-semibold tabular-nums ${edgeTone(stats[side].edge)}`}>{signedPct(stats[side].edge)}</span>
-                ),
+                cell: (side: Side) => <span className={edgeTone(stats[side].edge)}>{signedPct(stats[side].edge)}</span>,
               },
-              {
-                label: "Final $CHOG",
-                cell: (side: Side) => <span className="font-mono tabular-nums">{formatChog(stats[side].stack)}</span>,
-              },
-              {
-                label: "Fees, $CHOG",
-                cell: (side: Side) => <span className="font-mono tabular-nums">{formatFee(stats[side].fees)}</span>,
-              },
-              { label: "Trades", cell: (side: Side) => <span className="font-mono tabular-nums">{stats[side].trades}</span> },
+              { label: "Final $CHOG", cell: (side: Side) => formatChog(stats[side].stack) },
+              { label: "Fees, $CHOG", cell: (side: Side) => formatFee(stats[side].fees) },
+              { label: "Trades", cell: (side: Side) => stats[side].trades },
             ].map((row) => (
               <tr key={row.label}>
-                <th scope="row" className="px-2 py-2 text-left text-[11px] font-normal text-subtle sm:px-3">
+                <th scope="row" className="static border-b-[var(--v2-line-soft)] bg-transparent text-left text-xs font-normal tracking-normal text-[var(--v2-faint)] normal-case">
                   {row.label}
                 </th>
                 {SIDES.map((side) => (
-                  <td key={side} className={`px-2 py-2 sm:px-3 ${result.winner === side ? "bg-white/[0.03]" : ""}`}>
+                  <td key={side} className={`is-num text-left ${result.winner === side ? "bg-[rgb(255_255_255/0.035)]" : ""}`}>
                     {row.cell(side)}
                   </td>
                 ))}
@@ -182,72 +187,72 @@ export function KoCard({
             ))}
           </tbody>
         </table>
-        <p className="border-t border-line/50 px-3 py-2 text-[11px] text-subtle">
-          Both started with {formatChog(startChog)} $CHOG; just holding ends with exactly that.
-        </p>
       </div>
+      <p className="v2-note mt-2.5">Both started with {formatChog(startChog)} $CHOG; just holding ends with exactly that.</p>
 
       {/* The reveal: until now the window was "48 hours of real $CHOG history". */}
-      <div className="mt-5 rounded-xl border border-dashed border-accent/50 bg-accent/5 p-3 sm:p-4">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="vs-stamp inline-flex -rotate-2 rounded-md border-2 border-accent-strong px-2 py-0.5 text-xs font-black tracking-[0.2em] text-accent-strong">
-            REVEAL
-          </span>
-          <p className="min-w-0 flex-1 text-sm font-semibold text-balance sm:text-base">{reveal.label}</p>
-        </div>
-        <p className="mt-2 text-xs leading-relaxed text-muted">
-          The real window:{" "}
-          <time dateTime={reveal.from} className="font-mono text-foreground">
-            {formatHour(Date.parse(reveal.from))}
-          </time>{" "}
-          to{" "}
-          <time dateTime={reveal.to} className="font-mono text-foreground">
-            {formatHour(Date.parse(reveal.to))}
-          </time>
-          . $CHOG went from <span className="font-mono text-foreground">{formatPrice(reveal.priceStart)}</span> to{" "}
-          <span className="font-mono text-foreground">{formatPrice(reveal.priceEnd)}</span> WMON (
-          <span className={edgeTone(priceMove)}>{signedPct(priceMove)}</span>).
-        </p>
+      <div className="vs-reveal mt-7">
+        <p className="v2-kicker v2-kicker--dot">Reveal · the real window</p>
+        <p className="vs-reveal-dates vs-wipe mt-3">{revealDates}</p>
+        {revealStory && <p className="v2-lead mt-2 text-[var(--v2-muted)]">{revealStory}</p>}
+        <dl className="vs-reveal-times mt-6">
+          <div>
+            <dt>From</dt>
+            <dd>
+              <time dateTime={reveal.from}>{formatHour(Date.parse(reveal.from))}</time>
+            </dd>
+          </div>
+          <div>
+            <dt>To</dt>
+            <dd>
+              <time dateTime={reveal.to}>{formatHour(Date.parse(reveal.to))}</time>
+            </dd>
+          </div>
+          <div>
+            <dt>$CHOG, WMON</dt>
+            <dd>
+              {formatPrice(reveal.priceStart)} → {formatPrice(reveal.priceEnd)}{" "}
+              <span className={edgeTone(priceMove)}>{signedPct(priceMove)}</span>
+            </dd>
+          </div>
+        </dl>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        <button type="button" onClick={onRematch} disabled={busy !== null} className="btn btn-primary">
+      <div className="mt-7 flex flex-wrap gap-2">
+        <button type="button" onClick={onRematch} disabled={busy !== null} className={`max-sm:w-full ${pillClass("primary")}`}>
           {busy === "rematch" ? "Finding another window…" : "Rematch on another window"}
         </button>
-        <button type="button" onClick={onRandom} disabled={busy !== null} className="btn btn-secondary">
+        <button type="button" onClick={onRandom} disabled={busy !== null} className={`max-sm:w-full ${pillClass("glass")}`}>
           <DiceIcon /> {busy === "random" ? "Shuffling…" : "Random bout"}
         </button>
         <ShareButton bout={bout} labels={labels} />
-        <button type="button" onClick={onReplay} className="btn btn-ghost">
+        <button type="button" onClick={onReplay} className={`max-sm:w-full ${pillClass("ghost")}`}>
           <span aria-hidden>↺</span> Watch again
         </button>
       </div>
 
-      <nav aria-label="Both Chogs" className="mt-4 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-2">
+      <nav aria-label="Both Chogs" className="mt-6 grid gap-x-6 gap-y-2 border-t border-[var(--v2-line-soft)] pt-5 text-sm sm:grid-cols-2">
         {SIDES.map((side) => (
           <p key={side} className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className={`truncate font-medium ${SIDE_TONE[side].text}`}>{labels[side].title}:</span>
-            <Link href={`/chog/${bout[side].tokenId}`} className="text-muted hover:text-foreground hover:underline">
+            <Link href={`/chog/${bout[side].tokenId}`} className="v2-link">
               its page
             </Link>
-            <Link href={`/replay/${bout[side].tokenId}`} className="text-muted hover:text-foreground hover:underline">
+            <Link href={`/replay/${bout[side].tokenId}`} className="v2-link">
               its Time Machine
             </Link>
           </p>
         ))}
         <p className="sm:col-span-2">
-          <Link
-            href={`/replay/${bout.a.tokenId}?vs=${bout.b.tokenId}`}
-            className="font-medium text-accent-strong hover:underline"
-          >
+          <Link href={`/replay/${bout.a.tokenId}?vs=${bout.b.tokenId}`} className="v2-link">
             Race these two over all of $CHOG&apos;s history →
           </Link>
         </p>
       </nav>
 
-      <p className="mt-4 border-t border-line/70 pt-3 text-[11px] leading-relaxed text-subtle">
-        Genome <span className="font-mono">{bout.a.genomeVersion}</span>: a rules replay of each Chog&apos;s DNA on real
-        candles, not a promise. Past candles don&apos;t predict the next ones.
+      <p className="v2-note mt-5">
+        Genome <span className="v2-mono">{bout.a.genomeVersion}</span>: a rules replay of each Chog&apos;s DNA on real
+        candles, not a promise. Past candles don&apos;t predict the next ones. Simulated, points only.
       </p>
     </div>
   );
@@ -275,7 +280,7 @@ function Verdict({
 }) {
   if (kind === "watch" || !pick) {
     return (
-      <p className="mt-1.5 text-sm text-muted">
+      <p className="v2-body m-0">
         {VERSUS_COPY.spectate} A fresh bout lets you call it for +{PICK_POINTS}.
       </p>
     );
@@ -294,12 +299,12 @@ function Verdict({
     text =
       awarded && awarded > 0 ? (
         <>
-          <span className="font-semibold text-success">Called it: +{awarded} points.</span> {labels[pick].title}&apos;s genome
+          <span className="font-medium text-[var(--v2-success)]">Called it: +{awarded} points.</span> {labels[pick].title}&apos;s genome
           read the chart better.
         </>
       ) : (
         <>
-          <span className="font-semibold text-success">Called it.</span> {VERSUS_COPY.capped}
+          <span className="font-medium text-[var(--v2-success)]">Called it.</span> {VERSUS_COPY.capped}
         </>
       );
   } else {
@@ -313,10 +318,10 @@ function Verdict({
       );
   }
   return (
-    <div className="mt-1.5 space-y-1 text-sm text-muted">
+    <div className="v2-body space-y-1.5">
       <p>{text}</p>
       {kind === "points" && (fan || record) && (
-        <p className="text-xs">
+        <p className="v2-note">
           {record && (
             <>
               VERSUS record: {record.correct} of {record.picks} called · {formatChog(record.points)} pts ({record.pointsToday}/
@@ -327,15 +332,15 @@ function Verdict({
             // No fan card yet (VERSUS never makes one): the points wait for the first ride or nickname.
             <>
               {formatChog(record.pending)} pts move onto a fan card with your first{" "}
-              <Link href="/bell" className="underline-offset-2 hover:text-foreground hover:underline">
+              <Link href="/bell" className="v2-link">
                 Daily Bell ride
               </Link>
               .{" "}
             </>
           ) : fan ? (
             <>
-              Fan card: <span className="font-mono font-semibold text-accent-strong">{formatChog(fan.points)} pts</span>,{" "}
-              <Link href="/bell" className="underline-offset-2 hover:text-foreground hover:underline">
+              Fan card: <span className="v2-num text-[var(--v2-kicker)]">{formatChog(fan.points)} pts</span>,{" "}
+              <Link href="/bell" className="v2-link">
                 shared with the Daily Bell
               </Link>
               .{" "}
@@ -372,7 +377,7 @@ function ShareButton({ bout, labels }: { bout: VersusBout; labels: Record<Side, 
 
   return (
     <>
-      <button type="button" onClick={share} className="btn btn-secondary">
+      <button type="button" onClick={share} className={`max-sm:w-full ${pillClass("glass")}`}>
         {state === "copied" ? "Link copied" : state === "failed" ? "Copy the link below" : "Share this bout"}
       </button>
       {url && (
@@ -381,10 +386,10 @@ function ShareButton({ bout, labels }: { bout: VersusBout; labels: Record<Side, 
           value={url}
           aria-label="Link to this bout"
           onFocus={(e) => e.currentTarget.select()}
-          className="input w-full font-mono text-xs"
+          className="v2-input v2-mono w-full text-xs"
         />
       )}
-      <span aria-live="polite" className="sr-only">
+      <span aria-live="polite" className="v2-sr">
         {state === "copied" ? "Link copied to the clipboard." : ""}
       </span>
     </>

@@ -21,15 +21,16 @@ export type Side = "a" | "b";
 export const SIDES = ["a", "b"] as const satisfies readonly Side[];
 export const otherSide = (side: Side): Side => (side === "a" ? "b" : "a");
 
-/** Fighter colors: A in the accent purple, B in amber (the Time Machine's race colors). */
-export const SIDE_COLOR: Record<Side, string> = { a: "var(--color-accent-strong)", b: "var(--color-warning)" };
+/** Fighter colors (v2): A in teal, B in violet (chart series 1 and 2). */
+export const SIDE_COLOR: Record<Side, string> = { a: "var(--v2-chart-1)", b: "var(--v2-chart-2)" };
 /** The same colors as hex, for the share card (Satori has no CSS variables). */
-export const SIDE_HEX: Record<Side, string> = { a: "#9D8CFF", b: "#F5B544" };
+export const SIDE_HEX: Record<Side, string> = { a: "#9FF0EC", b: "#8B78EC" };
 
+/** A trading style's badge tone (v2 badges: no new hues). */
 export const STYLE_CHIP: Record<TradingStyle, string> = {
-  aggressive: "bg-warning/10 text-warning ring-warning/25",
-  balanced: "bg-accent/10 text-accent-strong ring-accent/30",
-  cautious: "bg-sky-400/10 text-sky-300 ring-sky-400/25",
+  aggressive: "v2-badge--violet",
+  balanced: "",
+  cautious: "v2-badge--teal",
 };
 
 export const boutPath = (id: string) => `/versus/${encodeURIComponent(id)}`;
@@ -47,8 +48,8 @@ export function signedPct(pct: number, digits = 1): string {
 }
 
 export function edgeTone(pct: number): string {
-  if (!Number.isFinite(pct) || Math.abs(pct) < 0.05) return "text-muted";
-  return pct > 0 ? "text-success" : "text-danger";
+  if (!Number.isFinite(pct) || Math.abs(pct) < 0.05) return "v2-muted";
+  return pct > 0 ? "v2-up" : "v2-down";
 }
 
 /** "1,042" (or "1,042.5" below 100). */

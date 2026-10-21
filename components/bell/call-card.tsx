@@ -42,7 +42,7 @@ export function RideButton({ tokenId, bell, className = "" }: { tokenId: number;
   return (
     <div className={className}>
       {riding === tokenId ? (
-        <span className="flex items-center justify-center gap-1.5 rounded-xl border border-success/40 bg-success/10 px-3.5 py-1.5 text-sm font-semibold text-success">
+        <span className="flex h-11 items-center justify-center gap-2 rounded-full border border-[rgb(98_224_166/0.35)] bg-[rgb(98_224_166/0.08)] px-4 text-sm font-medium text-[var(--v2-success)]">
           <span aria-hidden>✓</span> {booking ? "Riding next Bell" : "Riding"}
         </span>
       ) : (
@@ -52,7 +52,7 @@ export function RideButton({ tokenId, bell, className = "" }: { tokenId: number;
           disabled={windowOpen === null || riding !== undefined || ride.isPending}
           title={hint}
           aria-describedby={ride.isError ? errorId : undefined}
-          className={`btn w-full ${booking ? "btn-secondary" : "btn-primary"}`}
+          className="v2-btn-glass v2-btn--block"
         >
           {ride.isPending ? "Riding…" : booking ? "Ride next Bell" : "Ride"}
           <span className="sr-only"> with Chog #{tokenId}</span>
@@ -63,7 +63,7 @@ export function RideButton({ tokenId, bell, className = "" }: { tokenId: number;
         {ride.isSuccess ? rideAnnouncement(ride.data, tokenId) : ""}
       </span>
       {ride.isError && (
-        <p id={errorId} role="alert" className="mt-1.5 text-xs text-danger">
+        <p id={errorId} role="alert" className="mt-1.5 text-xs text-[var(--v2-danger)]">
           {rideErrorMessage(ride.error)}
         </p>
       )}
@@ -90,23 +90,23 @@ type CallCardProps = {
 /** One Chog's call: forecast, thesis in its voice, conviction, where it came from, and its result. */
 export function CallCard({ call, bell, reveal = true, action, ride, className = "" }: CallCardProps) {
   return (
-    <article className={`card flex flex-col gap-3 p-4 ${className}`}>
+    <article className={`v2-card v2-card--tight bell-call ${className}`}>
       <div className="flex items-start gap-3">
-        <ChogAvatar src={call.image} tokenId={call.tokenId} />
+        <ChogAvatar src={call.image} tokenId={call.tokenId} className="size-12 rounded-[12px]" />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold">
-            <Link href={`/chog/${call.tokenId}`} className="hover:text-accent-strong">
+          <h3 className="truncate text-[15px] font-medium text-[var(--v2-ink)]">
+            <Link href={`/chog/${call.tokenId}`} className="hover:text-[var(--v2-kicker)]">
               Chog #{call.tokenId}
             </Link>
           </h3>
-          <p className="truncate text-xs text-subtle">{call.name}</p>
+          <p className="truncate text-xs text-[var(--v2-faint)]">{call.name}</p>
         </div>
         <div className="shrink-0 text-right">
           <Forecast pct={call.forecastPct} size="lg" />
-          <p className="text-[11px] text-subtle">24h call</p>
+          <p className="text-[11px] text-[var(--v2-faint)]">24h call</p>
         </div>
       </div>
-      <p className="text-sm leading-relaxed text-pretty">“{call.thesis}”</p>
+      <p className="bell-thesis">“{call.thesis}”</p>
       <div className="mt-auto flex flex-wrap items-center gap-2">
         <SourceBadge source={call.source} />
         {call.claimed && <ClaimedBadge />}
@@ -124,12 +124,12 @@ export function CallCard({ call, bell, reveal = true, action, ride, className = 
  */
 export function CallRow({ call, bell, ride = rideable(bell) }: { call: BellCall; bell: BellSummary; ride?: boolean }) {
   return (
-    <li className="flex gap-3 border-b border-line/60 px-4 py-3.5 last:border-0">
-      <ChogAvatar src={call.image} tokenId={call.tokenId} className="size-10 rounded-xl" />
+    <li className="flex gap-3.5 border-b border-[var(--v2-line-soft)] px-4 py-4 transition-colors last:border-0 hover:bg-[rgb(255_255_255/0.02)] sm:px-5">
+      <ChogAvatar src={call.image} tokenId={call.tokenId} className="size-11 rounded-[11px]" />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <Link href={`/chog/${call.tokenId}`} className="font-semibold hover:text-accent-strong">
+            <Link href={`/chog/${call.tokenId}`} className="text-[15px] font-medium text-[var(--v2-ink)] hover:text-[var(--v2-kicker)]">
               Chog #{call.tokenId}
             </Link>
             <SourceBadge source={call.source} />
@@ -137,13 +137,13 @@ export function CallRow({ call, bell, ride = rideable(bell) }: { call: BellCall;
           </p>
           <Forecast pct={call.forecastPct} size="lg" className="shrink-0" />
         </div>
-        <p className="mt-1 line-clamp-2 text-sm text-muted">“{call.thesis}”</p>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="mt-1.5 line-clamp-2 text-sm text-[var(--v2-nav)]">“{call.thesis}”</p>
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <Conviction value={call.conviction} />
             {bell.status === "settled" && <CallResult call={call} actualPct={bell.actualPct} />}
           </div>
-          {ride && <RideButton tokenId={call.tokenId} bell={bell} />}
+          {ride && <RideButton tokenId={call.tokenId} bell={bell} className="w-full sm:w-auto sm:min-w-40" />}
         </div>
       </div>
     </li>

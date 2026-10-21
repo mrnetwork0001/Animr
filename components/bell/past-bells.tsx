@@ -15,15 +15,16 @@ export function PastBells({ days }: { days: string[] }) {
 
   return (
     <section aria-label="Past Bells">
-      <SectionTitle title="Past Bells" hint="Replays were rebuilt from real past $CHOG candles." />
+      <SectionTitle compact kicker="Archive" title="Past Bells" hint="Replays were rebuilt from real past $CHOG candles." />
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line px-4 py-8 text-center text-sm text-subtle">
-          No past Bells yet. The first one settles 24 hours after it rings.
-        </p>
+        <div className="v2-empty">
+          <p className="v2-empty-title">No past Bells yet</p>
+          <p className="v2-empty-body">The first one settles 24 hours after it rings.</p>
+        </div>
       ) : (
-        <ol className="card overflow-hidden">
+        <ol className="grid grid-cols-2 gap-2.5">
           {rows.map(({ day, query }) => (
-            <PastBellRow key={day} day={day} bell={query.data} pending={query.isPending} />
+            <PastBellTile key={day} day={day} bell={query.data} pending={query.isPending} />
           ))}
         </ol>
       )}
@@ -31,33 +32,34 @@ export function PastBells({ days }: { days: string[] }) {
   );
 }
 
-function PastBellRow({ day, bell, pending }: { day: string; bell?: BellSummary; pending: boolean }) {
+function PastBellTile({ day, bell, pending }: { day: string; bell?: BellSummary; pending: boolean }) {
   return (
-    <li className="border-b border-line/60 last:border-0">
-      <Link
-        href={`/bell/${day}`}
-        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/[0.07]"
-      >
-        <span className="w-28 shrink-0">
-          <span className="block text-sm font-medium">{formatDay(day)}</span>
-          {bell ? <KindBadge kind={bell.kind} /> : pending && <Skeleton className="mt-1 h-4 w-12" />}
+    <li className="min-w-0">
+      <Link href={`/bell/${day}`} className="bell-day-tile h-full">
+        <span className="flex items-center justify-between gap-2">
+          <span className="v2-overline tracking-[0.08em] whitespace-nowrap">{formatDay(day)}</span>
+          {bell ? <KindBadge kind={bell.kind} /> : pending && <Skeleton className="h-5 w-12 rounded-full" />}
         </span>
-        <span className="min-w-0 flex-1 truncate text-xs text-subtle">
+        <span className="flex min-h-7 items-end justify-between gap-2">
+          {bell?.status === "settled" ? (
+            <Forecast pct={bell.actualPct} size="lg" />
+          ) : bell?.status === "open" ? (
+            <span className="text-xs text-[var(--v2-nav)]">Settling…</span>
+          ) : (
+            pending && <Skeleton className="h-6 w-16" />
+          )}
+          <span aria-hidden className="text-[var(--v2-faint)]">
+            ›
+          </span>
+        </span>
+        <span className="truncate text-[11px] text-[var(--v2-faint)]">
           {bell?.oracle ? (
             <>
-              Oracle <span className="font-semibold text-muted">Chog #{bell.oracle.tokenId}</span>
+              Oracle <span className="text-[var(--v2-muted)]">Chog #{bell.oracle.tokenId}</span>
             </>
-          ) : bell?.status === "open" ? (
-            "Settling…"
-          ) : null}
-        </span>
-        {bell?.status === "settled" ? (
-          <Forecast pct={bell.actualPct} size="sm" />
-        ) : (
-          pending && <Skeleton className="h-4 w-14" />
-        )}
-        <span aria-hidden className="text-subtle">
-          ›
+          ) : (
+            "\u00a0"
+          )}
         </span>
       </Link>
     </li>

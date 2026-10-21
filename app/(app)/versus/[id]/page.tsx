@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { PageHeader } from "@/components/v2";
 import { VersusArena, VersusArenaSkeleton } from "@/components/versus/arena";
 import { personaName, sanitizeTraits } from "@/lib/agent/persona";
 import { chogLabel } from "@/lib/chog-id";
@@ -16,6 +17,8 @@ function fighterName(tokenId: number): string {
   const label = chogLabel(tokenId, { metadataName: chog?.name });
   return chog ? `${personaName(String(tokenId), sanitizeTraits(chog.traits))} (${label})` : label;
 }
+
+export const viewport: Viewport = { themeColor: "#0d0c11" };
 
 export async function generateMetadata({ params }: PageProps<"/versus/[id]">): Promise<Metadata> {
   const key = decodeBoutId((await params).id);
@@ -35,21 +38,26 @@ export async function generateMetadata({ params }: PageProps<"/versus/[id]">): P
 export default function VersusBoutPage({ params }: PageProps<"/versus/[id]">) {
   const metadataIds = allChogs().map((chog) => Number(chog.metadataId) || 0);
   return (
-    <div className="mx-auto w-full max-w-5xl flex-1 px-4 pt-8 pb-20 sm:px-6 sm:pt-10">
-      <Link href="/versus" className="mb-6 inline-flex text-sm text-muted transition-colors hover:text-foreground">
-        ← VERSUS
-      </Link>
-      <header className="mb-6">
-        <p className="eyebrow">VERSUS · a shared bout · points only</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-          Two genomes, the same hidden 48 hours. Who stacks more $CHOG?
-        </h1>
-      </header>
-      {/* params are request data under Cache Components, so they're read inside the boundary. */}
-      <Suspense fallback={<VersusArenaSkeleton />}>
-        <Bout params={params} metadataIds={metadataIds} />
-      </Suspense>
-      <p className="mt-10 text-xs text-pretty text-subtle">
+    <div className="v2-shell pb-20">
+      <PageHeader
+        kicker={
+          <>
+            <Link href="/versus" className="hover:text-[var(--v2-ink)]">
+              Rewind · VERSUS
+            </Link>
+            <span>· a shared bout · points only</span>
+          </>
+        }
+        title="Two genomes. 48 hidden hours. Who wins?"
+        lead="Same starting $CHOG, the same real CHOG/WMON candles, dates hidden until the KO. Call it first, or just watch."
+      />
+      <div className="v2-section">
+        {/* params are request data under Cache Components, so they're read inside the boundary. */}
+        <Suspense fallback={<VersusArenaSkeleton />}>
+          <Bout params={params} metadataIds={metadataIds} />
+        </Suspense>
+      </div>
+      <p className="v2-note mt-10 max-w-3xl">
         Every bout is simulated on real $CHOG history (1% fee + impact): no real trades and no tokens move. Picks earn
         points only, never money, and points have no cash value. Not affiliated with Chog.
       </p>

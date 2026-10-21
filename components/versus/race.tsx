@@ -1,14 +1,16 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
+import { pillClass } from "@/components/v2/primitives";
 import type { FanState } from "@/lib/bell/types";
 import type { VersusBout, VersusRecord } from "@/lib/rewind/types";
-import { LABEL, Portrait, SIDE_TONE, useReducedMotion } from "./bits";
+import { Portrait, SIDE_TONE, useReducedMotion } from "./bits";
 import { KoCard, type PlayKind } from "./ko-card";
 import { RaceChart, useRaceGeometry } from "./race-chart";
 import {
   type BoutLine,
   type FighterLabel,
+  SIDE_COLOR,
   SIDES,
   type Side,
   VERSUS_SIM_LABEL,
@@ -139,7 +141,7 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
   const pos = progress * (n - 1);
   const finished = progress >= 1;
   const hour = Math.min(hours, Math.floor(pos + 1e-6));
-  const height = width < 640 ? 250 : 330;
+  const height = width < 640 ? 260 : 380;
   const g = useRaceGeometry(bout, width, height);
   const lines = useMemo(() => boutLines(bout), [bout]);
   const ko = koLine(bout, labels);
@@ -175,26 +177,29 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
     : `Race chart: ${labels.a.title} and ${labels.b.title}, hour ${hour} of ${hours}. Lines show each $CHOG stack against just holding.`;
 
   return (
-    <section ref={sectionRef} aria-labelledby={headingId} className="card scroll-mt-28 overflow-hidden md:scroll-mt-24">
-      <div className="flex flex-wrap items-end justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-5">
-        <div className="min-w-0">
-          <p className="eyebrow">VERSUS · {finished ? "the reveal" : "48 hidden hours"}</p>
-          <h2
-            ref={headingRef}
-            id={headingId}
-            tabIndex={-1}
-            className="mt-1 text-lg font-semibold tracking-tight text-balance outline-none sm:text-xl"
-          >
-            <span className={SIDE_TONE.a.text}>{labels.a.title}</span> <span className="text-muted">vs</span>{" "}
-            <span className={SIDE_TONE.b.text}>{labels.b.title}</span>
+    <section
+      ref={sectionRef}
+      aria-labelledby={headingId}
+      className="v2-card v2-card--flush vs-stage scroll-mt-28 md:scroll-mt-24"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-3 px-4 pt-5 sm:px-8 sm:pt-7">
+        <div className="grid min-w-0 gap-2">
+          <p className="v2-kicker v2-kicker--dot">{finished ? "The reveal" : "48 hidden hours · live"}</p>
+          <h2 ref={headingRef} id={headingId} tabIndex={-1} className="v2-h2 outline-none">
+            <span className={SIDE_TONE.a.text}>{labels.a.title}</span>{" "}
+            <span className="text-[var(--v2-faint)]">vs</span> <span className={SIDE_TONE.b.text}>{labels.b.title}</span>
           </h2>
         </div>
-        <p className="chip">{finished ? bout.reveal.label.split(":")[0] : "Real dates hidden until the KO"}</p>
+        {finished ? (
+          <span className="v2-badge v2-badge--teal v2-badge--dot">{bout.reveal.label.split(":")[0]}</span>
+        ) : (
+          <span className="v2-badge v2-badge--live v2-badge--dot">Real dates hidden until the KO</span>
+        )}
       </div>
 
       {/* Fighters' corners: live edge and stack, the latest thing each one said. Visual only; the
           chart's label, the live region and the play-by-play carry the same information. */}
-      <div aria-hidden className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2 px-3 pt-4 sm:gap-4 sm:px-6">
+      <div aria-hidden className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2 px-3 pt-6 sm:gap-6 sm:px-8">
         <Corner
           side="a"
           bout={bout}
@@ -205,11 +210,11 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
           picked={pick === "a" && kind !== "watch"}
           bubble={bubbleOf("a")}
         />
-        <div className="pt-1 text-center">
-          <p className={`${LABEL} text-[10px]`}>Hour</p>
-          <p className="font-mono text-lg font-semibold tabular-nums sm:text-xl">
+        <div className="flex flex-col items-center pt-1 text-center">
+          <p className="v2-overline">Hour</p>
+          <p className="vs-hour mt-1.5">
             {hour}
-            <span className="text-sm text-subtle">/{hours}</span>
+            <span className="text-[0.5em] text-[var(--v2-faint)]">/{hours}</span>
           </p>
         </div>
         <Corner
@@ -224,34 +229,36 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
         />
       </div>
 
-      <div className="px-2 pt-3 sm:px-4">
-        <div ref={chartRef} className="relative h-[250px] sm:h-[330px]">
-          {width > 0 ? (
-            <RaceChart
-              bout={bout}
-              g={g}
-              width={width}
-              height={height}
-              pos={pos}
-              revealed={finished}
-              winner={finished ? bout.result.winner : undefined}
-              summary={summary}
-            />
-          ) : (
-            <div aria-hidden className="absolute inset-x-2 top-4 bottom-8 animate-pulse rounded-xl bg-surface-2/60" />
-          )}
+      <div className="px-2 pt-4 sm:px-8">
+        <div className="vs-chart-frame">
+          <div ref={chartRef} className="relative h-[260px] sm:h-[380px]">
+            {width > 0 ? (
+              <RaceChart
+                bout={bout}
+                g={g}
+                width={width}
+                height={height}
+                pos={pos}
+                revealed={finished}
+                winner={finished ? bout.result.winner : undefined}
+                summary={summary}
+              />
+            ) : (
+              <span aria-hidden className="v2-skeleton absolute inset-x-3 top-4 bottom-8" />
+            )}
+          </div>
         </div>
       </div>
 
-      <p aria-live="polite" className="sr-only">
+      <p aria-live="polite" className="v2-sr">
         {finished ? `${ko} ${bout.reveal.label}.` : ""}
       </p>
 
-      <div className="flex items-center gap-2 px-3 pt-3 sm:gap-3 sm:px-6">
+      <div className="flex items-center gap-3 px-3 pt-4 sm:gap-4 sm:px-8">
         <button
           type="button"
           onClick={playing ? () => setPlaying(false) : play}
-          className="btn btn-primary w-[6.25rem] shrink-0"
+          className={`${pillClass(finished ? "glass" : "primary", "sm")} w-[6.5rem] shrink-0`}
           aria-label={playing ? "Pause the race" : finished ? "Watch the race again" : "Play the race"}
         >
           <span aria-hidden>{playing ? "❚❚" : finished ? "↺" : "▶"}</span>
@@ -269,13 +276,14 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
           }}
           aria-label="Race timeline"
           aria-valuetext={`Hour ${hour} of ${hours}`}
-          className="h-2 min-w-0 flex-1 cursor-pointer accent-accent"
+          className="vs-range"
+          style={{ "--vs-progress": `${(progress * 100).toFixed(2)}%` } as CSSProperties}
         />
         <button
           type="button"
           onClick={skip}
           disabled={finished}
-          className="btn btn-secondary shrink-0 px-3"
+          className={`${pillClass("ghost", "sm")} shrink-0`}
           aria-label="Skip to the result"
         >
           Skip <span aria-hidden>⏭</span>
@@ -285,7 +293,7 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
       <Legend labels={labels} />
 
       {finished && (
-        <div className="px-3 pt-4 sm:px-6">
+        <div className="px-3 pt-6 sm:px-8">
           <KoCard
             bout={bout}
             labels={labels}
@@ -306,9 +314,9 @@ export function Race({ bout, labels, pick, kind, correct, awarded, fan, record, 
 
       {finished && <PlayByPlay bout={bout} labels={labels} />}
 
-      <p className="mt-4 border-t border-line/70 px-4 py-3 text-[11px] leading-relaxed text-subtle sm:px-6">
+      <p className="v2-note mt-6 border-t border-[var(--v2-line-soft)] px-4 py-4 sm:px-8">
         {VERSUS_SIM_LABEL}: both Chogs start with {formatChog(bout.startChog)} $CHOG and trade the same hourly closes by
-        their trait genomes. No real trades. Points only.
+        their trait genomes. No real trades. Points only: no cash value.
       </p>
     </section>
   );
@@ -336,40 +344,27 @@ function Corner({
   const right = side === "b";
   const tone = SIDE_TONE[side];
   return (
-    <div className={`min-w-0 ${right ? "text-right" : ""}`}>
-      <div className={`flex items-center gap-2 ${right ? "flex-row-reverse" : ""}`}>
-        <Portrait side={side} image={bout[side].image} tokenId={bout[side].tokenId} size={44} box="size-9 sm:size-11" className="rounded-xl" />
+    <div className={`min-w-0 ${tone.side} ${right ? "text-right" : ""}`}>
+      <div className={`flex items-center gap-2.5 ${right ? "flex-row-reverse" : ""}`}>
+        <Portrait side={side} image={bout[side].image} tokenId={bout[side].tokenId} size={48} box="size-9 sm:size-12" />
         <div className="min-w-0">
-          <p className={`truncate text-sm font-semibold ${tone.text}`}>{label.title}</p>
-          <p className={`flex min-h-4 flex-wrap gap-1 ${right ? "justify-end" : ""}`}>
-            {leads && (
-              <span className="vs-bob inline-flex rounded bg-success/15 px-1 text-[9px] font-bold tracking-wider text-success uppercase">
-                Leads
-              </span>
-            )}
-            {picked && (
-              <span className={`inline-flex rounded px-1 text-[9px] font-bold tracking-wider uppercase ${tone.text} ring-1 ring-current/40`}>
-                Your pick
-              </span>
-            )}
+          <p className="vs-text truncate text-sm font-medium sm:text-[15px]">{label.title}</p>
+          <p className={`mt-1 flex min-h-5 flex-wrap gap-1 ${right ? "justify-end" : ""}`}>
+            {leads && <span className="vs-bob v2-badge v2-badge--success h-5 px-1.5 text-[9.5px]">Leads</span>}
+            {picked && <span className={tone.tag}>Your pick</span>}
           </p>
         </div>
       </div>
-      <p className={`mt-1.5 font-mono text-xl font-semibold tabular-nums sm:text-2xl ${edgeTone(edge)}`}>{signedPct(edge)}</p>
-      <p className="text-[11px] text-subtle">
-        <span className="font-mono tabular-nums">{formatChog(value)}</span> $CHOG
+      <p className={`vs-edge mt-3 ${edgeTone(edge)}`}>{signedPct(edge)}</p>
+      <p className="mt-1 text-[11px] text-[var(--v2-faint)]">
+        <span className="v2-num text-[var(--v2-nav)]">{formatChog(value)}</span> $CHOG
       </p>
-      <div className={`mt-2 flex min-h-[3.75rem] items-start ${right ? "justify-end" : ""}`}>
+      <div className={`mt-3 flex min-h-[4rem] items-start ${right ? "justify-end" : ""}`}>
         {bubble && (
-          <div
-            key={`${bubble.i}:${bubble.text}`}
-            className={`vs-pop max-w-full rounded-2xl border px-2.5 py-1.5 text-left text-[11px] leading-snug text-foreground sm:text-xs ${tone.soft} ${
-              right ? "rounded-tr-sm" : "rounded-tl-sm"
-            }`}
-          >
+          <div key={`${bubble.i}:${bubble.text}`} className={`vs-pop vs-bubble ${right ? "vs-bubble--right" : "vs-bubble--left"}`}>
             <p className="line-clamp-3">
               {bubble.kind === "trade" && (
-                <span className={`mr-1 font-mono text-[10px] font-bold uppercase ${bubble.tradeSide === "buy" ? "text-success" : "text-danger"}`}>
+                <span className={`mr-1 text-[10px] font-semibold tracking-wider uppercase ${bubble.tradeSide === "buy" ? "v2-up" : "v2-down"}`}>
                   {bubble.tradeSide === "buy" ? "▲ buys" : "▼ sells"}
                 </span>
               )}
@@ -384,20 +379,20 @@ function Corner({
 
 function Legend({ labels }: { labels: Record<Side, FighterLabel> }) {
   return (
-    <ul aria-hidden className="flex flex-wrap gap-x-4 gap-y-1 px-4 pt-3 text-[11px] text-muted sm:px-6">
+    <ul aria-hidden className="v2-legend px-4 pt-4 sm:px-8">
       {SIDES.map((side) => (
-        <li key={side} className="flex min-w-0 items-center gap-1.5">
-          <span className={`h-0.5 w-4 rounded-full ${SIDE_TONE[side].fill}`} />
+        <li key={side} className="min-w-0">
+          <span className="v2-legend-swatch" style={{ "--v2-swatch": SIDE_COLOR[side] } as CSSProperties} />
           <span className="truncate">{labels[side].title}&apos;s $CHOG stack</span>
         </li>
       ))}
-      <li className="flex items-center gap-1.5">
-        <span className="w-4 border-t-[1.5px] border-dashed border-muted" /> Just holding
+      <li>
+        <span className="w-4 border-t-[1.5px] border-dashed border-[var(--v2-chart-4)]" /> Just holding
       </li>
-      <li className="flex items-center gap-1.5">
-        <span className="h-0.5 w-4 rounded-full bg-accent/70" /> $CHOG price
+      <li>
+        <span className="v2-legend-swatch" style={{ "--v2-swatch": "var(--v2-chart-3)" } as CSSProperties} /> $CHOG price
       </li>
-      <li className="flex items-center gap-1.5">▲ buys $CHOG back · ▼ sells $CHOG</li>
+      <li>▲ buys $CHOG back · ▼ sells $CHOG</li>
     </ul>
   );
 }
@@ -409,15 +404,15 @@ function PlayByPlay({ bout, labels }: { bout: VersusBout; labels: Record<Side, F
       i: m.i,
       side: m.fighter,
       key: `m${k}`,
-      node: <span className="text-muted">&ldquo;{tasteText(m.text)}&rdquo;</span>,
+      node: <span className="text-[var(--v2-nav)]">&ldquo;{tasteText(m.text)}&rdquo;</span>,
     })),
     ...bout.trades.map((t, k) => ({
       i: t.i,
       side: t.fighter,
       key: `t${k}`,
       node: (
-        <span className="text-muted">
-          <span className={`font-mono text-[11px] font-semibold uppercase ${t.side === "buy" ? "text-success" : "text-danger"}`}>
+        <span className="text-[var(--v2-nav)]">
+          <span className={`text-[11px] font-semibold tracking-wider uppercase ${t.side === "buy" ? "v2-up" : "v2-down"}`}>
             {t.side === "buy" ? "bought $CHOG" : "sold $CHOG"}
           </span>
           {t.reason ? <> · {tasteText(t.reason)}</> : null}
@@ -427,33 +422,36 @@ function PlayByPlay({ bout, labels }: { bout: VersusBout; labels: Record<Side, F
   ].sort((x, y) => x.i - y.i);
 
   return (
-    <details className="group mx-3 mt-3 rounded-xl px-2 sm:mx-5">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-2 text-sm font-medium text-muted hover:text-foreground [&::-webkit-details-marker]:hidden">
-        <span aria-hidden className="text-xs text-subtle transition-transform group-open:rotate-90">
+    <details className="group mx-3 mt-5 rounded-[var(--v2-r-lg)] border border-[var(--v2-line-soft)] px-3 sm:mx-8 sm:px-5">
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3.5 text-sm font-medium text-[var(--v2-muted)] hover:text-[var(--v2-ink)] [&::-webkit-details-marker]:hidden">
+        <span aria-hidden className="text-[10px] text-[var(--v2-faint)] transition-transform group-open:rotate-90">
           ▶
         </span>
-        Play-by-play ({bout.trades.length} {bout.trades.length === 1 ? "trade" : "trades"})
+        Play-by-play
+        <span className="v2-tab-count">
+          {bout.trades.length} {bout.trades.length === 1 ? "trade" : "trades"}
+        </span>
       </summary>
-      <ol className="max-h-80 space-y-2 overflow-y-auto pb-3">
+      <ol className="max-h-80 space-y-2.5 overflow-y-auto border-t border-[var(--v2-line-soft)] py-3.5">
         {events.map((event) => {
           const t = frameTime(bout, event.i);
           return (
-          <li key={event.key} className="flex gap-3 text-sm">
-            <time
-              dateTime={Number.isFinite(t) ? new Date(t).toISOString() : undefined}
-              className="w-16 shrink-0 font-mono text-xs text-subtle sm:w-36"
-              title={formatHour(t)}
-            >
-              <span className="sm:hidden">Hour {event.i}</span>
-              <span className="hidden sm:inline">{formatHour(t).replace(" UTC", "")}</span>
-            </time>
-            <span className="min-w-0">
-              <span className={`font-medium ${SIDE_TONE[event.side].text}`}>{labels[event.side].title}</span> {event.node}
-            </span>
-          </li>
+            <li key={event.key} className="flex gap-3 text-sm">
+              <time
+                dateTime={Number.isFinite(t) ? new Date(t).toISOString() : undefined}
+                className="v2-num w-16 shrink-0 text-xs text-[var(--v2-faint)] sm:w-32"
+                title={formatHour(t)}
+              >
+                <span className="sm:hidden">Hour {event.i}</span>
+                <span className="hidden sm:inline">{formatHour(t).replace(" UTC", "")}</span>
+              </time>
+              <span className="min-w-0">
+                <span className={`font-medium ${SIDE_TONE[event.side].text}`}>{labels[event.side].title}</span> {event.node}
+              </span>
+            </li>
           );
         })}
-        {events.length === 0 && <li className="text-sm text-muted">Neither Chog traded: both just held their $CHOG.</li>}
+        {events.length === 0 && <li className="text-sm text-[var(--v2-nav)]">Neither Chog traded: both just held their $CHOG.</li>}
       </ol>
     </details>
   );

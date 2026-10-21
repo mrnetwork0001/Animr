@@ -4,27 +4,34 @@ import { useSyncExternalStore } from "react";
 import { ChogThumb } from "@/components/dna/chog-thumb";
 import type { TradingStyle } from "@/lib/agent/types";
 import { STYLE_CHIP, type Side } from "./shared";
+import "@/app/design-v2.css";
 import "./versus.css";
 
-// Small building blocks shared by every VERSUS view.
+// Small building blocks shared by every VERSUS view (v2 design system: A teal, B violet).
 
-export const LABEL = "text-[11px] font-medium uppercase tracking-wider text-subtle";
+/** Tracked caps for row and column labels (the v2 overline). */
+export const LABEL = "v2-overline";
 
-/** Fighter A in the accent purple, B in amber: borders, fills and text. */
-export const SIDE_TONE: Record<Side, { ring: string; text: string; fill: string; button: string; soft: string }> = {
+/**
+ * Fighter A in teal, B in violet. Each value is a class string: the side class (`vs-side-a` sets the
+ * colour variables) plus the helper that reads them (versus.css).
+ */
+export const SIDE_TONE: Record<Side, { side: string; ring: string; text: string; fill: string; button: string; tag: string }> = {
   a: {
-    ring: "ring-accent-strong/70",
-    text: "text-accent-strong",
-    fill: "bg-accent-strong",
-    button: "border-accent-strong/60 bg-accent/10 hover:bg-accent/20 hover:border-accent-strong",
-    soft: "border-accent-strong/40 bg-accent/10",
+    side: "vs-side-a",
+    ring: "vs-side-a vs-ring",
+    text: "vs-side-a vs-text",
+    fill: "vs-side-a vs-fill",
+    button: "vs-side-a vs-pick",
+    tag: "vs-side-a vs-tag",
   },
   b: {
-    ring: "ring-warning/70",
-    text: "text-warning",
-    fill: "bg-warning",
-    button: "border-warning/60 bg-warning/10 hover:bg-warning/20 hover:border-warning",
-    soft: "border-warning/40 bg-warning/10",
+    side: "vs-side-b",
+    ring: "vs-side-b vs-ring",
+    text: "vs-side-b vs-text",
+    fill: "vs-side-b vs-fill",
+    button: "vs-side-b vs-pick",
+    tag: "vs-side-b vs-tag",
   },
 };
 
@@ -52,6 +59,7 @@ export function Portrait({
   box,
   eager = false,
   alt = "",
+  large = false,
   className = "",
 }: {
   side: Side;
@@ -63,6 +71,8 @@ export function Portrait({
   box?: string;
   eager?: boolean;
   alt?: string;
+  /** The big corner portrait: rounder corners. */
+  large?: boolean;
   className?: string;
 }) {
   return (
@@ -73,26 +83,20 @@ export function Portrait({
       box={box}
       eager={eager}
       alt={alt}
-      className={`ring-2 ${SIDE_TONE[side].ring} ${className}`}
+      className={`${SIDE_TONE[side].ring} ${large ? "vs-ring--lg" : ""} ${className}`}
     />
   );
 }
 
 export function StyleTag({ style }: { style: TradingStyle }) {
-  return (
-    <span
-      className={`rounded px-1.5 py-px text-[10px] font-medium uppercase tracking-wider ring-1 ring-inset ${STYLE_CHIP[style] ?? STYLE_CHIP.balanced}`}
-    >
-      {style}
-    </span>
-  );
+  return <span className={`v2-badge ${STYLE_CHIP[style] ?? STYLE_CHIP.balanced}`}>{style}</span>;
 }
 
 /** A small die, for "Random" buttons. */
-export function DiceIcon({ className = "size-4" }: { className?: string }) {
+export function DiceIcon({ className = "v2-btn-icon" }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" className={className} aria-hidden fill="none">
-      <rect x="2.5" y="2.5" width="15" height="15" rx="4" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="2.5" y="2.5" width="15" height="15" rx="4" stroke="currentColor" strokeWidth="1.5" />
       {[
         [7, 7],
         [13, 7],
@@ -100,24 +104,21 @@ export function DiceIcon({ className = "size-4" }: { className?: string }) {
         [7, 13],
         [13, 13],
       ].map(([cx, cy]) => (
-        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" fill="currentColor" />
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.25" fill="currentColor" />
       ))}
     </svg>
   );
 }
 
-/** The round "VS" badge between two fighters. */
+/** The "VS" on the centre hairline between two fighters: DM Sans 380, faint. */
 export function VsBadge({ className = "" }: { className?: string }) {
   return (
-    <span
-      aria-hidden
-      className={`vs-slam inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-line-strong bg-background text-sm font-black tracking-tight text-foreground shadow-[0_0_0_4px_rgb(131_110_249/0.12),0_10px_30px_-10px_rgb(131_110_249/0.8)] sm:size-14 sm:text-base ${className}`}
-    >
-      VS
+    <span aria-hidden className={`vs-axis ${className}`}>
+      <span className="vs-vs vs-slam">VS</span>
     </span>
   );
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <span aria-hidden className={`block animate-pulse rounded-lg bg-surface-2 ${className}`} />;
+  return <span aria-hidden className={`v2-skeleton block ${className}`} />;
 }

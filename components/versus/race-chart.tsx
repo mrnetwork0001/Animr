@@ -17,7 +17,10 @@ import {
 // holding (the dashed line) on top, the $CHOG price index below, trade markers on each fighter's line.
 // Playback state lives in race.tsx; everything here is a pure function of data, size and position.
 
-const PAD = { top: 12, right: 46, bottom: 22, left: 6 };
+const PAD = { top: 16, right: 54, bottom: 24, left: 12 };
+
+/** Each fighter's line glow (teal A, violet B). */
+const GLOW: Record<Side, string> = { a: "rgb(159 240 236 / 0.45)", b: "rgb(139 120 236 / 0.5)" };
 
 function niceStep(range: number, targetTicks: number): number {
   const raw = range / Math.max(1, targetTicks);
@@ -113,8 +116,13 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
       <>
         <defs>
           <linearGradient id={`${id}-price`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.24" />
-            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+            <stop offset="0%" stopColor="#d3d3d7" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#d3d3d7" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={`${id}-head`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#9ff0ec" stopOpacity="0" />
+            <stop offset="35%" stopColor="#9ff0ec" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#9ff0ec" stopOpacity="0.05" />
           </linearGradient>
         </defs>
         {g.edgeTicks.map((tick) => (
@@ -125,13 +133,11 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
                 x2={g.x1}
                 y1={g.yEdge(tick)}
                 y2={g.yEdge(tick)}
-                stroke="var(--color-line)"
+                stroke="var(--v2-chart-grid)"
                 strokeWidth={1}
-                strokeDasharray="2 4"
-                opacity={0.8}
               />
             )}
-            <text x={g.x1 + 6} y={g.yEdge(tick) + 3.5} fontSize={10} fill="var(--color-subtle)" className="font-mono">
+            <text x={g.x1 + 8} y={g.yEdge(tick) + 3.5} fontSize={11} fill="var(--v2-faint)">
               {tick === 0 ? "hold" : signedPct(tick, Math.abs(tick) < 10 && tick % 1 ? 1 : 0)}
             </text>
           </g>
@@ -142,12 +148,12 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
           x2={g.x1}
           y1={g.zeroY}
           y2={g.zeroY}
-          stroke="var(--color-muted)"
-          strokeWidth={1.5}
-          strokeDasharray="5 5"
-          opacity={0.8}
+          stroke="var(--v2-chart-3)"
+          strokeOpacity={0.42}
+          strokeWidth={1.6}
+          strokeDasharray="4 5"
         />
-        <line x1={g.x0} x2={g.x1} y1={g.priceBottom} y2={g.priceBottom} stroke="var(--color-line)" strokeWidth={1} />
+        <line x1={g.x0} x2={g.x1} y1={g.priceBottom} y2={g.priceBottom} stroke="var(--v2-chart-grid)" strokeWidth={1} />
       </>
     ),
     [g, id],
@@ -169,19 +175,32 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
     return (
       <>
         <path d={g.priceArea} fill={`url(#${id}-price)`} />
-        <path d={g.priceLine} fill="none" stroke="var(--color-accent)" strokeOpacity={0.75} strokeWidth={1.25} strokeLinejoin="round" />
+        <path d={g.priceLine} fill="none" stroke="var(--v2-chart-3)" strokeOpacity={0.55} strokeWidth={1.25} strokeLinejoin="round" />
+        {/* Each stack's lead over (or deficit to) holding, as a faint wash against the hold line. */}
         {order.map((side) => (
           <path
-            key={side}
-            d={g.lines[side]}
-            fill="none"
-            stroke={SIDE_COLOR[side]}
-            strokeWidth={winner === side ? 3.25 : 2.5}
-            strokeOpacity={winner && winner !== "draw" && winner !== side ? 0.6 : 1}
-            strokeLinejoin="round"
-            strokeLinecap="round"
+            key={`area-${side}`}
+            d={`${g.lines[side]}L${g.xOf(g.n - 1).toFixed(1)} ${g.zeroY.toFixed(1)}L${g.xOf(0).toFixed(1)} ${g.zeroY.toFixed(1)}Z`}
+            fill={SIDE_COLOR[side]}
+            fillOpacity={winner && winner !== "draw" && winner !== side ? 0.025 : 0.06}
           />
         ))}
+        {order.map((side) => {
+          const lost = winner !== undefined && winner !== "draw" && winner !== side;
+          return (
+            <path
+              key={side}
+              d={g.lines[side]}
+              fill="none"
+              stroke={SIDE_COLOR[side]}
+              strokeWidth={winner === side ? 3 : 2.25}
+              strokeOpacity={lost ? 0.45 : 1}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              style={lost ? undefined : { filter: `drop-shadow(0 0 6px ${GLOW[side]})` }}
+            />
+          );
+        })}
       </>
     );
   }, [g, id, winner]);
@@ -199,13 +218,13 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
     >
       {grid}
 
-      <text x={g.x0 + 2} y={g.priceTop - 7} fontSize={10} fill="var(--color-subtle)">
+      <text x={g.x0 + 4} y={g.priceTop - 7} fontSize={11} fill="var(--v2-faint)">
         {revealed ? "$CHOG price (WMON per $CHOG)" : "$CHOG price index (100 = start)"}
       </text>
-      <text x={g.x1 + 6} y={g.priceTop + 8} fontSize={10} fill="var(--color-subtle)" className="font-mono">
+      <text x={g.x1 + 8} y={g.priceTop + 8} fontSize={11} fill="var(--v2-faint)">
         {priceLabel(g.pHi)}
       </text>
-      <text x={g.x1 + 6} y={g.priceBottom} fontSize={10} fill="var(--color-subtle)" className="font-mono">
+      <text x={g.x1 + 8} y={g.priceBottom} fontSize={11} fill="var(--v2-faint)">
         {priceLabel(g.pLo)}
       </text>
       {g.timeTicks.map((frame, i) => (
@@ -213,10 +232,9 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
           key={frame}
           x={g.xOf(frame)}
           y={height - 7}
-          fontSize={10}
-          fill="var(--color-subtle)"
+          fontSize={11}
+          fill="var(--v2-faint)"
           textAnchor={i === 0 ? "start" : i === g.timeTicks.length - 1 ? "end" : "middle"}
-          className="font-mono"
         >
           {timeLabel(frame)}
         </text>
@@ -239,7 +257,7 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
             key={`${trade.fighter}-${trade.i}-${k}`}
             d={d}
             fill={SIDE_COLOR[trade.fighter]}
-            stroke="var(--color-background)"
+            stroke="#0d0c11"
             strokeWidth={1.25}
             className="vs-mark"
           />
@@ -248,27 +266,25 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
 
       {!revealed && pos > 0 && (
         <g>
-          <line
-            x1={headX}
-            x2={headX}
-            y1={g.valueTop}
-            y2={g.priceBottom}
-            stroke="var(--color-foreground)"
-            strokeOpacity={0.3}
-            strokeWidth={1}
-          />
-          <circle cx={headX} cy={g.yPrice(frameAt(frames, pos, "priceIndex"))} r={3} fill="var(--color-accent)" />
-          {(["b", "a"] as const).map((side) => (
-            <circle
-              key={side}
-              cx={headX}
-              cy={g.yEdge(edgeOf(frameAt(frames, pos, side), startChog))}
-              r={5}
-              fill={SIDE_COLOR[side]}
-              stroke="var(--color-background)"
-              strokeWidth={2}
-            />
-          ))}
+          <rect x={headX - 0.5} y={g.valueTop} width={1} height={g.priceBottom - g.valueTop} fill={`url(#${id}-head)`} />
+          <circle cx={headX} cy={g.yPrice(frameAt(frames, pos, "priceIndex"))} r={3} fill="var(--v2-chart-3)" />
+          {(["b", "a"] as const).map((side) => {
+            const cy = g.yEdge(edgeOf(frameAt(frames, pos, side), startChog));
+            return (
+              <g key={side}>
+                <circle cx={headX} cy={cy} r={11} fill={SIDE_COLOR[side]} fillOpacity={0.16} className="vs-pulse" />
+                <circle
+                  cx={headX}
+                  cy={cy}
+                  r={5}
+                  fill={SIDE_COLOR[side]}
+                  stroke="#0d0c11"
+                  strokeWidth={2}
+                  style={{ filter: `drop-shadow(0 0 6px ${GLOW[side]})` }}
+                />
+              </g>
+            );
+          })}
         </g>
       )}
 
@@ -281,9 +297,9 @@ export function RaceChart({ bout, g, width, height, pos, revealed, winner, summa
               cx={g.xOf(frames.length - 1)}
               cy={g.yEdge(edgeOf(last[side], startChog))}
               r={4.5}
-              fill={SIDE_COLOR[side]}
-              stroke="var(--color-background)"
-              strokeWidth={2}
+              fill="#0d0c11"
+              stroke={SIDE_COLOR[side]}
+              strokeWidth={2.25}
             />
           );
         })}

@@ -1,26 +1,429 @@
 /*
- * VERSUS effects (components/versus/*): only what Tailwind utilities can't express, i.e. keyframes.
- * Global on purpose (next.config.ts routes every *.css through Tailwind as plain CSS), so every class
- * is prefixed `vs-`. Every animation is opt-in: it only runs when the system allows motion.
+ * VERSUS (components/versus/*) on the v2 design system (app/design-v2.css, components/v2/README.md).
+ * Global on purpose (next.config.ts routes every *.css through Tailwind as plain CSS), so every class is
+ * prefixed `vs-`. Only v2 tokens: Chog A is teal, Chog B is violet. Every animation is opt-in: it only
+ * runs when the system allows motion.
  */
 
+@layer components {
+  /* ------------------------------------------------------------------ fighter colours */
+
+  /* A side class sets the fighter's colour; the helpers below read it. */
+  .vs-side-a {
+    --vs-side: var(--v2-teal);
+    --vs-side-rgb: 159 240 236;
+  }
+  .vs-side-b {
+    --vs-side: var(--v2-violet-ink);
+    --vs-side-rgb: 169 155 243;
+  }
+  .vs-text {
+    color: var(--vs-side);
+  }
+  .vs-fill {
+    background: var(--vs-side);
+  }
+  /* A Chog's art, ringed in its fighter's colour with a soft halo. */
+  .vs-ring {
+    border-radius: var(--v2-r-md);
+    box-shadow:
+      0 0 0 1px rgb(var(--vs-side-rgb) / 0.55),
+      0 0 0 5px rgb(var(--vs-side-rgb) / 0.07),
+      0 22px 44px -26px rgb(var(--vs-side-rgb) / 0.75);
+  }
+  .vs-ring--lg {
+    border-radius: var(--v2-r-xl);
+  }
+  /* A small tag in the fighter's colour ("Your pick"). */
+  .vs-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding-inline: 7px;
+    border: 1px solid rgb(var(--vs-side-rgb) / 0.4);
+    border-radius: var(--v2-r-pill);
+    background: rgb(var(--vs-side-rgb) / 0.08);
+    color: var(--vs-side);
+    font-size: 10px;
+    font-weight: 560;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ------------------------------------------------------------------ the stage */
+
+  /* The tale of the tape and the race: glass with each fighter's light from its own corner. */
+  .vs-stage {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .vs-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(520px 320px at 0% 0%, rgb(159 240 236 / 0.075), transparent 70%),
+      radial-gradient(520px 320px at 100% 0%, rgb(111 90 220 / 0.16), transparent 70%);
+  }
+
+  /* The centre line both corners mirror around, with the VS set on it. */
+  .vs-axis {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: stretch;
+    justify-content: center;
+    min-width: 44px;
+  }
+  .vs-axis::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--v2-line) 25%, var(--v2-line) 75%, transparent);
+  }
+  .vs-vs {
+    position: relative;
+    padding: 8px 0;
+    background: var(--v2-bg);
+    color: var(--v2-faint);
+    font-family: var(--v2-font-display);
+    font-size: clamp(30px, 4.4vw, 64px);
+    font-weight: var(--v2-fw-display);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .vs-stage .vs-vs {
+    background: transparent;
+    text-shadow: 0 0 24px rgb(13 12 17 / 1), 0 0 12px rgb(13 12 17 / 1);
+  }
+
+  .vs-name {
+    margin: 0;
+    font-family: var(--v2-font-display);
+    font-size: clamp(19px, 1.3vw + 13px, 30px);
+    font-weight: var(--v2-fw-display);
+    letter-spacing: -0.018em;
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+  .vs-quote {
+    margin: 0;
+    color: var(--v2-nav);
+    font-size: var(--v2-fs-sm);
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  /* ------------------------------------------------------------------ the pick */
+
+  .vs-pick {
+    display: flex;
+    min-height: 64px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border: 1px solid rgb(var(--vs-side-rgb) / 0.42);
+    border-radius: var(--v2-r-pill);
+    background: rgb(var(--vs-side-rgb) / 0.06);
+    box-shadow: var(--v2-glass-glow);
+    color: var(--v2-ink);
+    font-family: var(--v2-font-display);
+    font-size: clamp(15px, 0.5vw + 13px, 19px);
+    font-weight: 420;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition:
+      border-color var(--v2-dur) ease,
+      background-color var(--v2-dur) ease,
+      box-shadow var(--v2-dur) ease,
+      transform var(--v2-dur) var(--v2-ease);
+  }
+  .vs-pick:hover:not(:disabled) {
+    border-color: var(--vs-side);
+    background: rgb(var(--vs-side-rgb) / 0.12);
+    box-shadow:
+      var(--v2-glass-glow),
+      0 14px 40px -16px rgb(var(--vs-side-rgb) / 0.7);
+  }
+  .vs-pick:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .vs-pick:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+  }
+
+  /* ------------------------------------------------------------------ the tape (mirrored rows) */
+
+  .vs-tape {
+    position: relative;
+    margin: 0;
+  }
+  .vs-tape::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: var(--v2-line-soft);
+  }
+  .vs-tape-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 11px 0;
+    border-top: 1px solid var(--v2-line-soft);
+  }
+  .vs-tape-row:first-child {
+    border-top: 0;
+  }
+  @media (min-width: 640px) {
+    .vs-tape-row {
+      grid-template-columns: minmax(0, 1fr) 10rem minmax(0, 1fr);
+      gap: 16px;
+    }
+  }
+  .vs-tape-row dt {
+    order: 2;
+    position: relative;
+    justify-self: center;
+    padding: 3px 8px;
+    border-radius: var(--v2-r-pill);
+    background: var(--v2-bg);
+    color: var(--v2-faint);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .vs-tape-row dd {
+    min-width: 0;
+    margin: 0;
+    font-family: var(--v2-font-display);
+    font-size: clamp(14px, 0.35vw + 12.5px, 17px);
+    font-weight: 400;
+    line-height: 1.3;
+  }
+  .vs-tape-row dd:first-of-type {
+    order: 1;
+    text-align: right;
+  }
+  .vs-tape-row dd:last-of-type {
+    order: 3;
+    text-align: left;
+  }
+
+  /* ------------------------------------------------------------------ the race */
+
+  .vs-edge {
+    font-family: var(--v2-font-display);
+    font-size: clamp(26px, 2vw + 17px, 44px);
+    font-weight: var(--v2-fw-display);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .vs-hour {
+    font-family: var(--v2-font-display);
+    font-size: clamp(26px, 1.6vw + 18px, 40px);
+    font-weight: var(--v2-fw-display);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .vs-bubble {
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgb(var(--vs-side-rgb) / 0.32);
+    border-radius: 16px;
+    background: rgb(var(--vs-side-rgb) / 0.06);
+    box-shadow: var(--v2-glass-glow);
+    color: var(--v2-muted);
+    font-size: 12.5px;
+    line-height: 1.45;
+    text-align: left;
+  }
+  .vs-bubble--left {
+    border-top-left-radius: 4px;
+  }
+  .vs-bubble--right {
+    border-top-right-radius: 4px;
+  }
+
+  .vs-chart-frame {
+    position: relative;
+    border: 1px solid var(--v2-line-soft);
+    border-radius: var(--v2-r-lg);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.015), transparent 40%),
+      rgb(8 7 12 / 0.55);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+  .vs-chart-frame svg text {
+    font-family: var(--v2-font-text);
+  }
+
+  /* The timeline scrubber: a slim track, the played part in the meter gradient, a glowing teal thumb. */
+  .vs-range {
+    --vs-progress: 0%;
+    height: 22px;
+    min-width: 0;
+    flex: 1;
+    cursor: pointer;
+    appearance: none;
+    background: transparent;
+  }
+  .vs-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, var(--v2-violet-b), var(--v2-teal)) 0 0 / var(--vs-progress) 100% no-repeat,
+      rgb(255 255 255 / 0.1);
+  }
+  .vs-range::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, var(--v2-violet-b), var(--v2-teal)) 0 0 / var(--vs-progress) 100% no-repeat,
+      rgb(255 255 255 / 0.1);
+  }
+  .vs-range::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border: 3px solid var(--v2-bg);
+    border-radius: 50%;
+    appearance: none;
+    background: var(--v2-teal);
+    box-shadow: 0 0 0 1px var(--v2-teal), 0 0 14px rgb(159 240 236 / 0.6);
+  }
+  .vs-range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 3px solid var(--v2-bg);
+    border-radius: 50%;
+    background: var(--v2-teal);
+    box-shadow: 0 0 0 1px var(--v2-teal), 0 0 14px rgb(159 240 236 / 0.6);
+  }
+
+  /* ------------------------------------------------------------------ the KO and the reveal */
+
+  .vs-ko {
+    display: inline-block;
+    color: var(--vs-side, var(--v2-muted));
+    font-family: var(--v2-font-display);
+    font-size: clamp(44px, 5vw + 18px, 88px);
+    font-weight: var(--v2-fw-display);
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    text-shadow: 0 0 34px rgb(var(--vs-side-rgb, 211 211 215) / 0.45);
+  }
+  .vs-ko-title {
+    margin: 0;
+    color: var(--v2-ink);
+    font-family: var(--v2-font-display);
+    font-size: var(--v2-fs-h2);
+    font-weight: var(--v2-fw-display);
+    letter-spacing: -0.018em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  /* The reveal: until the KO the window was "48 hours of real $CHOG history". */
+  .vs-reveal {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(18px, 2.4vw, 32px);
+    border: 1px solid var(--v2-line-teal);
+    border-radius: var(--v2-r-lg);
+    background:
+      radial-gradient(600px 220px at 0% 0%, rgb(159 240 236 / 0.09), transparent 70%),
+      radial-gradient(500px 220px at 100% 100%, rgb(111 90 220 / 0.14), transparent 70%),
+      rgb(255 255 255 / 0.015);
+    box-shadow: var(--v2-glass-glow), var(--v2-glow-teal);
+  }
+  .vs-reveal-dates {
+    margin: 0;
+    font-family: var(--v2-font-display);
+    font-size: clamp(30px, 3.4vw + 14px, 64px);
+    font-weight: var(--v2-fw-display);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    background-image: linear-gradient(90deg, #ffffff 0%, var(--v2-kicker) 55%, var(--v2-violet-ink) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-wrap: balance;
+  }
+  .vs-reveal-times {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+  }
+  @media (min-width: 640px) {
+    .vs-reveal-times {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .vs-reveal-times > div {
+    padding-top: 12px;
+    border-top: 1px solid var(--v2-line-soft);
+  }
+  .vs-reveal-times dt {
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-2xs);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .vs-reveal-times dd {
+    margin: 4px 0 0;
+    color: var(--v2-ink);
+    font-family: var(--v2-font-display);
+    font-size: var(--v2-fs-lg);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  /* The VS badge lands between the two fighters. */
+  /* The VS lands between the two fighters. */
   .vs-slam {
     animation: vs-slam 520ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
   }
 
-  /* Fighter cards slide in from their corners. */
+  /* Fighters slide in from their corners. */
   .vs-in-left {
-    animation: vs-in-left 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: vs-in-left 480ms var(--v2-ease) both;
   }
   .vs-in-right {
-    animation: vs-in-right 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: vs-in-right 480ms var(--v2-ease) both;
   }
 
-  /* KO and REVEAL stamps land with a thud. */
+  /* The KO lands with a thud. */
   .vs-stamp {
-    animation: vs-stamp 460ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+    animation: vs-stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  }
+
+  /* The real dates wipe in, left to right. */
+  .vs-wipe {
+    animation: vs-wipe 900ms 180ms var(--v2-ease) both;
   }
 
   /* Speech bubbles pop out of their fighter. */
@@ -30,7 +433,7 @@
 
   /* The KO card rises in at the end of the race. */
   .vs-rise {
-    animation: vs-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: vs-rise 520ms var(--v2-ease) both;
   }
 
   /* A trade marker pops on the line (SVG: scale around its own box). */
@@ -40,7 +443,7 @@
     animation: vs-mark 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 
-  /* The leader's crown bobs. */
+  /* The leader's tag bobs. */
   .vs-bob {
     animation: vs-bob 1.4s ease-in-out infinite;
   }
@@ -54,47 +457,59 @@
 @keyframes vs-slam {
   from {
     opacity: 0;
-    transform: scale(2.2) rotate(-12deg);
+    transform: scale(1.8);
   }
 }
 
 @keyframes vs-in-left {
   from {
     opacity: 0;
-    transform: translateX(-18px);
+    transform: translateX(-22px);
   }
 }
 
 @keyframes vs-in-right {
   from {
     opacity: 0;
-    transform: translateX(18px);
+    transform: translateX(22px);
   }
 }
 
-/* Ends at no transform: the stamp's resting tilt is a Tailwind rotate-* utility (the `rotate` property). */
 @keyframes vs-stamp {
   from {
     opacity: 0;
-    transform: scale(1.9) rotate(-10deg);
+    transform: scale(1.7);
+    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: none;
+    filter: none;
+  }
+}
+
+@keyframes vs-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.2;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
   }
 }
 
 @keyframes vs-pop {
   from {
     opacity: 0;
-    transform: translateY(4px) scale(0.9);
+    transform: translateY(4px) scale(0.94);
   }
 }
 
 @keyframes vs-rise {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(14px);
   }
 }
 

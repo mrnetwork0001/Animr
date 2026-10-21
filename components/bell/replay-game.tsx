@@ -70,60 +70,58 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
   return (
     <section id={id} aria-label="Replay a past Bell" className="scroll-mt-28 md:scroll-mt-24">
       <SectionTitle
+        kicker="Practice"
         title="Replay a past Bell"
         hint="Practice mini-game: see a past Bell's calls without the answer, ride one, get the real result at once. Nothing is saved."
         action={
           session.rounds > 0 && (
-            <span className="chip" title="Practice: these points aren't saved to your fan card">
+            <span className="v2-chip" title="Practice: these points aren't saved to your fan card">
               Practice · not saved: {session.rounds} {session.rounds === 1 ? "replay" : "replays"} ·{" "}
-              <span className="font-mono text-accent-strong">{formatPoints(session.points)} pts</span>
+              <span className="v2-num text-[var(--v2-kicker)]">{formatPoints(session.points)} pts</span>
             </span>
           )
         }
       />
-      <div className="card p-4 sm:p-5">
+      <div className="v2-card">
         {!bell ? (
           loading ? (
             <div role="status" className="space-y-3">
-              <span className="sr-only">Loading past Bells…</span>
+              <span className="v2-sr">Loading past Bells…</span>
               <Skeleton className="h-8 w-2/3" />
               <Skeleton className="h-32" />
             </div>
           ) : (
-            <p className="py-6 text-center text-sm text-subtle">
-              No settled Bells to replay yet. Come back after the first one settles.
-            </p>
+            <div className="v2-empty">
+              <p className="v2-empty-title">No settled Bells to replay yet</p>
+              <p className="v2-empty-body">Come back after the first one settles.</p>
+            </div>
           )
         ) : (
           <>
             <div>
               <h3 className={LABEL}>1 · Pick a day</h3>
-              <div role="group" aria-label="Past Bells to replay" className="mt-2 flex flex-wrap gap-1.5">
+              <div role="group" aria-label="Past Bells to replay" className="mt-3 flex flex-wrap gap-2">
                 {[...playable].reverse().map((b) => (
                   <button
                     key={b.day}
                     type="button"
                     aria-pressed={b.day === bell.day}
                     onClick={() => choose(b.day)}
-                    className={`chip transition-colors ${
-                      b.day === bell.day
-                        ? "border-accent bg-accent/15 text-foreground"
-                        : "hover:border-accent hover:text-foreground"
-                    }`}
+                    className="v2-chip"
                   >
                     {formatDay(b.day)}
-                    {b.kind === "replay" && <span className="text-subtle">· replay</span>}
+                    {b.kind === "replay" && <span className="opacity-60">· replay</span>}
                   </button>
                 ))}
                 {playable.length > 1 && (
-                  <button type="button" onClick={surprise} className="chip border-dashed hover:text-foreground">
+                  <button type="button" onClick={surprise} className="v2-chip border-dashed">
                     Surprise me
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-7">
               <h3 className={LABEL}>2 · The herd at the Bell of {formatDay(bell.day)}</h3>
               <HerdHistogram
                 bell={bell}
@@ -137,14 +135,14 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
                     : []
                 }
               />
-              <BullBearBar bell={bell} className="mt-3" />
-              <p className="mt-3 text-xs text-subtle">
-                $CHOG traded at <span className="font-mono text-muted">{formatPrice(bell.entryPrice)}</span> WMON at the
+              <BullBearBar bell={bell} className="mt-5" />
+              <p className="v2-note mt-4">
+                $CHOG traded at <span className="v2-num text-[var(--v2-muted)]">{formatPrice(bell.entryPrice)}</span> WMON at the
                 Bell. Which Chog would you have ridden?
               </p>
             </div>
 
-            <p role="status" className="sr-only">
+            <p role="status" className="v2-sr">
               {picked && bell.actualPct !== null
                 ? `$CHOG really moved ${signedPct(bell.actualPct)}. Chog #${picked.tokenId} called ${signedPct(picked.forecastPct)}${
                     typeof picked.points === "number" ? ` and scored ${formatPoints(picked.points)} points` : ""
@@ -161,8 +159,8 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
               />
             )}
 
-            <h3 className={`${LABEL} mt-6`}>3 · Ride one</h3>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <h3 className={`${LABEL} mt-8`}>3 · Ride one</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {candidates.map((call) => {
                 const mine = call.tokenId === pick;
                 return (
@@ -171,12 +169,12 @@ export function ReplayGame({ days, id }: { days: string[]; id?: string }) {
                     call={call}
                     bell={bell}
                     reveal={Boolean(picked)}
-                    className={`bg-surface-2/40 shadow-none ${mine ? "ring-2 ring-accent" : ""}`}
+                    className={mine ? "border-[var(--v2-line-teal)] shadow-[var(--v2-glass-glow),var(--v2-glow-teal)]" : ""}
                     action={
                       picked ? (
-                        mine && <p className="text-center text-xs font-semibold text-accent-strong">Your pick</p>
+                        mine && <p className="v2-kicker justify-center">Your pick</p>
                       ) : (
-                        <button type="button" onClick={() => ride(call)} className="btn btn-secondary w-full">
+                        <button type="button" onClick={() => ride(call)} className="v2-btn-glass v2-btn--block">
                           Ride Chog #{call.tokenId}
                         </button>
                       )
@@ -220,35 +218,38 @@ function Reveal({
   const beat = error === null ? null : sharePastError(bell.histogram, actualPct, error);
 
   return (
-    <div ref={showResult} className="bell-pop mt-5 scroll-mt-28 rounded-2xl md:scroll-mt-24 border border-accent/40 bg-accent/10 p-4 sm:p-5">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+    <div
+      ref={showResult}
+      className="bell-pop v2-card v2-card--feature mt-7 scroll-mt-28 border-[var(--v2-line-teal)] md:scroll-mt-24"
+    >
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
         <div>
           <p className={LABEL}>$CHOG really moved</p>
-          <Forecast pct={actualPct} size="xl" className="mt-1" />
+          <Forecast pct={actualPct} size="xl" className="mt-2" />
         </div>
         <div className="min-w-0 flex-1 basis-60 text-sm">
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-[var(--v2-ink)]">
             {hit !== null && <Stamp hit={hit} />}
             Chog #{picked.tokenId} called <Forecast pct={picked.forecastPct} size="sm" />
           </p>
-          <p className="mt-1.5 text-muted">
+          <p className="mt-1.5 text-[var(--v2-muted)]">
             {error !== null && <>Off by {formatErrorPts(error)}. </>}
             {typeof picked.points === "number" && (
               <>
-                It scored <span className="font-mono font-semibold text-accent-strong">+{formatPoints(picked.points)} pts</span>
+                It scored <span className="v2-num text-[var(--v2-kicker)]">+{formatPoints(picked.points)} pts</span>
                 :{" "}
               </>
             )}
             #{place} of {candidates.length} here
             {beat !== null && <>, closer than about {Math.round(beat)}% of the herd</>}.
           </p>
-          <p className="mt-1 text-xs text-subtle">
+          <p className="v2-note mt-1.5">
             {herdLine(bell, actualPct)}{" "}
             {best && best.tokenId !== picked.tokenId ? `Best pick here: Chog #${best.tokenId}.` : "You found the best pick here."}
             {bell.oracle && ` Oracle of the Day: Chog #${bell.oracle.tokenId}.`}
           </p>
         </div>
-        <button type="button" onClick={next.onClick} className="btn btn-primary">
+        <button type="button" onClick={next.onClick} className="v2-btn-primary">
           {next.label}
         </button>
       </div>

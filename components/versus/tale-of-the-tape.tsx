@@ -4,7 +4,7 @@ import { type ReactNode, useCallback, useId } from "react";
 import { useGenome, useStanding } from "@/components/dna/api";
 import { DEFAULT_WINDOW, WINDOW_LABEL } from "@/components/dna/shared";
 import type { VersusBoutPreview, VersusFighter } from "@/lib/rewind/types";
-import { LABEL, Portrait, SIDE_TONE, Skeleton, StyleTag, VsBadge } from "./bits";
+import { Portrait, SIDE_TONE, Skeleton, StyleTag, VsBadge } from "./bits";
 import {
   DAILY_POINTS_CAP,
   type FighterLabel,
@@ -59,41 +59,36 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
   const busy = pending !== null;
 
   return (
-    <section aria-labelledby={headingId} className="card relative overflow-hidden">
-      {/* Corner glows in each fighter's color. */}
-      <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 size-64 rounded-full bg-accent/20 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-warning/10 blur-3xl" />
-
-      <div className="relative flex flex-wrap items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-5">
-        <h2 ref={focusHeading} id={headingId} tabIndex={-1} className="eyebrow outline-none">
+    <section aria-labelledby={headingId} className="v2-card v2-card--flush vs-stage">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-5 sm:px-8 sm:pt-7">
+        <h2 ref={focusHeading} id={headingId} tabIndex={-1} className="v2-kicker v2-kicker--dot outline-none">
           Tale of the tape
         </h2>
         <p className="flex flex-wrap gap-1.5">
-          <span className="chip">{preview.windowLabel || "48 hours of real $CHOG history"} · dates hidden</span>
-          <span className="chip">Both start with {formatChog(preview.startChog)} $CHOG</span>
+          <span className="v2-chip">{preview.windowLabel || "48 hours of real $CHOG history"} · dates hidden</span>
+          <span className="v2-chip">Both start with {formatChog(preview.startChog)} $CHOG</span>
         </p>
       </div>
 
-      <div className="relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2 px-3 pt-5 sm:gap-6 sm:px-6">
+      {/* The two corners, mirrored around the centre hairline. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2 px-3 pt-6 sm:gap-8 sm:px-8 sm:pt-8">
         <Corner side="a" fighter={preview.a} label={labels.a} line={genomeLine(genomes.a)} loading={genomeA.isPending} />
-        <div className="flex h-24 items-center sm:h-36">
-          <VsBadge />
-        </div>
+        <VsBadge />
         <Corner side="b" fighter={preview.b} label={labels.b} line={genomeLine(genomes.b)} loading={genomeB.isPending} />
       </div>
 
       {/* The one action comes right under the corners; the gene table backs it up below. */}
-      <div className="relative mt-5 border-y border-line/70 bg-background/30 px-4 pt-5 pb-5 text-center sm:px-6">
-        <h3 id={questionId} className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+      <div className="mt-7 border-y border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.012)] px-4 py-7 text-center sm:px-8 sm:py-9">
+        <h3 id={questionId} className="v2-h2">
           Who stacks more $CHOG?
         </h3>
-        <p className="mx-auto mt-1.5 max-w-xl text-xs leading-relaxed text-pretty text-muted sm:text-sm">
+        <p className="mx-auto mt-3 max-w-xl text-[length:var(--v2-fs-sm)] leading-relaxed text-pretty text-[var(--v2-nav)]">
           {mode === "shared" ? "Someone shared this bout with you. " : "Both genomes trade the same hidden 48 hours. "}
-          Call it right for <span className="font-semibold text-accent-strong">+{PICK_POINTS} points</span> (one pick
+          Call it right for <span className="v2-num text-[var(--v2-kicker)]">+{PICK_POINTS} points</span> (one pick
           per bout, up to {DAILY_POINTS_CAP} a day). {POINTS_LABEL}.
         </p>
 
-        <div role="group" aria-labelledby={questionId} className="mx-auto mt-4 grid max-w-xl grid-cols-2 gap-2 sm:gap-3">
+        <div role="group" aria-labelledby={questionId} className="mx-auto mt-6 grid max-w-2xl grid-cols-2 gap-2 sm:gap-4">
           {(["a", "b"] as const).map((side) => (
             <button
               key={side}
@@ -101,34 +96,29 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
               onClick={() => onPick(side)}
               disabled={busy}
               aria-busy={pending === side || undefined}
-              className={`group flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 px-2 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 sm:gap-3 sm:px-4 sm:text-base ${SIDE_TONE[side].button}`}
+              className={`${SIDE_TONE[side].button} ${side === "b" ? "flex-row-reverse sm:flex-row" : ""}`}
             >
-              <Portrait
-                side={side}
-                image={preview[side].image}
-                tokenId={preview[side].tokenId}
-                size={32}
-                className="rounded-lg"
-              />
+              <Portrait side={side} image={preview[side].image} tokenId={preview[side].tokenId} size={36} box="size-8 sm:size-9" />
               <span className="min-w-0 truncate">
                 {pending === side ? "Locking in…" : labels[side].title}
-                <span className="sr-only">: pick {labels[side].spoken} to stack more $CHOG</span>
+                <span className="v2-sr">: pick {labels[side].spoken} to stack more $CHOG</span>
               </span>
             </button>
           ))}
         </div>
 
-        <button type="button" onClick={onWatch} disabled={busy} className="btn btn-ghost mt-3">
+        <button type="button" onClick={onWatch} disabled={busy} className="v2-btn-ghost v2-btn--sm mt-4">
           {pending === "watch" ? "Loading the bout…" : "Just watch (no pick, no points)"}
         </button>
 
         {error && (
-          <p role="alert" className="mx-auto mt-3 max-w-md text-sm text-danger">
+          <p role="alert" className="mx-auto mt-3 max-w-md text-sm text-[var(--v2-danger)]">
             {error}
           </p>
         )}
       </div>
-      <dl aria-label="Tale of the tape: both genomes, gene by gene" className="relative mx-3 mt-5 divide-y divide-line/60 rounded-xl border border-line/70 bg-background/40 text-xs sm:mx-6 sm:text-sm">
+
+      <dl aria-label="Tale of the tape: both genomes, gene by gene" className="vs-tape mx-3 my-5 sm:mx-8 sm:my-7">
         <TapeRow
           label={`League · ${WINDOW_LABEL[DEFAULT_WINDOW]}`}
           labels={labels}
@@ -147,7 +137,7 @@ export function TaleOfTheTape({ preview, labels, mode, onPick, onWatch, pending,
               />
             ))}
       </dl>
-      <p className="relative px-4 pt-3 pb-5 text-center text-[11px] text-subtle sm:px-6">
+      <p className="v2-note border-t border-[var(--v2-line-soft)] px-4 py-4 text-center sm:px-8">
         {VERSUS_SIM_LABEL}. Real dates are revealed at the KO.
       </p>
     </section>
@@ -173,17 +163,18 @@ function Corner({
         side={side}
         image={fighter.image}
         tokenId={fighter.tokenId}
-        size={144}
-        box="size-24 sm:size-36"
+        size={168}
+        box="size-24 sm:size-36 lg:size-[168px]"
         eager
+        large
         alt={`${label.spoken}'s original art`}
-        className="rounded-2xl sm:rounded-3xl"
       />
-      <p className={`mt-3 max-w-full text-base leading-snug font-semibold tracking-tight text-balance break-words sm:text-lg ${SIDE_TONE[side].text}`}>
-        {label.title}
+      <p className={`mt-3 text-[10.5px] font-medium tracking-[0.16em] uppercase sm:mt-5 ${SIDE_TONE[side].text}`}>
+        Chog {side.toUpperCase()}
       </p>
+      <p className="vs-name mt-1 max-w-full break-words">{label.title}</p>
       {/* "CHOG #1462 · token #1": both names, wrapping between them on narrow screens. */}
-      <p className="flex max-w-full flex-wrap justify-center gap-x-1 font-mono text-[10px] text-subtle sm:text-[11px]">
+      <p className="mt-1 flex max-w-full flex-wrap justify-center gap-x-1 text-[11px] text-[var(--v2-faint)] sm:text-xs">
         {label.ids.split(" · ").map((part, i) => (
           <span key={part} className="whitespace-nowrap">
             {i > 0 && <span aria-hidden>· </span>}
@@ -191,16 +182,14 @@ function Corner({
           </span>
         ))}
       </p>
-      <p className="mt-1.5 text-sm font-medium text-balance text-foreground">{fighter.archetype}</p>
-      <p className="mt-1">
+      <p className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <span className="text-[length:var(--v2-fs-sm)] text-balance text-[var(--v2-muted)]">{fighter.archetype}</span>
         <StyleTag style={fighter.style} />
       </p>
       {line ? (
-        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-pretty text-muted italic sm:line-clamp-4 sm:text-[13px]">
-          &ldquo;{line}&rdquo;
-        </p>
+        <p className="vs-quote mt-3 line-clamp-3 max-w-sm sm:line-clamp-4">&ldquo;{line}&rdquo;</p>
       ) : loading ? (
-        <span className="mt-2 w-full space-y-1.5">
+        <span className="mt-3 w-full max-w-xs space-y-1.5">
           <Skeleton className="h-3 w-full" />
           <Skeleton className="mx-auto h-3 w-3/4" />
         </span>
@@ -225,28 +214,28 @@ function TapeRow({
   const cell = (side: Side, value: ReactNode | undefined) =>
     value !== undefined ? (
       <>
-        <span className="sr-only">{labels[side].title}: </span>
+        <span className="v2-sr">{labels[side].title}: </span>
         {value}
       </>
     ) : loading?.[side] ? (
       <Skeleton className={`h-3.5 w-20 ${side === "a" ? "ml-auto" : ""}`} />
     ) : (
-      <span className="text-subtle">—</span>
+      <span className="text-[var(--v2-faint)]">—</span>
     );
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-center gap-2 px-2.5 py-2 sm:grid-cols-[minmax(0,1fr)_8rem_minmax(0,1fr)] sm:px-4">
-      <dt className={`order-2 text-center ${LABEL} text-[10px] sm:text-[11px]`}>{label}</dt>
-      <dd className="order-1 min-w-0 text-right font-medium text-foreground">{cell("a", a)}</dd>
-      <dd className="order-3 min-w-0 text-left font-medium text-foreground">{cell("b", b)}</dd>
+    <div className="vs-tape-row">
+      <dt>{label}</dt>
+      <dd className={SIDE_TONE.a.text}>{cell("a", a)}</dd>
+      <dd className={SIDE_TONE.b.text}>{cell("b", b)}</dd>
     </div>
   );
 }
 
 function Standing({ rank, edge }: { rank: number; edge: number }) {
   return (
-    <span className="inline-flex flex-wrap items-baseline gap-x-1.5">
-      <span>#{new Intl.NumberFormat("en-US").format(rank)}</span>
-      <span className={`font-mono text-[11px] tabular-nums ${edge > 0 ? "text-success" : edge < 0 ? "text-danger" : "text-muted"}`}>
+    <span className="inline-flex flex-wrap items-baseline gap-x-2">
+      <span className="v2-num">#{new Intl.NumberFormat("en-US").format(rank)}</span>
+      <span className={`v2-num text-[0.85em] ${edge > 0 ? "v2-up" : edge < 0 ? "v2-down" : "v2-muted"}`}>
         {signedPct(edge)}
       </span>
     </span>
@@ -256,33 +245,31 @@ function Standing({ rank, edge }: { rank: number; edge: number }) {
 /** Same footprint as the tape, while a bout loads. */
 export function TapeSkeleton() {
   return (
-    <div role="status" className="card overflow-hidden px-4 py-5 sm:px-6">
-      <span className="sr-only">Loading the bout…</span>
-      <div aria-hidden className="flex items-center justify-between">
+    <div role="status" className="v2-card v2-card--flush vs-stage px-4 py-6 sm:px-8 sm:py-7">
+      <span className="v2-sr">Loading the bout…</span>
+      <div aria-hidden className="flex items-center justify-between gap-3">
         <Skeleton className="h-3 w-28" />
-        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-6 w-56" />
       </div>
-      <div aria-hidden className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
+      <div aria-hidden className="mt-8 grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-8">
         {[0, 1].map((i) => (
-          <span key={i} className={`flex flex-col items-center gap-2 ${i ? "order-3" : "order-1"}`}>
-            <Skeleton className="size-24 rounded-2xl sm:size-36 sm:rounded-3xl" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3 w-28" />
+          <span key={i} className={`flex flex-col items-center gap-2.5 ${i ? "order-3" : "order-1"}`}>
+            <Skeleton className="size-24 rounded-[var(--v2-r-xl)] sm:size-36 lg:size-[168px]" />
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-3 w-32" />
             <Skeleton className="h-3 w-20" />
           </span>
         ))}
-        <span className="order-2 flex size-11 items-center justify-center rounded-full border border-line text-sm font-black text-subtle sm:size-14">
-          VS
-        </span>
+        <span className="order-2 vs-vs bg-transparent">VS</span>
       </div>
-      <div aria-hidden className="mt-6 space-y-2">
+      <div aria-hidden className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-4">
+        <Skeleton className="h-16 rounded-full" />
+        <Skeleton className="h-16 rounded-full" />
+      </div>
+      <div aria-hidden className="mt-10 space-y-3">
         {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} className="h-7" />
+          <Skeleton key={i} className="h-6" />
         ))}
-      </div>
-      <div aria-hidden className="mt-6 grid grid-cols-2 gap-3">
-        <Skeleton className="h-14 rounded-2xl" />
-        <Skeleton className="h-14 rounded-2xl" />
       </div>
     </div>
   );

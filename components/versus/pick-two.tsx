@@ -6,7 +6,8 @@ import type { GenomeResponse } from "@/components/dna/api";
 import { dnaKeys } from "@/components/dna/api";
 import { randomChogId } from "@/components/dna/shared";
 import { useHiddenChogs } from "@/components/hidden-chogs";
-import { DiceIcon, Portrait, SIDE_TONE, StyleTag } from "./bits";
+import { pillClass } from "@/components/v2/primitives";
+import { DiceIcon, Portrait, SIDE_TONE, StyleTag, VsBadge } from "./bits";
 import { type ParsedFighter, type Side, parseFighterInput } from "./shared";
 
 type PickTwoProps = {
@@ -63,34 +64,37 @@ export function PickTwo({ id, metadataIds, initial, onStart, onCancel }: PickTwo
       noValidate
       aria-labelledby={headingId}
       aria-describedby={problem ? errorId : undefined}
-      className="card p-4 sm:p-5"
+      className="v2-card vs-stage"
     >
-      <h2 id={headingId} className="text-base font-semibold tracking-tight">
-        Pick two Chogs
-      </h2>
-      <p className="mt-1 text-xs text-muted">
-        Type a token id (<span className="font-mono">7</span>) or the name marketplaces show (
-        <span className="font-mono">CHOG #1462</span>). Leave one empty for a random rival.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+        <div className="grid gap-2">
+          <p className="v2-kicker">Pick two</p>
+          <h2 id={headingId} className="v2-h3">
+            Choose the fighters
+          </h2>
+        </div>
+        <p className="v2-note max-w-md">
+          A token id (<span className="v2-mono">7</span>) or the name marketplaces show (
+          <span className="v2-mono">CHOG #1462</span>). Leave one empty for a random rival.
+        </p>
+      </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-start">
+      <div className="mt-6 grid gap-5 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-stretch md:gap-8">
         <Field side="a" value={text.a} parsed={parsed.a} other={tokenOf("b")} metadataIds={metadataIds} onChange={(v) => set("a", v)} />
-        <span aria-hidden className="hidden pt-8 text-sm font-black text-subtle sm:block">
-          VS
-        </span>
+        <VsBadge className="hidden md:flex" />
         <Field side="b" value={text.b} parsed={parsed.b} other={tokenOf("a")} metadataIds={metadataIds} onChange={(v) => set("b", v)} />
       </div>
 
       {problem && (
-        <p id={errorId} role="alert" className="mt-3 text-sm text-danger">
+        <p id={errorId} role="alert" className="mt-4 text-sm text-[var(--v2-danger)]">
           {problem}
         </p>
       )}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button type="submit" className="btn btn-primary">
-          Deal this bout
+      <div className="mt-6 flex flex-wrap gap-2">
+        <button type="submit" className={pillClass("primary")}>
+          Start the bout
         </button>
-        <button type="button" onClick={onCancel} className="btn btn-ghost">
+        <button type="button" onClick={onCancel} className={pillClass("ghost")}>
           Cancel
         </button>
       </div>
@@ -146,11 +150,11 @@ function Field({
   const metadataNumber = tokenId !== undefined ? metadataIds[tokenId - 1] : 0;
 
   return (
-    <div className="min-w-0">
-      <label htmlFor={inputId} className={`text-xs font-semibold tracking-wider uppercase ${SIDE_TONE[side].text}`}>
+    <div className={`v2-field min-w-0 rounded-[var(--v2-r-lg)] border border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.015)] p-4 ${SIDE_TONE[side].side}`}>
+      <label htmlFor={inputId} className="vs-text text-[11px] font-medium tracking-[0.16em] uppercase">
         Chog {side.toUpperCase()}
       </label>
-      <div className="mt-1.5 flex gap-2">
+      <div className="v2-input-group">
         <input
           id={inputId}
           value={value}
@@ -160,32 +164,32 @@ function Field({
           placeholder="7 or CHOG #1462"
           aria-invalid={parsed.kind === "invalid" || undefined}
           aria-describedby={hintId}
-          className="input min-w-0 flex-1 py-2"
+          className="v2-input"
         />
         <button
           type="button"
           onClick={() => onChange(String(randomChogId(other ?? undefined, hidden)))}
-          className="btn btn-secondary shrink-0 px-3"
+          className={`${pillClass("glass", "sm")} shrink-0`}
           aria-label={`Random Chog ${side.toUpperCase()}`}
           title="Random Chog"
         >
-          <DiceIcon />
+          <DiceIcon /> Random
         </button>
       </div>
 
-      <div id={hintId} aria-live="polite" className="mt-2 min-h-11 text-xs">
+      <div id={hintId} aria-live="polite" className="min-h-12 text-xs">
         {parsed.kind === "empty" ? (
-          <p className="pt-1 text-subtle">Empty: a random rival.</p>
+          <p className="pt-1 text-[var(--v2-faint)]">Empty: a random rival.</p>
         ) : parsed.kind === "invalid" ? (
-          <p className="pt-1 text-danger">{parsed.message}</p>
+          <p className="pt-1 text-[var(--v2-danger)]">{parsed.message}</p>
         ) : (
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Portrait side={side} image={info?.chog.image} tokenId={parsed.tokenId} size={40} className="rounded-lg" />
+          <div className="flex min-w-0 items-center gap-3">
+            <Portrait side={side} image={info?.chog.image} tokenId={parsed.tokenId} size={44} />
             <div className="min-w-0">
-              <p className="truncate font-mono text-foreground">
+              <p className="truncate text-[var(--v2-ink)]">
                 {metadataNumber ? `CHOG #${metadataNumber} · ` : ""}token #{parsed.tokenId}
               </p>
-              <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-muted">
+              <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[var(--v2-nav)]">
                 {info ? (
                   <>
                     <span className="truncate">{info.genome.archetype}</span>
@@ -194,14 +198,14 @@ function Field({
                 ) : dna.isError ? (
                   <span>Its DNA didn&apos;t load, but it can still race.</span>
                 ) : (
-                  <span className="text-subtle">Reading its DNA…</span>
+                  <span className="text-[var(--v2-faint)]">Reading its DNA…</span>
                 )}
               </p>
               {parsed.alternative && (
                 <button
                   type="button"
                   onClick={() => onChange(String(parsed.alternative!.tokenId))}
-                  className="mt-0.5 text-left text-accent-strong hover:underline"
+                  className="v2-link mt-1 text-left"
                 >
                   {parsed.alternative.hint}
                 </button>

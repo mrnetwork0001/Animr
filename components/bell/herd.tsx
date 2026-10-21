@@ -6,8 +6,8 @@ import { herdSplit, signedPct } from "./format";
 export type HerdMark = { pct: number; label: string; tone: "actual" | "pick" };
 
 const MARK_TONE = {
-  actual: { line: "bg-foreground", chip: "bg-foreground text-background" },
-  pick: { line: "bg-accent-strong", chip: "bg-accent text-background" },
+  actual: { line: "bg-[var(--v2-ink)]", chip: "bg-[var(--v2-ink)] text-[var(--v2-bg)]" },
+  pick: { line: "bg-[var(--v2-teal)] shadow-[0_0_10px_rgb(159_240_236/0.6)]", chip: "bg-[var(--v2-teal)] text-[var(--v2-bg)]" },
 } as const;
 
 type Bucket = { bucketPct: number; count: number };
@@ -44,14 +44,14 @@ export function sharePastError(histogram: Bucket[], actualPct: number, errorPts:
   return (beaten / total) * 100;
 }
 
-/** Every call of a Bell bucketed by forecast (bears red, bulls green), with optional markers. */
+/** Every call of a Bell bucketed by forecast (bulls teal, bears violet: neither side gets an alarm colour), with optional markers. */
 export function HerdHistogram({ bell, marks = [], className = "" }: { bell: BellSummary; marks?: HerdMark[]; className?: string }) {
   const { buckets, step } = grid(bell.histogram);
   if (buckets.length === 0 || bell.calls === 0) {
     return (
-      <p className={`rounded-xl border border-dashed border-line px-4 py-8 text-center text-sm text-subtle ${className}`}>
-        No calls yet.
-      </p>
+      <div className={`v2-empty ${className}`}>
+        <p className="v2-empty-title">No calls yet</p>
+      </div>
     );
   }
   const first = buckets[0].bucketPct;
@@ -70,7 +70,7 @@ export function HerdHistogram({ bell, marks = [], className = "" }: { bell: Bell
   return (
     <figure className={className}>
       <div role="img" aria-label={label} className="relative">
-        <div className="flex h-32 items-end gap-[3px] sm:h-36">
+        <div className="flex h-36 items-end gap-[3px] sm:h-44">
           {buckets.map((b, i) => (
             <div
               key={b.bucketPct}
@@ -78,7 +78,7 @@ export function HerdHistogram({ bell, marks = [], className = "" }: { bell: Bell
               className="flex h-full flex-1 flex-col justify-end"
             >
               <div
-                className={`bell-rise rounded-t-[3px] ${b.bucketPct >= 0 ? "bg-success/75" : "bg-danger/75"}`}
+                className={`bell-rise rounded-t-[4px] ${b.bucketPct >= 0 ? "bell-bar-bull" : "bell-bar-bear"}`}
                 style={{ height: `${b.count ? Math.max(2.5, (b.count / max) * 100) : 0}%`, animationDelay: `${i * 30}ms` }}
               />
             </div>
@@ -91,7 +91,7 @@ export function HerdHistogram({ bell, marks = [], className = "" }: { bell: Bell
             <div key={mark.label} aria-hidden className="pointer-events-none absolute inset-y-0" style={{ left: `${left}%` }}>
               <span className={`absolute inset-y-0 w-0.5 -translate-x-1/2 rounded-full ${MARK_TONE[mark.tone].line}`} />
               <span
-                className={`bell-pop absolute rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold whitespace-nowrap shadow ${align} ${MARK_TONE[mark.tone].chip}`}
+                className={`bell-pop absolute rounded-full px-2 py-0.5 text-[10.5px] font-medium whitespace-nowrap ${align} ${MARK_TONE[mark.tone].chip}`}
                 style={{ top: `${i * 22}px` }}
               >
                 {mark.label} {signedPct(mark.pct)}
@@ -100,7 +100,7 @@ export function HerdHistogram({ bell, marks = [], className = "" }: { bell: Bell
           );
         })}
       </div>
-      <div aria-hidden className="relative mt-1.5 h-4 border-t border-line font-mono text-[10px] text-subtle">
+      <div aria-hidden className="relative mt-2 h-5 border-t border-[var(--v2-line-soft)] text-[11px] text-[var(--v2-faint)]">
         {ticks.map((tick) => (
           <span
             key={tick}
@@ -116,26 +116,37 @@ export function HerdHistogram({ bell, marks = [], className = "" }: { bell: Bell
 }
 
 /**
- * The bull/bear split of a Bell's calls, both sides shown the same way (flat calls, if any, sit in between):
- * no side gets a headline.
+ * The bull/bear split of a Bell's calls, both sides shown the same way: bulls teal from the left, bears violet from
+ * the right, flat calls (if any) in between. No side gets a headline or an alarm colour.
  */
 export function BullBearBar({ bell, className = "" }: { bell: Pick<BellSummary, "bullPct" | "bearPct">; className?: string }) {
   const { bull, bear, flat } = herdSplit(bell);
   return (
     <div className={className}>
-      <div className="flex items-baseline justify-between gap-2 text-xs font-medium tabular-nums">
-        <span className="text-success">▲ {bull}% bull</span>
-        {flat > 0 && <span className="text-subtle">{flat}% flat</span>}
-        <span className="text-danger">{bear}% bear ▼</span>
+      <div aria-hidden className="flex items-end justify-between gap-3">
+        <span className="grid gap-1">
+          <span className="v2-overline">▲ Bull</span>
+          <span className="bell-herd-count text-[var(--v2-teal)]">{bull}%</span>
+        </span>
+        {flat > 0 && (
+          <span className="grid gap-1 text-center">
+            <span className="v2-overline">Flat</span>
+            <span className="bell-herd-count text-[var(--v2-faint)]">{flat}%</span>
+          </span>
+        )}
+        <span className="grid gap-1 text-right">
+          <span className="v2-overline">Bear ▼</span>
+          <span className="bell-herd-count text-[var(--v2-violet-ink)]">{bear}%</span>
+        </span>
       </div>
       <div
         role="img"
         aria-label={`${bull}% of calls bull, ${bear}% bear${flat ? `, ${flat}% flat` : ""}`}
-        className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-line"
+        className="bell-herd-bar mt-3"
       >
-        <span className="bg-success" style={{ width: `${bull}%` }} />
+        <span className="bell-bull" style={{ width: `${bull}%` }} />
         <span className="flex-1" />
-        <span className="bg-danger" style={{ width: `${bear}%` }} />
+        <span className="bell-bear" style={{ width: `${bear}%` }} />
       </div>
     </div>
   );

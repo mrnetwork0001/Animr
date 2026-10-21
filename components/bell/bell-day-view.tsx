@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import type { BellCall, BellCallSort, BellSummary } from "@/lib/bell/types";
 import { isNotFound, useBell, useBellCalls, useTodayBell } from "./api";
+import { BellIcon } from "@/components/v2/icons";
+import { Badge, StatRow, TabLinks } from "@/components/v2/primitives";
 import {
   Countdown,
   Forecast,
   KindBadge,
-  LABEL,
   LoadError,
   SampleBanner,
   SectionTitle,
@@ -34,18 +35,18 @@ export function BellDayView({ day }: { day: string }) {
   const today = useTodayBell();
   const latest = today.data?.day;
 
-  const nav = (
-    <nav aria-label="Other Bells" className="flex flex-wrap gap-2">
-      <Link href={`/bell/${shiftDay(day, -1)}`} className="btn btn-secondary px-3 py-1.5">
-        ← {formatDay(shiftDay(day, -1))}
-      </Link>
-      {latest && day < latest && (
-        <Link href={`/bell/${shiftDay(day, 1)}`} className="btn btn-secondary px-3 py-1.5">
-          {formatDay(shiftDay(day, 1))} →
-        </Link>
-      )}
-    </nav>
+  const pager = (label: string) => (
+    <TabLinks
+      label={label}
+      items={[
+        { href: `/bell/${shiftDay(day, -1)}`, label: `← ${formatDay(shiftDay(day, -1))}` },
+        { href: `/bell/${day}`, label: formatDay(day), active: true },
+        ...(latest && day < latest ? [{ href: `/bell/${shiftDay(day, 1)}`, label: `${formatDay(shiftDay(day, 1))} →` }] : []),
+        { href: "/bell", label: "Today's Bell" },
+      ]}
+    />
   );
+  const nav = pager("Other Bells");
 
   if (query.isPending) return <BellDaySkeleton />;
   if (query.isError) {
@@ -60,17 +61,22 @@ export function BellDayView({ day }: { day: string }) {
       );
     }
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <SampleBanner />
-        <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-          <p className="text-base font-medium">No Bell rang on {formatDay(day)}</p>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+        <div className="v2-empty">
+          <span aria-hidden className="v2-icon-tile v2-icon-tile--lg">
+            <BellIcon />
+          </span>
+          <p className="v2-empty-title">No Bell rang on {formatDay(day)}</p>
+          <p className="v2-empty-body">
             Bells ring daily at 15:00 UTC. Days before the first live Bell are covered by replays where real candles
             exist.
           </p>
-          <Link href="/bell" className="btn btn-primary mt-6">
-            Go to today&apos;s Bell
-          </Link>
+          <div className="v2-empty-actions">
+            <Link href="/bell" className="v2-btn-primary">
+              Go to today&apos;s Bell
+            </Link>
+          </div>
         </div>
         {nav}
       </div>
@@ -79,12 +85,19 @@ export function BellDayView({ day }: { day: string }) {
 
   const bell = query.data;
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-6">
       <SampleBanner />
+      {pager("Bell pager")}
       <Overview bell={bell} />
-      {bell.status === "settled" && <Verdict bell={bell} title="Verdict" />}
-      <AllCalls bell={bell} latest={bell.day === latest} />
-      {nav}
+      {bell.status === "settled" && (
+        <div className="v2-section">
+          <Verdict bell={bell} title="Verdict" feature />
+        </div>
+      )}
+      <div className="v2-section">
+        <AllCalls bell={bell} latest={bell.day === latest} />
+      </div>
+      <div className="pt-4">{nav}</div>
     </div>
   );
 }
@@ -92,62 +105,48 @@ export function BellDayView({ day }: { day: string }) {
 function Overview({ bell }: { bell: BellSummary }) {
   const settled = bell.status === "settled";
   return (
-    <section aria-label="Summary" className="card p-5 sm:p-6">
+    <section aria-label="Summary" className="v2-card v2-card--roomy">
       <div className="flex flex-wrap items-center gap-2">
         <KindBadge kind={bell.kind} />
-        <span className={`chip ${settled ? "" : "border-accent/40 text-accent-strong"}`}>
-          {settled ? "Settled" : "Open"}
-        </span>
-        <span className="text-xs text-subtle">
+        {settled ? <Badge>Settled</Badge> : <Badge tone="teal" live>Open</Badge>}
+        <span className="v2-note">
           Rang {formatDay(bell.rungAt.slice(0, 10))}, {formatUtcTime(bell.rungAt)}
           {settled && ` · settled ${formatDay(bell.horizonAt.slice(0, 10))}, ${formatUtcTime(bell.horizonAt)}`}
         </span>
       </div>
       {!settled && (
-        <p className="mt-3 text-sm text-muted">
+        <p className="v2-body mt-3">
           Settles at {formatUtcTime(bell.horizonAt)} on {formatDay(bell.horizonAt.slice(0, 10))}, in{" "}
-          <Countdown to={Date.parse(bell.horizonAt)} className="text-foreground" />.
+          <Countdown to={Date.parse(bell.horizonAt)} className="text-[var(--v2-ink)]" />.
         </p>
       )}
-      <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Entry price">
-          {formatPrice(bell.entryPrice)} <span className="text-xs text-subtle">WMON</span>
-        </Stat>
-        <Stat label="Settle price">
-          {settled ? (
-            <>
-              {formatPrice(bell.settlePrice)} <span className="text-xs text-subtle">WMON</span>
-            </>
-          ) : (
-            "—"
-          )}
-        </Stat>
-        <Stat label="$CHOG moved">{settled ? <Forecast pct={bell.actualPct} /> : "—"}</Stat>
-        <Stat label="Calls">{bell.calls.toLocaleString("en-US")}</Stat>
-      </dl>
-      <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,1fr)_14rem] md:items-end">
+      <StatRow
+        className="mt-6"
+        stats={[
+          { key: "entry", label: "Entry price", hint: "WMON", value: formatPrice(bell.entryPrice) },
+          { key: "settle", label: "Settle price", hint: "WMON", value: settled ? formatPrice(bell.settlePrice) : "—" },
+          {
+            key: "moved",
+            label: "$CHOG moved",
+            value: settled ? <Forecast pct={bell.actualPct} className="text-[length:inherit]" /> : "—",
+          },
+          { key: "calls", label: "Calls", value: bell.calls.toLocaleString("en-US") },
+        ]}
+      />
+      <div className="mt-8 grid gap-8 border-t border-[var(--v2-line-soft)] pt-7 md:grid-cols-[minmax(0,1fr)_17rem] md:items-end">
         <HerdHistogram
           bell={bell}
           marks={settled && bell.actualPct !== null ? [{ pct: bell.actualPct, label: "Actual", tone: "actual" }] : []}
         />
         <BullBearBar bell={bell} />
       </div>
-      <p className="mt-4 text-xs text-subtle">
+      <p className="v2-note mt-5">
         {bell.kind === "replay"
           ? "Replay: rebuilt from real past CHOG/WMON hourly candles with the same rules as live Bells."
           : "Live: rung on schedule."}{" "}
-        Prices are WMON per $CHOG from the real CHOG/WMON pool.
+        Prices are WMON per $CHOG from the real CHOG/WMON pool. Points only: no cash value.
       </p>
     </section>
-  );
-}
-
-function Stat({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <dt className={LABEL}>{label}</dt>
-      <dd className="mt-1 font-mono text-sm tabular-nums">{children}</dd>
-    </div>
   );
 }
 
@@ -164,6 +163,7 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
   return (
     <section aria-label="Every call">
       <SectionTitle
+        kicker={`${bell.calls.toLocaleString("en-US")} calls`}
         title="Every call"
         hint={
           latest && ridesOpen
@@ -175,22 +175,20 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
                 : "Settles at the horizon."
         }
       />
-      <div role="group" aria-label="Sort calls" className="mb-3 flex flex-wrap gap-1.5">
+      <div role="group" aria-label="Sort calls" className="mb-4 flex flex-wrap gap-2">
         {sorts.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             aria-pressed={sort === id}
             onClick={() => setSort(id)}
-            className={`chip transition-colors ${
-              sort === id ? "border-accent bg-accent/15 text-foreground" : "hover:border-accent hover:text-foreground"
-            }`}
+            className="v2-chip"
           >
             {label}
           </button>
         ))}
       </div>
-      <div className="card overflow-hidden">
+      <div className="v2-card v2-card--flush overflow-hidden">
         {pages.isPending ? (
           <CallRowsSkeleton />
         ) : pages.isError && calls.length === 0 ? (
@@ -203,7 +201,7 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
             />
           </div>
         ) : calls.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-subtle">No calls at this Bell.</p>
+          <p className="v2-note px-4 py-10 text-center">No calls at this Bell.</p>
         ) : (
           <ol aria-label={`Calls, ${SORTS.find((s) => s.id === sort)?.label.toLowerCase()} first`}>
             {calls.map((call: BellCall) => (
@@ -212,7 +210,7 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
           </ol>
         )}
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-subtle">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--v2-faint)]">
         <span aria-live="polite">
           Showing {calls.length.toLocaleString("en-US")} of {bell.calls.toLocaleString("en-US")} calls
         </span>
@@ -221,14 +219,14 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
             type="button"
             onClick={() => pages.fetchNextPage()}
             disabled={pages.isFetchingNextPage}
-            className="btn btn-secondary"
+            className="v2-btn-glass"
           >
             {pages.isFetchingNextPage ? "Loading…" : "Load more calls"}
           </button>
         )}
       </div>
       {pages.isFetchNextPageError && (
-        <p role="alert" className="mt-2 text-xs text-danger">
+        <p role="alert" className="mt-2 text-xs text-[var(--v2-danger)]">
           Couldn&apos;t load more calls: {pages.error?.message}
         </p>
       )}
@@ -239,10 +237,10 @@ function AllCalls({ bell, latest }: { bell: BellSummary; latest: boolean }) {
 function CallRowsSkeleton({ announce = true }: { announce?: boolean }) {
   return (
     <div role={announce ? "status" : undefined}>
-      {announce && <span className="sr-only">Loading calls…</span>}
+      {announce && <span className="v2-sr">Loading calls…</span>}
       {Array.from({ length: 6 }, (_, i) => (
-        <div key={i} aria-hidden className="flex gap-3 border-b border-line/60 px-4 py-3.5 last:border-0">
-          <Skeleton className="size-10" />
+        <div key={i} aria-hidden className="flex gap-3.5 border-b border-[var(--v2-line-soft)] px-4 py-4 last:border-0 sm:px-5">
+          <Skeleton className="size-11 rounded-[11px]" />
           <span className="flex-1 space-y-2">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-3 w-3/4" />
@@ -257,17 +255,18 @@ function CallRowsSkeleton({ announce = true }: { announce?: boolean }) {
 export function BellDaySkeleton() {
   return (
     <div role="status" className="space-y-6">
-      <span className="sr-only">Loading this Bell…</span>
-      <div className="card space-y-4 p-6">
-        <Skeleton className="h-5 w-48" />
+      <span className="v2-sr">Loading this Bell…</span>
+      <Skeleton className="h-11 w-80 rounded-full" />
+      <div className="v2-card v2-card--roomy space-y-6">
+        <Skeleton className="h-6 w-56" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-10" />
+            <Skeleton key={i} className="h-14" />
           ))}
         </div>
-        <Skeleton className="h-36" />
+        <Skeleton className="h-44" />
       </div>
-      <div className="card">
+      <div className="v2-card v2-card--flush">
         <CallRowsSkeleton announce={false} />
       </div>
     </div>

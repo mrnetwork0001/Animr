@@ -18,8 +18,8 @@ export function FanPanel({ bell }: { bell?: BellSummaryResponse }) {
 
   if (fan.isPending) {
     return (
-      <div role="status" className="card flex flex-wrap gap-6 p-5">
-        <span className="sr-only">Loading your fan card…</span>
+      <div role="status" className="v2-card flex flex-wrap gap-6">
+        <span className="v2-sr">Loading your fan card…</span>
         <Skeleton className="h-10 w-40" />
         <Skeleton className="h-10 w-20" />
         <Skeleton className="h-10 w-20" />
@@ -44,26 +44,26 @@ export function FanPanel({ bell }: { bell?: BellSummaryResponse }) {
     .sort((a, b) => b.day.localeCompare(a.day))
     .slice(0, 6);
   return (
-    <section aria-label="Your fan card" className="card p-4 sm:p-5">
-      <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
+    <section aria-label="Your fan card" className="v2-card">
+      <div className="flex flex-wrap items-start gap-x-10 gap-y-6">
         <Nickname fan={me} />
         <Stat label="Points">
-          <span className="font-mono text-2xl font-semibold tabular-nums">{formatPoints(me.points)}</span>
+          <span className="v2-num text-[length:var(--v2-fs-stat-sm)] leading-none text-[var(--v2-ink)]">{formatPoints(me.points)}</span>
           <Rank fan={me} />
         </Stat>
         <Stat label="Streak">
-          <span className="flex items-center gap-1 font-mono text-2xl font-semibold tabular-nums">
-            <FlameIcon className={`size-5 ${me.streak > 0 ? "text-warning" : "text-subtle"}`} />
-            {me.streak}
-            <span className="font-sans text-xs font-normal text-subtle">{me.streak === 1 ? "day" : "days"}</span>
+          <span className="flex items-center gap-1.5 leading-none">
+            <FlameIcon className={`size-5 ${me.streak > 0 ? "text-[var(--v2-teal)]" : "text-[var(--v2-faint)]"}`} />
+            <span className="v2-num text-[length:var(--v2-fs-stat-sm)] text-[var(--v2-ink)]">{me.streak}</span>
+            <span className="text-xs text-[var(--v2-faint)]">{me.streak === 1 ? "day" : "days"}</span>
           </span>
         </Stat>
         {bell && <ThisBell bell={bell} fan={me} />}
       </div>
       {history.length > 0 && (
-        <div className="mt-4 border-t border-line pt-3">
+        <div className="mt-6 border-t border-[var(--v2-line-soft)] pt-4">
           <h3 className={LABEL}>Your recent rides</h3>
-          <ol className="mt-2 flex flex-wrap gap-1.5">
+          <ol className="mt-3 flex flex-wrap gap-2">
             {history.map((ride) => {
               // A ride booked on a Bell that hasn't rung yet has no page of its own.
               const booked = ride.day === me.next?.day;
@@ -71,15 +71,15 @@ export function FanPanel({ bell }: { bell?: BellSummaryResponse }) {
                 <li key={ride.day}>
                   <Link
                     href={booked ? "/bell" : `/bell/${ride.day}`}
-                    className="chip transition-colors hover:border-accent hover:text-foreground"
+                    className="v2-chip"
                   >
                     {formatDay(ride.day)} · Chog #{ride.tokenId} ·{" "}
                     {typeof ride.points === "number" ? (
-                      <span className="font-mono text-accent-strong">+{formatPoints(ride.points)} pts</span>
+                      <span className="v2-num text-[var(--v2-kicker)]">+{formatPoints(ride.points)} pts</span>
                     ) : booked ? (
-                      <span className="text-accent-strong">next Bell</span>
+                      <span className="text-[var(--v2-kicker)]">next Bell</span>
                     ) : (
-                      <span className="text-subtle">settling</span>
+                      <span className="text-[var(--v2-faint)]">settling</span>
                     )}
                   </Link>
                 </li>
@@ -88,7 +88,7 @@ export function FanPanel({ bell }: { bell?: BellSummaryResponse }) {
           </ol>
         </div>
       )}
-      <PointsNote className="mt-3" />
+      <PointsNote className="mt-5" />
     </section>
   );
 }
@@ -97,8 +97,8 @@ export function FanPanel({ bell }: { bell?: BellSummaryResponse }) {
 function Rank({ fan }: { fan: FanResponse }) {
   if (!fan.rank || !fan.fans) return null;
   return (
-    <span className="block text-xs text-subtle">
-      Rank <span className="font-mono text-muted">#{fan.rank}</span> of {fan.fans.toLocaleString("en-US")}
+    <span className="mt-1.5 block text-xs text-[var(--v2-faint)]">
+      Rank <span className="v2-num text-[var(--v2-muted)]">#{fan.rank}</span> of {fan.fans.toLocaleString("en-US")}
     </span>
   );
 }
@@ -107,7 +107,7 @@ function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <p className={LABEL}>{label}</p>
-      <div className="mt-1">{children}</div>
+      <div className="mt-2.5">{children}</div>
     </div>
   );
 }
@@ -130,7 +130,7 @@ function Nickname({ fan }: { fan: FanState }) {
         <label htmlFor={inputId} className={LABEL}>
           Your nickname
         </label>
-        <div className="mt-1 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           <input
             id={inputId}
             value={draft}
@@ -139,17 +139,17 @@ function Nickname({ fan }: { fan: FanState }) {
             autoFocus
             autoComplete="nickname"
             placeholder="e.g. moonchog"
-            className="input w-48 py-1.5"
+            className="v2-input w-52"
           />
-          <button type="submit" disabled={save.isPending} className="btn btn-primary">
+          <button type="submit" disabled={save.isPending} className="v2-btn-glass">
             {save.isPending ? "Saving…" : draft.trim() || !fan.nickname ? "Save" : "Clear name"}
           </button>
-          <button type="button" onClick={() => setEditing(false)} className="btn btn-ghost">
+          <button type="button" onClick={() => setEditing(false)} className="v2-btn-ghost">
             Cancel
           </button>
         </div>
         {save.isError && (
-          <p role="alert" className="mt-1.5 text-xs text-danger">
+          <p role="alert" className="mt-1.5 text-xs text-[var(--v2-danger)]">
             {save.error.message}
           </p>
         )}
@@ -159,27 +159,27 @@ function Nickname({ fan }: { fan: FanState }) {
   return (
     <div className="min-w-0">
       <p className={LABEL}>Fan</p>
-      <p className="mt-1 flex flex-wrap items-center gap-x-2">
-        <span className="truncate text-lg font-semibold">{fanName(fan)}</span>
+      <p className="mt-2 flex flex-wrap items-center gap-x-2">
+        <span className="v2-h3 truncate">{fanName(fan)}</span>
         <button
           type="button"
           onClick={() => {
             setDraft(fan.nickname ?? "");
             setEditing(true);
           }}
-          className="btn btn-ghost px-2 py-0.5 text-xs"
+          className="v2-btn-ghost v2-btn--sm"
         >
           {fan.nickname ? "Rename" : "Pick a nickname"}
         </button>
       </p>
-      <p className="text-xs text-subtle">No wallet needed: this browser is your fan card.</p>
+      <p className="v2-note mt-1">No wallet needed: this browser is your fan card.</p>
     </div>
   );
 }
 
 function PlayPastBell() {
   return (
-    <a href={`#${REPLAY_GAME_ID}`} className="font-medium text-accent-strong hover:underline">
+    <a href={`#${REPLAY_GAME_ID}`} className="v2-link">
       Play a past Bell now ↓
     </a>
   );
@@ -192,18 +192,18 @@ function NextRide({ next, className = "" }: { next: NonNullable<FanState["next"]
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <ChogAvatar tokenId={next.tokenId} className="size-10 rounded-xl" />
-      <div className="min-w-0 text-sm">
+      <div className="min-w-0 text-sm text-[var(--v2-muted)]">
         <p>
           You&apos;re riding{" "}
-          <Link href={`/chog/${next.tokenId}`} className="font-semibold hover:text-accent-strong">
+          <Link href={`/chog/${next.tokenId}`} className="font-medium text-[var(--v2-ink)] hover:text-[var(--v2-kicker)]">
             Chog #{next.tokenId}
           </Link>{" "}
           at {bellWhen(next.day, now)}.
         </p>
-        <p className="text-xs text-subtle">
+        <p className="v2-note mt-0.5">
           {now !== null && now < ringsAt ? (
             <>
-              It rings at 15:00 UTC, in <Countdown to={ringsAt} className="text-muted" />, and your ride counts from
+              It rings at 15:00 UTC, in <Countdown to={ringsAt} className="text-[var(--v2-muted)]" />, and your ride counts from
               the ring.
             </>
           ) : (
@@ -229,9 +229,9 @@ function ThisBell({ bell, fan }: { bell: BellSummaryResponse; fan: FanState }) {
       <div className="min-w-0 flex-1 basis-64">
         <p className={LABEL}>Your next ride</p>
         {fan.next ? (
-          <NextRide next={fan.next} className="mt-1" />
+          <NextRide next={fan.next} className="mt-2" />
         ) : (
-          <p className="mt-1 text-sm text-muted">
+          <p className="v2-body mt-2">
             {bell.kind === "live"
               ? "This Bell's rides are locked in. Pick a Chog below and it rides the next Bell (15:00 UTC)."
               : "Live Bells ring at 15:00 UTC. Pick a Chog below and it rides the next one."}{" "}
@@ -245,12 +245,12 @@ function ThisBell({ bell, fan }: { bell: BellSummaryResponse; fan: FanState }) {
     <div className="min-w-0 flex-1 basis-64">
       <p className={LABEL}>Your ride · Bell of {formatDay(bell.day)}</p>
       {riding !== undefined ? (
-        <div className="mt-1 flex items-center gap-3">
+        <div className="mt-2 flex items-center gap-3">
           <ChogAvatar src={call?.image} tokenId={riding} className="size-10 rounded-xl" />
-          <div className="min-w-0 text-sm">
+          <div className="min-w-0 text-sm text-[var(--v2-muted)]">
             <p className="flex flex-wrap items-center gap-x-1.5">
               Riding
-              <Link href={`/chog/${riding}`} className="font-semibold hover:text-accent-strong">
+              <Link href={`/chog/${riding}`} className="font-medium text-[var(--v2-ink)] hover:text-[var(--v2-kicker)]">
                 Chog #{riding}
               </Link>
               {call && (
@@ -264,7 +264,7 @@ function ThisBell({ bell, fan }: { bell: BellSummaryResponse; fan: FanState }) {
                 </>
               )}
             </p>
-            <p className="text-xs text-subtle">
+            <p className="v2-note mt-0.5">
               {bell.status === "settled"
                 ? "Settled. Your points are in."
                 : `Your ride counts from the first hourly close after you picked; it settles at ${formatUtcTime(bell.horizonAt)}.`}
@@ -272,13 +272,13 @@ function ThisBell({ bell, fan }: { bell: BellSummaryResponse; fan: FanState }) {
           </div>
         </div>
       ) : (
-        <p className="mt-1 text-sm text-muted">
+        <p className="v2-body mt-2">
           No ride yet. Pick a Chog below. Rides close in{" "}
-          <Countdown to={Date.parse(bell.rideWindowClosesAt)} className="text-foreground" />, then a pick rides the
+          <Countdown to={Date.parse(bell.rideWindowClosesAt)} className="text-[var(--v2-ink)]" />, then a pick rides the
           next Bell.
         </p>
       )}
-      {fan.next && <NextRide next={fan.next} className="mt-3 border-t border-line/60 pt-3" />}
+      {fan.next && <NextRide next={fan.next} className="mt-3 border-t border-[var(--v2-line-soft)] pt-3" />}
     </div>
   );
 }

@@ -8,7 +8,8 @@ import { ChogAvatar, LoadError, SectionTitle, Skeleton } from "./bits";
 import { fanName, formatErrorPts, formatPoints, hitRate } from "./format";
 import { FlameIcon } from "./icons";
 
-const RANK_TONE = ["text-warning", "text-foreground", "text-orange-300"];
+/** The podium in teal, then neutrals. */
+const RANK_TONE = ["text-[var(--v2-teal)]", "text-[var(--v2-kicker)]", "text-[var(--v2-violet-ink)]"];
 const TOP = 10;
 
 /** Season standings: Chogs by forecasting points (replays included) and fans by points from their rides. */
@@ -20,28 +21,24 @@ export function SeasonStandings() {
   return (
     <section aria-label="Season standings">
       <SectionTitle
-        title="Season standings"
+        compact
+        kicker="Season"
+        title="Standings"
         hint={tab === "chogs" ? "Chogs score every settled Bell, replays included." : "Fans score the Chogs they ride."}
       />
-      <div className="card overflow-hidden">
-        <div role="group" aria-label="Show standings for" className="flex gap-1 border-b border-line p-1.5">
-          {(["chogs", "fans"] as const).map((id) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={tab === id}
-              onClick={() => setTab(id)}
-              className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                tab === id ? "bg-accent/15 text-foreground" : "text-muted hover:text-foreground"
-              }`}
-            >
-              {id === "chogs" ? "Chogs" : "Fans"}
-            </button>
-          ))}
+      <div className="v2-card v2-card--flush overflow-hidden">
+        <div className="border-b border-[var(--v2-line-soft)] p-2">
+          <div role="group" aria-label="Show standings for" className="v2-tabs flex w-full">
+            {(["chogs", "fans"] as const).map((id) => (
+              <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)} className="v2-tab flex-1">
+                {id === "chogs" ? "Chogs" : "Fans"}
+              </button>
+            ))}
+          </div>
         </div>
         {standings.isPending ? (
           <div role="status" className="space-y-3 p-4">
-            <span className="sr-only">Loading standings…</span>
+            <span className="v2-sr">Loading standings…</span>
             {Array.from({ length: 5 }, (_, i) => (
               <Skeleton key={i} className="h-9" />
             ))}
@@ -67,8 +64,8 @@ export function SeasonStandings() {
 
 function Rank({ rank }: { rank: number }) {
   return (
-    <span className={`w-7 shrink-0 font-mono text-sm font-semibold tabular-nums ${RANK_TONE[rank - 1] ?? "text-subtle"}`}>
-      <span className="sr-only">Rank </span>
+    <span className={`v2-num w-7 shrink-0 text-[17px] ${RANK_TONE[rank - 1] ?? "text-[var(--v2-faint)]"}`}>
+      <span className="v2-sr">Rank </span>
       {rank}
     </span>
   );
@@ -76,31 +73,31 @@ function Rank({ rank }: { rank: number }) {
 
 function Points({ value }: { value: number }) {
   return (
-    <span className="font-mono text-sm font-semibold tabular-nums">
+    <span className="v2-num text-[16px] text-[var(--v2-ink)]">
       {formatPoints(value)}
-      <span className="ml-0.5 text-[11px] font-normal text-subtle">pts</span>
+      <span className="ml-1 font-[family-name:var(--v2-font-text)] text-[11px] text-[var(--v2-faint)]">pts</span>
     </span>
   );
 }
 
 function ChogTable({ rows }: { rows: ChogBellStanding[] }) {
   if (rows.length === 0) {
-    return <p className="px-4 py-8 text-center text-sm text-subtle">Chogs show up here once the first Bell settles.</p>;
+    return <p className="v2-note px-4 py-8 text-center">Chogs show up here once the first Bell settles.</p>;
   }
   return (
     <ol>
       {rows.slice(0, TOP).map((row, i) => (
-        <li key={row.tokenId} className="border-b border-line/60 last:border-0">
+        <li key={row.tokenId} className="border-b border-[var(--v2-line-soft)] last:border-0">
           <Link
             href={`/chog/${row.tokenId}`}
-            className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent/[0.07]"
+            className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[rgb(255_255_255/0.03)]"
           >
             <Rank rank={row.rank ?? i + 1} />
-            <ChogAvatar src={row.image} tokenId={row.tokenId} className="size-9 rounded-lg" />
+            <ChogAvatar src={row.image} tokenId={row.tokenId} className="size-9 rounded-[9px]" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">Chog #{row.tokenId}</span>
+              <span className="block truncate text-sm font-medium text-[var(--v2-ink)]">Chog #{row.tokenId}</span>
               <span
-                className="block truncate text-[11px] text-subtle"
+                className="block truncate text-[11px] text-[var(--v2-faint)]"
                 title={`${row.hits} of ${row.calls} calls hit · average error ${formatErrorPts(row.avgErrorPts)}`}
               >
                 {hitRate(row.hits, row.calls)}% hits
@@ -121,7 +118,7 @@ function FanTable({ rows, me }: { rows: FanStanding[]; me?: FanResponse }) {
   // The visitor's own row when they rank below the top rows (rank comes with GET /api/fan).
   const mine = me && me.rank && !shown.some((row) => row.fanId === me.fanId) ? me : undefined;
   if (shown.length === 0) {
-    return <p className="px-4 py-8 text-center text-sm text-subtle">No fans on the board yet. Ride a Chog to be first.</p>;
+    return <p className="v2-note px-4 py-8 text-center">No fans on the board yet. Ride a Chog to be first.</p>;
   }
   return (
     <ol>
@@ -146,19 +143,19 @@ function FanRow({
 }) {
   return (
     <li
-      className={`flex items-center gap-3 border-b border-line/60 px-4 py-2.5 last:border-0 ${you ? "bg-accent/10" : ""} ${
-        separated ? "border-t border-dashed border-t-line" : ""
-      }`}
+      className={`flex items-center gap-3 border-b border-[var(--v2-line-soft)] px-4 py-3 last:border-0 ${
+        you ? "bg-[rgb(111_90_220/0.1)] shadow-[inset_2px_0_0_var(--v2-teal)]" : ""
+      } ${separated ? "border-t border-dashed border-t-[var(--v2-line)]" : ""}`}
     >
       <Rank rank={rank} />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold">{fanName(row)}</span>
-          {you && <span className="chip border-accent/40 py-0 text-[10px] text-accent-strong">You</span>}
+          <span className="truncate text-sm font-medium text-[var(--v2-ink)]">{fanName(row)}</span>
+          {you && <span className="v2-badge v2-badge--teal h-5">You</span>}
         </span>
         {row.streak > 0 && (
-          <span className="flex items-center gap-1 text-[11px] text-subtle">
-            <FlameIcon className="size-3 text-warning" />
+          <span className="flex items-center gap-1 text-[11px] text-[var(--v2-faint)]">
+            <FlameIcon className="size-3 text-[var(--v2-teal)]" />
             {row.streak}-day streak
           </span>
         )}
