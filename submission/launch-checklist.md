@@ -23,6 +23,11 @@ Steps marked **You** need you: your wallet or your accounts. Steps marked **Agen
 - [x] **Admin accepted.** `transferAdmin(0xc742AdA2872a042dD36D2E706907b4036968960C)` (tx `0xad1d222b20e110d5141bf4a8285d14c1cdce1f60249d8d695efbeb3610886edc`), then `acceptAdmin()` from your main wallet. Read on Oct 21: `admin()` is `0xc742…960C`, `pendingAdmin()` is `0x0`, `operator()` is `0x2523…9cC2` and `paused()` is `false`.
 - [x] **House Chog bought:** token **1399**, "CHOG #891" on OpenSea, held by your main wallet `0xc742…960C`. Its Tokenbound wallet will be `0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71`, the registry's address for token 1399 (not deployed yet on Oct 21).
 - [x] **$CHOG bought:** your main wallet holds about 24,550 $CHOG (Oct 21), enough for the House Chog's wallet and the Purses (step 3).
+- [x] **AnimrTrophies deployed** (Oct 21) at `0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`, from the House key. Read on Oct 21: `minter()` is the operator `0x2523…9cC2`, kinds 1–4 are enabled, `owner()` is still the House key `0xbcfD…e259` with no pending owner, and `uri()` is the relative `/api/trophies/meta/{id}` (follow-ups in step 5b). Its 12 fork tests pass against Oct 21 state. Not yet verified on Sourcify.
+- [x] **Production deployed** by hand at `https://useanimr.vercel.app`.
+- [x] **Privy login integrated** in the code: the header's "Log in" offers a wallet, email, Google, X and Discord (`components/privy/*`). It needs `NEXT_PUBLIC_PRIVY_APP_ID` on Vercel (DEPLOY.md 4.3).
+
+**Never run `DeployTrophies.s.sol` with `--broadcast` again either.** It would deploy a second trophies contract.
 
 **Never run `DeployAnimrTradeGuard.s.sol` with `--broadcast` again.** It would deploy a second guard.
 
@@ -66,7 +71,7 @@ Sign every step from your main wallet `0xc742…960C`, on `/chog/1399`. **Buy-on
 - [ ] **4e. Deposit** about 15,000 $CHOG and about 1,000 WMON from step 3 to `0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71`. The heist only opens while that wallet holds $CHOG.
 - [ ] **4f. Wake its AI.** Sign the free message on its page.
 - [ ] **4g. Switch to on-chain.** Sign "Switch the AI to on-chain" on the same page.
-- [ ] **Agent:** check that the TBA is `ready` and holds $CHOG and WMON, that `guard.isBuyOnly(tba)` is `false` and that `guard.canTrade(tba, false, <small amount>)` returns `ok`. Run "Act as the AI" on `/heist`: it must show `NotAuthorized()` for the AI key's transfer and the owner's control call going through.
+- [ ] **Agent:** check that the TBA is `ready` and holds $CHOG and WMON, that `guard.isBuyOnly(tba)` is `false` and that `guard.canTrade(tba, false, <small amount>)` returns `ok`. Run "Run the check" on `/heist`: it must show `NotAuthorized()` for the AI key's transfer and the owner's control call going through.
 - [ ] **First real guarded trade.** The House Chog trades when it thinks (at the Bell, and at each agent tick if step 6's optional pulse is on) and its mandate calls for a trade. **Agent:** note the transaction for the video, and check that the swap's output landed back in `0xa46a…AD71`.
 
 ### 5. You: Vercel, Upstash and environment variables (deploy by hand, before 15:00 on Wed Oct 21)
@@ -80,19 +85,30 @@ Follow [`DEPLOY.md`](DEPLOY.md) step by step. You run every step yourself. The H
 
 `<FIRST_LIVE_BELL>` should then be `2026-10-21`. Confirm it with `GET /api/stats` (`bell.firstLiveDay`).
 
-- [ ] **You:** create the Vercel project and an Upstash Redis database.
-- [ ] Set these environment variables, then **redeploy**:
-  - Public, which needs a rebuild after any change: `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUBLIC_SITE_URL=<APP_URL>`, `NEXT_PUBLIC_TRADE_GUARD_ADDRESS=0x92D3d4Af4B3b0F29Ec020e407803e135af61987b`
+- [x] **You:** create the Vercel project (production: `https://useanimr.vercel.app`) and an Upstash Redis database.
+- [ ] Check these environment variables are set, then **redeploy** after any change:
+  - Public, which needs a rebuild after any change: `NEXT_PUBLIC_NETWORK=mainnet`, `NEXT_PUBLIC_SITE_URL=https://useanimr.vercel.app`, `NEXT_PUBLIC_TRADE_GUARD_ADDRESS=0x92D3d4Af4B3b0F29Ec020e407803e135af61987b`, `NEXT_PUBLIC_TROPHIES_ADDRESS=0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`, `NEXT_PUBLIC_PRIVY_APP_ID`
   - Server: `ZG_API_KEY`, `CRON_SECRET`, `OPERATOR_PRIVATE_KEY` (the operator key only), `OPERATOR_ADDRESS`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `HOUSE_CHOG_TOKEN_ID=1399`, `HEIST_ADMIN_SECRET`, `HEIST_IP_SALT`, `ORACLE_PURSE_CHOG`, and optionally `HEIST_DAILY_USD_CAP` (default 3)
 - [ ] **Never put `HOUSE_PRIVATE_KEY` on Vercel.** It stays local, for scripts and Purse sends only.
 - [ ] Check that the 0G account has credit (pc.0g.ai, USD Billing mode for promo credits).
+
+### 5b. You: AnimrTrophies follow-ups (House key, then your main wallet)
+
+The House key `0xbcfD…e259` deployed AnimrTrophies and is its owner today. Send these from it, in order:
+
+- [ ] **Metadata URI.** `setURI("https://useanimr.vercel.app/api/trophies/meta/{id}")`. Today `uri()` returns the relative `/api/trophies/meta/{id}`, which wallets and marketplaces can't resolve.
+- [ ] **Hand ownership to your main wallet.** `transferOwnership(0xc742AdA2872a042dD36D2E706907b4036968960C)`.
+- [ ] **You, from `0xc742…960C`:** `acceptOwnership()`.
+- [ ] **Agent:** check `owner()` is `0xc742…960C`, `pendingOwner()` is `0x0`, `minter()` is still `0x2523…9cC2`, and `uri(1)` is the absolute URL; then open `https://useanimr.vercel.app/api/trophies/meta/1`.
+- [ ] Optional: verify the source on Sourcify (as for the guard), so the explorer shows it.
+- [ ] Check `NEXT_PUBLIC_TROPHIES_ADDRESS` is set on Vercel (step 5): without it the cabinet and awards are off.
 
 ### 6. You: external hourly pulse (cron-job.org)
 
 Vercel Hobby only runs daily crons.
 
-- [ ] Set up an external hourly call to `GET <APP_URL>/api/bell/cron` with the header `Authorization: Bearer <CRON_SECRET>` on cron-job.org (DEPLOY.md step 5.2 has the schedule). The route is idempotent and catches up any ring or settlement that's due.
-- [ ] Optional: the same for `GET <APP_URL>/api/agent/tick`, so awake agents think between Bells. On-chain agents like the House Chog think only on schedule, so without it the House Chog thinks once a day, at the Bell. This multiplies LLM spend by up to 24.
+- [ ] Set up an external hourly call to `GET https://useanimr.vercel.app/api/bell/cron` with the header `Authorization: Bearer <CRON_SECRET>` on cron-job.org (DEPLOY.md step 5.2 has the schedule). The route is idempotent and catches up any ring or settlement that's due.
+- [ ] Optional: the same for `GET https://useanimr.vercel.app/api/agent/tick`, so awake agents think between Bells. On-chain agents like the House Chog think only on schedule, so without it the House Chog thinks once a day, at the Bell. This multiplies LLM spend by up to 24.
 
 ### 7. You: moderation secret
 
@@ -100,7 +116,7 @@ Vercel Hobby only runs daily crons.
 
 ### 8. You: start collecting feedback (as soon as production is up)
 
-- [ ] Share `<APP_URL>` in the Chog community (Discord, X) and ask holders and fans to try it.
+- [ ] Share `https://useanimr.vercel.app` (and the judge tour, `/tour`) in the Chog community (Discord, X) and ask holders and fans to try it.
 - [ ] Collect **3–5 dated quotes** from Chog holders or testers, with permission to quote them, and note **one change made because of the feedback**. These fill `<FEEDBACK>` in `description.md` (the form asks for "user feedback or usage you've gathered").
 
 ---
@@ -109,11 +125,11 @@ Vercel Hobby only runs daily crons.
 
 These are code items.
 
-- [x] **Fix the two oracle-state tests.** Done Oct 19: 37 passed, 0 failed, 0 skipped against live mainnet (README and ARCHITECTURE updated). Keep the `forge test` shot in the video.
+- [x] **Fix the two oracle-state tests.** Done Oct 19: 37 passed, 0 failed, 0 skipped against live mainnet. Re-run on Oct 21: 36 passed, 0 failed, 1 skipped (`test_TwapUnavailableFailsClosed` skips by design once the live pool's ring is past 256 slots), plus AnimrTrophies 12 of 12. README and ARCHITECTURE say so. Keep the `forge test` shot in the video (0 failures).
 - [x] **Wagering words in the app.** `lib/dna/genome.ts` now says "Big trades", "Standard trades" and "I trade the other way", and `GENOME_VERSION` is still `g1-7de62b`.
 - [x] **`.env.example`** lists `HOUSE_CHOG_TOKEN_ID`, `OPERATOR_ADDRESS`, `HEIST_DAILY_USD_CAP`, `HEIST_ADMIN_SECRET`, `HEIST_IP_SALT`, `ORACLE_PURSE_CHOG` and `ZG_VERIFY_TEE`.
 - [x] Optional: the Time Machine header uses `chogLabel()`, so it reads "CHOG #1463 · token 2", like the genome card.
-- [ ] **The House Chog's two-way mandate** (in progress): the code-level rule that blocks real-money sells into dips, and the app's House Chog copy (the landing page, `/heist`, `/guard` and its `/chog` page) moving from buy-only to two-way. Then "Act as the AI" shows the theft attempt refused with `NotAuthorized()`, and a guarded sell as allowed, staying in the same wallet.
+- [x] **The House Chog's two-way mandate:** the code-level rule that blocks real-money sells into dips is `houseDipRule()` in `lib/agent/engine.ts`, and the app's House Chog copy (the landing page, `/heist`, `/guard`) describes two-way trading with buy-only as an optional switch. Once the House Chog is funded, "Run the check" shows the theft attempt refused with `NotAuthorized()`, and a guarded sell as allowed, staying in the same wallet.
 - [ ] Optional (your call): a license for the app code (for example, a root `LICENSE` with MIT). Then update README's License section.
 
 ---
@@ -125,7 +141,7 @@ These are code items.
 - [ ] **At 15:02**, `/bell` shows today's Bell as **live**, with 1,969 calls. Claimed agents' calls are marked as made by their 0G brain.
 - [ ] If it hasn't rung by 15:05, call the cron URL by hand with the secret.
 - [ ] Post the Bell at 15:00, then remind people when the ride window closes at 03:00.
-- [ ] **Smoke test** (once step 4 is done): run "Act as the AI" on `/heist`. You should see `NotAuthorized()` for the AI key's transfer and the owner's control call going through. Until the House Chog's wallet holds $CHOG, the page says it is still moving in.
+- [ ] **Smoke test** (once step 4 is done): run "Run the check" on `/heist`. You should see `NotAuthorized()` for the AI key's transfer and the owner's control call going through. Until the House Chog's wallet holds $CHOG, the page says it is still moving in.
 
 ## Thu Oct 22
 
@@ -147,16 +163,17 @@ These are code items.
 ### 12. Evening: fill the placeholders
 
 - [ ] Fill in every placeholder:
-  - `<APP_URL>` and `<VIDEO_URL>`
-  - `<REPO_URL>`: push the repo; if it's private, invite the reviewer account the form asks for
+  - [x] `<APP_URL>`: filled everywhere with `https://useanimr.vercel.app`
+  - [x] `<REPO_URL>`: the repository stays private. The docs say "private repository, access for judges on request via the submission form" and point judges to `/docs` (Contracts and API, AnimrTradeGuard, Trophy cabinet) and the explorer. If the form insists on a repo link, invite the reviewer account it names.
+  - `<VIDEO_URL>`
   - `<CONTACT>` (in `judge-instructions.md`)
   - `<FIRST_LIVE_BELL>` from `GET /api/stats` (`bell.firstLiveDay`)
   - `<PURSE_AMOUNT>` from `ORACLE_PURSE_CHOG`
-  - `<WINDOW>`, `<BEAT_HOLD_PCT>`, `<MEDIAN_EDGE>` and `<BEST_EDGE>` in `description.md`: the values you wrote down at recording time, so the description matches the video. Refresh the snapshot in ARCHITECTURE §4 with the same values and time.
+  - [x] `<WINDOW>`, `<BEAT_HOLD_PCT>`, `<MEDIAN_EDGE>` and `<BEST_EDGE>` in `description.md`: filled from `GET /api/dna/population` on Oct 21 at 13:06 UTC ("over the 45 days to Oct 21, 38% of Chogs beat holding (median edge −4.0%, best +55.3%)"); ARCHITECTURE §4 has the same snapshot. If the numbers you read at recording time differ, update both: `curl -s https://useanimr.vercel.app/api/dna/population | jq '{window: .window.label, stats}'` gives `beatHoldPct`, `medianEdgePct` and `bestEdgePct`.
   - `<STATS>` from `/stats`: fans, rides, return visits, Versus picks, heist attempts and caves, claimed agents, 0G spend. Keep it under 400 characters.
   - `<FEEDBACK>` from step 8. Keep it under 800 characters.
-- [ ] **The House Chog's label.** Once its wallet holds real $CHOG and its first guarded trade has landed, remove "*launching*" from README (the House Chog paragraph and "What's real") and from ARCHITECTURE §6 and §10. If it isn't live by then, change its line under WHAT'S LIVE in `description.md` ("The House Chog, CHOG #891 (token 1399), trading its own real $CHOG through the guard") to say it is launching, and keep "launching" in README and ARCHITECTURE.
-- [ ] Re-check the character counts. The limits are 8,000 for the description, 8,000 for the judge instructions, 200 for the tech stack and 8,000 for the go-to-market plan. Before filling, the description is 6,618 characters, so placeholders and URLs have about 1,380 characters of room: `<STATS>` and `<FEEDBACK>` at full length leave about 180 for the URLs and numbers.
+- [ ] **The House Chog's label.** Every doc calls it *launching* today. Once its wallet holds real $CHOG and its first guarded trade has landed, remove "launching" from README (the Rob row, the House Chog paragraph and "What's real"), ARCHITECTURE §6 and §10, `description.md` (WHAT'S LIVE: say "trading its own real $CHOG through the guard") and `judge-instructions.md` (ON-CHAIN, and "Once funded"). Until then, keep it.
+- [ ] Re-check the character counts. The limits are 8,000 for the description, 8,000 for the judge instructions, 200 for the tech stack and 8,000 for the go-to-market plan. Before filling, the description is 6,601 characters (URLs and the population numbers are already in), so `<STATS>` at 400 and `<FEEDBACK>` at 800 still fit, with about 200 characters left for `<VIDEO_URL>`, `<PURSE_AMOUNT>` and `<FIRST_LIVE_BELL>`. The judge instructions are 7,711 characters before `<CONTACT>` and `<FIRST_LIVE_BELL>`.
 
 ## Fri Oct 23
 
@@ -167,8 +184,8 @@ These are code items.
 | Project name | Animr |
 | Description | `submission/description.md` |
 | Demo video | `<VIDEO_URL>` |
-| App link | `<APP_URL>` |
-| GitHub repo | `<REPO_URL>` |
+| App link | `https://useanimr.vercel.app` (judges: `/tour`) |
+| GitHub repo | Private repository: access for judges on request (invite the reviewer account if the form names one) |
 | Judge access instructions | `submission/judge-instructions.md` |
 | Tech stack | `submission/tech-stack.txt` |
 | Go-to-market plan | `submission/go-to-market.md` |
