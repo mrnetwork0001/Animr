@@ -46,7 +46,7 @@ export const heroStats = {
   /** The asterisk points at the footnote under the row. */
   beat: "beat holding",
   /** Read after "beat holding" by screen readers, in place of the asterisk. */
-  noteHint: "(simulated, see note below)",
+  noteHint: "(backtest, see note below)",
   /**
    * AnimrTradeGuard (contracts/src/AnimrTradeGuard.sol) has no function that moves tokens out of a Chog's wallet:
    * its operator can only call trade(), which swaps inside the wallet. That is the hero's safety claim.
@@ -54,7 +54,6 @@ export const heroStats = {
   guard: { value: "0", spoken: "Zero", label: "withdraw functions" },
 } as const;
 
-const WINDOW_WORDS: Record<WindowKey, string> = { "30d": "30-day", "45d": "45-day", max: "Full-history" };
 
 /**
  * The footnote under the stats: which replay the share comes from (its "*" is drawn by the hero, hidden
@@ -63,7 +62,9 @@ const WINDOW_WORDS: Record<WindowKey, string> = { "30d": "30-day", "45d": "45-da
 export function heroFootnote(windowKey: WindowKey, range: string): string {
   // No-break spaces, and a word joiner after the dash (a line may otherwise break right after it).
   const unbroken = range.replace(/ /g, "\u00a0").replace(/([\u2013\u2014-])/g, "$1\u2060");
-  return `${WINDOW_WORDS[windowKey]} replay on real $CHOG candles (${unbroken}), 1% fee + impact. Simulated.`;
+  // A backtest, said plainly: real prices, replayed trades. The window length stays in the range itself.
+  void windowKey;
+  return `Backtest: each Chog's trading DNA replayed on real hourly $CHOG prices (${unbroken}), with the pool's 1% fee and price impact.`;
 }
 
 export type HeroCard = {
