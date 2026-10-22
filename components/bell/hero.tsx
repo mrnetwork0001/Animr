@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSoundAt } from "@/components/audio/use-sound";
 import { useNow } from "@/components/decision-feed";
 import { utcDay } from "@/lib/bell/rules";
 import type { BellSummaryResponse } from "@/lib/bell/types";
@@ -83,6 +84,8 @@ function Clock({
 }) {
   const closesAt = bell ? Date.parse(bell.rideWindowClosesAt) : null;
   const nextRing = now === null ? null : nextBellAt(now);
+  // The Bell strikes when the ring comes (sound is opt-in: components/audio).
+  useSoundAt("bell", nextRing);
   const target = ridesOpen ? closesAt : nextRing;
   // The newest settled Bell: the practice game sits on its page.
   const practiceDay = bell ? (bell.status === "settled" ? bell.day : shiftDay(bell.day, -1)) : null;

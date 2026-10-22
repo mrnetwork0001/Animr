@@ -5,6 +5,7 @@ import { type ReactNode, useCallback, useState } from "react";
 import { possessive } from "@/lib/possessive";
 import { VERSUS_COPY } from "@/lib/rewind/rules";
 import type { VersusBout, VersusRecord } from "@/lib/rewind/types";
+import { useSoundOnMount } from "@/components/audio/use-sound";
 import { Badge, pillClass } from "@/components/v2/primitives";
 import { DiceIcon, Portrait, SIDE_TONE } from "./bits";
 import {
@@ -57,6 +58,8 @@ export function KoCard({
   busy,
   scrollIntoView,
 }: KoCardProps) {
+  // The hit lands with the card after a race (not on a static load; sound is opt-in: components/audio).
+  useSoundOnMount(scrollIntoView ? "ko" : null);
   const { result, reveal, frames, startChog } = bout;
   const draw = result.winner === "draw";
   const last = frames[frames.length - 1];

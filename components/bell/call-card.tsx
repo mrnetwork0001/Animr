@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type ReactNode, useId } from "react";
+import { playSound } from "@/components/audio/use-sound";
 import type { BellCall, BellSummary, FanResponse } from "@/lib/bell/types";
 import { rideErrorMessage, useFan, useRide } from "./api";
 import { CallResult, ChogAvatar, Conviction, Forecast, SourceBadge, useBefore } from "./bits";
@@ -67,7 +68,7 @@ export function RideButton({
       ) : (
         <button
           type="button"
-          onClick={() => ride.mutate(tokenId)}
+          onClick={() => ride.mutate(tokenId, { onSuccess: () => playSound("ride") })}
           disabled={windowOpen === null || riding !== undefined || ride.isPending}
           title={hint}
           aria-describedby={ride.isError ? errorId : undefined}

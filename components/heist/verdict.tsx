@@ -1,5 +1,6 @@
 "use client";
 
+import { useSoundOnMount } from "@/components/audio/use-sound";
 import { Badge, Kicker } from "@/components/v2";
 import { shortAddress } from "@/lib/format";
 import type { HeistProof, NoClaimReason, ProofStep } from "@/lib/heist/types";
@@ -29,6 +30,8 @@ const NO_CLAIM_HEADLINE: Record<NoClaimReason, string> = {
 /** What Monad said about the AI's "yes": the live simulation, or (while moving in) what the check will do. */
 export function Verdict({ view }: { view: VerdictView }) {
   const { proof, origin } = view;
+  // "Monad said NO." lands with a refusal (sound is opt-in: components/audio).
+  useSoundOnMount(proof.kind === "live" && proof.refused ? "refused" : null);
   const yes = origin === "chat" ? "AI said YES." : "You ran the AI's transfer.";
 
   if (proof.kind === "no-claim") {

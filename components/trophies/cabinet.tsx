@@ -2,6 +2,7 @@
 
 import { skipToken, useQuery } from "@tanstack/react-query";
 import type { Address } from "viem";
+import { useSoundOnce } from "@/components/audio/use-sound";
 import { publicClient } from "@/lib/clients";
 import { explorerAddressUrl } from "@/lib/format";
 import { trophyBadgeMarkup } from "@/lib/trophies/art";
@@ -34,6 +35,8 @@ export function TrophyCabinet({ account }: { account?: Address }) {
     queryFn: trophiesAddress && account ? () => readTrophies(publicClient, account) : skipToken,
     staleTime: 60_000,
   });
+  // A chime once per session per Chog with a trophy (sound is opt-in: components/audio).
+  useSoundOnce("trophy", account && trophies.data?.length ? `trophy:${account}` : null);
   if (!trophiesAddress || !account || !trophies.data) return null;
   const held = trophies.data;
   const contractUrl = explorerAddressUrl(trophiesAddress);

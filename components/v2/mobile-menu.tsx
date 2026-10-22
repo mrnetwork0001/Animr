@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { SoundToggle } from "@/components/audio/sound-toggle";
 import { CoachHelpButton, CoachReplayRow } from "@/components/tour/coach-replay";
 import { COACH_MENU_EVENT, COACH_ROOT_SELECTOR, type CoachMenuDetail } from "@/lib/coach";
 import { V2_NAV_LINKS, isV2NavActive } from "./nav";
@@ -43,6 +44,7 @@ export function V2HeaderActions({ wallet }: { wallet?: ReactNode }) {
       <NavWalletSource />
       {!compact && (
         <>
+          <SoundToggle />
           <CoachHelpButton />
           <div className="v2-header-wallet" data-coach="account">
             {wallet}
@@ -162,6 +164,7 @@ function MobileMenu({ wallet }: { wallet: ReactNode }) {
             })}
           </ul>
         </nav>
+        <SoundToggle showLabel className="mt-2" />
         {wallet && (
           <div className="v2-menu-wallet" data-coach="account">
             {wallet}
