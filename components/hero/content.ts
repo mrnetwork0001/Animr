@@ -51,7 +51,7 @@ export const heroStats = {
    * AnimrTradeGuard (contracts/src/AnimrTradeGuard.sol) has no function that moves tokens out of a Chog's wallet:
    * its operator can only call trade(), which swaps inside the wallet. That is the hero's safety claim.
    */
-  guard: { value: "0", spoken: "Zero", label: "withdraw functions" },
+  guard: { value: "0", spoken: "Zero", label: "ways for the AI to withdraw" },
 } as const;
 
 
