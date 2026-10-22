@@ -404,6 +404,10 @@ export const tradeGuard: DocContent = {
               <Code>trade()</Code> takes no recipient, token, router, path or calldata. The only thing the operator can make
               a wallet do is swap between $CHOG and WMON into itself.
             </p>
+            <p>
+              You withdraw through the wallet itself, not the guard: the profile&apos;s vault panel has a Withdraw form that
+              calls the wallet&apos;s own <Code>execute()</Code>, which only the Chog&apos;s current holder may call.
+            </p>
           </Callout>
         </>
       ),
