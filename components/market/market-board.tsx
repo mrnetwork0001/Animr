@@ -74,7 +74,7 @@ export function MarketBoard({ rows }: { rows: MarketRow[] }) {
           <span className="v2-label" id="market-style">
             Style
           </span>
-          <div role="group" aria-labelledby="market-style" className="dna-scroll-x">
+          <div role="group" aria-labelledby="market-style" className="flex flex-wrap items-center gap-2">
             {(["all", ...STYLES] as const).map((value) => (
               <button
                 key={value}

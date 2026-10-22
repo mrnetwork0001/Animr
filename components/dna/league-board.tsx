@@ -371,10 +371,10 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
-          {/* The three divisions, once any Chog is claimed (until then every Chog is unclaimed); phones: one row that
-              scrolls sideways. */}
+          {/* The three divisions, once any Chog is claimed (until then every Chog is unclaimed). The chips wrap onto
+              a second row on phones instead of scrolling sideways (a scroll row clipped the last chip). */}
           {showDivisions && (
-            <div role="group" aria-label="Division" className="dna-scroll-x -mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-auto sm:px-0">
+            <div role="group" aria-label="Division" className="flex flex-wrap items-center gap-2">
               {([{ key: "", label: "All divisions", title: "Every Chog" }, ...DIVISIONS] as const).map((division) => (
                 <button
                   key={division.key || "all"}
@@ -395,7 +395,7 @@ export function LeagueBoard({ index }: { index?: LeagueIndex }) {
 
           {showDivisions && <span aria-hidden className="v2-vr hidden h-5 self-center lg:block" />}
 
-          <div role="group" aria-label="Trading style" className="dna-scroll-x -mx-4 w-[calc(100%+2rem)] px-4 sm:mx-0 sm:w-auto sm:px-0">
+          <div role="group" aria-label="Trading style" className="flex flex-wrap items-center gap-2">
             {(["", ...STYLES] as const).map((style) => (
               <button
                 key={style || "all"}
