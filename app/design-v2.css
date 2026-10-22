@@ -2118,3 +2118,14 @@
     outline: 2px solid Highlight;
   }
 }
+
+/* The docs' header: brand left, one link right (app/(docs)/layout.tsx). */
+@layer components {
+  .v2-docs-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--v2-s-4);
+    min-height: var(--v2-header-h);
+  }
+}
