@@ -326,7 +326,8 @@
   .v2-brand-logo {
     display: block;
     width: auto;
-    height: 42px;
+    /* The same size as the footer's lockup (site-footer.css). */
+    height: 40px;
   }
 
   .v2-nav {
@@ -709,7 +710,7 @@
       --v2-header-h: 58px;
     }
     .v2-brand-logo {
-      height: 36px;
+      height: 40px;
     }
   }
 

@@ -211,9 +211,8 @@ body:has(.hx-page) {
 .hx-logo {
   display: block;
   width: auto;
-  height: calc(84 * var(--k));
-  max-height: 52px;
-  min-height: 36px;
+  /* The same size as the footer's lockup, at every width. */
+  height: 40px;
 }
 
 .hx-nav,
