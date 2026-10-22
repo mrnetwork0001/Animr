@@ -44,3 +44,10 @@ next-env.d.ts
 /.data/
 !.env.example
 submission/broll/
+
+# demo film (Remotion): heavy and generated files
+video/node_modules/
+video/out/
+video/.cache/
+video/public/footage/
+video/public/stills/

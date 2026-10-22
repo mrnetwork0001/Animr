@@ -34,6 +34,8 @@ Built for Chogathon 2026 · **Not affiliated with Chog** · App: [useanimr.verce
 
 The header is a game-style HUD: a glyph per section with live badges (the Bell countdown, today's heist attempts, how many Chogs the logged-in wallet holds), folded into a hamburger panel on phones and tablets; the League's filter chips wrap on narrow screens. **Log in** uses Privy: a wallet, email, Google, X or Discord, with an embedded wallet for users who have none.
 
+On a first visit to any app page, a **guided walkthrough narrated by the House Chog** (Laser Pounce) spotlights each header tab in turn with a short line in its voice and a real fact where one exists (the Bell countdown, the vault once open, how many Chogs you hold); Previous / Next / Skip and the arrow keys move it, it shows once per browser, and the **?** button (or the phone menu) replays it. **Sound** is opt-in and off by default: a speaker toggle in the header turns on short sound moments synthesized in the browser (the Bell striking at the ring, a K.O. in Versus, a thud when Monad refuses the heist, a trophy chime, a ride blip) and a generative ambient score that never repeats, with its own switch and volume. The docs at `/docs` have their own quiet header (no tabs, no login, no wallet code).
+
 **Holders** open `/chog/<tokenId>`, log in with the wallet that holds the Chog, and follow a six-step stepper: create the Chog's wallet (one transaction), let the guard trade (one), set limits (one; 10% per trade, 30% per day, 10 minutes apart and 2% slippage by default), fund the vault with $CHOG and/or WMON (or wrap MON on the way in), wake the AI (a free signature; it paper-trades the vault's real balances) and switch it to on-chain (a second free signature). The live panel then offers Edit limits, Deposit or withdraw and Back to paper trading, and **Withdraw to your wallet** sends tokens out through the wallet's own `execute()`, which only the holder can call. The in-app Holder guide (`/docs/holder-guide`) follows it button by button.
 
 **The House Chog** is the team's own real-money trader: **CHOG #891 · token 1399**. Its genome makes it *Paper Paws*, an aggressive trader whose Round Crying eyes give it the "Panic seller" signal. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead. Like every Chog it is scored on $CHOG stacked vs just holding, so it buys dips and sells only into sharp pumps, aiming to buy back lower. Its wallet [`0xa46a…AD71`](https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71), the same wallet the heist dares you to rob, holds real $CHOG and WMON, and its AI runs in on-chain mode on production: it decides on the hourly tick and at the Bell, and every swap it makes lands back in that wallet. Its first production decisions were holds; the first thesis cited the House rule, which blocks any sell while $CHOG is soft.
@@ -151,8 +153,9 @@ forge script script/GrowPoolOracle.s.sol --rpc-url monad --sender <any>         
 ```
 app/(site)/            landing page (/)
 app/(app)/             /app, /league, /traits, /market, /replay/[id], /versus, /versus/[id], /breed, /bell, /bell/[day],
-                       /bell/[day]/recap, /heist, /chog/[id], /guard, /leaderboard, /stats, /tour, /docs, /docs/[slug];
+                       /bell/[day]/recap, /heist, /chog/[id], /guard, /leaderboard, /stats, /tour;
                        opengraph-image share cards for Chogs, Bells, recaps, the League, replays and bouts
+app/(docs)/            /docs and /docs/[slug] with their own minimal header
 app/api/               dna, versus, breed, bell (incl. recap), fan, heist, agents, agent/tick, chog/[id]/ask, holders,
                        trophies (meta, art), farcaster (embed image), leaderboard, stats, optout
 app/.well-known/       farcaster.json: the Farcaster Mini App manifest
@@ -169,17 +172,21 @@ lib/contracts/         AnimrTradeGuard client: onboarding, limits, quotes, prepa
 lib/trophies/          AnimrTrophies client: kinds, award hooks (Bell, heist, first trade), cabinet reads, metadata
 lib/market/            OpenSea listings joined with the League ("Best traders for sale")
 lib/farcaster/         Mini App embed tags and URLs
+lib/audio/             opt-in sound: synthesized moments and the generative ambient (components/audio/ holds the toggle)
+lib/coach.ts           the first-visit walkthrough's storage and events
+lib/runtime-env.ts     production-only gate for anything the operator key broadcasts
 lib/privy.ts           Privy login config (components/privy/ holds the login button and the wagmi bridge)
 lib/brand-safety.ts    trait display and AI-prompt filter (data/brand-safety.json)
 lib/optout.ts          "Hide my Chog": a holder's signed opt-out; lib/visibility.ts applies it everywhere
 lib/og/                share-card rendering
 components/docs/       the /docs site: 20 pages, registry and facts read from the code
-components/tour/       the judge tour's steps and the "back to the tour" pill
+components/tour/       the judge tour (/tour), its "back to the tour" pill, and the House Chog's first-visit walkthrough
 components/v2/         app shell and the game-HUD header nav (glyphs and live badges)
 contracts/             AnimrTradeGuard, AnimrTrophies, vendored Uniswap v3 math, fork tests, deploy and oracle scripts
 data/                  chogs.json (1,969 Chogs), chog-ohlcv-1h.json (committed candles), brand-safety.json
 scripts/               snapshot-chogs.mts (trait snapshot), send-oracle-purse.mts (sends and records a Purse; dry run by default)
 submission/            Chogathon submission texts and launch checklist
+video/                 the demo film (Remotion): script, real on-chain data, capture and render scripts; see video/README.md
 ```
 
 The Versus API contract is in `lib/rewind/types.ts`. `/stats` shows live usage (fans, rides, return visits, Versus picks, heist attempts, claimed agents, 0G spend) and hosts **Hide my Chog**: one free signature from the current holder takes a Chog off every public page.
