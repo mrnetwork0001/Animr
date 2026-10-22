@@ -142,7 +142,7 @@ function GuardSetup({
   const actHint = canAct
     ? undefined
     : !viewer
-      ? "Connect the holder's wallet to do this step."
+      ? "Log in with the holder's wallet to do this step."
       : wrongChain
         ? `Switch to ${appConfig.chain.name} to do this step.`
         : "Only the Chog's holder can do this step.";
@@ -363,7 +363,7 @@ function ViewerBar({
     return (
       <div className={`${bar} border-[var(--v2-line-soft)] bg-[rgb(255_255_255/0.025)]`}>
         <p className="text-sm text-[var(--v2-nav)]">
-          Hold this Chog? Connect that wallet to set this up.
+          Hold this Chog? Log in with that wallet to set this up.
         </p>
         <ConnectButton className="ml-auto" />
       </div>

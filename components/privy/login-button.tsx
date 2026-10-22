@@ -17,7 +17,7 @@ const PANEL =
 const ROW = `${pillClass("ghost", "sm", true)} justify-start px-2.5 text-[var(--v2-ink)]`;
 
 /**
- * The Privy login button. Logged out: "Log in" (glass, in the header) or "Connect wallet" (violet, in a page prompt);
+ * The Privy login button. Logged out: "Log in" (glass in the header, violet in a page prompt);
  * both open Privy's modal (wallets, email code, Google, X, Discord). Logged in: an account pill with a menu (copy
  * address, Your Chogs, link more accounts, log out), plus a "Switch to Monad" pill when an external wallet is on
  * another network.
@@ -62,7 +62,7 @@ export function PrivyLoginButton({ className = "", size = "md" }: { className?: 
           .filter(Boolean)
           .join(" ")}
       >
-        {header ? "Log in" : "Connect wallet"}
+        Log in
       </button>
     );
   }
@@ -80,7 +80,7 @@ export function PrivyLoginButton({ className = "", size = "md" }: { className?: 
         onClick={() => runPrivyAction("linkWallet")}
         className={`${pillClass("primary", size)} ${className}`}
       >
-        Connect wallet
+        Add a wallet
       </button>
     );
   }

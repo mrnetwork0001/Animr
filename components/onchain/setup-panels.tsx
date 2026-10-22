@@ -211,7 +211,7 @@ function useModeSwitch(ctx: Ctx) {
   const mutation = useMutation({
     mutationFn: async (mode: AgentMode) => {
       const owner = ctx.viewer;
-      if (!owner) throw new Error("Connect the holder's wallet first.");
+      if (!owner) throw new Error("Log in with the holder's wallet first.");
       setPhase("sign");
       return requestAgentMode({
         tokenId: ctx.tokenId,

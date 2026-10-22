@@ -47,7 +47,7 @@ export function ConnectButtonFallback({ size = "sm" }: { size?: "sm" | "md" }) {
   if (privyEnabled) {
     return (
       <span aria-hidden className={`${pillClass(size === "sm" ? "glass" : "primary", size)} opacity-50`}>
-        {size === "sm" ? "Log in" : "Connect wallet"}
+        Log in
       </span>
     );
   }

@@ -132,7 +132,7 @@ export function HideMyChog({ tokenId: fixedId, nameNumbers }: { tokenId?: number
     step = (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Hint>
-          Hold {name(tokenId)}? Connect that wallet to {hidden ? "show it again" : "hide it"}.
+          Hold {name(tokenId)}? Log in with that wallet to {hidden ? "show it again" : "hide it"}.
         </Hint>
         <ConnectButton className="ml-auto" />
       </div>

@@ -187,7 +187,7 @@ function HouseBuyOnlyCard({
           </button>
         ) : (
           <p className="mt-3 text-sm text-[var(--v2-faint)]">
-            {viewer ? `Switch your wallet to ${appConfig.chain.name} to do this step.` : "Connect the holder's wallet to do this step."}
+            {viewer ? `Switch your wallet to ${appConfig.chain.name} to do this step.` : "Log in with the holder's wallet to do this step."}
           </p>
         )}
       </>

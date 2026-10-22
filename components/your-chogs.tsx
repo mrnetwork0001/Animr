@@ -215,7 +215,7 @@ function ConnectPrompt({ className }: { className: string }) {
     <section id={ANCHOR.id} aria-labelledby={headingId} className={`${ANCHOR.scroll} ${className}`}>
       <SectionTitle id={headingId} title="Hold a Chog? Watch it trade." />
       <EmptyState
-        title="Connect to see your Chogs"
+        title="Log in to see your Chogs"
         body="Every Chog Genesis you hold shows up here, ranked: its League place, its Daily Bell call and its AI."
         actions={<ConnectButton />}
         className="py-10"
