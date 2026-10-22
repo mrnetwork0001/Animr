@@ -361,7 +361,7 @@ export function LivePanel({ ctx, agentQuery }: { ctx: Ctx; agentQuery: UseQueryR
             aria-expanded={topUp}
             className="v2-btn-glass v2-btn--sm"
           >
-            Add funds
+            Deposit or withdraw
           </button>
           <button
             type="button"

@@ -512,7 +512,7 @@ function FundedRow({ ctx, open, onToggle }: { ctx: Ctx; open: boolean; onToggle:
       </p>
       {ctx.canAct && (
         <button type="button" onClick={onToggle} aria-expanded={open} className="v2-btn-glass v2-btn--sm mt-2">
-          {open ? "Hide deposits" : missing ? `Add ${missing === "wmon" ? "WMON" : "$CHOG"}` : "Add funds"}
+          {open ? "Hide" : missing ? `Add ${missing === "wmon" ? "WMON" : "$CHOG"}` : "Deposit or withdraw"}
         </button>
       )}
       {open && (

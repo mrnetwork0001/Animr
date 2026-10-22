@@ -80,8 +80,9 @@ function missingNote(missing: TokenKey, buyOnly?: boolean): string {
 }
 
 /**
- * Deposit $CHOG / WMON into the Chog's wallet, wrap MON into WMON on the way, or wrap native MON that already sits
- * in the wallet. The guard trades only CHOG and WMON, so native MON in the vault is idle.
+ * Deposit $CHOG / WMON into the Chog's wallet, wrap MON into WMON on the way, wrap native MON that already sits
+ * in the wallet, or withdraw to the holder's wallet. The guard trades only CHOG and WMON, so native MON in the vault
+ * is idle.
  */
 export function FundVault({ tba, viewer, canAct, balances, buyOnly, tx }: FundVaultProps) {
   const missing = missingToken(balances, buyOnly);
@@ -103,6 +104,9 @@ export function FundVault({ tba, viewer, canAct, balances, buyOnly, tx }: FundVa
         <>
           <DepositForm tba={tba} viewer={viewer} wallet={wallet.data} tx={tx} defaultToken={missing ?? "chog"} />
           <WrapAndDepositForm tba={tba} viewer={viewer} monBalance={wallet.data?.mon} tx={tx} />
+          {(balances.chog > BigInt(0) || balances.wmon > BigInt(0)) && (
+            <WithdrawForm tba={tba} viewer={viewer} balances={balances} tx={tx} />
+          )}
         </>
       ) : (
         <p className="text-sm text-[var(--v2-faint)]">The holder deposits from their wallet.</p>
@@ -356,6 +360,121 @@ function WrapAndDepositForm({
         <p className="v2-help mt-2 block">
           Your wallet: <span className="v2-num text-[var(--v2-nav)]">{monBalance === undefined ? "…" : fmt(monBalance)}</span> {MON}
           {monBalance !== undefined && " (Max keeps 0.1 for gas)"}
+        </p>
+        {check.error && (
+          <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--v2-danger)]">
+            {check.error}
+          </p>
+        )}
+      </Box>
+    </form>
+  );
+}
+
+/**
+ * Withdraw $CHOG or WMON from the Chog's wallet to the holder's own wallet: one transaction through the wallet's
+ * execute(), which only the Chog's current owner may call. The guard has no withdraw function, so this is the one
+ * way funds ever leave, and only the holder can take it.
+ */
+function WithdrawForm({
+  tba,
+  viewer,
+  balances,
+  tx,
+}: {
+  tba: Address;
+  viewer: Address;
+  balances: VaultBalances;
+  tx: TxFlow;
+}) {
+  const config = useConfig();
+  const [token, setToken] = useState<TokenKey>(balances.chog > BigInt(0) ? "chog" : "wmon");
+  const [amount, setAmount] = useState("");
+  const errorId = useId();
+  const available = balances[token];
+  const check = parseTokenAmount(amount, DECIMALS, available);
+  const { label, address } = TOKENS[token];
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = check.value;
+    if (value === undefined || tx.busy) return;
+    let before: VaultBalances | undefined;
+    const ok = await tx.run({
+      origin: "step",
+      steps: [
+        {
+          label: `Withdraw ${label}`,
+          send: async () => {
+            before = await readVaultBalances(publicClient, tba);
+            const { request } = await simulateContract(config, {
+              address: tba,
+              abi: tbaExecuteAbi,
+              functionName: "execute",
+              args: [
+                address,
+                BigInt(0),
+                encodeFunctionData({ abi: erc20Abi, functionName: "transfer", args: [viewer, value] }),
+                0,
+              ],
+              account: viewer,
+              chainId,
+            });
+            return writeContract(config, request);
+          },
+        },
+      ],
+      verify: () =>
+        pollOutcome(async () => {
+          if (!before) return undefined;
+          const after = await readVaultBalances(publicClient, tba);
+          return after[token] <= before[token] - value
+            ? undefined
+            : "The withdrawal confirmed, but the vault's balance hasn't caught up yet. Refresh in a moment.";
+        }),
+      success: `Withdrew ${fmt(value)} ${label} to your wallet.`,
+    });
+    if (ok) setAmount("");
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <Box title="Withdraw to your wallet">
+        <p className="v2-help mt-1 block leading-relaxed">
+          Sends from the Chog&apos;s wallet to {viewer.slice(0, 6)}…{viewer.slice(-4)} through the wallet&apos;s own{" "}
+          <code className="font-mono">execute()</code>. Only the Chog&apos;s holder can do this; the AI and the guard never can.
+        </p>
+        <div className="mt-2 flex gap-1.5" role="radiogroup" aria-label="Token to withdraw">
+          {(Object.keys(TOKENS) as TokenKey[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              role="radio"
+              aria-checked={token === key}
+              onClick={() => setToken(key)}
+              disabled={balances[key] === BigInt(0)}
+              className={`v2-chip cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${token === key ? "is-active" : ""}`}
+            >
+              {TOKENS[key].label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <AmountInput
+            value={amount}
+            onChange={setAmount}
+            max={available}
+            label={`Amount of ${label} to withdraw`}
+            errorId={errorId}
+            error={check.error}
+            disabled={tx.busy}
+          />
+          <button type="submit" disabled={check.value === undefined || tx.busy} className="v2-btn-glass h-12">
+            Withdraw
+          </button>
+        </div>
+        <p className="v2-help mt-2 block">
+          In the vault: <span className="v2-num text-[var(--v2-nav)]">{fmt(available)}</span> {label}
         </p>
         {check.error && (
           <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--v2-danger)]">
