@@ -1,6 +1,6 @@
 import type { DocContent } from "../frame";
 import { howItWorks, judgeQuickStart, welcome } from "./getting-started";
-import { chogWallet, claimItsAi, tradeGuard, trophies } from "./own";
+import { chogWallet, claimItsAi, holderGuide, tradeGuard, trophies } from "./own";
 import { askThisChog, breed, dailyBell, league, robThisChog, timeMachine, tradingDna, versus } from "./play";
 import { architecture, contractsAndApi, selfHosting } from "./tech";
 import { trust } from "./trust";
@@ -18,6 +18,7 @@ export const DOC_CONTENT: Record<string, DocContent> = {
   "daily-bell": dailyBell,
   "rob-this-chog": robThisChog,
   "ask-this-chog": askThisChog,
+  "holder-guide": holderGuide,
   "chog-wallet": chogWallet,
   "claim-its-ai": claimItsAi,
   "trade-guard": tradeGuard,

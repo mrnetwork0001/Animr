@@ -12,7 +12,7 @@ The owner's guide: you run every step yourself. All times are UTC. The productio
 | Wed Oct 21, 15:01 | The first trigger rings the **Oct 21 Bell as live**. The trigger can be the cron-job.org pulse at 15:01, Vercel's cron (any time from 15:00 to 15:59) or anyone opening `/bell`. |
 | Thu Oct 22, 00:00 | Feature freeze. |
 | Thu Oct 22, 03:00 | Rides on the Oct 21 Bell close (12 hours after 15:00). |
-| **Thu Oct 22, from 15:10** | The Oct 21 Bell can settle (horizon 15:00 plus 10 minutes). The pulse settles it at 15:11. Then come the Oracle Purse (step 9) and the Bell scenes of the video. |
+| **Thu Oct 22, from 15:10** | The Oct 21 Bell can settle (horizon 15:00 plus 10 minutes). The pulse settles it at 15:11. Then the purse job sends the Oracle Purse (step 9), and the Bell scenes of the video follow. |
 | Fri Oct 23, 12:00 | Submit. The Oct 22 Bell settles at 15:10 that day, after submission. |
 
 **The Oct 21 Bell is the only live Bell that can settle before you submit.**
@@ -42,7 +42,7 @@ Production gets its own Redis namespace and starts empty:
   openssl rand -hex 32   # HEIST_IP_SALT
   ```
 - [ ] **Have two values from `.env.local` ready:** `ZG_API_KEY` and `OPERATOR_PRIVATE_KEY`. Copy them one at a time.
-- [ ] **Decide `ORACLE_PURSE_CHOG`.** Use the whole $CHOG the House key will really send after the Oct 21 Bell settles. Unset or `0` means no Purse is promised. Set it only to the whole $CHOG the House key will really hold and send by Thu 15:10.
+- [ ] **Decide `ORACLE_PURSE_CHOG`.** Use the whole $CHOG the House key will really send after each live Bell settles. Unset or `0` means no Purse is promised. Production uses `500`: set it only to the whole $CHOG the House key will really hold and send by Thu 15:10, and use the same value where the purse job runs (step 9).
 
 ## 1. Put the code on GitHub
 
@@ -77,7 +77,7 @@ gh repo create animr --public --source=. --push     # or --private, then invite 
 
 ## 3. Redis: Upstash through the Vercel Marketplace
 
-Every piece of shared state lives in Redis: Bells, rides, fan cards, Versus, the heist's counters and daily 0G budget, agents and their decisions, and rate limits.
+Redis is required in production. Every piece of shared state lives in it: Bells, rides, fan cards, Versus, the heist's counters and daily 0G budget, agents and their decisions, and rate limits. Without it, nothing persists across instances or cold starts, and the heist fails closed (the House Chog naps; see step 10).
 
 The app picks its store in `lib/kv.ts` and `lib/agent/store.ts`, in this order:
 
@@ -131,9 +131,11 @@ NEXT_PUBLIC_PRIVY_APP_ID=<the Privy App ID from 4.3>
 NEXT_PUBLIC_TROPHIES_ADDRESS=0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d
 NEXT_PUBLIC_SITE_URL=https://useanimr.vercel.app
 OPERATOR_ADDRESS=0x2523bBdD941783C4E565180D2a1b18DE86319cC2
-ORACLE_PURSE_CHOG=<whole $CHOG you will really send per settled live Bell, or 0>
+ORACLE_PURSE_CHOG=500
 HOUSE_CHOG_TOKEN_ID=1399
 ```
+
+`ORACLE_PURSE_CHOG=500` is the whole $CHOG per settled live Bell that production promises and the purse job sends; `0` means no Purse.
 
 `HOUSE_CHOG_TOKEN_ID=1399` is the House Chog's **token ID** ("CHOG #891" on OpenSea). Never use the CHOG # number 891, or `#891`: that is a different Chog.
 
@@ -164,7 +166,7 @@ This list comes from `process.env` reads across `app/`, `lib/`, `components/` an
 | `OPERATOR_ADDRESS` | Recommended | Config | `0x2523bBdD941783C4E565180D2a1b18DE86319cC2` | The heist proof's sender when the guard's `operator()` can't be read. The deploy script also reads it. |
 | `NEXT_PUBLIC_TRADE_GUARD_ADDRESS` | Recommended | Config | `0x92D3d4Af4B3b0F29Ec020e407803e135af61987b` | The live guard. Unset on mainnet means the same address. **An empty value means paper only**, so never save it blank. Inlined at build time. |
 | `NEXT_PUBLIC_NETWORK` | Recommended | Config | `mainnet` | Monad mainnet (chain 143), which is also what unset means. Never `testnet`: the Chog assets exist only on mainnet. Inlined at build time. |
-| `ORACLE_PURSE_CHOG` | Decide | Config | Whole $CHOG per Purse, or `0`. Use the same value in `.env.local`. | What a settled live Bell promises its Oracle, shown as "on its way" for 48 hours until the script records a transfer. Unset or `0` means no Purse is promised. |
+| `ORACLE_PURSE_CHOG` | Decide | Config | `500` on production: whole $CHOG per Purse, or `0`. Use the same value where the purse job runs. | What a settled live Bell promises its Oracle, shown as "on its way" for 48 hours until the purse job records a transfer, then "sent" with the transaction. Unset or `0` means no Purse is promised. The docs' Daily Bell page shows the deployment's value. |
 | `HEIST_ADMIN_SECRET` | Recommended | Secret | New `openssl rand -hex 32`. | The bearer token for Hall of Fame moderation (appendix). Unset means no admin, and LLM-written replies stay held. |
 | `HEIST_IP_SALT` | Optional | Secret | New `openssl rand -hex 32`. | The key for visitors' IP hashes. Unset means it's derived from `CRON_SECRET`. |
 | `HOUSE_CHOG_TOKEN_ID` | Required | Config | `1399`: its **token ID** ("CHOG #891" on OpenSea), never its "CHOG #" number. `.env.local` already has it. | Block A. Unset means the House Chog is "moving in" on `/heist`, `/guard` and `/`. |
@@ -262,7 +264,7 @@ You create two jobs:
 | Job | URL | Schedule (UTC) | Why |
 | --- | --- | --- | --- |
 | Animr Bell pulse | `https://useanimr.vercel.app/api/bell/cron` | Minutes **1 and 11** of every hour (`1,11 * * * *`) | Rings at 15:01 sharp. Settles at 15:11 the next day. Catches up anything a late or missed run left behind. |
-| Animr agent tick | `https://useanimr.vercel.app/api/agent/tick` | Minute **30** of every hour (`30 * * * *`) | Every awake (claimed) agent thinks once: one 0G call each, about $0.002, so about $0.05 per agent per day with the Bell. Minute 30 stays clear of the 15:01 ring. |
+| Animr agent tick | `https://useanimr.vercel.app/api/agent/tick` | Minute **30** of every hour (`30 * * * *`) | Every awake (claimed) agent thinks once: one 0G call each, about $0.002, so about $0.05 per agent per day with the Bell. On-chain agents (the House Chog included) decide only here and at the ring, never through "Think now", so without this job they would trade at most once a day. Minute 30 stays clear of the 15:01 ring. |
 
 To set them up:
 
@@ -361,21 +363,25 @@ The House Chog is already bought: token **1399**, "CHOG #891" on OpenSea. `HOUSE
    - `/heist` opens once its wallet is deployed and holds $CHOG.
 2. If `/guard` or `/` still shows "moving in" after the wallet is live, **Redeploy without the build cache** (4.2): both pages are prerendered at build. Aim to finish before the freeze at Thu 00:00 and before the heist recording on Thursday morning.
 
-## 9. The Oracle Purse (Thu Oct 22, after the Bell settles)
+## 9. The Oracle Purse (automatic after each settlement)
 
-Before you run it, check these:
+The purse is sent by a scheduled job the team runs outside Vercel, shortly after each live Bell settles (15:11): it executes `scripts/send-oracle-purse.mts --broadcast` with `ANIMR_ENV=production`, the production Redis pair, `HOUSE_PRIVATE_KEY`, `HOUSE_CHOG_TOKEN_ID=1399` and the same `ORACLE_PURSE_CHOG` as Vercel (`500`). The script picks the winner (the Oracle of the Day; the House Chog never pays itself and a hidden Chog is never named), simulates the transfer, sends it and records the hash, so the Bell page turns "on its way" into "sent" with the transaction. One Purse per Bell: the record is claimed before the broadcast, so a re-run does nothing, and a run after a crash settles the pending record from the chain. The app never reads the House key.
 
-- [ ] `/bell/2026-10-21` shows **settled**.
+What the job needs, and what to check before each settlement:
+
 - [ ] The House key `0xbcfD…e259` holds at least `ORACLE_PURSE_CHOG` $CHOG plus at least 1 MON for gas.
-- [ ] `.env.local` has `HOUSE_PRIVATE_KEY`, the same `ORACLE_PURSE_CHOG` as Vercel, `HOUSE_CHOG_TOKEN_ID=1399`, and the **production** Redis credentials as `UPSTASH_REDIS_REST_URL`/`TOKEN` (step 3C).
+- [ ] The job's environment has `HOUSE_PRIVATE_KEY`, the same `ORACLE_PURSE_CHOG` as Vercel, `HOUSE_CHOG_TOKEN_ID=1399`, and the **production** Redis credentials as `UPSTASH_REDIS_REST_URL`/`TOKEN` (step 3C).
+- [ ] After 15:11, `/bell/<day>` shows **settled** and, a little later, the purse as **sent** with its transaction.
+
+To check a purse by hand, or to send one the job missed, run the script from a laptop with the same environment in `.env.local`:
 
 ```bash
 cd /Users/mrnetwork/Animr
-ANIMR_ENV=production JITI_TSCONFIG_PATHS=1 npx jiti scripts/send-oracle-purse.mts              # dry run: check the winner, wallet and amount
-ANIMR_ENV=production JITI_TSCONFIG_PATHS=1 npx jiti scripts/send-oracle-purse.mts --broadcast  # send and record
+ANIMR_ENV=production JITI_TSCONFIG_PATHS=1 npx jiti scripts/send-oracle-purse.mts              # dry run: the winner, wallet and amount
+ANIMR_ENV=production JITI_TSCONFIG_PATHS=1 npx jiti scripts/send-oracle-purse.mts --broadcast  # send and record (no-op if already sent)
 ```
 
-One Purse per Bell: a re-run does nothing. The launch checklist (step 10) covers the posting rules.
+The launch checklist (step 10) covers the posting rules.
 
 ## 10. Troubleshooting
 

@@ -3,8 +3,10 @@ import { MAINNET_TRADE_GUARD } from "@/lib/contracts/animr-trade-guard";
 import { chogLabel } from "@/lib/chog-id";
 import { appConfig, trading } from "@/lib/config";
 import { getChog } from "@/lib/dna/chogs";
+import { purseAmountChog } from "@/lib/bell/purse";
 import { siteOrigin } from "@/lib/farcaster/embed";
 import { houseChogTokenId } from "@/lib/heist/config";
+import { buildPersona } from "@/lib/heist/persona";
 import { trophiesAddress } from "@/lib/trophies/config";
 import { chogGenome, chogName } from "@/lib/dna/population";
 import {
@@ -43,20 +45,30 @@ export const ADDR = {
   multicall3: MULTICALL3_ADDRESS as Address,
   guard: MAINNET_TRADE_GUARD,
   /**
-   * AnimrTrophies on Monad mainnet (NEXT_PUBLIC_TROPHIES_ADDRESS): name() = "Animr Trophies", minter() = the operator
-   * (eth_call, Oct 21 2026). The literal is the deployed address, for builds without the env var.
+   * AnimrTrophies on Monad mainnet (NEXT_PUBLIC_TROPHIES_ADDRESS): name() = "Animr Trophies", minter() = the operator,
+   * owner() = the admin wallet with no pendingOwner (eth_call, Oct 22 2026). Source: Sourcify exact match (Oct 21 2026),
+   * shown as verified on Monadscan. The literal is the deployed address, for builds without the env var.
    */
   trophies: trophiesAddress ?? getAddress("0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d"),
   /** The AI operator key's public address: guard.operator() and trophies.minter() (eth_call, Oct 21 2026). */
   operator: getAddress("0x2523bBdD941783C4E565180D2a1b18DE86319cC2"),
   /** The guard's admin, the team's main wallet: guard.admin() (eth_call, Oct 21 2026). */
   admin: getAddress("0xc742AdA2872a042dD36D2E706907b4036968960C"),
-  /** The House key (scripts only): deployed the contracts, pays Oracle Purses, owns AnimrTrophies (.env.example). */
+  /** The House key (scripts only): deployed the contracts and pays Oracle Purses (.env.example). AnimrTrophies' ownership went to the admin wallet. */
   houseKey: getAddress("0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259"),
 } as const;
 
 /** The House Chog's token id: HOUSE_CHOG_TOKEN_ID (lib/heist/config.ts), else production's 1399 (submission/DEPLOY.md). */
 export const HOUSE_TOKEN_ID = houseChogTokenId() ?? 1399;
+
+/**
+ * ORACLE_PURSE_CHOG as this deployment reads it (lib/bell/purse.ts): whole $CHOG per settled live Bell, or null when no
+ * purse is configured (unset, 0 or invalid). Read at build time, like every env-driven fact on the docs pages.
+ */
+export const PURSE_CHOG: string | null = (() => {
+  const amount = purseAmountChog();
+  return amount && Number(amount) > 0 ? amount : null;
+})();
 
 const houseSnapshot = getChog(HOUSE_TOKEN_ID);
 
@@ -67,6 +79,8 @@ export const HOUSE = {
   /** Persona name, as every page shows it first. */
   name: houseSnapshot ? chogName(houseSnapshot) : null,
   archetype: houseSnapshot ? chogGenome(houseSnapshot).archetype : null,
+  /** Messages a robber gets per heist: the defender's patience, from the genome's cooldown (lib/heist/persona.ts). */
+  patience: buildPersona(HOUSE_TOKEN_ID).patience,
   wallet: computeTokenBoundAccount({
     implementation: ACCOUNT_PROXY,
     tokenContract: getAddress("0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763"),

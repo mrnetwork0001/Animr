@@ -92,6 +92,7 @@ export const welcome: DocContent = {
             [<DocLink key="d" href="/docs/daily-bell">Daily Bell</DocLink>, `Every Chog calls $CHOG's next ${HORIZON_HOURS} hours at ${BELL_HOUR_UTC}:00 UTC. Ride one for points.`, "No"],
             [<DocLink key="r" href="/docs/rob-this-chog">{HEIST_TITLE}</DocLink>, "Con the House Chog's AI, then watch Monad refuse the transfer.", "No"],
             [<DocLink key="a" href="/docs/ask-this-chog">Ask this Chog</DocLink>, "Ask a Chog's AI about its trades and its DNA.", "No"],
+            [<DocLink key="h" href="/docs/holder-guide">Holder guide</DocLink>, "Every holder step as the Chog's page shows it, from Log in to a live AI, and how to withdraw.", "Holder"],
             [<DocLink key="w" href="/docs/chog-wallet">Your Chog&apos;s wallet</DocLink>, "Create the Chog's ERC-6551 wallet in one transaction.", "Holder"],
             [<DocLink key="c" href="/docs/claim-its-ai">Claim its AI</DocLink>, "One free signature gives the Chog an LLM brain on 0G Compute.", "Holder"],
             [<DocLink key="g" href="/docs/trade-guard">AnimrTradeGuard</DocLink>, "Let the AI trade the wallet's real $CHOG within your limits.", "Holder"],
@@ -221,9 +222,11 @@ export const howItWorks: DocContent = {
               title: "Optionally, it trades for real",
               body: (
                 <p>
-                  The holder grants AnimrTradeGuard, sets limits and signs a switch to on-chain mode. From then on the
+                  The holder grants AnimrTradeGuard, sets limits, funds the vault and signs a switch to on-chain mode, six
+                  steps on the Chog&apos;s page (<DocLink href="/docs/holder-guide">Holder guide</DocLink>). From then on the
                   AI&apos;s key can call one function, <Code>trade()</Code>, which swaps CHOG and WMON inside the same
-                  wallet within those limits.
+                  wallet within those limits, on the hourly tick and at the Bell. Only the holder can withdraw, through
+                  the wallet itself.
                 </p>
               ),
             },
@@ -274,7 +277,7 @@ export const howItWorks: DocContent = {
           head={["Who", "Needs", "Can"]}
           rows={[
             ["Visitor", "Nothing", "Every Play feature. Bell and Versus picks use an anonymous cookie, never a wallet."],
-            ["Holder", "The wallet that holds the Chog", "Create its wallet, wake its AI, opt in to guarded trading, hide it from public pages"],
+            ["Holder", "The wallet that holds the Chog", "Create its wallet, wake its AI, opt in to guarded trading, withdraw from its wallet, hide it from public pages"],
             ["Buyer of a Chog", "The NFT", "Everything above, after signing again; the seller's limits don't carry over"],
             ["Animr's server", "Its operator key, gas only", "Run brains, ring and settle Bells, call guard.trade() within each holder's limits"],
           ]}
@@ -361,16 +364,17 @@ export const judgeQuickStart: DocContent = {
       body: (
         <>
           <P>
-            Open <Code>/chog/&lt;token id&gt;</Code> and connect the wallet that holds it. You need a little MON for gas.
+            Open <Code>/chog/&lt;token id&gt;</Code>, press <strong>Log in</strong> (Privy: a wallet, email, Google, X or
+            Discord) and connect the wallet that holds it. You need a little MON for gas. The page&apos;s six-step stepper
+            reads the chain and shows what is next; the <DocLink href="/docs/holder-guide">Holder guide</DocLink> follows
+            it button by button.
           </P>
           <StepList
             steps={[
-              { title: "Create its wallet", body: <p>One transaction creates and initializes its ERC-6551 account through Multicall3.</p> },
-              { title: "Wake its AI", body: <p>Sign a free message. It can think right away with Think now, and every decision shows its 0G receipt.</p> },
-              {
-                title: "Optional: real trading",
-                body: <p>Grant AnimrTradeGuard, set limits, fund the wallet with $CHOG or WMON and sign the switch to on-chain. You can disable or revoke at any time.</p>,
-              },
+              { title: "Create the Chog's wallet", body: <p>One transaction creates and initializes its ERC-6551 account through Multicall3.</p> },
+              { title: "Let the guard trade, set your limits, fund the vault", body: <p>One transaction each: the guard&apos;s permission, your limits (10% per trade, 30% per day, 10 minutes apart and 2% slippage by default), then $CHOG and/or WMON into the vault. Only have MON? Wrap &amp; deposit does it in two transactions.</p> },
+              { title: "Wake the AI", body: <p>Sign a free message. It paper-trades the vault&apos;s real balances, can think right away with Think now, and every decision shows its 0G receipt.</p> },
+              { title: "Switch the AI to on-chain", body: <p>Sign a second free message. From then on it trades real $CHOG within your limits, on the hourly tick and at the Bell. Edit limits, deposit, withdraw to your wallet or go back to paper at any time; Disable or Revoke stops it.</p> },
             ]}
           />
         </>
@@ -391,7 +395,8 @@ export const judgeQuickStart: DocContent = {
           </li>
           <li>
             <strong>Think now refuses.</strong> Each Chog can think on demand once every {MANUAL_RUN_INTERVAL_MS / 60_000}{" "}
-            minutes, and there is a global daily cap. Chogs trading on-chain think only on schedule.
+            minutes, and there is a global daily cap. Chogs trading on-chain never think on demand: they decide on the
+            hourly tick and at the Bell.
           </li>
           <li>
             <strong>Images are missing.</strong> The IPFS gateway rate-limits bursts. Reload.

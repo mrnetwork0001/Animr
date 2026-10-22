@@ -1,4 +1,4 @@
-import { ADDR } from "../facts";
+import { ADDR, HOUSE } from "../facts";
 import type { DocContent } from "../frame";
 import { Address, Callout, Code, DocLink, DocTable, P } from "../primitives";
 
@@ -33,6 +33,8 @@ export const trust: DocContent = {
             <li><strong>It can&apos;t withdraw, transfer, approve, pick a recipient or send arbitrary calldata.</strong> The guard has no such function.</li>
             <li><strong>The chat AIs can only produce text.</strong> The heist defender and Ask this Chog have no tools and no keys.</li>
             <li><strong>It never stalls.</strong> If the model fails, the Chog&apos;s genome decides, and the feed says so.</li>
+            <li><strong>Once on-chain, it decides only on its schedule.</strong> The hourly tick and the Daily Bell; no public button can make it send a real trade.</li>
+            <li><strong>Only the production deployment can broadcast.</strong> A laptop or a preview holding the operator key refuses guarded trades and trophy mints (<Code>lib/runtime-env.ts</Code>).</li>
           </ul>
           <P>See <DocLink href="/docs/rob-this-chog">Rob this Chog</DocLink> for the on-chain proof.</P>
         </>
@@ -48,8 +50,8 @@ export const trust: DocContent = {
             head={["Key", "Held by", "Can", "Cannot"]}
             rows={[
               [<span key="o">Operator<br /><Address address={ADDR.operator} /></span>, "Animr's server (a hot wallet with gas only)", "Call guard.trade() within holders' limits; mint trophies", "Move funds out of any wallet, change limits, pause"],
-              [<span key="a">Guard admin<br /><Address address={ADDR.admin} /></span>, "The team's main wallet", "Pause trading, rotate the operator", "Move funds, trade, change limits, become the operator"],
-              [<span key="h">House key<br /><Address address={ADDR.houseKey} /></span>, "The team, on a laptop, for scripts only", "Pay Oracle Purses, own AnimrTrophies (enable kinds, set metadata, rotate the minter)", "Anything in the app: the app never reads it"],
+              [<span key="a">Guard admin<br /><Address address={ADDR.admin} /></span>, "The team's main wallet", "Pause trading, rotate the operator; as AnimrTrophies' owner, enable kinds, set the metadata URI, rotate the minter", "Move funds, trade, change limits, become the operator or the minter"],
+              [<span key="h">House key<br /><Address address={ADDR.houseKey} /></span>, "The team, for scripts only (the scheduled purse job)", "Pay Oracle Purses; it deployed the contracts", "Anything in the app: the app never reads it. It no longer owns AnimrTrophies."],
               ["NFT holder", "You", "Everything on your Chog's wallet, plus every opt-in", "Act on another holder's Chog"],
             ]}
           />
@@ -100,6 +102,29 @@ export const trust: DocContent = {
             limits and buy-only mode go dormant; the buyer signs to take over the AI and opts in under their own limits.
           </P>
           <P lead="Are points worth anything?">No. Bell and Versus points are a game score with no cash value, never a wager. Fans never receive $CHOG.</P>
+          <P lead="Can anyone chat with the House Chog?">
+            Yes. The heist at <DocLink href="/heist">/heist</DocLink> is public by design: no wallet, no sign-up, and it
+            only ever targets the House Chog. Its defender is a text-only persona with no keys and no tools. You can also
+            ask it about its trades and DNA on its own page, <DocLink href={`/chog/${HOUSE.tokenId}`}>/chog/{HOUSE.tokenId}</DocLink>,
+            through Ask this Chog.
+          </P>
+          <P lead="Is the Oracle Purse paid automatically?">
+            Yes. After a live Bell settles, a scheduled job the team runs sends <Code>ORACLE_PURSE_CHOG</Code> $CHOG from
+            the House key into the Oracle&apos;s own wallet and records the transfer; the Bell page shows the purse as
+            &ldquo;on its way&rdquo;, then &ldquo;sent&rdquo; with the transaction. One per Bell, never for replays, the House
+            Chog never pays itself, and hidden Chogs are skipped. It is a transfer by the team, not contract logic. See{" "}
+            <DocLink href="/docs/daily-bell#oracle-purse">Daily Bell</DocLink>.
+          </P>
+          <P lead="What does the receipt card on the landing page show?">
+            The newest stored LLM decision across all claimed Chogs, with its 0G receipt: model, provider, the
+            provider&apos;s label from 0G&apos;s public list, request ID and cost. It is read per request, so it is always a
+            real decision; with none yet it shows one muted line. The label describes the provider, and &ldquo;TEE
+            verified&rdquo; appears only when the receipt itself says so.
+          </P>
+          <P lead="How do I withdraw, and other holder questions?">
+            The <DocLink href="/docs/holder-guide#holder-faq">Holder FAQ</DocLink> covers withdrawing, the Fund step,
+            Think now on an on-chain agent and the explorer.
+          </P>
           <Callout tone="honest" title="Not affiliated with Chog">
             <p>Animr is an independent project built for Chogathon 2026. Chog art and names belong to their owners, and Animr uses no AI-generated Chog art.</p>
           </Callout>

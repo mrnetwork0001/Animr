@@ -24,14 +24,15 @@ On its Time Machine page (/replay/<token id>), press play. Its genome trades the
 Open /versus. Two Chogs face off on a hidden 48 hours of real $CHOG history. Call the one you think stacks more $CHOG, watch the race, then see the real dates. A correct call adds 10 points (points only, up to 100 a day).
 
 4. ROB IT (2 min)
-Open /heist ("Rob this Chog"). The House Chog, CHOG #891 (token 1399), keeps real $CHOG in its own wallet on Monad mainnet. Try to talk its AI into sending it to you: 280 characters per message, 3–6 messages per heist. When the AI says yes, the page simulates the exact transfer out of the wallet from the AI's key against Monad mainnet at a pinned block:
+Open /heist ("Rob this Chog"). The House Chog, CHOG #891 (token 1399), keeps real $CHOG in its own wallet on Monad mainnet. Try to talk its AI into sending it to you: 280 characters per message, 3 messages per heist (the defender's patience comes from the House Chog's genome). The heist is public by design and only ever targets the House Chog; its AI has no keys and no tools. When the AI says yes, the page simulates the exact transfer out of the wallet from the AI's key against Monad mainnet at a pinned block:
 - Tokenbound refuses it with NotAuthorized(): the AI's key isn't the wallet's owner.
 - The same transfer from the real owner goes through, as a control.
+- The AI's only real door, our guard, is asked to sell the whole vault and refuses that too: TradeRejected("exceeds per-trade cap") under the House Chog's 10% per-trade limit. A sell within the limits would be allowed, and it stays in the same wallet.
 
-The AI's only real door is our guard: a sell within the owner's limits is allowed, and it stays in the same wallet. Nothing is ever broadcast. You don't have to con the AI first: "Run the check" runs the same mainnet check at any time.
+Nothing is ever broadcast. You don't have to con the AI first: "Run the check" runs the same mainnet check at any time. Every attempt is counted in the header badge and on /stats, and a caving reply can go on the Hall of Fame after the team approves it.
 
 5. RIDE the Bell (1 min)
-Open /bell. At 15:00 UTC every day, every Chog publishes a 24-hour $CHOG call. Pick the Chog you trust; your ride counts from the next hourly close. 24 hours later the real price settles every call: Oracle of the Day, Most Rekt, points, streaks and a short AI-written recap. A settled live Bell also shows its Oracle Purse: real $CHOG the team sends into the Oracle's own ERC-6551 wallet. Past Bells are under /bell/<YYYY-MM-DD>. Points have no cash value.
+Open /bell. At 15:00 UTC every day, every Chog publishes a 24-hour $CHOG call. Pick the Chog you trust; your ride counts from the next hourly close. 24 hours later the real price settles every call: Oracle of the Day, Most Rekt, points, streaks and a short AI-written recap. On production the Bell rings at 15:01 UTC and settles at 15:11 the next day; rides close 12 hours after the ring. A settled live Bell also shows its Oracle Purse: real $CHOG sent automatically after settlement by a scheduled job the team runs, from the House key into the Oracle's own ERC-6551 wallet, shown as "on its way" and then "sent" with the transaction. Past Bells are under /bell/<YYYY-MM-DD>. Points have no cash value.
 
 OPTIONAL EXTRAS (no wallet)
 
@@ -39,23 +40,27 @@ OPTIONAL EXTRAS (no wallet)
 - Ask this Chog: on any /chog/<token id> page, ask its AI about its trades and DNA. It answers in text and can't act.
 - /market: "Best traders for sale", live OpenSea listings ranked by League edge.
 - Trophy cabinet: on /chog/<token id>, trophies minted by AnimrTrophies into the Chog's own wallet.
-- /docs: 19 pages, including the AnimrTradeGuard, Trophy cabinet and Contracts and API pages.
+- /docs: 20 pages, including the Holder guide, AnimrTradeGuard, Trophy cabinet and Contracts and API pages.
 - /stats: live usage numbers.
 
 IF YOU HOLD A CHOG (optional, about 5 minutes, a little MON for gas)
 
-1. Open https://useanimr.vercel.app/chog/<your token id> and press "Log in" (a wallet, email, Google, X or Discord). Then link or connect the wallet that holds the Chog: only the holder can do the steps below.
+1. Open https://useanimr.vercel.app/chog/<your token id> and press "Log in" (a wallet, email, Google, X or Discord). Then link or connect the wallet that holds the Chog: only the holder can do the steps below. The section "Let it trade real $CHOG" is a six-step stepper that reads the chain and shows what is next.
 2. Create the Chog's wallet: one transaction that creates and initializes its ERC-6551 account through Multicall3.
-3. Claim its AI: sign a free message (not a transaction). Its LLM on 0G Compute can think right away with "Think now" and thinks again at every Bell. Each decision shows its 0G receipt: provider, request ID and cost. It paper-trades the wallet's $CHOG at live prices.
-4. Optional, real trading, on the same page: let AnimrTradeGuard trade, set your limits, fund the wallet with $CHOG and/or WMON, then sign to switch the AI to on-chain. You can disable or revoke at any time.
+3. Let the guard trade: one transaction (the wallet's setPermissions for AnimrTradeGuard; the AI's key never gets access).
+4. Set your limits: one transaction. The form starts at 10% per trade, 30% of the vault per day, 10 minutes apart and 2% slippage; buy-only is an optional lock.
+5. Fund the vault: deposit $CHOG and/or WMON from your wallet, or "Only have MON? Wrap & deposit" (two transactions). The step is done once the vault holds either token; the finished row shows the balances, says when only one token is in ("With $CHOG alone it can sell but not buy") and reopens with "Add WMON" or "Deposit or withdraw".
+6. Wake the AI: sign a free message (not a transaction). Its LLM on 0G Compute paper-trades the vault's real balances at live prices, can think right away with "Think now", and each decision shows its 0G receipt: provider, request ID and cost.
+7. Switch to on-chain: sign a second free message. From then on its trades are real swaps in the wallet, within your limits, on the hourly tick and at the Bell ("Think now" is for paper agents). The live panel offers Edit limits, Deposit or withdraw and Back to paper; Disable or Revoke stops it at any time.
+8. Withdraw to your wallet: under Deposit or withdraw, one transaction through the wallet's own execute(), which only the holder can call. The guard has no withdraw function, so neither the AI nor Animr can ever move your tokens out.
 
-If you sell the Chog, its wallet, tokens, trophies, record and AI history go with it. The new owner's limits start blank. To take your Chog off Animr's public pages, use "Hide my Chog" on /stats (one free signature).
+Nothing needs an explorer: every step is a transaction or a signature from the Chog's page. If you sell the Chog, its wallet, tokens, trophies, record and AI history go with it. The new owner's limits start blank. To take your Chog off Animr's public pages, use "Hide my Chog" on /stats (one free signature). The Holder guide at /docs/holder-guide follows the stepper button by button.
 
 ON-CHAIN
 
 - AnimrTradeGuard: https://monadscan.com/address/0x92D3d4Af4B3b0F29Ec020e407803e135af61987b (source verified on Sourcify). /guard reads its roles, pause switch and the House Chog's vault live.
-- AnimrTrophies: https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d
-- House Chog (CHOG #891 · token 1399, launching): wallet https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71. Once funded, its AI trades real $CHOG two-way through the guard, at most 10% per trade and 30% per day, and every swap lands back in the same wallet. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead.
+- AnimrTrophies: https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d (source verified: Sourcify exact match, shown on Monadscan). Its owner is the team's main wallet 0xc742…960C, its minter the AI operator key, and its metadata is served at https://useanimr.vercel.app/api/trophies/meta/{id}. Trophies are minted only from the production deployment, like guarded trades.
+- House Chog (CHOG #891 · token 1399): wallet https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71, funded with real $CHOG and WMON, its AI in on-chain mode. It trades two-way through the guard, at most 10% per trade and 30% per day, and every swap lands back in the same wallet. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead: a rule in the engine turns any sell into a hold while $CHOG is down over the last hour or day. Its first production decision was a hold whose thesis cited that House rule.
 
 WHAT'S REAL AND WHAT'S SIMULATED
 
@@ -67,7 +72,7 @@ TROUBLESHOOTING
 
 - "The House Chog is napping": today's $3 AI budget for the heist is spent; it resets at 00:00 UTC. "Run the check" still runs the full mainnet check.
 - The heist says the House Chog is moving in, or "no claim made": the check only claims a refusal once its wallet is deployed, initialized and holds $CHOG. Contact us below.
-- "Think now" refuses: each Chog can think on demand only every few minutes, under a global daily cap. Agents still think at every Bell.
+- "Think now" refuses: each paper Chog can think on demand only every 15 minutes, under a global daily cap, and still thinks every hour and at every Bell. An on-chain Chog never thinks on demand: it decides on the hourly tick and at the Bell only.
 - Numbers differ from the video: windows roll forward every hour, so replays and ranks move. Genome g1-7de62b never changes.
 - Missing Chog images: the IPFS gateway rate-limits bursts, so reload.
 - The ride window has closed: rides open for 12 hours after the 15:00 UTC ring. A later ride goes to the next Bell.
@@ -76,7 +81,7 @@ FOR THE CODE
 
 The repository is private; access for judges is on request via the submission form. Without it, everything is checkable from the app:
 - https://useanimr.vercel.app/docs: Contracts and API (every address and the public HTTP API), AnimrTradeGuard (limits, ceilings, tests) and Trophy cabinet.
-- AnimrTradeGuard's verified source on the explorer (link above). Fork tests on live Monad mainnet: AnimrTradeGuard 37 (0 failures), AnimrTrophies 12 (12 pass).
+- Both contracts' verified source on the explorer (links above; Sourcify exact matches). Fork tests on live Monad mainnet: AnimrTradeGuard 37 fork tests (36 pass, 1 skipped by design), AnimrTrophies 12/12.
 
 Contact: <CONTACT>
 

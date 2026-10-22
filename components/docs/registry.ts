@@ -88,6 +88,12 @@ export const DOC_GROUPS: readonly DocGroup[] = [
     label: "Own a Chog",
     pages: [
       {
+        slug: "holder-guide",
+        title: "Holder guide",
+        description:
+          "Every step a holder takes on their Chog's page, from Log in to an AI trading real $CHOG, and how to withdraw.",
+      },
+      {
         slug: "chog-wallet",
         title: "Your Chog's wallet",
         nav: "Your Chog's wallet",

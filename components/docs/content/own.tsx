@@ -1,9 +1,11 @@
+import { LIMIT_PRESETS, SETUP_STEPS, describeLimits } from "@/components/onchain/setup-steps";
 import { ACTIVATION_MAX_AGE_MS } from "@/lib/agent/auth";
 import { MIN_CONFIDENCE } from "@/lib/agent/brain";
 import { PAPER_FEE_BPS, UNFUNDED_MESSAGE } from "@/lib/agent/paper";
 import { MAX_DECISIONS_PER_AGENT } from "@/lib/agent/store";
 import { MANUAL_RUN_INTERVAL_MS } from "@/lib/agent/types";
 import { ZG_DEFAULT_MODEL } from "@/lib/agent/zg-compute";
+import { BELL_HOUR_UTC } from "@/lib/bell/rules";
 import { DEFAULT_GUARD_LIMITS, GUARD_LIMIT_CEILINGS, TRADE_DEADLINE_SECONDS } from "@/lib/contracts/animr-trade-guard";
 import { TROPHIES } from "@/lib/trophies/config";
 import { ADDR, HOUSE, LINKS } from "../facts";
@@ -108,6 +110,291 @@ export const chogWallet: DocContent = {
             A &ldquo;Hide my Chog&rdquo; opt-out survives a sale; the new holder can undo it. See{" "}
             <DocLink href="/docs/trust">Trust model and FAQ</DocLink>.
           </P>
+          <P lead="Only the holder moves tokens out.">
+            The Chog page&apos;s <strong>Withdraw to your wallet</strong> form calls the wallet&apos;s own <Code>execute()</Code>,
+            which Tokenbound accepts from the current holder alone; AnimrTradeGuard has no withdraw function. Step by step:{" "}
+            <DocLink href="/docs/holder-guide#withdraw">Holder guide</DocLink>.
+          </P>
+        </>
+      ),
+    },
+  ],
+};
+
+// ---------------------------------------------------------------- Holder guide
+
+/** A stepper row's title, as components/onchain/setup-steps.ts spells it, so the docs can't drift from the page. */
+const stepTitle = (id: (typeof SETUP_STEPS)[number]["id"]) => SETUP_STEPS.find((step) => step.id === id)?.title ?? id;
+
+/** The limits form's presets, by label ("Cautious, Balanced, Bold"). */
+const presets = LIMIT_PRESETS.map((preset) => preset.label).join(", ");
+
+export const holderGuide: DocContent = {
+  intro: (
+    <P lead="Everything a holder does happens on the Chog's own page.">
+      Open <Code>/chog/&lt;token id&gt;</Code> and log in with the wallet that holds the Chog. The section{" "}
+      <strong>Let it trade real $CHOG</strong> is a six-step stepper: it reads the chain, shows the next step, and every
+      step is one transaction or one free signature from that wallet. Nothing needs an explorer. This page follows the
+      stepper in the order the app does, then covers the live panel, withdrawing and the questions holders ask.
+    </P>
+  ),
+  sections: [
+    {
+      id: "login",
+      title: "Log in and connect the holder's wallet",
+      body: (
+        <>
+          <P>
+            <strong>Log in</strong> in the header opens Privy: a browser or external wallet, an email code, Google, X or
+            Discord. A login without a wallet gets an embedded one. The holder steps need the wallet that holds the Chog,
+            so connect or link that one: every action is checked against <Code>ownerOf</Code>, and the stepper says
+            &ldquo;You hold this Chog&rdquo; when the connected wallet is the holder, or &ldquo;Read-only&rdquo; when it
+            isn&apos;t.
+          </P>
+          <ul>
+            <li>The wallet must be on Monad mainnet (chain 143); the page offers the switch if it isn&apos;t.</li>
+            <li>Transactions need a little MON for gas. Signatures are free.</li>
+            <li>A self-hosted Animr without Privy configured shows a plain browser-wallet menu instead.</li>
+          </ul>
+        </>
+      ),
+    },
+    {
+      id: "steps",
+      title: "The six steps, as the page shows them",
+      body: (
+        <StepList
+          steps={[
+            {
+              title: stepTitle("create-account"),
+              body: (
+                <p>
+                  One transaction: <Code>registry.createAccount</Code> and <Code>AccountProxy.initialize</Code> through
+                  Multicall3. The button is <strong>Create the wallet</strong>, or <strong>Finish wallet setup</strong> for
+                  an account that exists but was never initialized. Tokens sent to the address earlier are already there.
+                  Details: <DocLink href="/docs/chog-wallet">Your Chog&apos;s wallet</DocLink>.
+                </p>
+              ),
+            },
+            {
+              title: stepTitle("grant-guard"),
+              body: (
+                <p>
+                  One transaction, <strong>Authorize the guard</strong>: <Code>setPermissions([guard], [true])</Code> on
+                  the wallet, so AnimrTradeGuard (never the AI&apos;s key) may execute for it. Send it from the holder&apos;s
+                  wallet directly; a permission set through a relayer or a batch contract doesn&apos;t count. The page
+                  re-reads the chain before it calls the step done.
+                </p>
+              ),
+            },
+            {
+              title: stepTitle("configure"),
+              body: (
+                <p>
+                  One transaction, <Code>guard.configure</Code>. The form starts from the app default,{" "}
+                  {describeLimits(DEFAULT_GUARD_LIMITS)}, with the presets {presets}; the contract&apos;s ceilings are on{" "}
+                  <DocLink href="/docs/trade-guard#limits">AnimrTradeGuard</DocLink>. Each later change is one
+                  transaction. The House Chog&apos;s page adds an optional buy-only lock row (<Code>setBuyOnly</Code>),
+                  which stays off.
+                </p>
+              ),
+            },
+            {
+              title: stepTitle("fund"),
+              body: (
+                <>
+                  <p>
+                    The guard trades $CHOG and WMON, so the vault needs one of them, and both to trade both ways. Three
+                    ways in, all from the holder&apos;s wallet:
+                  </p>
+                  <ul>
+                    <li>
+                      <strong>Deposit:</strong> $CHOG or WMON, one ERC-20 transfer to the Chog&apos;s wallet. The token the
+                      vault still lacks is preselected.
+                    </li>
+                    <li>
+                      <strong>Only have MON? Wrap &amp; deposit:</strong> two transactions, WMON&apos;s <Code>deposit()</Code>{" "}
+                      (1:1) and then the transfer. Max keeps 0.1 MON for gas. If the second one is cancelled, the WMON stays
+                      in your wallet and Deposit can send it.
+                    </li>
+                    <li>
+                      <strong>MON already in the vault</strong> can be wrapped in place: one transaction through the
+                      wallet&apos;s own <Code>execute()</Code>; nothing leaves the wallet.
+                    </li>
+                  </ul>
+                  <p>The step is done as soon as the vault holds either token (a buy-only vault needs WMON).</p>
+                </>
+              ),
+            },
+            {
+              title: "Wake the AI",
+              body: (
+                <p>
+                  One free signature (a message, not a transaction). The AI starts in paper mode on the vault&apos;s real
+                  balances: live prices, simulated fills, no tokens move. You can do this before the vault is ready; the
+                  row counts as done whenever the agent is active. Details:{" "}
+                  <DocLink href="/docs/claim-its-ai">Claim its AI</DocLink>.
+                </p>
+              ),
+            },
+            {
+              title: stepTitle("go-onchain"),
+              body: (
+                <p>
+                  One free signature, <strong>Sign &amp; go on-chain</strong>. From its next scheduled decision its trades
+                  execute as real swaps in this wallet, through the guard and within your limits, and its PnL restarts
+                  from the vault&apos;s value at the switch. The server refuses the switch until the guard setup is ready.
+                </p>
+              ),
+            },
+          ]}
+        />
+      ),
+    },
+    {
+      id: "fund-row",
+      title: "The finished Fund row",
+      body: (
+        <>
+          <P>
+            Once the vault holds something, the Fund row shows its balances and reopens on demand. Its button reads{" "}
+            <strong>Add WMON</strong> or <strong>Add $CHOG</strong> while only one token is in, else{" "}
+            <strong>Deposit or withdraw</strong>. With one token the AI trades one way, and the row says so:
+          </P>
+          <ul>
+            <li>&ldquo;With $CHOG alone it can sell but not buy: add WMON to trade both ways.&rdquo;</li>
+            <li>&ldquo;With WMON alone it can buy but has nothing to sell: add $CHOG to trade both ways.&rdquo;</li>
+          </ul>
+          <P>The switch to on-chain repeats the warning. A buy-only vault only ever spends WMON, so it isn&apos;t nudged for $CHOG.</P>
+        </>
+      ),
+    },
+    {
+      id: "live",
+      title: "Live",
+      body: (
+        <>
+          <P lead="With everything in place the chip reads Live · real $CHOG.">
+            The live panel names the AI that trades, shows the limits in one line and the vault&apos;s $CHOG and WMON, and
+            gives the holder three buttons:
+          </P>
+          <DocTable
+            caption="Live panel"
+            head={["Button", "What it does", "Costs"]}
+            rows={[
+              ["Edit limits", "A new guard.configure with the changed limits", "One transaction"],
+              ["Deposit or withdraw", "Opens the same Deposit, Wrap & deposit and Withdraw forms as the Fund step", "One or two transactions per action"],
+              ["Back to paper trading", "Signs the paper-mode message; the AI keeps thinking, fills are simulated again", "Free signature"],
+            ]}
+          />
+          <P>
+            Below it, <strong>Stop the AI</strong>: <strong>Disable trading</strong> (<Code>guard.disable</Code>, keeps the
+            guard&apos;s permission; save limits again to resume) or <strong>Revoke the guard</strong> (
+            <Code>setPermissions([guard], [false])</Code>). Either takes effect from the next block, and your tokens stay
+            where they are. If Animr pauses the guard, the chip reads Paused by Animr: your settings are kept, and the
+            pause can never move funds.
+          </P>
+        </>
+      ),
+    },
+    {
+      id: "withdraw",
+      title: "Withdraw to your wallet",
+      body: (
+        <>
+          <P lead="Only the holder can take tokens out, and only through the wallet itself.">
+            The <strong>Withdraw to your wallet</strong> form sits under Deposit or withdraw, in the Fund step and in the
+            live panel, once the vault holds $CHOG or WMON. Pick the token, type the amount (or Max), and the page sends
+            one transaction: the Chog wallet&apos;s own <Code>execute(token, 0, transfer(you, amount), CALL)</Code>, which
+            Tokenbound accepts from the Chog&apos;s current holder alone. The page re-reads the vault&apos;s balances before
+            it reports success.
+          </P>
+          <ul>
+            <li>
+              AnimrTradeGuard has no withdraw function, so the AI and the guard never can. See{" "}
+              <DocLink href="/docs/trade-guard#execution">AnimrTradeGuard</DocLink>.
+            </li>
+            <li>The form moves $CHOG and WMON. Native MON in the vault isn&apos;t traded; wrap it in place first if the AI should use it.</li>
+            <li>
+              Withdrawing while the AI is on-chain is fine: its next decision sees the new balances, and the engine rebases
+              its PnL when the vault moves outside trading rather than counting it as a trade.
+            </li>
+          </ul>
+        </>
+      ),
+    },
+    {
+      id: "schedule",
+      title: "When it thinks",
+      body: (
+        <>
+          <DocTable
+            caption="When an agent thinks"
+            head={["Mode", "Decides", "Think now"]}
+            rows={[
+              ["Paper", `Every hour on the agent tick, once at the ${BELL_HOUR_UTC}:00 UTC Bell, and on demand`, `Yes: once every ${MANUAL_RUN_INTERVAL_MS / 60_000} minutes per Chog, under a global daily cap`],
+              ["On-chain", "Every hour on the agent tick and once at the Bell", "No, the button answers 403: a public button must never choose when an AI sends a real trade"],
+            ]}
+          />
+          <P>
+            On production the tick is an external pulse at minute 30 of every hour, and real trades are sent only from the
+            production deployment. Details, including the House Chog&apos;s mandate:{" "}
+            <DocLink href="/docs/claim-its-ai#loop">Claim its AI</DocLink>.
+          </P>
+        </>
+      ),
+    },
+    {
+      id: "costs",
+      title: "What each step costs",
+      body: (
+        <DocTable
+          caption="Transactions and signatures"
+          head={["Step", "What you confirm", "Gas"]}
+          rows={[
+            [stepTitle("create-account"), "1 transaction (Multicall3)", "Yes"],
+            [stepTitle("grant-guard"), "1 transaction (setPermissions)", "Yes"],
+            [stepTitle("configure"), "1 transaction (configure), and 1 per later change", "Yes"],
+            [stepTitle("fund"), "1 transaction per deposit; 2 for Wrap & deposit", "Yes"],
+            ["Wake the AI", "1 signed message", "No"],
+            [`${stepTitle("go-onchain")}, or back to paper`, "1 signed message", "No"],
+            ["Withdraw, Disable, Revoke", "1 transaction each", "Yes"],
+            ["The AI's decisions", "Nothing: Animr pays the 0G calls, and the operator key pays the gas of guard.trade()", "No"],
+          ]}
+        />
+      ),
+    },
+    {
+      id: "holder-faq",
+      title: "Holder FAQ",
+      body: (
+        <>
+          <P lead="How do I withdraw?">
+            Under Deposit or withdraw, with the Withdraw to your wallet form above: one transaction through the wallet&apos;s
+            own <Code>execute()</Code>, holder only. The guard can&apos;t do it for you, and neither can the AI.
+          </P>
+          <P lead="Why did the Fund step advance before I added WMON?">
+            The step is done as soon as the vault holds either token, because the AI can already trade one way (a buy-only
+            vault needs WMON). The finished row says which token is missing and reopens with Add WMON or Add $CHOG, and the
+            on-chain switch repeats the warning.
+          </P>
+          <P lead="Why can't I press Think now on an on-chain agent?">
+            An AI that sends real trades decides only on its schedule, the hourly tick and the Daily Bell, and the button
+            answers 403 for it. Switch back to paper trading if you want on-demand runs.
+          </P>
+          <P lead="Do I need to accept anything on the explorer?">
+            No. Every holder step is a transaction or a signature from the Chog&apos;s page. The only explorer steps were the
+            team&apos;s, accepting the two-step ownership handovers of its own contracts (AnimrTrophies, and the guard&apos;s
+            admin role).
+          </P>
+          <P lead="Can I stop it?">
+            Yes, at any time: Back to paper trading (free), Disable trading or Revoke the guard (one transaction each).
+            Selling the Chog also makes your guard settings dormant.
+          </P>
+          <P lead="What happens when I sell?">
+            The buyer gets the wallet and everything in it; your grant, limits and buy-only mode go dormant, and the buyer
+            signs to take over the AI. See <DocLink href="/docs/trust#faq">Trust model and FAQ</DocLink>.
+          </P>
         </>
       ),
     },
@@ -204,14 +491,16 @@ Issued at: <ISO time>`}
             caption="Decision triggers"
             head={["Trigger", "Who", "Notes"]}
             rows={[
-              ["Hourly tick", "Every awake agent", <span key="t"><Code>GET /api/agent/tick</Code>, called by an external hourly pulse with <Code>CRON_SECRET</Code></span>],
-              ["Daily Bell ring", "Every awake agent", "One run per Bell makes its call; it never trades past the ring's deadline"],
-              ["Think now", "Paper agents only", `Once per ${MANUAL_RUN_INTERVAL_MS / 60_000} minutes per Chog, a per-network limit and a global daily cap (ANIMR_MANUAL_RUNS_PER_DAY, default 400)`],
+              ["Hourly tick", "Every awake agent", <span key="t"><Code>GET /api/agent/tick</Code>, called by an external hourly pulse with <Code>CRON_SECRET</Code>; on production at minute 30 of every hour</span>],
+              ["Daily Bell ring", "Every awake agent", `One run per Bell makes its call; it never trades past the ring's deadline. On production the ring is ${BELL_HOUR_UTC}:01 UTC.`],
+              ["Think now", "Paper agents only", `Once per ${MANUAL_RUN_INTERVAL_MS / 60_000} minutes per Chog, a per-network limit and a global daily cap (ANIMR_MANUAL_RUNS_PER_DAY, default 400). An on-chain agent answers 403: it decides on the tick and at the Bell only.`],
             ]}
           />
           <P>
             Each cycle is: market snapshot, brain, guardrails, execution, store. Each run holds a per-agent lock. Animr keeps
-            up to {MAX_DECISIONS_PER_AGENT} decisions per agent; the page shows the newest.
+            up to {MAX_DECISIONS_PER_AGENT} decisions per agent; the page shows the newest. The pulse is external because
+            Vercel&apos;s Hobby crons are daily and fire anywhere within their hour; its schedules are on{" "}
+            <DocLink href="/docs/architecture#schedule">Architecture</DocLink>.
           </P>
         </>
       ),
@@ -235,14 +524,25 @@ Issued at: <ISO time>`}
             <li>reads the result from the guard&apos;s <Code>Traded</Code> event.</li>
           </ul>
           <P>
-            On-chain agents think only on schedule, never through Think now. The engine refuses to trade a wallet where the
-            operator key itself holds a Tokenbound permission.
+            On-chain agents think only on schedule, the hourly tick and the Bell, never through Think now. Real trades are
+            sent only from the production deployment (<Code>ANIMR_ENV</Code> or <Code>VERCEL_ENV</Code> ={" "}
+            <Code>production</Code>, <Code>lib/runtime-env.ts</Code>): a laptop or a preview that holds the operator key
+            refuses to broadcast. The engine also refuses to trade a wallet where the operator key itself holds a
+            Tokenbound permission.
           </P>
           <Callout title="The House Chog's mandate">
             <p>
               The team&apos;s own on-chain agent, the House Chog ({HOUSE.label}), trades two-way under limits of 10% per trade
-              and 30% per day. A code rule turns any real-money sell into a hold while $CHOG is down over the last hour or
-              day, so it buys dips and sells only into pumps.
+              and 30% per day. Its prompt carries the mandate (buy dips, sell only into sharp pumps), and a rule in the
+              engine, <Code>houseDipRule</Code>, enforces it: for the House Chog in on-chain mode, a sell decision becomes a
+              hold while $CHOG is down over the last hour or the last 24 hours, or while either change can&apos;t be read.
+              The decision is stored as a hold with the rule&apos;s reason, for example &ldquo;House rule: no real-money sells
+              into a dip&rdquo;. Buys are never touched.
+            </p>
+            <p>
+              Its first decision on production, on Oct 21, 2026 at 23:35 UTC, was an LLM hold whose thesis cited the rule:
+              it &ldquo;blocks any sell while $CHOG is soft&rdquo;. Its decisions and receipts are on{" "}
+              <DocLink href={`/chog/${HOUSE.tokenId}`}>/chog/{HOUSE.tokenId}</DocLink>.
             </p>
           </Callout>
         </>
@@ -264,6 +564,12 @@ Issued at: <ISO time>`}
               and it stores receipts without verifying them independently.
             </p>
           </Callout>
+          <P lead="The landing page shows the newest one.">
+            The receipt card on <DocLink href="/">the landing page</DocLink> is the newest stored LLM decision across every
+            claimed Chog that may be featured, read per request: the action and thesis, then the receipt&apos;s model,
+            provider, the provider&apos;s label from 0G&apos;s list, request ID and cost. With no such decision yet it shows one
+            muted line instead of a sample.
+          </P>
         </>
       ),
     },
@@ -289,8 +595,9 @@ export const tradeGuard: DocContent = {
         rows={[
           ["Address (Monad mainnet)", <Address key="g" address={ADDR.guard} kind="contract" />],
           ["Deployed", "Oct 19, 2026, block 114,783,301"],
-          ["Source", "Verified on Sourcify (exact match)"],
+          ["Source", "Verified on Sourcify (exact match, Oct 19, 2026); Monadscan shows the verified source"],
           ["License", "GPL-2.0-or-later (it links vendored Uniswap v3 libraries)"],
+          ["Who sends trades", "The operator key, from the production deployment only (ANIMR_ENV or VERCEL_ENV = production)"],
         ]}
       />
     </>
@@ -324,13 +631,17 @@ export const tradeGuard: DocContent = {
       title: "Holder setup",
       body: (
         <>
+          <P>
+            The Chog page runs this as a six-step stepper, with Wake the AI between funding and the switch; the{" "}
+            <DocLink href="/docs/holder-guide">Holder guide</DocLink> follows it button by button. In contract terms:
+          </P>
           <StepList
             steps={[
               { title: "Create the wallet", body: <p>If needed, create and initialize the Chog&apos;s account (see <DocLink href="/docs/chog-wallet">Your Chog&apos;s wallet</DocLink>).</p> },
               { title: <><Code>wallet.setPermissions([guard], [true])</Code></>, body: <p>Sent by the holder directly, not through a forwarder.</p> },
               { title: <><Code>guard.configure(wallet, limits)</Code></>, body: <p>Only accepts canonical Tokenbound accounts of Chog Genesis tokens: registry v0.3.1, AccountProxy, salt 0, this chain.</p> },
-              { title: "Fund the wallet", body: <p>With $CHOG and/or WMON (the guard trades the two ERC-20s, not native MON).</p> },
-              { title: "Switch the AI to on-chain", body: <p>Sign the mode switch on the Chog page.</p> },
+              { title: "Fund the wallet", body: <p>With $CHOG and/or WMON (the guard trades the two ERC-20s, not native MON). The page can also wrap MON into WMON on the way in.</p> },
+              { title: "Switch the AI to on-chain", body: <p>Sign the mode switch on the Chog page, after waking the AI.</p> },
             ]}
           />
           <P>
@@ -405,8 +716,10 @@ export const tradeGuard: DocContent = {
               a wallet do is swap between $CHOG and WMON into itself.
             </p>
             <p>
-              You withdraw through the wallet itself, not the guard: the profile&apos;s vault panel has a Withdraw form that
-              calls the wallet&apos;s own <Code>execute()</Code>, which only the Chog&apos;s current holder may call.
+              You withdraw through the wallet itself, not the guard: the Chog page&apos;s <strong>Withdraw to your wallet</strong>{" "}
+              form (under Deposit or withdraw) calls the wallet&apos;s own <Code>execute()</Code>, which Tokenbound accepts
+              from the Chog&apos;s current holder alone. Step by step:{" "}
+              <DocLink href="/docs/holder-guide#withdraw">Holder guide</DocLink>.
             </p>
           </Callout>
         </>
@@ -495,19 +808,29 @@ export const trophies: DocContent = {
             head={["Fact", "Value"]}
             rows={[
               ["Address (Monad mainnet)", <Address key="t" address={ADDR.trophies} kind="contract" />],
+              ["Source", "Verified on Sourcify (exact match, Oct 21, 2026); Monadscan shows the verified source"],
               ["Standard", "Minimal ERC-1155, name \"Animr Trophies\", symbol ANIMR-TROPHY. Token ID = trophy kind; a balance counts how often it was won."],
               ["Recipient", "The contract derives the Chog's canonical Tokenbound address itself (registry v0.3.1, AccountProxy, salt 0, this chain), so it can only ever mint into real Chog wallets. The wallet doesn't have to exist yet."],
               ["Idempotency", "keccak256(abi.encode(kind, context)) can be used once. Context is the UTC day as YYYYMMDD for daily kinds, the Chog's token ID for First real trade."],
               ["Soulbound", "Transfers and approvals revert with Soulbound()"],
-              ["Roles", "The owner (two-step transfer) enables kinds, sets the metadata URI and rotates the minter. The minter, the app's operator key, can only award. They can never be the same address."],
-              ["Metadata", <span key="m"><Code>/api/trophies/meta/&lt;id&gt;</Code> and the badge art at <Code>/api/trophies/art/&lt;id&gt;</Code></span>],
+              [
+                "Roles",
+                <span key="roles">
+                  The owner (two-step transfer) enables kinds, sets the metadata URI and rotates the minter. It is the team&apos;s
+                  main wallet, the guard&apos;s admin, <Address address={ADDR.admin} />, after a handover the team accepted on
+                  the explorer. The minter, the operator key <Address address={ADDR.operator} />, can only award. They can
+                  never be the same address.
+                </span>,
+              ],
+              ["Metadata", <span key="m">The URI set on the contract is <Code>{LINKS.app}/api/trophies/meta/{"{id}"}</Code>; the badge art is at <Code>/api/trophies/art/&lt;id&gt;</Code></span>],
             ]}
           />
           <P>
             12 Foundry tests cover awards to counterfactual and deployed wallets, one mint per key, soulbinding, trophies
-            following the NFT and the roles. Minting is idempotent in the app too: it checks <Code>awarded</Code> before
-            sending and retries a failed mint later. With <Code>NEXT_PUBLIC_TROPHIES_ADDRESS</Code> unset, the cabinet and
-            awards are off.
+            following the NFT and the roles; 12 of 12 pass against Oct 21, 2026 mainnet state. Minting is idempotent in the
+            app too: it checks <Code>awarded</Code> before sending and retries a failed mint later. Awards are sent only from
+            the production deployment, the same gate as guarded trades (<Code>lib/runtime-env.ts</Code>). With{" "}
+            <Code>NEXT_PUBLIC_TROPHIES_ADDRESS</Code> unset, the cabinet and awards are off.
           </P>
           <P>
             Read it on <Ext href={`${LINKS.explorer}/address/${ADDR.trophies}`}>{LINKS.explorerName}</Ext>.

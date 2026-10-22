@@ -17,7 +17,7 @@ import { TRAIT_ALPHA_MIN_COUNT } from "@/lib/dna/population";
 import { DEFENDER_MODELS, HEIST_LIMITS, HEIST_TAGLINE } from "@/lib/heist/config";
 import { DRAMA_WINDOWS, SETTLE_HOURS } from "@/lib/rewind/windows";
 import { VERSUS_DAILY_POINTS_CAP, VERSUS_HOURS, VERSUS_POINTS_PER_WIN } from "@/lib/rewind/rules";
-import { ADDR, HOUSE } from "../facts";
+import { ADDR, HOUSE, PURSE_CHOG } from "../facts";
 import type { DocContent } from "../frame";
 import { Address, Callout, Code, DocLink, DocTable, P, StepList } from "../primitives";
 import { LeagueNow } from "./live";
@@ -26,6 +26,8 @@ const supply = CHOG_SUPPLY.toLocaleString("en-US");
 const start = REPLAY.startChog.toLocaleString("en-US");
 const feePct = PAPER_FEE_BPS / 100;
 const windows = REPLAY_WINDOWS.join(", ");
+/** When rides close for a Bell rung on time: the ring hour plus the ride window, on the clock. */
+const rideCloseHour = (BELL_HOUR_UTC + RIDE_WINDOW_HOURS) % 24;
 
 // ---------------------------------------------------------------- League and Traits
 
@@ -450,6 +452,12 @@ export const dailyBell: DocContent = {
             <li>Claimed Chogs call through one run of their AI on 0G Compute, a few at a time with a timeout. If the AI fails, the genome makes the call.</li>
             <li>Every forecast is clamped to ±{MAX_FORECAST_PCT}%.</li>
           </ul>
+          <P>
+            On production the external pulse calls the Bell route at minute 1 of every hour, so the ring lands at{" "}
+            {BELL_HOUR_UTC}:01 UTC. Vercel&apos;s own {BELL_HOUR_UTC}:00 cron fires anywhere within that hour on the Hobby
+            plan, so the pulse is what makes the time predictable. A deployment that comes up after {BELL_HOUR_UTC}:00
+            rings that day&apos;s Bell at its first trigger: late, but still live, and its calls count from that later price.
+          </P>
         </>
       ),
     },
@@ -467,6 +475,11 @@ export const dailyBell: DocContent = {
             Each Bell names an Oracle of the Day (the closest call) and a Most Rekt (the furthest; between equal misses, the
             more confident call is more rekt). Season records track oracle wins.
           </P>
+          <P lead={`On production that is ${BELL_HOUR_UTC}:11 UTC the next day: the ${HORIZON_HOURS}-hour horizon plus the 10-minute grace, on the pulse's minute-11 run.`}>
+            The same maintenance run mints the Best call and Most rekt trophies into the winners&apos; wallets (
+            <DocLink href="/docs/trophies">Trophy cabinet</DocLink>), the AI recap is written on the first request after
+            settlement, and the Oracle Purse follows (below).
+          </P>
         </>
       ),
     },
@@ -475,7 +488,7 @@ export const dailyBell: DocContent = {
       title: "Rides and points",
       body: (
         <ul>
-          <li>Ride one Chog per Bell, within {RIDE_WINDOW_HOURS} hours of the ring. Your fan card is an httpOnly cookie; your public fan ID is a hash of it.</li>
+          <li>Ride one Chog per Bell, within {RIDE_WINDOW_HOURS} hours of the ring: until {String(rideCloseHour).padStart(2, "0")}:00 UTC for a Bell rung on time. Your fan card is an httpOnly cookie; your public fan ID is a hash of it.</li>
           <li>A ride counts from the first hourly close after you pick, so a late ride can&apos;t cash in on a move it already saw.</li>
           <li>Your ride scores your Chog&apos;s call with the formula above, against the move from your ride&apos;s start to settlement.</li>
           <li>Streak bonus: +{STREAK_BONUS_PER_DAY} for each consecutive Bell you rode, up to +{STREAK_BONUS_MAX}.</li>
@@ -499,16 +512,24 @@ export const dailyBell: DocContent = {
       title: "Oracle Purse",
       body: (
         <>
-          <P lead="After a live Bell settles, the team can send real $CHOG into the Oracle's own wallet.">
-            The amount is <Code>ORACLE_PURSE_CHOG</Code>; unset or <Code>0</Code> means no purse is promised. The team sends
-            it from the House key with <Code>scripts/send-oracle-purse.mts</Code> into the winning Chog&apos;s ERC-6551
-            wallet, so the purse belongs to the NFT and passes to its next holder. It is an operational step, not contract
-            logic.
+          <P lead="After a live Bell settles, real $CHOG goes into the Oracle's own wallet.">
+            The amount is <Code>ORACLE_PURSE_CHOG</Code>, whole $CHOG per settled live Bell; unset or <Code>0</Code> means no
+            purse is promised.{" "}
+            {PURSE_CHOG
+              ? `This deployment is configured for ${PURSE_CHOG} $CHOG per Bell.`
+              : "This deployment has no purse configured, so its Bells promise none."}{" "}
+            It is paid from the House key into the winning Chog&apos;s ERC-6551 wallet, so the purse belongs to the NFT and
+            passes to its next holder. It is a transfer by the team, not contract logic.
           </P>
           <ul>
-            <li>The winner is the Oracle of the Day the Bell page shows. The House Chog never wins its own purse, and a hidden Chog is never named; the next-closest call wins instead.</li>
-            <li>One purse per Bell. The script records the transfer hash, and the Bell page shows it on the Oracle card.</li>
-            <li>Until a transfer is recorded, a settled live Bell shows the purse as on its way for up to 48 hours, then as not sent.</li>
+            <li>
+              It is sent automatically: after settlement, a scheduled job the team runs executes{" "}
+              <Code>scripts/send-oracle-purse.mts</Code>, which picks the winner, simulates the transfer, sends it and
+              records the transaction hash.
+            </li>
+            <li>The winner is the Oracle of the Day the Bell page shows. The House Chog never pays itself (its runner-up wins instead), and a Chog its holder hid is never named.</li>
+            <li>One purse per Bell: the record is claimed before the broadcast, so a re-run can&apos;t pay twice. Replayed Bells never get one.</li>
+            <li>The Bell page shows the purse as &ldquo;on its way&rdquo; from settlement, then &ldquo;sent&rdquo; with the transaction once it is recorded. If nothing is recorded within 48 hours it says so plainly rather than keep promising.</li>
             <li>Fans never receive $CHOG.</li>
           </ul>
           <P>
@@ -524,8 +545,13 @@ export const dailyBell: DocContent = {
       body: (
         <>
           <ul>
-            <li>Vercel Cron calls <Code>GET /api/bell/cron</Code> at 15:00 and 16:00 UTC.</li>
-            <li>An external hourly pulse calls the same route, so a late or missed Vercel run is caught up.</li>
+            <li>Vercel Cron calls <Code>GET /api/bell/cron</Code> at 15:00 and 16:00 UTC; on the Hobby plan each fires anywhere within its hour.</li>
+            <li>
+              An external hourly pulse calls the same route at minutes 1 and 11 (<Code>1,11 * * * *</Code>), with{" "}
+              <Code>CRON_SECRET</Code> as a Bearer header: the ring at {BELL_HOUR_UTC}:01, the settlement at {BELL_HOUR_UTC}:11,
+              and a catch-up every other hour. A second pulse at minute 30 (<Code>30 * * * *</Code>) calls{" "}
+              <Code>GET /api/agent/tick</Code> for the agents, not the Bell.
+            </li>
             <li>Visiting a Bell page also catches up anything that is due.</li>
           </ul>
           <P>Ringing and settling are idempotent and hold a lock, so overlapping triggers are safe.</P>
@@ -542,11 +568,18 @@ export const dailyBell: DocContent = {
 
 export const robThisChog: DocContent = {
   intro: (
-    <P lead={`${HEIST_TAGLINE}`}>
-      The House Chog{HOUSE.name ? `, ${HOUSE.name} (${HOUSE.label}),` : ` (${HOUSE.label})`} keeps $CHOG in its own
-      Tokenbound wallet on Monad mainnet. Anyone can try to talk its AI into handing it over at{" "}
-      <DocLink href="/heist">/heist</DocLink>.
-    </P>
+    <>
+      <P lead={`${HEIST_TAGLINE}`}>
+        The House Chog{HOUSE.name ? `, ${HOUSE.name} (${HOUSE.label}),` : ` (${HOUSE.label})`} keeps $CHOG in its own
+        Tokenbound wallet on Monad mainnet. Anyone can try to talk its AI into handing it over at{" "}
+        <DocLink href="/heist">/heist</DocLink>.
+      </P>
+      <P lead="Public by design, and only ever the House Chog.">
+        Anyone can play, with no wallet and no sign-up. The target is fixed by <Code>HOUSE_CHOG_TOKEN_ID</Code>: no
+        holder&apos;s Chog can be picked, and the defender has no keys and no tools, so a lost argument costs nothing but
+        pride.
+      </P>
+    </>
   ),
   sections: [
     {
@@ -554,7 +587,7 @@ export const robThisChog: DocContent = {
       title: "The rules",
       body: (
         <ul>
-          <li>Messages of at most {HEIST_LIMITS.maxMessageChars} characters, {HEIST_LIMITS.minTurns} to {HEIST_LIMITS.maxTurns} messages per heist (the AI&apos;s patience varies).</li>
+          <li>Messages of at most {HEIST_LIMITS.maxMessageChars} characters, {HEIST_LIMITS.minTurns} to {HEIST_LIMITS.maxTurns} messages per heist. The defender&apos;s patience comes from its genome&apos;s cooldown; the House Chog&apos;s AI gives {HOUSE.patience}.</li>
           <li>Per-IP limits on messages, heists and proofs, and a global cap of {HEIST_LIMITS.globalProofsPerMinute} proofs a minute to protect the public RPC.</li>
           <li>
             A daily 0G budget (<Code>HEIST_DAILY_USD_CAP</Code>, default $3) is reserved before each reply. When it is spent,
@@ -614,15 +647,22 @@ export const robThisChog: DocContent = {
                 title: "The one legitimate door",
                 body: (
                   <p>
-                    The proof also simulates <Code>guard.trade(wallet, sell, …)</Code>: within the owner&apos;s limits a
-                    sell is allowed, and its output lands back in the same wallet. A request beyond the limits shows the
-                    guard&apos;s decoded <Code>TradeRejected</Code> reason.
+                    The proof also simulates <Code>guard.trade(wallet, sell, …)</Code> from the same key, for the vault&apos;s
+                    whole $CHOG balance (or the amount the AI agreed to). Against the House Chog&apos;s limits, 10% per
+                    trade, the whole vault is refused with the guard&apos;s decoded reason,{" "}
+                    <Code>TradeRejected(&quot;exceeds per-trade cap&quot;)</Code>. A sell within the limits would be allowed,
+                    and even then its output lands back in the same wallet.
                   </p>
                 ),
               },
             ]}
           />
-          <P>Nothing is ever broadcast. The page shows the block number and explorer links.</P>
+          <P>
+            So the proof is two <Code>eth_call</Code>s from the AI key, the wallet&apos;s <Code>execute()</Code> and the
+            guard&apos;s <Code>trade()</Code>, plus the owner&apos;s control call, all at one block. Nothing is ever broadcast.
+            The page shows the block number and explorer links. Every attempt, cave and refusal is counted: the header
+            badge shows today&apos;s attempts and <DocLink href="/stats">/stats</DocLink> the totals.
+          </P>
         </>
       ),
     },
@@ -663,8 +703,10 @@ export const robThisChog: DocContent = {
 export const askThisChog: DocContent = {
   intro: (
     <P lead="Every Chog's page has a chat box: ask it about its trades, its DNA or its record.">
-      Open <Code>/chog/&lt;token id&gt;</Code> and scroll to <strong>Ask this Chog</strong>. It answers in its own voice
-      from its real record, and that record is labelled as simulated where it is.
+      Open <Code>/chog/&lt;token id&gt;</Code> (the House Chog&apos;s is{" "}
+      <DocLink href={`/chog/${HOUSE.tokenId}`}>/chog/{HOUSE.tokenId}</DocLink>) and scroll to{" "}
+      <strong>Ask this Chog</strong>. It answers in its own voice from its real record, and that record is labelled as
+      simulated where it is.
     </P>
   ),
   sections: [

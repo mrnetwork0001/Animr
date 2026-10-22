@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { V2_NAV_LINKS } from "@/components/v2/nav";
 import { ZG_DEFAULT_MODEL } from "@/lib/agent/zg-compute";
 import { ADDR, HOUSE, LINKS } from "../facts";
 import type { DocContent } from "../frame";
@@ -25,10 +26,10 @@ export const architecture: DocContent = {
             ["Chain access", "viem and wagmi on Monad mainnet (chain 143), TanStack Query"],
             ["Login", "Privy (wallets, email, Google, X, Discord, embedded wallets) when NEXT_PUBLIC_PRIVY_APP_ID is set; otherwise a plain browser-wallet menu"],
             ["AI", `Vercel AI SDK with an OpenAI-compatible provider for the 0G Compute Router (default model ${ZG_DEFAULT_MODEL}), zod schemas`],
-            ["State", "Upstash Redis (or Vercel KV's REST pair); a local file store in .data/ when neither is set"],
+            ["State", "Upstash Redis, required in production: the Vercel Marketplace's KV_REST_API_URL/TOKEN pair, or UPSTASH_REDIS_REST_URL/TOKEN. A local file store in .data/ on a laptop."],
             ["Contracts", "Solidity 0.8 with Foundry; ERC-6551 registry v0.3.1 and Tokenbound V3 as already deployed"],
             ["Market data", "GeckoTerminal (hourly candles) and DexScreener (live price); OpenSea API for /market listings"],
-            ["Hosting", "Vercel, with Vercel Cron plus an external hourly pulse"],
+            ["Hosting", "Vercel (Hobby: daily crons that fire anywhere within their hour) plus an external hourly pulse"],
           ]}
         />
       ),
@@ -60,20 +61,48 @@ export const architecture: DocContent = {
       ),
     },
     {
+      id: "production",
+      title: "What only production does",
+      body: (
+        <>
+          <P lead="Redis is required in production.">
+            Without a Redis pair, state falls back to one instance&apos;s <Code>/tmp</Code> and is wiped on cold starts:
+            Bells, rides and heist counters don&apos;t persist, and the heist fails closed because its daily 0G budget
+            can&apos;t be enforced (the House Chog naps). On Vercel, connect Upstash Redis from the Marketplace.
+          </P>
+          <P lead="Only the production deployment broadcasts.">
+            Guarded trades and trophy mints are sent only when <Code>ANIMR_ENV</Code> or <Code>VERCEL_ENV</Code> is{" "}
+            <Code>production</Code> (<Code>lib/runtime-env.ts</Code>). A laptop or a preview that happens to hold the
+            operator key and the contract addresses refuses to act on mainnet for its own Bells or agents.
+          </P>
+        </>
+      ),
+    },
+    {
       id: "schedule",
       title: "What runs on a schedule",
       body: (
-        <DocTable
-          caption="Schedule"
-          head={["When (UTC)", "What", "Trigger"]}
-          rows={[
-            ["15:00", "Ring today's Bell (claimed agents think once)", "Vercel Cron → GET /api/bell/cron"],
-            ["16:00", "Settle yesterday's Bell (due from 15:10)", "Vercel Cron → GET /api/bell/cron"],
-            ["Hourly", "Catch up any ring or settlement that is due", "External pulse → GET /api/bell/cron"],
-            ["Hourly", "Every awake agent thinks once", "External pulse → GET /api/agent/tick"],
-            ["On visit", "Bell pages catch up anything due", "after() hook on the Bell read routes"],
-          ]}
-        />
+        <>
+          <DocTable
+            caption="Schedule"
+            head={["When (UTC)", "What", "Trigger"]}
+            rows={[
+              ["15:00", "Vercel Cron rings today's Bell; on Hobby it fires anywhere from 15:00 to 15:59", "Vercel Cron → GET /api/bell/cron"],
+              ["15:01", "The pulse rings today's Bell after the 60-second ring lag (claimed agents think once)", "External pulse, 1,11 * * * * → GET /api/bell/cron"],
+              ["15:11", "The pulse settles yesterday's Bell (horizon plus 10 minutes' grace) and mints its Best call and Most rekt trophies", "External pulse → GET /api/bell/cron"],
+              ["16:00", "Vercel Cron settles yesterday's Bell if the pulse hasn't", "Vercel Cron → GET /api/bell/cron"],
+              ["Every hour, :01 and :11", "Catch up any ring or settlement that is due", "External pulse → GET /api/bell/cron"],
+              ["Every hour, :30", "Every awake agent thinks once; on-chain agents decide only here and at the ring", "External pulse, 30 * * * * → GET /api/agent/tick"],
+              ["After settlement", "The Oracle Purse is sent from the House key and recorded", "A scheduled job the team runs: scripts/send-oracle-purse.mts"],
+              ["On request", "A settled Bell's recap is written once, on its first request", "GET /api/bell/recap/[day]"],
+              ["On visit", "Bell pages catch up anything due", "after() hook on the Bell read routes"],
+            ]}
+          />
+          <P>
+            The pulse schedules are production&apos;s, on an external scheduler; it sends <Code>CRON_SECRET</Code> as a
+            Bearer header, never in a URL. Both routes are idempotent and hold a lock, so overlapping triggers are safe.
+          </P>
+        </>
       ),
     },
     {
@@ -97,6 +126,26 @@ export const architecture: DocContent = {
           the collection&apos;s own art. A Farcaster Mini App embed opens the Daily Bell inside Farcaster clients. Animr uses
           no AI-generated Chog art.
         </P>
+      ),
+    },
+    {
+      id: "header",
+      title: "The header and login",
+      body: (
+        <>
+          <P lead="The header is a game HUD.">
+            One glyph per section ({V2_NAV_LINKS.map((link) => link.label).join(", ")}) with small live badges from real
+            data: the Daily Bell&apos;s countdown (to the ride window&apos;s close while a live Bell is open, else to the next
+            ring), today&apos;s heist attempts, and how many Chogs the logged-in wallet holds. Badges load after hydration and
+            pause while the tab is hidden. Below 1100px the links and the wallet move into a hamburger panel, and the
+            League&apos;s and the market&apos;s filter chips wrap instead of scrolling sideways.
+          </P>
+          <P>
+            <strong>Log in</strong> is Privy when <Code>NEXT_PUBLIC_PRIVY_APP_ID</Code> is set: a wallet, an email code,
+            Google, X or Discord, with an embedded wallet for users who have none; the active wallet is bridged into wagmi.
+            Unset, the header shows a plain browser-wallet menu.
+          </P>
+        </>
       ),
     },
   ],
@@ -141,8 +190,8 @@ export const contractsAndApi: DocContent = {
           compact
           rows={[
             ["AI operator", <Address key="o" address={ADDR.operator} />, "guard.operator() and the trophies minter. Holds MON for gas only."],
-            ["Guard admin", <Address key="a" address={ADDR.admin} />, "The team's main wallet: pause, rotate the operator"],
-            ["House key", <Address key="h" address={ADDR.houseKey} />, "Scripts only: deployed the contracts, grew the oracle, pays Oracle Purses, owns AnimrTrophies"],
+            ["Guard admin", <Address key="a" address={ADDR.admin} />, "The team's main wallet: pause, rotate the operator. Also AnimrTrophies' owner."],
+            ["House key", <Address key="h" address={ADDR.houseKey} />, "Scripts only: deployed the contracts, grew the oracle, pays Oracle Purses through the scheduled purse job"],
             [`House Chog wallet (${HOUSE.label})`, <Address key="hw" address={HOUSE.wallet} kind="wallet" />, "The heist's vault and the team's on-chain agent"],
           ]}
         />
@@ -181,18 +230,18 @@ export const contractsAndApi: DocContent = {
               ["/api/bell/recap/[day]", "GET", "A settled Bell's recap"],
               ["/api/bell/standings", "GET", "Top oracles and top fans"],
               ["/api/bell/ride", "POST", "Body { tokenId }: ride a Chog on the open (or next) Bell"],
-              [<span key="c">/api/bell/cron {cron}</span>, "GET", "Ring and settle whatever is due"],
+              [<span key="c">/api/bell/cron {cron}</span>, "GET", "Ring and settle whatever is due (Vercel Cron at 15:00 and 16:00; the pulse at minutes 1 and 11)"],
               ["/api/fan", "GET, POST", "Your fan card; POST { nickname } sets a nickname"],
               ["/api/heist", "GET", "The heist page's data"],
               ["/api/heist/chat", "POST", "Body { sessionId?, message, recipient? }: one message to the defender"],
               ["/api/heist/proof", "POST", "Body { recipient? }: Run the check, the read-only mainnet simulation"],
               [<span key="h">/api/heist/hall-of-fame {admin}</span>, "GET, POST, PATCH, DELETE", "The wall; POST adds your caving reply; PATCH and DELETE moderate"],
               ["/api/chog/[tokenId]/ask", "POST", "Body { sessionId?, message, viewer? }: Ask this Chog"],
-              ["/api/agents/[tokenId]", "GET", "A Chog's agent and its newest decisions"],
+              ["/api/agents/[tokenId]", "GET", "A Chog's agent and its newest decisions. Cached 5 s at the CDN with no stale-while-revalidate, so a claim or a mode switch shows on the next poll"],
               ["/api/agents/[tokenId]/activate", "POST", "Wake the AI with the holder's signed message"],
               ["/api/agents/[tokenId]/mode", "POST", "Switch paper or on-chain with the holder's signed message"],
-              ["/api/agents/[tokenId]/tick", "POST", "Think now (paper agents, rate limited)"],
-              [<span key="t">/api/agent/tick {cron}</span>, "GET", "Every awake agent thinks once"],
+              ["/api/agents/[tokenId]/tick", "POST", "Think now (paper agents, rate limited; an on-chain agent answers 403)"],
+              [<span key="t">/api/agent/tick {cron}</span>, "GET", "Every awake agent thinks once (the pulse at minute 30)"],
               ["/api/leaderboard", "GET", "Every claimed agent by PnL vs holding"],
               ["/api/holders/[address]", "GET", "The Chogs an address holds, with League place and Bell call"],
               ["/api/optout", "GET, POST", "Hide my Chog: list, status, the message to sign, and the signed opt-out"],
@@ -210,8 +259,8 @@ export const contractsAndApi: DocContent = {
 // ---------------------------------------------------------------- Self-hosting
 
 const envRows: [string, ReactNode, string][] = [
-  ["CRON_SECRET", secret, "Protects /api/bell/cron and /api/agent/tick. Required in production."],
-  ["UPSTASH_REDIS_REST_URL / _TOKEN, or KV_REST_API_URL / _TOKEN", secret, "Shared state. Required on Vercel."],
+  ["CRON_SECRET", secret, "Protects /api/bell/cron and /api/agent/tick. Required in production, where the external pulse sends it as a Bearer header."],
+  ["UPSTASH_REDIS_REST_URL / _TOKEN, or KV_REST_API_URL / _TOKEN", secret, "Shared state: Bells, rides, fan cards, the heist's counters and budget, agents. Required in production: without it state is per instance and lost on cold starts, and the heist fails closed (the House Chog naps). On Vercel, connect Upstash from the Marketplace."],
   ["ZG_API_KEY", secret, "0G Compute Router key. Without it, rules and templates decide."],
   ["ZG_MODEL, ZG_BASE_URL, ZG_JSON_MODE, ZG_THINKING, ZG_VERIFY_TEE", pub, "Optional 0G settings (server-only)"],
   ["OPERATOR_PRIVATE_KEY", secret, "The AI operator key for on-chain mode and trophy mints. A fresh hot wallet with gas only."],
@@ -219,7 +268,7 @@ const envRows: [string, ReactNode, string][] = [
   ["NEXT_PUBLIC_TRADE_GUARD_ADDRESS", pub, "The guard. Unset on mainnet means the live guard; empty means paper only."],
   ["NEXT_PUBLIC_TROPHIES_ADDRESS", pub, "AnimrTrophies. Unset turns the cabinet and awards off."],
   ["HOUSE_CHOG_TOKEN_ID", pub, "The House Chog's token ID (1399), never its CHOG # number"],
-  ["ORACLE_PURSE_CHOG", pub, "Whole $CHOG per Oracle Purse; unset or 0 means none"],
+  ["ORACLE_PURSE_CHOG", pub, "Whole $CHOG per Oracle Purse; unset or 0 means none. The Daily Bell page shows this deployment's value. Set the same value where the purse job runs."],
   ["HEIST_DAILY_USD_CAP", pub, "0G spend per UTC day on heist replies (default 3)"],
   ["HEIST_ADMIN_SECRET", secret, "Bearer token for Hall of Fame moderation"],
   ["HEIST_IP_SALT", secret, "Key for hashing visitors' IPs (default: derived from CRON_SECRET)"],
@@ -269,9 +318,11 @@ export const selfHosting: DocContent = {
       body: (
         <ul>
           <li>Import the repo with the Next.js preset and no overrides; keep Fluid Compute on (the Bell routes use a 300-second max duration).</li>
-          <li>Connect Upstash Redis from the Vercel Marketplace, then add the variables above (secrets as Secret, production only) and redeploy.</li>
-          <li><Code>vercel.json</Code> already calls <Code>/api/bell/cron</Code> at 15:00 and 16:00 UTC. Vercel Hobby only allows daily crons, so add two hourly jobs on an external scheduler (for example cron-job.org): <Code>/api/bell/cron</Code> and <Code>/api/agent/tick</Code>, each with <Code>Authorization: Bearer &lt;CRON_SECRET&gt;</Code>.</li>
-          <li>Redeploy after any variable change. <Code>/guard</Code> and the landing page are prerendered, so House Chog changes show after a rebuild.</li>
+          <li>Connect Upstash Redis from the Vercel Marketplace (it adds <Code>KV_REST_API_URL</Code> and <Code>KV_REST_API_TOKEN</Code>; the <Code>UPSTASH_REDIS_REST_*</Code> pair works too), then add the variables above (secrets as Secret, production only) and redeploy. Redis is required: without it the Bell, rides and the heist don&apos;t persist, and the House Chog naps.</li>
+          <li><Code>vercel.json</Code> already calls <Code>/api/bell/cron</Code> at 15:00 and 16:00 UTC, but Vercel Hobby only allows daily crons and fires them anywhere within the hour. Add two jobs on an external scheduler (for example cron-job.org), each a GET with <Code>Authorization: Bearer &lt;CRON_SECRET&gt;</Code>: <Code>/api/bell/cron</Code> at minutes 1 and 11 of every hour (<Code>1,11 * * * *</Code>) and <Code>/api/agent/tick</Code> at minute 30 (<Code>30 * * * *</Code>). On-chain agents decide only on that tick and at the Bell.</li>
+          <li>Only the production deployment sends guarded trades and trophy mints (<Code>VERCEL_ENV</Code> = <Code>production</Code>, or <Code>ANIMR_ENV</Code> elsewhere). Previews with the same variables stay paper-only.</li>
+          <li>The Oracle Purse is a scheduled job the team runs outside Vercel: <Code>scripts/send-oracle-purse.mts --broadcast</Code> with <Code>ANIMR_ENV=production</Code>, the production Redis pair, <Code>HOUSE_PRIVATE_KEY</Code> and the same <Code>ORACLE_PURSE_CHOG</Code>. The app never reads the House key.</li>
+          <li>Redeploy after any variable change. <Code>/guard</Code>, the landing page and the docs are prerendered, so House Chog and purse changes show after a rebuild.</li>
         </ul>
       ),
     },

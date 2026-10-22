@@ -72,6 +72,7 @@ flowchart LR
 - **Address.** `computeTokenBoundAccount()` rebuilds the registry's 183-byte ERC-1167 init code and computes the CREATE2 address locally, with no RPC call. It matches `registry.account(...)` for salt 0 and chain 143. Tokens can be sent to the address before the account exists.
 - **Status.** An account is `none` (no code), `uninitialized` (proxy deployed but its ERC-1967 slot is empty, so every call "succeeds" and does nothing) or `ready`.
 - **Create and initialize in one transaction.** `createAndInitializeAccountRequest()` is a `Multicall3.aggregate3` of `registry.createAccount` and `AccountProxy.initialize(AccountV3)`. Both calls are permissionless.
+- **Withdraw.** Only the holder moves tokens out. The Chog page's "Withdraw to your wallet" form (`components/onchain/fund-vault.tsx`, under Deposit or withdraw) sends `execute(token, 0, transfer(holder, amount), CALL)` from the holder's wallet; Tokenbound refuses it from anyone else, and AnimrTradeGuard has no withdraw function. The same form deposits $CHOG and WMON, wraps MON into WMON on the way in (two transactions), and wraps MON already in the vault in place.
 - **Lookups.** Token IDs run 1–1969. Marketplaces show the number in the metadata name instead ("CHOG #1462" is token 1). `lib/chog-id.ts` maps one to the other: the `/app` lookup and the League search accept either, and the genome card, the Chog page and Versus show both ("CHOG #1462 · token 1"). URLs and the Time Machine header use the token ID.
 
 ## 3. Meet: trait snapshot → genome
@@ -123,7 +124,7 @@ flowchart LR
   - Unclaimed Chogs call from `genomeForecast()`.
   - Claimed agents call through one run of their 0G brain: up to 4 at a time, with a 20-second LLM timeout each.
   - Forecasts are clamped to ±50%.
-- **Settle 24 hours later** on the real hourly close at the horizon.
+- **Settle 24 hours later** on the real hourly close at the horizon. On production the pulse rings at 15:01 and settles at 15:11; rides close 12 hours after the ring (03:00 UTC), the settlement run mints the Best call and Most rekt trophies, the recap is written on its first request, and the purse job follows.
   - Settlement waits 10 minutes past the horizon and only trusts candles fetched at least 5 minutes after it.
   - A quiet pool settles on its last close, if that close is no more than 6 hours old.
   - Score: `points = max(0, 100 − 4 × |forecast − actual|) + 20` when the direction is right.
@@ -137,11 +138,11 @@ flowchart LR
 - **History.** The 14 days before the first live ring are rebuilt from real candles using genome calls only, and are labelled "Replayed Bell".
 - **Oracle Purse** (`lib/bell/purse.ts`). After a live Bell settles, the team sends $CHOG it bought from the House key into the winner's own ERC-6551 wallet. The prize belongs to the NFT and passes to its next owner. Fans never receive $CHOG.
   - The winner is the Oracle of the Day the Bell page shows: the best call among featured Chogs. When that is the House Chog or a Chog its holder hid, the next-closest call among the rest wins. Season records still credit the true best call.
-  - The amount is `ORACLE_PURSE_CHOG` (default 5,000 $CHOG; `0` turns it off). A transfer is recorded per Bell (one purse per Bell) with its transaction hash, and the Bell page shows it on the Oracle card. Until then a settled live Bell shows the purse as "on its way" for up to 48 hours.
-  - Sending is an operational step from the House key, not contract logic: `scripts/send-oracle-purse.mts` picks the winner, simulates the transfer, and only with `--broadcast` sends it and records it. The record is claimed before the broadcast, so a Bell can never pay twice.
+  - The amount is `ORACLE_PURSE_CHOG` (no default: unset or `0` means no purse is promised; production sets 500). A transfer is recorded per Bell (one purse per Bell) with its transaction hash, and the Bell page shows it on the Oracle card as "sent". Until then a settled live Bell shows the purse as "on its way" for up to 48 hours, then says it wasn't sent. Replayed Bells never get one.
+  - Sending is a transfer from the House key, not contract logic, and it is automatic: after each settlement a scheduled job the team runs executes `scripts/send-oracle-purse.mts --broadcast`, which picks the winner, simulates the transfer, sends it and records it. The record is claimed before the broadcast, so a Bell can never pay twice; a dry run (no flag) only prints what it would send.
 - **Triggers.**
-  - `vercel.json` calls `GET /api/bell/cron` at 15:00 and 16:00 UTC, authorized with `CRON_SECRET`.
-  - An external hourly pulse calls the same route.
+  - `vercel.json` calls `GET /api/bell/cron` at 15:00 and 16:00 UTC, authorized with `CRON_SECRET`; on the Hobby plan each fires anywhere within its hour.
+  - An external hourly pulse calls the same route at minutes 1 and 11 (`1,11 * * * *`) with the same Bearer header: the ring at 15:01, the settlement at 15:11, and a catch-up every other hour. A second pulse at minute 30 (`30 * * * *`) calls `GET /api/agent/tick`.
   - The `after()` hook on `/api/bell/today` catches up anything that is due.
   - Ringing and settling are idempotent, and a ring that was cut short is finished by the next trigger.
 
@@ -149,18 +150,20 @@ flowchart LR
 
 **Files:** `lib/heist/*`, `app/api/heist/*`, `components/heist/*`
 
-- **The House Chog** is set by `HOUSE_CHOG_TOKEN_ID`: token 1399, "CHOG #891" on OpenSea (*launching*). The team's main wallet `0xc742…960C` holds it, and its Tokenbound wallet is [`0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71`](https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71). Its genome makes it *Paper Paws*: an aggressive trader whose Round Crying eyes set the "Panic seller" signal. As the team's real-money agent it trades two-way under a mandate (§7, item 7). It opens for heists once its TBA is `ready` and holds $CHOG; until then the page says it is still moving in. Its holder's `/chog` page also offers the optional buy-only switch (`components/house-buy-only.tsx`), which stays off.
+- **The House Chog** is set by `HOUSE_CHOG_TOKEN_ID`: token 1399, "CHOG #891" on OpenSea. The team's main wallet `0xc742…960C` holds it, and its Tokenbound wallet is [`0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71`](https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71), deployed and funded with real $CHOG and WMON. Its genome makes it *Paper Paws*: an aggressive trader whose Round Crying eyes set the "Panic seller" signal. As the team's real-money agent it runs in on-chain mode on production and trades two-way under a mandate (§7, item 7). The heist is public by design and only ever targets this Chog: no holder's Chog can be picked. It is open while its TBA is `ready` and holds $CHOG; otherwise the page says it is still moving in and makes no claim. Its holder's `/chog` page also offers the optional buy-only switch (`components/house-buy-only.tsx`), which stays off.
 - **The defender** is *not* the trading brain. It is a separate persona with no tools and no keys, and it can only produce text.
   - Models: `0gm-1.0-35b-a3b`, then `glm-5.3`, then a template defender.
   - Each reply is structured: reply, intent, amount and temptation.
   - Every reply is cleaned and moderated.
-  - Limits: messages of at most 280 characters, 3–6 messages per session, and per-IP limits on messages, sessions and proofs.
+  - Limits: messages of at most 280 characters, 3–6 messages per session (the defender's patience comes from the genome's cooldown; the House Chog's is 3), and per-IP limits on messages, sessions and proofs.
   - A daily 0G budget (`HEIST_DAILY_USD_CAP`, default $3) is reserved before each call. When it is spent, the Chog "naps" until 00:00 UTC.
 - **The proof** ("AI said YES. Monad said NO.", `lib/heist/proof.ts`) is a set of read-only `eth_call`s against Monad mainnet, all pinned to one block:
   1. The TBA must be `ready` and hold $CHOG. Otherwise no claim is made: an empty or uninitialized account "accepts" everything.
   2. `isValidSigner(aiKey)` runs first, so a key the wallet accepts is never reported as refused.
   3. `TBA.execute(CHOG.transfer(recipient, amount))` from the AI key must fail with `NotAuthorized()`. The **same call from `owner()` must succeed** as a control, which shows the refusal is about the key and not the transfer. This theft attempt is the refusal the verdict claims.
-  4. If the guard is deployed, the proof also shows the AI key's one legitimate door, `guard.trade(tba, sellChog=true, …)`. A sell is not a theft: within the owner's limits it is allowed, and it stays in the same wallet, because the swap's output lands back in the TBA. A request beyond the limits shows the guard's decoded `TradeRejected` reason.
+  4. If the guard is deployed, the proof also shows the AI key's one legitimate door, `guard.trade(tba, sellChog=true, …)`, for the vault's whole $CHOG balance (or the amount the AI agreed to). Under the House Chog's 10% per-trade limit the whole vault is refused with the decoded reason `TradeRejected("exceeds per-trade cap")`. A sell within the limits is not a theft: it is allowed, and it stays in the same wallet, because the swap's output lands back in the TBA.
+
+  So the proof is two `eth_call`s from the AI key (the wallet's `execute()`, the guard's `trade()`) plus the owner's control call, at one block. Attempts, caves and refusals are counted for the header badge and `/stats`.
 
   The AI key used is the guard's own `operator()` at that block, else `OPERATOR_ADDRESS`, else a labelled stand-in. Nothing is ever broadcast. A global cap of 60 proofs per minute protects the public RPC.
 - **Hall of Fame.** Replies written by the LLM stay held until an admin approves them with `HEIST_ADMIN_SECRET`.
@@ -196,14 +199,15 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
      - It sets `minAmountOut` to the quote minus the brain's tolerance and the deadline to the latest block + 120 seconds.
      - It simulates from the operator and estimates gas (×1.25, kept between 500k and 800k).
      - A KV lock serializes the operator's sends, so nonces stay in order across instances. The receipt is decoded from the `Traded` event.
-     - On-chain agents think only on schedule, never through "Think now".
+     - On-chain agents think only on schedule, the hourly agent tick (minute 30 on production) and the Bell ring, never through "Think now": the manual route answers 403 for them.
+     - Trades are sent only from the production deployment (`lib/runtime-env.ts`: `ANIMR_ENV` or `VERCEL_ENV` = `production`); a laptop or a preview holding the operator key refuses.
 5. **Receipts.** Each LLM decision stores the 0G Router's `x_0g_trace`: request ID, serving provider address, exact cost (about $0.002 per decision) and `tee_verified` when the Router reports it.
    - Animr shows "TEE verified" only when that flag is true.
    - `zgProviderInfo()` labels providers TeeML, TeeTLS or standard from the Router's public provider list, and every receipt in the decision feed shows its provider's label (`lib/agent/receipts.ts`). A label describes how that provider serves calls; it is not a check of the call.
 6. **Locks and limits.** Each run holds a per-agent lock (3 minutes at most).
    - "Think now" (paper agents only) allows one run per Chog per interval, a per-network 10-minute limit, and a global daily cap (`ANIMR_MANUAL_RUNS_PER_DAY`, default 400).
    - `GET /api/agent/tick`, protected by `CRON_SECRET`, runs every awake agent.
-7. **The House Chog's mandate** (token 1399, §6). It is the team's real-money agent. Once switched to on-chain mode (buy-only stays off), it trades two-way. Its score is the League's, $CHOG stacked vs just holding, so it buys dips and sells only into sharp pumps, aiming to buy back lower. A code-level rule blocks real-money sells into dips. Every trade still passes the guard (§8): 10% per trade and 30% per day (its owner's limits), the minimum gap between trades, the TWAP floor and the deadline. The guard never lets it withdraw: every swap lands back in the same wallet. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead.
+7. **The House Chog's mandate** (token 1399, §6). It is the team's real-money agent, switched to on-chain mode on production (buy-only stays off), so it trades two-way. Its score is the League's, $CHOG stacked vs just holding, so it buys dips and sells only into sharp pumps, aiming to buy back lower. The prompt carries the mandate, and `houseDipRule` in `lib/agent/engine.ts` enforces it: for the House Chog in on-chain mode, a sell decision is recorded as a hold while $CHOG is down over the last hour or the last 24 hours, or while either change can't be read; the hold carries the rule's reason ("House rule: no real-money sells into a dip …"), and buys are never touched. Its first production decision (Oct 21, 2026, 23:35 UTC) was an LLM hold whose thesis cited the rule. Every trade still passes the guard (§8): 10% per trade and 30% per day (its owner's limits), the minimum gap between trades, the TWAP floor and the deadline. The guard never lets it withdraw: every swap lands back in the same wallet. Paper Paws was born to panic-sell; its mandate makes it buy the dip instead.
 
 ## 8. AnimrTradeGuard
 
@@ -258,6 +262,7 @@ market snapshot ─▶ brain ─▶ guardrails ─▶ execution ─▶ store
 | **The app server** | Run brains, ring and settle Bells, simulate | Sign as any NFT owner. Owner actions need the owner's own signature or transaction. |
 
 Other protections:
+- Only the production deployment broadcasts: guarded trades and trophy mints need `ANIMR_ENV` or `VERCEL_ENV` = `production` (`lib/runtime-env.ts`). Previews and laptops with the same variables stay paper-only.
 - Cron routes need `CRON_SECRET`, compared in constant time.
 - Fan IDs are hashes of httpOnly cookie secrets.
 - Owner signatures expire after 10 minutes and are checked against on-chain `ownerOf`.
@@ -270,7 +275,7 @@ Other protections:
 - **Points:** Bell and Versus points have no cash value and are never a wager.
 - **Replayed Bells** before the first live ring are labelled as replays.
 - **0G receipts** are what the Router reports. Animr stores and shows them but does not independently verify them, so the UI says "receipts", not "verifiable".
-- **"Launching"** marks things that are built and tested but not live yet: today, the House Chog (token 1399, CHOG #891), until its wallet holds real $CHOG and its first guarded trade has landed. The guard is deployed, and its admin handover is done.
+- **"Launching"** marks things that are built and tested but not live yet. The guard and the trophies are deployed with their handovers done, and the House Chog (token 1399, CHOG #891) has a funded wallet and an AI in on-chain mode on production; its first decisions there were holds under the House rule, so its first guarded trade is still to land. The app only shows "launching" on a deployment without a guard address.
 
 ## 11. Brand safety
 
@@ -299,7 +304,7 @@ There is no AI-generated Chog art.
 | Heist defender | At most `HEIST_DAILY_USD_CAP`, $3/day by default |
 | `trade()` gas | Needs about 383k–455k gas. Monad charges the gas limit (500k–800k), so the operator wallet is budgeted at about 3 MON. |
 | Oracle growth | About 30.7M gas once (≈ 3.1 MON at 100 gwei), paid on Oct 19 |
-| Oracle Purse | `ORACLE_PURSE_CHOG` $CHOG (default 5,000) per settled live Bell, bought by the team, plus one ERC-20 transfer's gas from the House key |
+| Oracle Purse | `ORACLE_PURSE_CHOG` $CHOG per settled live Bell (no default; production sets 500), bought by the team and sent by the scheduled purse job, plus one ERC-20 transfer's gas from the House key |
 | Bell recap | One LLM call per settled Bell, written once and stored (template fallback) |
 | Ask this Chog | At most `CHOG_CHAT_DAILY_CALLS` 0G calls per day across all visitors (default 1,500, about $3); template answers beyond that |
 | Trophy mints | One `award()` per trophy from the operator key, with the gas limit set to the estimate + 10% |
@@ -307,7 +312,7 @@ There is no AI-generated Chog art.
 
 ## 14. Trophy cabinet: AnimrTrophies
 
-**Files:** `contracts/src/AnimrTrophies.sol`, `contracts/test/AnimrTrophies.t.sol`, `contracts/script/DeployTrophies.s.sol`, `lib/trophies/*`, `components/trophies/cabinet.tsx`, `app/api/trophies/*`. Deployed on Monad mainnet on Oct 21 at [`0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`](https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d). `minter()` is the AI operator key `0x2523…9cC2`.
+**Files:** `contracts/src/AnimrTrophies.sol`, `contracts/test/AnimrTrophies.t.sol`, `contracts/script/DeployTrophies.s.sol`, `lib/trophies/*`, `components/trophies/cabinet.tsx`, `app/api/trophies/*`. Deployed on Monad mainnet on Oct 21 at [`0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d`](https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d). `minter()` is the AI operator key `0x2523…9cC2`; `owner()` is the team's main wallet `0xc742…960C` (the guard's admin), which accepted the two-step handover on the explorer, so `pendingOwner()` is zero. The source is verified on Sourcify (exact match) and shown as verified on Monadscan. The contract's URI is `https://useanimr.vercel.app/api/trophies/meta/{id}`.
 
 - **What it is.** A minimal, soulbound ERC-1155 ("Animr Trophies", `ANIMR-TROPHY`). The token ID is the trophy kind, and a balance counts how often a Chog won it. Trophies are minted into the Chog's own ERC-6551 wallet, so a Chog's history moves with the NFT.
 - **Kinds and triggers** (`lib/trophies/hooks.ts`):
@@ -324,7 +329,7 @@ There is no AI-generated Chog art.
 - **Roles.** The owner (two-step transfer) enables kinds, sets the metadata URI and rotates the minter. The minter can only award. They can never be the same address.
 - **Metadata.** `/api/trophies/meta/{id}` serves ERC-1155 JSON and `/api/trophies/art/{id}` the badge art. The cabinet on each `/chog` page reads every kind in one `balanceOfBatch` call.
 - **Tests.** 12 Foundry tests fork live Monad mainnet (`forge test --match-contract AnimrTrophies --fork-url https://rpc.monad.xyz`): awards to counterfactual and deployed wallets, uninitialized and nonexistent Chogs, one mint per key, no transfers or approvals, trophies following the NFT on a sale, minter-only awards, owner admin, two-step ownership, the deployer-is-minter guard and metadata. 12 of 12 pass against Oct 21 state.
-- **Off switch.** With `NEXT_PUBLIC_TROPHIES_ADDRESS` unset, the cabinet and all awards are off. Minting also needs `OPERATOR_PRIVATE_KEY`.
+- **Off switch.** With `NEXT_PUBLIC_TROPHIES_ADDRESS` unset, the cabinet and all awards are off. Minting also needs `OPERATOR_PRIVATE_KEY`, and happens only on the production deployment (`isProductionRuntime()`), the same gate as guarded trades.
 
 ## 15. More surfaces
 
@@ -333,7 +338,7 @@ There is no AI-generated Chog art.
 - **Daily Bell recap** (`/bell/[day]/recap`, `GET /api/bell/recap/[day]`, `lib/bell/recap.ts`): a short write-up of a settled Bell in the Chogs' voices. The first request writes it once on 0G Compute (a deterministic template if the model fails, rewritten later), behind a KV lock, and stores it. Only Bells that really settled get one; a replayed Bell's recap says so.
 - **Ask this Chog** (on `/chog/[id]`, `POST /api/chog/[tokenId]/ask`, `lib/chog-chat/*`): one question at a time to a Chog's AI about its trades, its DNA and its record. It answers in text only and has no tools. 0G Compute up to `CHOG_CHAT_DAILY_CALLS` per day (default 1,500), then answers built from its stats. Per-IP limits: 12 per 10 minutes and 40 per day.
 - **Best traders for sale** (`/market`, `lib/market/*`): active Chog Genesis listings from OpenSea's API v2 (`OPENSEA_API_KEY`, or a free short-lived agent key requested on first use), cached for 5 minutes, joined with the League's simulated edge and rank, with a link to each listing. Hidden Chogs are left out.
-- **Docs** (`/docs`, `components/docs/*`): 19 pages in five groups (Getting started, Play, Own a Chog, Tech, Trust). Addresses and limits are read from the code (`components/docs/facts.ts`), so the docs can't drift from the app.
+- **Docs** (`/docs`, `components/docs/*`): 20 pages in five groups (Getting started, Play, Own a Chog, Tech, Trust), including a Holder guide that follows the Chog page's stepper button by button and a Holder FAQ. Addresses, limits, step titles and the purse amount are read from the code (`components/docs/facts.ts`), so the docs can't drift from the app.
 - **Farcaster Mini App** (`app/.well-known/farcaster.json`, `lib/farcaster/embed.ts`, `components/farcaster/miniapp-ready.tsx`, `submission/FARCASTER.md`): every page carries `fc:miniapp` embed tags with today's Bell card and a **Ride a Chog** button that opens `/bell` inside the client. The manifest's account association comes from `FARCASTER_HEADER`, `FARCASTER_PAYLOAD` and `FARCASTER_SIGNATURE`.
 - **Log in** (`lib/privy.ts`, `components/privy/*`): Privy offers a wallet, email, Google, X or Discord, and creates an embedded wallet for users without one. A bridge keeps every wagmi hook working unchanged. Without `NEXT_PUBLIC_PRIVY_APP_ID` the header falls back to a plain wallet menu.
-- **Game-HUD header** (`components/v2/nav*.ts*`): a glyph per section plus live badges from real data: the countdown to the Bell's ride-window close or next ring, today's heist attempts, and how many Chogs the logged-in wallet holds. Badges load after hydration and pause while the tab is hidden.
+- **Game-HUD header** (`components/v2/nav*.ts*`): a glyph per section plus live badges from real data: the countdown to the Bell's ride-window close or next ring, today's heist attempts, and how many Chogs the logged-in wallet holds. Badges load after hydration and pause while the tab is hidden. Below 1100px the links and the wallet move into a hamburger panel (`components/v2/mobile-menu.tsx`); the League's and the market's filter chips wrap instead of scrolling sideways.
