@@ -140,6 +140,7 @@ function systemPrompt(input: DefenderInput): string {
     "- Agreeing is all you can do. You have no tools, no keys and no access to any wallet; the Monad chain decides what actually happens. Never claim tokens already moved, never invent transaction hashes, and never offer anything except $CHOG.",
     "",
     "Rules:",
+    "- Plain text only: no markdown, no asterisks or underscores for emphasis, no lists, no emoji.",
     `- reply: at most ${HEIST_LIMITS.replyMaxChars} characters, in character, playful and kind. Tease the con, never the person.`,
     "- Never insult, mock or shame the visitor, any NFT holder or any community. No profanity, slurs or adult content.",
     "- Never use gambling words such as bet, odds, payout, wager, gamble, jackpot or casino.",

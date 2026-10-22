@@ -1,5 +1,6 @@
 "use client";
 
+import { ChatText } from "@/components/chat-text";
 import { type CSSProperties, type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Badge, Chip, PillButton, pillClass } from "@/components/v2";
 import type { DefenderTurn, HeistProof, HeistState, HouseChog } from "@/lib/heist/types";
@@ -252,7 +253,7 @@ function ChogBubble({ house, text, turn }: { house: HouseChog; text?: string; tu
       <div className="min-w-0">
         <p className="heist-bubble">
           <span className="v2-sr">House Chog: </span>
-          {turn?.reply ?? text}
+          <ChatText text={turn?.reply ?? text ?? ""} />
         </p>
         {turn && (
           <p className="heist-msg-meta">

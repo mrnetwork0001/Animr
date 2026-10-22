@@ -1,5 +1,6 @@
 "use client";
 
+import { ChatText } from "@/components/chat-text";
 import { useMutation } from "@tanstack/react-query";
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { useChogName, useGenome } from "@/components/dna/api";
@@ -126,14 +127,14 @@ export function AskChog({ tokenId, viewer }: { tokenId: number; viewer?: string 
               <div key={line.id} className="ask-msg ask-msg--you">
                 <p className="ask-bubble">
                   <span className="v2-sr">You: </span>
-                  {line.text}
+                  <ChatText text={line.text} />
                 </p>
               </div>
             ) : (
               <div key={line.id} className="ask-msg ask-msg--chog">
                 <p className="ask-bubble">
                   <span className="v2-sr">{label}: </span>
-                  {line.text}
+                  <ChatText text={line.text} />
                 </p>
                 {line.source === "template" && <p className="ask-meta">Quick answer from its stats: its AI is resting</p>}
               </div>
