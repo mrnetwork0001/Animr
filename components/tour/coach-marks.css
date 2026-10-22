@@ -1,0 +1,256 @@
+/*
+ * The in-app guide (components/tour/coach-marks.tsx) on the v2 design system: a dimming veil with a cutout around one
+ * header element, a thin teal ring, a stem and the narrator's card. Fixed inside .v2-page (its fonts and tokens),
+ * above the header (z 40) and the hamburger panel. Everything that moves does so with transform and opacity, and
+ * only when motion is allowed. Global on purpose (plain CSS through Tailwind), so every class is prefixed `coach-`.
+ */
+
+@layer components {
+  .coach {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+  }
+  .coach[hidden] {
+    display: none;
+  }
+
+  .coach-veil {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .coach-veil-fill {
+    fill: rgb(13 12 17 / 0.76);
+  }
+  /* Positioned by transform from the origin; width, height and rx are its attributes. */
+  .coach-hole {
+    transform-box: view-box;
+  }
+
+  .coach-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    border: 1px solid rgb(159 240 236 / 0.78);
+    box-shadow:
+      0 0 0 1px rgb(159 240 236 / 0.1),
+      0 0 26px rgb(159 240 236 / 0.22);
+    opacity: 0;
+  }
+  .coach-stem {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgb(159 240 236 / 0.75), rgb(159 240 236 / 0.3));
+    opacity: 0;
+  }
+  .coach-stem[data-side="above"] {
+    background: linear-gradient(0deg, rgb(159 240 236 / 0.75), rgb(159 240 236 / 0.3));
+  }
+  /* A dot where the stem meets the cutout. */
+  .coach-stem::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--v2-teal);
+    box-shadow: 0 0 8px rgb(159 240 236 / 0.7);
+    transform: translateX(-50%);
+  }
+  .coach-stem[data-side="below"]::before {
+    top: -2px;
+  }
+  .coach-stem[data-side="above"]::before {
+    bottom: -2px;
+  }
+  .coach[data-ready][data-spot] .coach-ring,
+  .coach[data-ready][data-spot] .coach-stem {
+    opacity: 1;
+  }
+
+  .coach-card {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(380px, 100vw - 32px);
+    padding: 16px 18px 14px;
+    border-radius: var(--v2-r-lg);
+    color: var(--v2-ink);
+    opacity: 0;
+    outline: none;
+  }
+  .coach[data-ready] .coach-card {
+    opacity: 1;
+  }
+
+  .coach-narrator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .coach-avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--v2-line);
+    border-radius: 50%;
+  }
+  .coach-avatar--mark {
+    object-fit: cover;
+    background: #15141b;
+  }
+  .coach-who {
+    display: grid;
+    min-width: 0;
+    line-height: 1.25;
+  }
+  .coach-name {
+    overflow: hidden;
+    color: var(--v2-ink);
+    font-size: var(--v2-fs-sm);
+    font-weight: 560;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .coach-role {
+    overflow: hidden;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-xs);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .coach-skip {
+    height: 30px;
+    margin-left: auto;
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+
+  .coach-kicker {
+    margin: 0;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-xs);
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  /* Focus lands here on every stop so the title is read; the ring is the dialog itself, not a box on the text. */
+  .coach .coach-title:focus,
+  .coach .coach-title:focus-visible {
+    outline: none;
+  }
+  .coach-title {
+    margin: 2px 0 0;
+    font-family: var(--v2-font-display);
+    font-size: 22px;
+    font-weight: 450;
+    letter-spacing: -0.012em;
+    line-height: 1.2;
+  }
+  .coach-body {
+    margin: 8px 0 0;
+    color: var(--v2-muted);
+    font-size: var(--v2-fs-base);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .coach-fact {
+    margin: 10px 0 0;
+    color: var(--v2-teal);
+    font-family: var(--v2-font-display);
+    font-size: var(--v2-fs-md);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.35;
+  }
+
+  .coach-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .coach-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 auto 0 2px;
+    padding: 0;
+    list-style: none;
+  }
+  .coach-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--v2-line-strong);
+  }
+  .coach-dot[data-state="done"] {
+    background: var(--v2-ink);
+    opacity: 0.5;
+  }
+  .coach-dot[data-state="current"] {
+    background: var(--v2-teal);
+    box-shadow: 0 0 8px rgb(159 240 236 / 0.6);
+    transform: scale(1.3);
+  }
+  .coach-arrow {
+    width: 15px;
+    height: 15px;
+    flex: none;
+  }
+
+  .coach-keys {
+    margin: 12px 0 0;
+    color: var(--v2-faint);
+    font-size: var(--v2-fs-2xs);
+  }
+  .coach-keys kbd {
+    display: inline-block;
+    min-width: 18px;
+    padding: 1px 4px;
+    border: 1px solid var(--v2-line);
+    border-radius: 5px;
+    font: inherit;
+    line-height: 1.3;
+    text-align: center;
+  }
+  /* Touch screens have no arrow keys to mention. */
+  @media (hover: none) and (pointer: coarse) {
+    .coach-keys {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .coach[data-ready] .coach-card {
+      transition:
+        transform 0.4s var(--v2-ease),
+        opacity 0.22s ease;
+    }
+    .coach[data-ready] .coach-ring {
+      transition:
+        transform 0.4s var(--v2-ease),
+        opacity 0.22s ease;
+    }
+    .coach[data-ready] .coach-hole {
+      transition: transform 0.4s var(--v2-ease);
+    }
+    .coach-stem {
+      transition: opacity 0.22s ease;
+    }
+    .coach-dot {
+      transition:
+        background-color 0.2s ease,
+        transform 0.2s var(--v2-ease);
+    }
+  }
+}

@@ -1,6 +1,8 @@
 import type { Viewport } from "next";
 import { Suspense } from "react";
 import { ConnectButton, ConnectButtonFallback } from "@/components/connect-button";
+import { CoachMarks } from "@/components/tour/coach-marks";
+import { coachFacts } from "@/components/tour/narrator";
 import { TourPill } from "@/components/tour/tour-pill";
 import { AppShell } from "@/components/v2";
 import { Providers } from "../providers";
@@ -21,6 +23,9 @@ export const viewport: Viewport = {
  *
  * The wallet and query providers (wagmi + react-query) live here rather than in the root layout:
  * every consumer is an app route, so the landing page doesn't download or hydrate them.
+ *
+ * CoachMarks is the first-visit walkthrough of the header (components/tour/coach-marks.tsx), narrated by the House
+ * Chog when one is configured; it mounts once here and renders nothing until it runs.
  */
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -34,6 +39,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       >
         {children}
         <TourPill />
+        <CoachMarks facts={coachFacts()} />
       </AppShell>
     </Providers>
   );

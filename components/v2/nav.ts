@@ -10,18 +10,20 @@ export type V2NavLink = {
   short: string;
   /** Path prefixes (whole segments) that belong to this section, so sub-pages highlight it too. */
   match: readonly string[];
+  /** Its data-coach value on the desktop link and the hamburger row: the in-app guide's stop (components/tour). */
+  coach: string;
 };
 
 export const V2_NAV_LINKS: readonly V2NavLink[] = [
   // A Chog's own page (/chog/N) is where the lookup leads.
-  { href: "/app", label: "Your Chogs", short: "Chogs", match: ["/app", "/chog"] },
+  { href: "/app", label: "Your Chogs", short: "Chogs", match: ["/app", "/chog"], coach: "chogs" },
   // Traits, Chogs for sale (/market) and the claimed-AI board (/leaderboard) are League tabs.
-  { href: "/league", label: "League", short: "League", match: ["/league", "/traits", "/market", "/leaderboard"] },
+  { href: "/league", label: "League", short: "League", match: ["/league", "/traits", "/market", "/leaderboard"], coach: "league" },
   // Two-Chog races, the one-Chog Time Machine at /replay and Breed (/breed).
-  { href: "/versus", label: "Versus", short: "Versus", match: ["/versus", "/replay", "/breed"] },
-  { href: "/bell", label: "Daily Bell", short: "Bell", match: ["/bell"] },
-  { href: "/heist", label: HEIST_TITLE, short: "Heist", match: ["/heist"] },
-  { href: "/guard", label: "Guard", short: "Guard", match: ["/guard"] },
+  { href: "/versus", label: "Versus", short: "Versus", match: ["/versus", "/replay", "/breed"], coach: "versus" },
+  { href: "/bell", label: "Daily Bell", short: "Bell", match: ["/bell"], coach: "bell" },
+  { href: "/heist", label: HEIST_TITLE, short: "Heist", match: ["/heist"], coach: "heist" },
+  { href: "/guard", label: "Guard", short: "Guard", match: ["/guard"], coach: "guard" },
 ];
 
 export const V2_FOOTER_LINKS: readonly { href: string; label: string }[] = [

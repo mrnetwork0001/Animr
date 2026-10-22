@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { CoachHelpButton, CoachReplayRow } from "@/components/tour/coach-replay";
+import { COACH_MENU_EVENT, COACH_ROOT_SELECTOR, type CoachMenuDetail } from "@/lib/coach";
 import { V2_NAV_LINKS, isV2NavActive } from "./nav";
 import { NavItemContent, NavWalletSource } from "./nav-hud";
 
@@ -26,9 +28,12 @@ function useCompact(): boolean {
 }
 
 /**
- * The header's right column: on wide screens the wallet slot (Log in / account), on phones and tablets a
- * hamburger whose panel holds the section links and the wallet. The wallet is mounted in one place only,
+ * The header's right column: on wide screens the guide's "?" and the wallet slot (Log in / account), on phones and
+ * tablets a hamburger whose panel holds the section links and the wallet. The wallet is mounted in one place only,
  * so its client state (Privy, wagmi) never runs twice.
+ *
+ * data-coach marks what the in-app guide (components/tour/coach-marks.tsx) highlights: the wallet wrappers
+ * ("account") and the hamburger ("menu"); the panel's rows carry their link's id.
  */
 export function V2HeaderActions({ wallet }: { wallet?: ReactNode }) {
   const compact = useCompact();
@@ -36,7 +41,14 @@ export function V2HeaderActions({ wallet }: { wallet?: ReactNode }) {
     <div className="v2-header-actions">
       {/* Feeds the "Your Chogs" badge for both layouts (one instance per page). */}
       <NavWalletSource />
-      {!compact && <div className="v2-header-wallet">{wallet}</div>}
+      {!compact && (
+        <>
+          <CoachHelpButton />
+          <div className="v2-header-wallet" data-coach="account">
+            {wallet}
+          </div>
+        </>
+      )}
       {/* The fallback sits in the same .v2-menu wrapper as the menu, so CSS hides it on wide screens too (a bare
           button showed there until the menu streamed in, and its 42px nudged the header). */}
       <Suspense
@@ -57,6 +69,7 @@ function MenuButton({ open, onToggle, controls }: { open: boolean; onToggle: () 
     <button
       type="button"
       className="v2-menu-button"
+      data-coach="menu"
       aria-expanded={open}
       aria-controls={controls || undefined}
       aria-label={open ? "Close menu" : "Open menu"}
@@ -83,6 +96,16 @@ function MobileMenu({ wallet }: { wallet: ReactNode }) {
     setOpen(false);
   }
 
+  // The in-app guide opens the panel to walk its rows, and closes it when done.
+  useEffect(() => {
+    const onCoach = (event: Event) => {
+      setOpenedAt(pathname);
+      setOpen(Boolean((event as CustomEvent<CoachMenuDetail>).detail?.open));
+    };
+    window.addEventListener(COACH_MENU_EVENT, onCoach);
+    return () => window.removeEventListener(COACH_MENU_EVENT, onCoach);
+  }, [pathname]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -90,8 +113,14 @@ function MobileMenu({ wallet }: { wallet: ReactNode }) {
     };
     const onPointer = (event: PointerEvent) => {
       const target = event.target as Node | null;
-      // Privy's modal and the account menu render in portals: clicks there must not close the panel.
-      if (target instanceof Element && target.closest("#privy-dialog, #privy-dialog-backdrop, #privy-modal-content")) return;
+      // Privy's modal and the account menu render in portals, and the guide's card sits over the page: clicks there
+      // must not close the panel.
+      if (
+        target instanceof Element &&
+        target.closest(`#privy-dialog, #privy-dialog-backdrop, #privy-modal-content, ${COACH_ROOT_SELECTOR}`)
+      ) {
+        return;
+      }
       if (rootRef.current && target && !rootRef.current.contains(target)) setOpen(false);
     };
     document.addEventListener("keydown", onKey);
@@ -122,6 +151,7 @@ function MobileMenu({ wallet }: { wallet: ReactNode }) {
                   <Link
                     href={link.href}
                     className="v2-menu-link"
+                    data-coach={link.coach}
                     aria-current={active ? (pathname === link.href ? "page" : "true") : undefined}
                     onClick={() => setOpen(false)}
                   >
@@ -132,7 +162,12 @@ function MobileMenu({ wallet }: { wallet: ReactNode }) {
             })}
           </ul>
         </nav>
-        {wallet && <div className="v2-menu-wallet">{wallet}</div>}
+        {wallet && (
+          <div className="v2-menu-wallet" data-coach="account">
+            {wallet}
+          </div>
+        )}
+        <CoachReplayRow onBeforeReplay={() => setOpen(false)} />
       </div>
     </div>
   );

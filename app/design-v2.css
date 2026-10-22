@@ -2130,3 +2130,75 @@
     min-height: var(--v2-header-h);
   }
 }
+
+/* The in-app guide's header pieces (components/tour/coach-replay.tsx): the small "?" that replays it on wide screens,
+   and the hamburger panel's "Replay the guide" row. The guide itself is styled in components/tour/coach-marks.css. */
+@layer components {
+  .v2-coach-help {
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--v2-line);
+    border-radius: var(--v2-r-pill);
+    background: rgb(255 255 255 / 0.03);
+    color: var(--v2-faint);
+    cursor: pointer;
+    transition:
+      color var(--v2-dur) ease,
+      border-color var(--v2-dur) ease,
+      background-color var(--v2-dur) ease;
+  }
+  .v2-coach-help:hover {
+    border-color: var(--v2-line-strong);
+    background: rgb(255 255 255 / 0.06);
+    color: var(--v2-ink);
+  }
+  .v2-coach-help:focus-visible {
+    outline: 1.5px solid var(--v2-teal);
+    outline-offset: 2px;
+  }
+  .v2-coach-help svg {
+    width: 15px;
+    height: 15px;
+  }
+  @media (max-width: 1099.98px) {
+    .v2-coach-help {
+      display: none;
+    }
+  }
+
+  .v2-menu-replay {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    margin-top: 8px;
+    padding-inline: 12px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: var(--v2-faint);
+    font: inherit;
+    font-size: var(--v2-fs-sm);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      color var(--v2-dur) ease,
+      background-color var(--v2-dur) ease;
+  }
+  .v2-menu-replay:hover {
+    background: rgb(255 255 255 / 0.04);
+    color: var(--v2-ink);
+  }
+  .v2-menu-replay:focus-visible {
+    outline: 1.5px solid var(--v2-teal);
+    outline-offset: 2px;
+  }
+  .v2-menu-replay svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+  }
+}
