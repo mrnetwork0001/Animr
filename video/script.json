@@ -1,0 +1,154 @@
+{
+  "title": "Animr: every Chog is an AI trader",
+  "model": "eleven_multilingual_v2",
+  "voices": {
+    "narrator": {
+      "name": "Sarah",
+      "id": "EXAVITQu4vr4xnSDxMaL",
+      "settings": {
+        "stability": 0.5,
+        "similarity_boost": 0.8,
+        "style": 0.25,
+        "use_speaker_boost": true
+      }
+    },
+    "chog": {
+      "name": "Callum",
+      "id": "N2lVS1w4EtoT3dr4eOWO",
+      "settings": {
+        "stability": 0.45,
+        "similarity_boost": 0.8,
+        "style": 0.45,
+        "use_speaker_boost": true
+      }
+    }
+  },
+  "scenes": [
+    {
+      "id": "open",
+      "seconds": 11,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "October twenty-first, ten forty-one at night, on Monad. One Chog gets something no NFT picture had before. A wallet of its own."
+        }
+      ]
+    },
+    {
+      "id": "problem",
+      "seconds": 9,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "There are one thousand, nine hundred and sixty-nine Chog Genesis NFTs. Most of them do one thing. They sit, and they wait."
+        }
+      ]
+    },
+    {
+      "id": "turn",
+      "seconds": 9,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "Meet Animr. Every Chog is an AI trader. Its traits are its strategy, and the CHOG market keeps score.",
+          "say": "Meet Animer. Every Chog is an AI trader. Its traits are its strategy, and the CHOG market keeps score."
+        }
+      ]
+    },
+    {
+      "id": "meet",
+      "seconds": 16,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "Up to thirteen on-chain traits compile into a trading genome. Laser eyes chase breakouts. Crowns trade big. Same traits, same trader. The League ranks every Chog against just holding CHOG, and on your first visit, the House Chog shows you around."
+        }
+      ]
+    },
+    {
+      "id": "rewind",
+      "seconds": 13,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "In Versus, two Chogs race a hidden forty-eight hours of real CHOG history. Call the winner, watch the knockout, then see the real dates. Or breed two, and race their child on the same chart."
+        }
+      ]
+    },
+    {
+      "id": "bell",
+      "seconds": 14.5,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "Every day at fifteen hundred UTC, the Daily Bell rings. All nineteen sixty-nine Chogs call the next twenty-four hours. Fans ride the one they trust. No wallet, just points. Then the market settles it."
+        }
+      ]
+    },
+    {
+      "id": "purse",
+      "seconds": 10.5,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "The best call earns a soulbound trophy in its own wallet, and an Oracle Purse of five hundred real CHOG, sent automatically. The prize belongs to the NFT."
+        }
+      ]
+    },
+    {
+      "id": "heist",
+      "seconds": 23,
+      "lines": [
+        {
+          "voice": "chog",
+          "text": "Psst. You're here for my CHOG, aren't you? You get three messages. Make them count."
+        },
+        {
+          "voice": "narrator",
+          "text": "Rob this Chog. The House Chog keeps fifteen thousand real CHOG in its wallet. Talk it into sending them. Even when the AI says yes, we run that exact transfer against Monad mainnet. Monad says no. Not authorized. The AI can be fooled. The NFT can't."
+        }
+      ]
+    },
+    {
+      "id": "setup",
+      "seconds": 21.5,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "Holders can put the AI on-chain. Last night, the House Chog's holder did. Create the Chog's wallet. Let the guard trade. Set limits: ten percent a trade, thirty percent a day. Deposit fifteen thousand CHOG and a thousand and one WMON. Then two free signatures: wake the AI, and switch it on-chain."
+        }
+      ]
+    },
+    {
+      "id": "guard",
+      "seconds": 18.5,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "The AI's key can call one function: trade. Every swap lands back in the same wallet, so it can never withdraw. Only the holder can. Last night, one WMON came out, through the wallet's own execute. And every AI decision carries its zero G Compute receipt."
+        }
+      ]
+    },
+    {
+      "id": "unique",
+      "seconds": 12,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "Why the Chog matters? No NFT, no trader. No NFT, no wallet. No NFT, no authority. Sell the Chog, and its trader, its wallet and its trophies go with it."
+        }
+      ]
+    },
+    {
+      "id": "close",
+      "seconds": 12,
+      "lines": [
+        {
+          "voice": "narrator",
+          "text": "Animr. Meet a Chog, race it, ride it, or try to rob it. Next, every holder can switch theirs on.",
+          "say": "Animer. Meet a Chog, race it, ride it, or try to rob it. Next, every holder can switch theirs on."
+        }
+      ]
+    }
+  ]
+}

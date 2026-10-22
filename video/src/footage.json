@@ -1,0 +1,397 @@
+{
+ "bell": {
+  "file": "footage/bell.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 594,
+  "marks": {
+   "bell.scroll": 159,
+   "bell.hover": 279,
+   "bell.ride": 322,
+   "bell.fan": 481
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "url": "useanimr.vercel.app/bell",
+  "rects": {
+   "fan": {
+    "x": 48,
+    "y": 355,
+    "w": 1504,
+    "h": 231
+   }
+  }
+ },
+ "breed": {
+  "file": "footage/breed.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 306,
+  "marks": {
+   "breed.chart": 89
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "family": {
+    "x": 48,
+    "y": 375,
+    "w": 1504,
+    "h": 2074
+   }
+  }
+ },
+ "chog": {
+  "file": "footage/chog.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 1346,
+  "marks": {
+   "chog.wallet": 104,
+   "chog.decisions": 330,
+   "chog.ask": 555,
+   "chog.sent": 800,
+   "chog.answer": 1220
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "askAfter": {
+    "x": 48,
+    "y": 385,
+    "w": 1100,
+    "h": 408
+   }
+  }
+ },
+ "docs": {
+  "file": "footage/docs.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 396,
+  "marks": {
+   "docs.holder": 89
+  }
+ },
+ "guard": {
+  "file": "footage/guard.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 563,
+  "marks": {
+   "guard.roles": 90,
+   "guard.vault": 309
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "vault": {
+    "x": 48,
+    "y": 110,
+    "w": 1504,
+    "h": 655
+   }
+  }
+ },
+ "guide": {
+  "file": "footage/guide.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 651,
+  "marks": {
+   "guide.step2": 104,
+   "guide.step3": 239,
+   "guide.step4": 375,
+   "guide.step5": 510
+  }
+ },
+ "heist": {
+  "file": "footage/heist.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 1485,
+  "marks": {
+   "heist.type": 171,
+   "heist.send": 437,
+   "heist.reply": 930,
+   "heist.run": 1120,
+   "heist.verdict": 1207
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "verdict": {
+    "x": 48,
+    "y": 110,
+    "w": 1504,
+    "h": 650
+   }
+  }
+ },
+ "hero": {
+  "file": "footage/hero.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 597,
+  "marks": {
+   "hero.scroll": 194,
+   "hero.receipt": 369
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "verbs": {
+    "x": 0,
+    "y": 88,
+    "w": 1600,
+    "h": 514
+   },
+   "receipt": {
+    "x": 802,
+    "y": 260,
+    "w": 710,
+    "h": 20
+   }
+  }
+ },
+ "league": {
+  "file": "footage/league.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 423,
+  "marks": {
+   "league.scroll": 89
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "table": {
+    "x": 48,
+    "y": 80,
+    "w": 1504,
+    "h": 98
+   }
+  }
+ },
+ "scan_create": {
+  "file": "footage/scan_create.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 326,
+  "marks": {},
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "url": "monadscan.com/tx/0x28de3abe02e1c3f4…",
+  "hash": "0x28de3abe02e1c3f464481035d104a6abd9157e5705c3cae509a75b2b783de466"
+ },
+ "scan_deposit": {
+  "file": "footage/scan_deposit.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 321,
+  "marks": {},
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "url": "monadscan.com/tx/0x7a4b7b42dac6a967…",
+  "hash": "0x7a4b7b42dac6a967b57190717c30882a3a38e650bc75ae33e0dd08d39069ab52"
+ },
+ "scan_guard": {
+  "file": "footage/scan_guard.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 321,
+  "marks": {},
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "url": "monadscan.com/tx/0xfb080b34bab37cf9…",
+  "hash": "0xfb080b34bab37cf96892357e7a1edc6af8b74d9fdf539916054ebfd2ce0ceed7"
+ },
+ "scan_limits": {
+  "file": "footage/scan_limits.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 320,
+  "marks": {},
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "url": "monadscan.com/tx/0xf0f56e4240abfb30…",
+  "hash": "0xf0f56e4240abfb30650d426534fbe47b8342c8b4db59835d626b8bba9af7ac44"
+ },
+ "versus": {
+  "file": "footage/versus.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 1131,
+  "marks": {
+   "versus.pick": 168,
+   "versus.race": 225,
+   "versus.ko": 936
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "result": {
+    "x": 106,
+    "y": 931,
+    "w": 1388,
+    "h": 46
+   }
+  }
+ },
+ "owner": {
+  "file": "footage/owner/owner-holder-view.mp4",
+  "width": 3010,
+  "height": 1682,
+  "durationFrames": 1854,
+  "marks": {
+   "app": 0,
+   "held": 150,
+   "chog": 480,
+   "setup": 900,
+   "live": 960,
+   "deposit": 1230,
+   "menu": 1590
+  },
+  "rects": {
+   "header": {
+    "x": 1100,
+    "y": 0,
+    "w": 500,
+    "h": 80
+   },
+   "card": {
+    "x": 40,
+    "y": 170,
+    "w": 520,
+    "h": 460
+   },
+   "setup": {
+    "x": 40,
+    "y": 60,
+    "w": 1060,
+    "h": 800
+   },
+   "live": {
+    "x": 80,
+    "y": 280,
+    "w": 1020,
+    "h": 240
+   },
+   "deposit": {
+    "x": 40,
+    "y": 60,
+    "w": 1060,
+    "h": 760
+   },
+   "menu": {
+    "x": 1220,
+    "y": 40,
+    "w": 380,
+    "h": 520
+   }
+  }
+ },
+ "scan_purse": {
+  "file": "footage/scan_purse.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 186,
+  "marks": {},
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "hash": "0xbc486bec0a26adf55dc4926aeff031291528cc59eaba3d779bad4906d43e871a",
+  "rects": {}
+ },
+ "scan_trophy_1": {
+  "file": "footage/scan_trophy_1.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 182,
+  "marks": {},
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "hash": "0x446adae5009a8b392a8a62ebbf2b79eb06cb95b480a4cc5ddf4cf66e3d6d5cdc",
+  "rects": {}
+ },
+ "scan_trophy_2": {
+  "file": "footage/scan_trophy_2.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 186,
+  "marks": {},
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "hash": "0x40598305dbb790c5cfb9292190e6597043161e0c0c1b211ef2336d22c3112e09",
+  "rects": {}
+ },
+ "settled": {
+  "file": "footage/settled.mp4",
+  "width": 3200,
+  "height": 1800,
+  "durationFrames": 521,
+  "marks": {
+   "settled.verdict": 89,
+   "settled.purse": 198,
+   "settled.recap": 333
+  },
+  "deviceScale": 2,
+  "viewport": {
+   "w": 1600,
+   "h": 900
+  },
+  "rects": {
+   "verdict": {
+    "x": 48,
+    "y": 200,
+    "w": 1504,
+    "h": 307
+   },
+   "recap": null
+  }
+ }
+}

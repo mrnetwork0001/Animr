@@ -1,0 +1,2648 @@
+{
+ "fps": 30,
+ "totalFrames": 5203,
+ "bpm": 133,
+ "beats": [
+  10,
+  24,
+  37,
+  51,
+  64,
+  78,
+  91,
+  105,
+  118,
+  132,
+  146,
+  159,
+  173,
+  186,
+  200,
+  213,
+  227,
+  240,
+  254,
+  267,
+  281,
+  294,
+  308,
+  321,
+  335,
+  349,
+  362,
+  376,
+  389,
+  403,
+  416,
+  430,
+  443,
+  457,
+  470,
+  484,
+  497,
+  511,
+  524,
+  538,
+  552,
+  565,
+  579,
+  592,
+  606,
+  619,
+  633,
+  646,
+  660,
+  673,
+  687,
+  700,
+  714,
+  727,
+  741,
+  755,
+  768,
+  782,
+  795,
+  809,
+  822,
+  836,
+  849,
+  863,
+  876,
+  890,
+  903,
+  917,
+  931,
+  944,
+  958,
+  971,
+  985,
+  998,
+  1012,
+  1025,
+  1039,
+  1052,
+  1066,
+  1079,
+  1093,
+  1106,
+  1120,
+  1134,
+  1147,
+  1161,
+  1174,
+  1188,
+  1201,
+  1215,
+  1228,
+  1242,
+  1255,
+  1269,
+  1282,
+  1296,
+  1309,
+  1323,
+  1337,
+  1350,
+  1364,
+  1377,
+  1391,
+  1404,
+  1418,
+  1431,
+  1445,
+  1458,
+  1472,
+  1485,
+  1499,
+  1512,
+  1526,
+  1540,
+  1553,
+  1567,
+  1580,
+  1594,
+  1607,
+  1621,
+  1634,
+  1648,
+  1661,
+  1675,
+  1688,
+  1702,
+  1715,
+  1729,
+  1743,
+  1756,
+  1770,
+  1783,
+  1797,
+  1810,
+  1824,
+  1837,
+  1851,
+  1864,
+  1878,
+  1891,
+  1905,
+  1918,
+  1932,
+  1946,
+  1959,
+  1973,
+  1986,
+  2000,
+  2013,
+  2027,
+  2040,
+  2054,
+  2067,
+  2081,
+  2094,
+  2108,
+  2121,
+  2135,
+  2149,
+  2162,
+  2176,
+  2189,
+  2203,
+  2216,
+  2230,
+  2243,
+  2257,
+  2270,
+  2284,
+  2297,
+  2311,
+  2324,
+  2338,
+  2352,
+  2365,
+  2379,
+  2392,
+  2406,
+  2419,
+  2433,
+  2446,
+  2460,
+  2473,
+  2487,
+  2500,
+  2514,
+  2527,
+  2541,
+  2555,
+  2568,
+  2582,
+  2595,
+  2609,
+  2622,
+  2636,
+  2649,
+  2663,
+  2676,
+  2690,
+  2703,
+  2717,
+  2731,
+  2744,
+  2758,
+  2771,
+  2785,
+  2798,
+  2812,
+  2825,
+  2839,
+  2852,
+  2866,
+  2879,
+  2893,
+  2906,
+  2920,
+  2934,
+  2947,
+  2961,
+  2974,
+  2988,
+  3001,
+  3015,
+  3028,
+  3042,
+  3055,
+  3069,
+  3082,
+  3096,
+  3109,
+  3123,
+  3137,
+  3150,
+  3164,
+  3177,
+  3191,
+  3204,
+  3218,
+  3231,
+  3245,
+  3258,
+  3272,
+  3285,
+  3299,
+  3312,
+  3326,
+  3340,
+  3353,
+  3367,
+  3380,
+  3394,
+  3407,
+  3421,
+  3434,
+  3448,
+  3461,
+  3475,
+  3488,
+  3502,
+  3515,
+  3529,
+  3543,
+  3556,
+  3570,
+  3583,
+  3597,
+  3610,
+  3624,
+  3637,
+  3651,
+  3664,
+  3678,
+  3691,
+  3705,
+  3718,
+  3732,
+  3746,
+  3759,
+  3773,
+  3786,
+  3800,
+  3813,
+  3827,
+  3840,
+  3854,
+  3867,
+  3881,
+  3894,
+  3908,
+  3921,
+  3935,
+  3949,
+  3962,
+  3976,
+  3989,
+  4003,
+  4016,
+  4030,
+  4043,
+  4057,
+  4070,
+  4084,
+  4097,
+  4111,
+  4124,
+  4138,
+  4152,
+  4165,
+  4179,
+  4192,
+  4206,
+  4219,
+  4233,
+  4246,
+  4260,
+  4273,
+  4287,
+  4300,
+  4314,
+  4327,
+  4341,
+  4355,
+  4368,
+  4382,
+  4395,
+  4409,
+  4422,
+  4436,
+  4449,
+  4463,
+  4476,
+  4490,
+  4503,
+  4517,
+  4531,
+  4544,
+  4558,
+  4571,
+  4585,
+  4598,
+  4612,
+  4625,
+  4639,
+  4652,
+  4666,
+  4679,
+  4693,
+  4706,
+  4720,
+  4734,
+  4747,
+  4761,
+  4774,
+  4788,
+  4801,
+  4815,
+  4828,
+  4842,
+  4855,
+  4869,
+  4882,
+  4896,
+  4909,
+  4923,
+  4937,
+  4950,
+  4964,
+  4977,
+  4991,
+  5004,
+  5018,
+  5031,
+  5045,
+  5058,
+  5072,
+  5085,
+  5099,
+  5112,
+  5126,
+  5140,
+  5153,
+  5167,
+  5180,
+  5194
+ ],
+ "music": {
+  "file": "audio/music.mp3",
+  "source": "elevenlabs-music"
+ },
+ "scenes": [
+  {
+   "id": "open",
+   "from": 0,
+   "durationInFrames": 330,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "October twenty-first, ten forty-one at night, on Monad. One Chog gets something no NFT picture had before. A wallet of its own.",
+     "file": "audio/vo/open_0.mp3",
+     "startFrame": 8,
+     "durationFrames": 258,
+     "words": [
+      {
+       "word": "October",
+       "start": 8,
+       "end": 21
+      },
+      {
+       "word": "twenty-first,",
+       "start": 22,
+       "end": 42
+      },
+      {
+       "word": "ten",
+       "start": 45,
+       "end": 53
+      },
+      {
+       "word": "forty-one",
+       "start": 56,
+       "end": 70
+      },
+      {
+       "word": "at",
+       "start": 70,
+       "end": 72
+      },
+      {
+       "word": "night,",
+       "start": 74,
+       "end": 83
+      },
+      {
+       "word": "on",
+       "start": 84,
+       "end": 88
+      },
+      {
+       "word": "Monad.",
+       "start": 90,
+       "end": 108
+      },
+      {
+       "word": "One",
+       "start": 119,
+       "end": 126
+      },
+      {
+       "word": "Chog",
+       "start": 127,
+       "end": 136
+      },
+      {
+       "word": "gets",
+       "start": 137,
+       "end": 143
+      },
+      {
+       "word": "something",
+       "start": 144,
+       "end": 154
+      },
+      {
+       "word": "no",
+       "start": 157,
+       "end": 162
+      },
+      {
+       "word": "NFT",
+       "start": 166,
+       "end": 177
+      },
+      {
+       "word": "picture",
+       "start": 181,
+       "end": 191
+      },
+      {
+       "word": "had",
+       "start": 192,
+       "end": 196
+      },
+      {
+       "word": "before.",
+       "start": 198,
+       "end": 215
+      },
+      {
+       "word": "A",
+       "start": 224,
+       "end": 226
+      },
+      {
+       "word": "wallet",
+       "start": 229,
+       "end": 239
+      },
+      {
+       "word": "of",
+       "start": 240,
+       "end": 242
+      },
+      {
+       "word": "its",
+       "start": 243,
+       "end": 247
+      },
+      {
+       "word": "own.",
+       "start": 248,
+       "end": 266
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "problem",
+   "from": 330,
+   "durationInFrames": 270,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "There are one thousand, nine hundred and sixty-nine Chog Genesis NFTs. Most of them do one thing. They sit, and they wait.",
+     "file": "audio/vo/problem_0.mp3",
+     "startFrame": 338,
+     "durationFrames": 242,
+     "words": [
+      {
+       "word": "There",
+       "start": 338,
+       "end": 346
+      },
+      {
+       "word": "are",
+       "start": 347,
+       "end": 351
+      },
+      {
+       "word": "one",
+       "start": 353,
+       "end": 361
+      },
+      {
+       "word": "thousand,",
+       "start": 362,
+       "end": 378
+      },
+      {
+       "word": "nine",
+       "start": 380,
+       "end": 388
+      },
+      {
+       "word": "hundred",
+       "start": 390,
+       "end": 398
+      },
+      {
+       "word": "and",
+       "start": 399,
+       "end": 401
+      },
+      {
+       "word": "sixty-nine",
+       "start": 403,
+       "end": 421
+      },
+      {
+       "word": "Chog",
+       "start": 422,
+       "end": 429
+      },
+      {
+       "word": "Genesis",
+       "start": 431,
+       "end": 442
+      },
+      {
+       "word": "NFTs.",
+       "start": 445,
+       "end": 468
+      },
+      {
+       "word": "Most",
+       "start": 479,
+       "end": 487
+      },
+      {
+       "word": "of",
+       "start": 488,
+       "end": 490
+      },
+      {
+       "word": "them",
+       "start": 491,
+       "end": 495
+      },
+      {
+       "word": "do",
+       "start": 498,
+       "end": 503
+      },
+      {
+       "word": "one",
+       "start": 506,
+       "end": 511
+      },
+      {
+       "word": "thing.",
+       "start": 513,
+       "end": 527
+      },
+      {
+       "word": "They",
+       "start": 534,
+       "end": 539
+      },
+      {
+       "word": "sit,",
+       "start": 542,
+       "end": 550
+      },
+      {
+       "word": "and",
+       "start": 551,
+       "end": 554
+      },
+      {
+       "word": "they",
+       "start": 555,
+       "end": 559
+      },
+      {
+       "word": "wait.",
+       "start": 560,
+       "end": 579
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "turn",
+   "from": 600,
+   "durationInFrames": 270,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "Meet Animr. Every Chog is an AI trader. Its traits are its strategy, and the CHOG market keeps score.",
+     "file": "audio/vo/turn_0.mp3",
+     "startFrame": 608,
+     "durationFrames": 223,
+     "words": [
+      {
+       "word": "Meet",
+       "start": 608,
+       "end": 619
+      },
+      {
+       "word": "Animr.",
+       "start": 622,
+       "end": 643
+      },
+      {
+       "word": "Every",
+       "start": 651,
+       "end": 661
+      },
+      {
+       "word": "Chog",
+       "start": 663,
+       "end": 672
+      },
+      {
+       "word": "is",
+       "start": 675,
+       "end": 679
+      },
+      {
+       "word": "an",
+       "start": 680,
+       "end": 682
+      },
+      {
+       "word": "AI",
+       "start": 685,
+       "end": 694
+      },
+      {
+       "word": "trader.",
+       "start": 696,
+       "end": 713
+      },
+      {
+       "word": "Its",
+       "start": 720,
+       "end": 726
+      },
+      {
+       "word": "traits",
+       "start": 727,
+       "end": 738
+      },
+      {
+       "word": "are",
+       "start": 739,
+       "end": 742
+      },
+      {
+       "word": "its",
+       "start": 743,
+       "end": 746
+      },
+      {
+       "word": "strategy,",
+       "start": 747,
+       "end": 768
+      },
+      {
+       "word": "and",
+       "start": 769,
+       "end": 773
+      },
+      {
+       "word": "the",
+       "start": 775,
+       "end": 777
+      },
+      {
+       "word": "CHOG",
+       "start": 778,
+       "end": 786
+      },
+      {
+       "word": "market",
+       "start": 787,
+       "end": 797
+      },
+      {
+       "word": "keeps",
+       "start": 799,
+       "end": 807
+      },
+      {
+       "word": "score.",
+       "start": 808,
+       "end": 831
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "meet",
+   "from": 870,
+   "durationInFrames": 523,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "Up to thirteen on-chain traits compile into a trading genome. Laser eyes chase breakouts. Crowns trade big. Same traits, same trader. The League ranks every Chog against just holding CHOG, and on your first visit, the House Chog shows you around.",
+     "file": "audio/vo/meet_0.mp3",
+     "startFrame": 878,
+     "durationFrames": 508,
+     "words": [
+      {
+       "word": "Up",
+       "start": 878,
+       "end": 883
+      },
+      {
+       "word": "to",
+       "start": 884,
+       "end": 886
+      },
+      {
+       "word": "thirteen",
+       "start": 888,
+       "end": 903
+      },
+      {
+       "word": "on-chain",
+       "start": 907,
+       "end": 923
+      },
+      {
+       "word": "traits",
+       "start": 925,
+       "end": 937
+      },
+      {
+       "word": "compile",
+       "start": 939,
+       "end": 955
+      },
+      {
+       "word": "into",
+       "start": 956,
+       "end": 961
+      },
+      {
+       "word": "a",
+       "start": 964,
+       "end": 965
+      },
+      {
+       "word": "trading",
+       "start": 966,
+       "end": 976
+      },
+      {
+       "word": "genome.",
+       "start": 978,
+       "end": 997
+      },
+      {
+       "word": "Laser",
+       "start": 1007,
+       "end": 1019
+      },
+      {
+       "word": "eyes",
+       "start": 1021,
+       "end": 1030
+      },
+      {
+       "word": "chase",
+       "start": 1031,
+       "end": 1039
+      },
+      {
+       "word": "breakouts.",
+       "start": 1040,
+       "end": 1063
+      },
+      {
+       "word": "Crowns",
+       "start": 1070,
+       "end": 1084
+      },
+      {
+       "word": "trade",
+       "start": 1086,
+       "end": 1094
+      },
+      {
+       "word": "big.",
+       "start": 1095,
+       "end": 1109
+      },
+      {
+       "word": "Same",
+       "start": 1117,
+       "end": 1125
+      },
+      {
+       "word": "traits,",
+       "start": 1126,
+       "end": 1141
+      },
+      {
+       "word": "same",
+       "start": 1144,
+       "end": 1152
+      },
+      {
+       "word": "trader.",
+       "start": 1153,
+       "end": 1172
+      },
+      {
+       "word": "The",
+       "start": 1181,
+       "end": 1185
+      },
+      {
+       "word": "League",
+       "start": 1187,
+       "end": 1195
+      },
+      {
+       "word": "ranks",
+       "start": 1197,
+       "end": 1205
+      },
+      {
+       "word": "every",
+       "start": 1207,
+       "end": 1218
+      },
+      {
+       "word": "Chog",
+       "start": 1220,
+       "end": 1231
+      },
+      {
+       "word": "against",
+       "start": 1233,
+       "end": 1243
+      },
+      {
+       "word": "just",
+       "start": 1244,
+       "end": 1251
+      },
+      {
+       "word": "holding",
+       "start": 1252,
+       "end": 1264
+      },
+      {
+       "word": "CHOG,",
+       "start": 1266,
+       "end": 1282
+      },
+      {
+       "word": "and",
+       "start": 1286,
+       "end": 1291
+      },
+      {
+       "word": "on",
+       "start": 1293,
+       "end": 1295
+      },
+      {
+       "word": "your",
+       "start": 1296,
+       "end": 1300
+      },
+      {
+       "word": "first",
+       "start": 1301,
+       "end": 1309
+      },
+      {
+       "word": "visit,",
+       "start": 1311,
+       "end": 1321
+      },
+      {
+       "word": "the",
+       "start": 1321,
+       "end": 1324
+      },
+      {
+       "word": "House",
+       "start": 1326,
+       "end": 1334
+      },
+      {
+       "word": "Chog",
+       "start": 1335,
+       "end": 1344
+      },
+      {
+       "word": "shows",
+       "start": 1346,
+       "end": 1354
+      },
+      {
+       "word": "you",
+       "start": 1356,
+       "end": 1359
+      },
+      {
+       "word": "around.",
+       "start": 1361,
+       "end": 1385
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "rewind",
+   "from": 1393,
+   "durationInFrames": 390,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "In Versus, two Chogs race a hidden forty-eight hours of real CHOG history. Call the winner, watch the knockout, then see the real dates. Or breed two, and race their child on the same chart.",
+     "file": "audio/vo/rewind_0.mp3",
+     "startFrame": 1401,
+     "durationFrames": 346,
+     "words": [
+      {
+       "word": "In",
+       "start": 1401,
+       "end": 1405
+      },
+      {
+       "word": "Versus,",
+       "start": 1407,
+       "end": 1425
+      },
+      {
+       "word": "two",
+       "start": 1426,
+       "end": 1432
+      },
+      {
+       "word": "Chogs",
+       "start": 1434,
+       "end": 1444
+      },
+      {
+       "word": "race",
+       "start": 1446,
+       "end": 1453
+      },
+      {
+       "word": "a",
+       "start": 1454,
+       "end": 1454
+      },
+      {
+       "word": "hidden",
+       "start": 1456,
+       "end": 1463
+      },
+      {
+       "word": "forty-eight",
+       "start": 1465,
+       "end": 1480
+      },
+      {
+       "word": "hours",
+       "start": 1481,
+       "end": 1491
+      },
+      {
+       "word": "of",
+       "start": 1492,
+       "end": 1494
+      },
+      {
+       "word": "real",
+       "start": 1496,
+       "end": 1503
+      },
+      {
+       "word": "CHOG",
+       "start": 1506,
+       "end": 1516
+      },
+      {
+       "word": "history.",
+       "start": 1517,
+       "end": 1535
+      },
+      {
+       "word": "Call",
+       "start": 1545,
+       "end": 1551
+      },
+      {
+       "word": "the",
+       "start": 1553,
+       "end": 1555
+      },
+      {
+       "word": "winner,",
+       "start": 1556,
+       "end": 1568
+      },
+      {
+       "word": "watch",
+       "start": 1570,
+       "end": 1578
+      },
+      {
+       "word": "the",
+       "start": 1580,
+       "end": 1582
+      },
+      {
+       "word": "knockout,",
+       "start": 1584,
+       "end": 1598
+      },
+      {
+       "word": "then",
+       "start": 1599,
+       "end": 1604
+      },
+      {
+       "word": "see",
+       "start": 1606,
+       "end": 1610
+      },
+      {
+       "word": "the",
+       "start": 1611,
+       "end": 1613
+      },
+      {
+       "word": "real",
+       "start": 1614,
+       "end": 1619
+      },
+      {
+       "word": "dates.",
+       "start": 1620,
+       "end": 1634
+      },
+      {
+       "word": "Or",
+       "start": 1641,
+       "end": 1647
+      },
+      {
+       "word": "breed",
+       "start": 1648,
+       "end": 1656
+      },
+      {
+       "word": "two,",
+       "start": 1658,
+       "end": 1672
+      },
+      {
+       "word": "and",
+       "start": 1677,
+       "end": 1682
+      },
+      {
+       "word": "race",
+       "start": 1685,
+       "end": 1691
+      },
+      {
+       "word": "their",
+       "start": 1693,
+       "end": 1697
+      },
+      {
+       "word": "child",
+       "start": 1699,
+       "end": 1710
+      },
+      {
+       "word": "on",
+       "start": 1712,
+       "end": 1715
+      },
+      {
+       "word": "the",
+       "start": 1716,
+       "end": 1718
+      },
+      {
+       "word": "same",
+       "start": 1719,
+       "end": 1727
+      },
+      {
+       "word": "chart.",
+       "start": 1728,
+       "end": 1747
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "bell",
+   "from": 1783,
+   "durationInFrames": 435,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "Every day at fifteen hundred UTC, the Daily Bell rings. All nineteen sixty-nine Chogs call the next twenty-four hours. Fans ride the one they trust. No wallet, just points. Then the market settles it.",
+     "file": "audio/vo/bell_0.mp3",
+     "startFrame": 1791,
+     "durationFrames": 414,
+     "words": [
+      {
+       "word": "Every",
+       "start": 1791,
+       "end": 1799
+      },
+      {
+       "word": "day",
+       "start": 1801,
+       "end": 1807
+      },
+      {
+       "word": "at",
+       "start": 1808,
+       "end": 1811
+      },
+      {
+       "word": "fifteen",
+       "start": 1812,
+       "end": 1823
+      },
+      {
+       "word": "hundred",
+       "start": 1824,
+       "end": 1832
+      },
+      {
+       "word": "UTC,",
+       "start": 1834,
+       "end": 1856
+      },
+      {
+       "word": "the",
+       "start": 1861,
+       "end": 1864
+      },
+      {
+       "word": "Daily",
+       "start": 1866,
+       "end": 1875
+      },
+      {
+       "word": "Bell",
+       "start": 1877,
+       "end": 1883
+      },
+      {
+       "word": "rings.",
+       "start": 1886,
+       "end": 1904
+      },
+      {
+       "word": "All",
+       "start": 1913,
+       "end": 1921
+      },
+      {
+       "word": "nineteen",
+       "start": 1924,
+       "end": 1937
+      },
+      {
+       "word": "sixty-nine",
+       "start": 1939,
+       "end": 1956
+      },
+      {
+       "word": "Chogs",
+       "start": 1958,
+       "end": 1971
+      },
+      {
+       "word": "call",
+       "start": 1974,
+       "end": 1982
+      },
+      {
+       "word": "the",
+       "start": 1984,
+       "end": 1986
+      },
+      {
+       "word": "next",
+       "start": 1987,
+       "end": 1996
+      },
+      {
+       "word": "twenty-four",
+       "start": 2000,
+       "end": 2015
+      },
+      {
+       "word": "hours.",
+       "start": 2016,
+       "end": 2033
+      },
+      {
+       "word": "Fans",
+       "start": 2043,
+       "end": 2056
+      },
+      {
+       "word": "ride",
+       "start": 2059,
+       "end": 2067
+      },
+      {
+       "word": "the",
+       "start": 2068,
+       "end": 2070
+      },
+      {
+       "word": "one",
+       "start": 2072,
+       "end": 2076
+      },
+      {
+       "word": "they",
+       "start": 2077,
+       "end": 2081
+      },
+      {
+       "word": "trust.",
+       "start": 2083,
+       "end": 2099
+      },
+      {
+       "word": "No",
+       "start": 2101,
+       "end": 2106
+      },
+      {
+       "word": "wallet,",
+       "start": 2108,
+       "end": 2120
+      },
+      {
+       "word": "just",
+       "start": 2121,
+       "end": 2127
+      },
+      {
+       "word": "points.",
+       "start": 2129,
+       "end": 2146
+      },
+      {
+       "word": "Then",
+       "start": 2155,
+       "end": 2163
+      },
+      {
+       "word": "the",
+       "start": 2165,
+       "end": 2167
+      },
+      {
+       "word": "market",
+       "start": 2169,
+       "end": 2179
+      },
+      {
+       "word": "settles",
+       "start": 2180,
+       "end": 2190
+      },
+      {
+       "word": "it.",
+       "start": 2192,
+       "end": 2205
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "purse",
+   "from": 2218,
+   "durationInFrames": 320,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "The best call earns a soulbound trophy in its own wallet, and an Oracle Purse of five hundred real CHOG, sent automatically. The prize belongs to the NFT.",
+     "file": "audio/vo/purse_0.mp3",
+     "startFrame": 2226,
+     "durationFrames": 304,
+     "words": [
+      {
+       "word": "The",
+       "start": 2226,
+       "end": 2231
+      },
+      {
+       "word": "best",
+       "start": 2232,
+       "end": 2240
+      },
+      {
+       "word": "call",
+       "start": 2242,
+       "end": 2251
+      },
+      {
+       "word": "earns",
+       "start": 2254,
+       "end": 2262
+      },
+      {
+       "word": "a",
+       "start": 2263,
+       "end": 2264
+      },
+      {
+       "word": "soulbound",
+       "start": 2266,
+       "end": 2282
+      },
+      {
+       "word": "trophy",
+       "start": 2283,
+       "end": 2295
+      },
+      {
+       "word": "in",
+       "start": 2297,
+       "end": 2298
+      },
+      {
+       "word": "its",
+       "start": 2300,
+       "end": 2304
+      },
+      {
+       "word": "own",
+       "start": 2305,
+       "end": 2311
+      },
+      {
+       "word": "wallet,",
+       "start": 2313,
+       "end": 2328
+      },
+      {
+       "word": "and",
+       "start": 2335,
+       "end": 2341
+      },
+      {
+       "word": "an",
+       "start": 2343,
+       "end": 2345
+      },
+      {
+       "word": "Oracle",
+       "start": 2347,
+       "end": 2358
+      },
+      {
+       "word": "Purse",
+       "start": 2359,
+       "end": 2368
+      },
+      {
+       "word": "of",
+       "start": 2369,
+       "end": 2371
+      },
+      {
+       "word": "five",
+       "start": 2374,
+       "end": 2382
+      },
+      {
+       "word": "hundred",
+       "start": 2383,
+       "end": 2391
+      },
+      {
+       "word": "real",
+       "start": 2393,
+       "end": 2399
+      },
+      {
+       "word": "CHOG,",
+       "start": 2402,
+       "end": 2415
+      },
+      {
+       "word": "sent",
+       "start": 2422,
+       "end": 2429
+      },
+      {
+       "word": "automatically.",
+       "start": 2431,
+       "end": 2456
+      },
+      {
+       "word": "The",
+       "start": 2468,
+       "end": 2471
+      },
+      {
+       "word": "prize",
+       "start": 2472,
+       "end": 2481
+      },
+      {
+       "word": "belongs",
+       "start": 2483,
+       "end": 2496
+      },
+      {
+       "word": "to",
+       "start": 2497,
+       "end": 2499
+      },
+      {
+       "word": "the",
+       "start": 2501,
+       "end": 2503
+      },
+      {
+       "word": "NFT.",
+       "start": 2505,
+       "end": 2530
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "heist",
+   "from": 2538,
+   "durationInFrames": 736,
+   "lines": [
+    {
+     "voice": "chog",
+     "text": "Psst. You're here for my CHOG, aren't you? You get three messages. Make them count.",
+     "file": "audio/vo/heist_0.mp3",
+     "startFrame": 2546,
+     "durationFrames": 187,
+     "words": [
+      {
+       "word": "Psst.",
+       "start": 2546,
+       "end": 2562
+      },
+      {
+       "word": "You're",
+       "start": 2576,
+       "end": 2583
+      },
+      {
+       "word": "here",
+       "start": 2583,
+       "end": 2589
+      },
+      {
+       "word": "for",
+       "start": 2590,
+       "end": 2594
+      },
+      {
+       "word": "my",
+       "start": 2596,
+       "end": 2600
+      },
+      {
+       "word": "CHOG,",
+       "start": 2602,
+       "end": 2617
+      },
+      {
+       "word": "aren't",
+       "start": 2618,
+       "end": 2626
+      },
+      {
+       "word": "you?",
+       "start": 2628,
+       "end": 2635
+      },
+      {
+       "word": "You",
+       "start": 2650,
+       "end": 2654
+      },
+      {
+       "word": "get",
+       "start": 2656,
+       "end": 2661
+      },
+      {
+       "word": "three",
+       "start": 2662,
+       "end": 2670
+      },
+      {
+       "word": "messages.",
+       "start": 2672,
+       "end": 2694
+      },
+      {
+       "word": "Make",
+       "start": 2698,
+       "end": 2703
+      },
+      {
+       "word": "them",
+       "start": 2704,
+       "end": 2709
+      },
+      {
+       "word": "count.",
+       "start": 2711,
+       "end": 2733
+      }
+     ]
+    },
+    {
+     "voice": "narrator",
+     "text": "Rob this Chog. The House Chog keeps fifteen thousand real CHOG in its wallet. Talk it into sending them. Even when the AI says yes, we run that exact transfer against Monad mainnet. Monad says no. Not authorized. The AI can be fooled. The NFT can't.",
+     "file": "audio/vo/heist_1.mp3",
+     "startFrame": 2741,
+     "durationFrames": 526,
+     "words": [
+      {
+       "word": "Rob",
+       "start": 2741,
+       "end": 2758
+      },
+      {
+       "word": "this",
+       "start": 2760,
+       "end": 2766
+      },
+      {
+       "word": "Chog.",
+       "start": 2769,
+       "end": 2788
+      },
+      {
+       "word": "The",
+       "start": 2795,
+       "end": 2799
+      },
+      {
+       "word": "House",
+       "start": 2801,
+       "end": 2809
+      },
+      {
+       "word": "Chog",
+       "start": 2810,
+       "end": 2821
+      },
+      {
+       "word": "keeps",
+       "start": 2823,
+       "end": 2832
+      },
+      {
+       "word": "fifteen",
+       "start": 2834,
+       "end": 2848
+      },
+      {
+       "word": "thousand",
+       "start": 2850,
+       "end": 2864
+      },
+      {
+       "word": "real",
+       "start": 2866,
+       "end": 2873
+      },
+      {
+       "word": "CHOG",
+       "start": 2876,
+       "end": 2884
+      },
+      {
+       "word": "in",
+       "start": 2886,
+       "end": 2888
+      },
+      {
+       "word": "its",
+       "start": 2889,
+       "end": 2892
+      },
+      {
+       "word": "wallet.",
+       "start": 2894,
+       "end": 2908
+      },
+      {
+       "word": "Talk",
+       "start": 2916,
+       "end": 2923
+      },
+      {
+       "word": "it",
+       "start": 2924,
+       "end": 2926
+      },
+      {
+       "word": "into",
+       "start": 2927,
+       "end": 2931
+      },
+      {
+       "word": "sending",
+       "start": 2933,
+       "end": 2942
+      },
+      {
+       "word": "them.",
+       "start": 2943,
+       "end": 2953
+      },
+      {
+       "word": "Even",
+       "start": 2963,
+       "end": 2971
+      },
+      {
+       "word": "when",
+       "start": 2972,
+       "end": 2975
+      },
+      {
+       "word": "the",
+       "start": 2976,
+       "end": 2979
+      },
+      {
+       "word": "AI",
+       "start": 2981,
+       "end": 2990
+      },
+      {
+       "word": "says",
+       "start": 2992,
+       "end": 2999
+      },
+      {
+       "word": "yes,",
+       "start": 3002,
+       "end": 3012
+      },
+      {
+       "word": "we",
+       "start": 3013,
+       "end": 3017
+      },
+      {
+       "word": "run",
+       "start": 3019,
+       "end": 3023
+      },
+      {
+       "word": "that",
+       "start": 3025,
+       "end": 3029
+      },
+      {
+       "word": "exact",
+       "start": 3030,
+       "end": 3041
+      },
+      {
+       "word": "transfer",
+       "start": 3043,
+       "end": 3056
+      },
+      {
+       "word": "against",
+       "start": 3058,
+       "end": 3068
+      },
+      {
+       "word": "Monad",
+       "start": 3070,
+       "end": 3082
+      },
+      {
+       "word": "mainnet.",
+       "start": 3083,
+       "end": 3101
+      },
+      {
+       "word": "Monad",
+       "start": 3111,
+       "end": 3124
+      },
+      {
+       "word": "says",
+       "start": 3126,
+       "end": 3132
+      },
+      {
+       "word": "no.",
+       "start": 3134,
+       "end": 3144
+      },
+      {
+       "word": "Not",
+       "start": 3146,
+       "end": 3153
+      },
+      {
+       "word": "authorized.",
+       "start": 3155,
+       "end": 3177
+      },
+      {
+       "word": "The",
+       "start": 3183,
+       "end": 3187
+      },
+      {
+       "word": "AI",
+       "start": 3189,
+       "end": 3196
+      },
+      {
+       "word": "can",
+       "start": 3198,
+       "end": 3201
+      },
+      {
+       "word": "be",
+       "start": 3202,
+       "end": 3205
+      },
+      {
+       "word": "fooled.",
+       "start": 3207,
+       "end": 3221
+      },
+      {
+       "word": "The",
+       "start": 3224,
+       "end": 3228
+      },
+      {
+       "word": "NFT",
+       "start": 3230,
+       "end": 3240
+      },
+      {
+       "word": "can't.",
+       "start": 3245,
+       "end": 3266
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "setup",
+   "from": 3274,
+   "durationInFrames": 645,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "Holders can put the AI on-chain. Last night, the House Chog's holder did. Create the Chog's wallet. Let the guard trade. Set limits: ten percent a trade, thirty percent a day. Deposit fifteen thousand CHOG and a thousand and one WMON. Then two free signatures: wake the AI, and switch it on-chain.",
+     "file": "audio/vo/setup_0.mp3",
+     "startFrame": 3282,
+     "durationFrames": 611,
+     "words": [
+      {
+       "word": "Holders",
+       "start": 3282,
+       "end": 3296
+      },
+      {
+       "word": "can",
+       "start": 3297,
+       "end": 3300
+      },
+      {
+       "word": "put",
+       "start": 3302,
+       "end": 3306
+      },
+      {
+       "word": "the",
+       "start": 3307,
+       "end": 3310
+      },
+      {
+       "word": "AI",
+       "start": 3312,
+       "end": 3321
+      },
+      {
+       "word": "on-chain.",
+       "start": 3323,
+       "end": 3347
+      },
+      {
+       "word": "Last",
+       "start": 3357,
+       "end": 3365
+      },
+      {
+       "word": "night,",
+       "start": 3367,
+       "end": 3374
+      },
+      {
+       "word": "the",
+       "start": 3375,
+       "end": 3377
+      },
+      {
+       "word": "House",
+       "start": 3379,
+       "end": 3386
+      },
+      {
+       "word": "Chog's",
+       "start": 3387,
+       "end": 3398
+      },
+      {
+       "word": "holder",
+       "start": 3399,
+       "end": 3409
+      },
+      {
+       "word": "did.",
+       "start": 3411,
+       "end": 3423
+      },
+      {
+       "word": "Create",
+       "start": 3431,
+       "end": 3442
+      },
+      {
+       "word": "the",
+       "start": 3442,
+       "end": 3444
+      },
+      {
+       "word": "Chog's",
+       "start": 3445,
+       "end": 3454
+      },
+      {
+       "word": "wallet.",
+       "start": 3455,
+       "end": 3471
+      },
+      {
+       "word": "Let",
+       "start": 3480,
+       "end": 3486
+      },
+      {
+       "word": "the",
+       "start": 3487,
+       "end": 3489
+      },
+      {
+       "word": "guard",
+       "start": 3490,
+       "end": 3497
+      },
+      {
+       "word": "trade.",
+       "start": 3498,
+       "end": 3514
+      },
+      {
+       "word": "Set",
+       "start": 3523,
+       "end": 3530
+      },
+      {
+       "word": "limits:",
+       "start": 3531,
+       "end": 3548
+      },
+      {
+       "word": "ten",
+       "start": 3553,
+       "end": 3559
+      },
+      {
+       "word": "percent",
+       "start": 3561,
+       "end": 3571
+      },
+      {
+       "word": "a",
+       "start": 3573,
+       "end": 3574
+      },
+      {
+       "word": "trade,",
+       "start": 3575,
+       "end": 3589
+      },
+      {
+       "word": "thirty",
+       "start": 3592,
+       "end": 3600
+      },
+      {
+       "word": "percent",
+       "start": 3602,
+       "end": 3612
+      },
+      {
+       "word": "a",
+       "start": 3613,
+       "end": 3614
+      },
+      {
+       "word": "day.",
+       "start": 3615,
+       "end": 3630
+      },
+      {
+       "word": "Deposit",
+       "start": 3637,
+       "end": 3651
+      },
+      {
+       "word": "fifteen",
+       "start": 3653,
+       "end": 3665
+      },
+      {
+       "word": "thousand",
+       "start": 3667,
+       "end": 3678
+      },
+      {
+       "word": "CHOG",
+       "start": 3680,
+       "end": 3688
+      },
+      {
+       "word": "and",
+       "start": 3690,
+       "end": 3693
+      },
+      {
+       "word": "a",
+       "start": 3694,
+       "end": 3695
+      },
+      {
+       "word": "thousand",
+       "start": 3696,
+       "end": 3708
+      },
+      {
+       "word": "and",
+       "start": 3709,
+       "end": 3711
+      },
+      {
+       "word": "one",
+       "start": 3714,
+       "end": 3722
+      },
+      {
+       "word": "WMON.",
+       "start": 3723,
+       "end": 3757
+      },
+      {
+       "word": "Then",
+       "start": 3765,
+       "end": 3772
+      },
+      {
+       "word": "two",
+       "start": 3774,
+       "end": 3780
+      },
+      {
+       "word": "free",
+       "start": 3783,
+       "end": 3790
+      },
+      {
+       "word": "signatures:",
+       "start": 3791,
+       "end": 3815
+      },
+      {
+       "word": "wake",
+       "start": 3823,
+       "end": 3831
+      },
+      {
+       "word": "the",
+       "start": 3832,
+       "end": 3834
+      },
+      {
+       "word": "AI,",
+       "start": 3837,
+       "end": 3852
+      },
+      {
+       "word": "and",
+       "start": 3854,
+       "end": 3858
+      },
+      {
+       "word": "switch",
+       "start": 3860,
+       "end": 3867
+      },
+      {
+       "word": "it",
+       "start": 3868,
+       "end": 3870
+      },
+      {
+       "word": "on-chain.",
+       "start": 3871,
+       "end": 3892
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "guard",
+   "from": 3919,
+   "durationInFrames": 555,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "The AI's key can call one function: trade. Every swap lands back in the same wallet, so it can never withdraw. Only the holder can. Last night, one WMON came out, through the wallet's own execute. And every AI decision carries its zero G Compute receipt.",
+     "file": "audio/vo/guard_0.mp3",
+     "startFrame": 3927,
+     "durationFrames": 529,
+     "words": [
+      {
+       "word": "The",
+       "start": 3927,
+       "end": 3932
+      },
+      {
+       "word": "AI's",
+       "start": 3934,
+       "end": 3947
+      },
+      {
+       "word": "key",
+       "start": 3949,
+       "end": 3957
+      },
+      {
+       "word": "can",
+       "start": 3959,
+       "end": 3964
+      },
+      {
+       "word": "call",
+       "start": 3966,
+       "end": 3974
+      },
+      {
+       "word": "one",
+       "start": 3977,
+       "end": 3985
+      },
+      {
+       "word": "function:",
+       "start": 3987,
+       "end": 4006
+      },
+      {
+       "word": "trade.",
+       "start": 4012,
+       "end": 4030
+      },
+      {
+       "word": "Every",
+       "start": 4038,
+       "end": 4046
+      },
+      {
+       "word": "swap",
+       "start": 4048,
+       "end": 4056
+      },
+      {
+       "word": "lands",
+       "start": 4058,
+       "end": 4067
+      },
+      {
+       "word": "back",
+       "start": 4068,
+       "end": 4074
+      },
+      {
+       "word": "in",
+       "start": 4075,
+       "end": 4077
+      },
+      {
+       "word": "the",
+       "start": 4078,
+       "end": 4080
+      },
+      {
+       "word": "same",
+       "start": 4082,
+       "end": 4088
+      },
+      {
+       "word": "wallet,",
+       "start": 4090,
+       "end": 4103
+      },
+      {
+       "word": "so",
+       "start": 4104,
+       "end": 4107
+      },
+      {
+       "word": "it",
+       "start": 4109,
+       "end": 4110
+      },
+      {
+       "word": "can",
+       "start": 4111,
+       "end": 4114
+      },
+      {
+       "word": "never",
+       "start": 4115,
+       "end": 4121
+      },
+      {
+       "word": "withdraw.",
+       "start": 4123,
+       "end": 4145
+      },
+      {
+       "word": "Only",
+       "start": 4154,
+       "end": 4164
+      },
+      {
+       "word": "the",
+       "start": 4166,
+       "end": 4168
+      },
+      {
+       "word": "holder",
+       "start": 4170,
+       "end": 4181
+      },
+      {
+       "word": "can.",
+       "start": 4183,
+       "end": 4197
+      },
+      {
+       "word": "Last",
+       "start": 4207,
+       "end": 4215
+      },
+      {
+       "word": "night,",
+       "start": 4217,
+       "end": 4225
+      },
+      {
+       "word": "one",
+       "start": 4226,
+       "end": 4234
+      },
+      {
+       "word": "WMON",
+       "start": 4235,
+       "end": 4256
+      },
+      {
+       "word": "came",
+       "start": 4258,
+       "end": 4264
+      },
+      {
+       "word": "out,",
+       "start": 4265,
+       "end": 4272
+      },
+      {
+       "word": "through",
+       "start": 4273,
+       "end": 4279
+      },
+      {
+       "word": "the",
+       "start": 4281,
+       "end": 4283
+      },
+      {
+       "word": "wallet's",
+       "start": 4284,
+       "end": 4294
+      },
+      {
+       "word": "own",
+       "start": 4296,
+       "end": 4302
+      },
+      {
+       "word": "execute.",
+       "start": 4305,
+       "end": 4324
+      },
+      {
+       "word": "And",
+       "start": 4330,
+       "end": 4335
+      },
+      {
+       "word": "every",
+       "start": 4338,
+       "end": 4347
+      },
+      {
+       "word": "AI",
+       "start": 4349,
+       "end": 4357
+      },
+      {
+       "word": "decision",
+       "start": 4359,
+       "end": 4371
+      },
+      {
+       "word": "carries",
+       "start": 4372,
+       "end": 4384
+      },
+      {
+       "word": "its",
+       "start": 4386,
+       "end": 4391
+      },
+      {
+       "word": "zero",
+       "start": 4394,
+       "end": 4408
+      },
+      {
+       "word": "G",
+       "start": 4412,
+       "end": 4416
+      },
+      {
+       "word": "Compute",
+       "start": 4422,
+       "end": 4433
+      },
+      {
+       "word": "receipt.",
+       "start": 4434,
+       "end": 4455
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "unique",
+   "from": 4474,
+   "durationInFrames": 360,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "Why the Chog matters? No NFT, no trader. No NFT, no wallet. No NFT, no authority. Sell the Chog, and its trader, its wallet and its trophies go with it.",
+     "file": "audio/vo/unique_0.mp3",
+     "startFrame": 4482,
+     "durationFrames": 332,
+     "words": [
+      {
+       "word": "Why",
+       "start": 4482,
+       "end": 4497
+      },
+      {
+       "word": "the",
+       "start": 4499,
+       "end": 4501
+      },
+      {
+       "word": "Chog",
+       "start": 4502,
+       "end": 4510
+      },
+      {
+       "word": "matters?",
+       "start": 4512,
+       "end": 4528
+      },
+      {
+       "word": "No",
+       "start": 4535,
+       "end": 4540
+      },
+      {
+       "word": "NFT,",
+       "start": 4542,
+       "end": 4560
+      },
+      {
+       "word": "no",
+       "start": 4562,
+       "end": 4566
+      },
+      {
+       "word": "trader.",
+       "start": 4568,
+       "end": 4583
+      },
+      {
+       "word": "No",
+       "start": 4585,
+       "end": 4590
+      },
+      {
+       "word": "NFT,",
+       "start": 4592,
+       "end": 4609
+      },
+      {
+       "word": "no",
+       "start": 4611,
+       "end": 4615
+      },
+      {
+       "word": "wallet.",
+       "start": 4617,
+       "end": 4632
+      },
+      {
+       "word": "No",
+       "start": 4636,
+       "end": 4642
+      },
+      {
+       "word": "NFT,",
+       "start": 4644,
+       "end": 4661
+      },
+      {
+       "word": "no",
+       "start": 4663,
+       "end": 4668
+      },
+      {
+       "word": "authority.",
+       "start": 4670,
+       "end": 4689
+      },
+      {
+       "word": "Sell",
+       "start": 4697,
+       "end": 4703
+      },
+      {
+       "word": "the",
+       "start": 4705,
+       "end": 4707
+      },
+      {
+       "word": "Chog,",
+       "start": 4708,
+       "end": 4721
+      },
+      {
+       "word": "and",
+       "start": 4722,
+       "end": 4728
+      },
+      {
+       "word": "its",
+       "start": 4730,
+       "end": 4735
+      },
+      {
+       "word": "trader,",
+       "start": 4736,
+       "end": 4747
+      },
+      {
+       "word": "its",
+       "start": 4748,
+       "end": 4753
+      },
+      {
+       "word": "wallet",
+       "start": 4754,
+       "end": 4764
+      },
+      {
+       "word": "and",
+       "start": 4766,
+       "end": 4769
+      },
+      {
+       "word": "its",
+       "start": 4770,
+       "end": 4774
+      },
+      {
+       "word": "trophies",
+       "start": 4775,
+       "end": 4788
+      },
+      {
+       "word": "go",
+       "start": 4790,
+       "end": 4793
+      },
+      {
+       "word": "with",
+       "start": 4795,
+       "end": 4800
+      },
+      {
+       "word": "it.",
+       "start": 4801,
+       "end": 4814
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "close",
+   "from": 4834,
+   "durationInFrames": 369,
+   "lines": [
+    {
+     "voice": "narrator",
+     "text": "Animr. Meet a Chog, race it, ride it, or try to rob it. Next, every holder can switch theirs on.",
+     "file": "audio/vo/close_0.mp3",
+     "startFrame": 4842,
+     "durationFrames": 232,
+     "words": [
+      {
+       "word": "Animr.",
+       "start": 4842,
+       "end": 4862
+      },
+      {
+       "word": "Meet",
+       "start": 4871,
+       "end": 4878
+      },
+      {
+       "word": "a",
+       "start": 4879,
+       "end": 4880
+      },
+      {
+       "word": "Chog,",
+       "start": 4882,
+       "end": 4898
+      },
+      {
+       "word": "race",
+       "start": 4904,
+       "end": 4914
+      },
+      {
+       "word": "it,",
+       "start": 4916,
+       "end": 4921
+      },
+      {
+       "word": "ride",
+       "start": 4925,
+       "end": 4936
+      },
+      {
+       "word": "it,",
+       "start": 4937,
+       "end": 4941
+      },
+      {
+       "word": "or",
+       "start": 4942,
+       "end": 4947
+      },
+      {
+       "word": "try",
+       "start": 4949,
+       "end": 4956
+      },
+      {
+       "word": "to",
+       "start": 4958,
+       "end": 4959
+      },
+      {
+       "word": "rob",
+       "start": 4962,
+       "end": 4969
+      },
+      {
+       "word": "it.",
+       "start": 4972,
+       "end": 4980
+      },
+      {
+       "word": "Next,",
+       "start": 4991,
+       "end": 5004
+      },
+      {
+       "word": "every",
+       "start": 5006,
+       "end": 5017
+      },
+      {
+       "word": "holder",
+       "start": 5019,
+       "end": 5028
+      },
+      {
+       "word": "can",
+       "start": 5030,
+       "end": 5034
+      },
+      {
+       "word": "switch",
+       "start": 5036,
+       "end": 5044
+      },
+      {
+       "word": "theirs",
+       "start": 5046,
+       "end": 5054
+      },
+      {
+       "word": "on.",
+       "start": 5057,
+       "end": 5073
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1024 @@
+{
+  "checkedAt": "2026-10-22T01:40:53.572Z",
+  "chain": {
+    "name": "Monad mainnet",
+    "chainId": 143,
+    "rpc": "https://rpc.monad.xyz"
+  },
+  "stateReadAtBlock": 115483658,
+  "stateReadAtBlockTimeISO": "2026-10-22T01:40:51.000Z",
+  "addresses": {
+    "owner": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+    "chogNft": "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+    "tokenId": "1399",
+    "tba": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+    "registry": "0x000000006551c19487814612e58FE06813775758",
+    "tokenboundAccountProxy": "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+    "tokenboundImplementation": "0x41C8f39463A868d3A88af00cd0fe7102F30E44eC",
+    "tradeGuard": "0x92D3d4Af4B3b0F29Ec020e407803e135af61987b",
+    "wmon": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+    "chog": "0x350035555E10d9AfAF1566AaebfCeD5BA6C27777",
+    "trophies": "0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d",
+    "houseKey": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+    "operator": "0x2523bBdD941783C4E565180D2a1b18DE86319cC2",
+    "multicall3": "0xcA11bde05977b3631167028862bE2a173976CA11",
+    "wrapRouterUsedByWallet": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+    "wrapRouterFeeRecipient": "0xf70da97812cb96acdf810712aa562db8dfa3dbef"
+  },
+  "method": "Every tx sent by the owner, operator and House key was found by bisecting eth_getTransactionCount over block height (from block 115290000, 2026-10-21 ~09:59 UTC, to latest), then reading each block and receipt. Cross-checked with eth_getLogs (100-block chunks) over blocks 115447900..latest for: all TBA-emitted logs, CHOG/WMON Transfers to the TBA, CHOG/WMON/Guard logs with topic1 = TBA (transfers out, guard Configured/Traded/Disabled/BuyOnlySet). The log scan found exactly the 6 TBA-related logs already in the txs below; no other deposits, withdrawals or guard events exist for the TBA.",
+  "nonces": {
+    "owner": "7 at block 115290000 -> 16 now (9 txs, nonces 7..15, all listed)",
+    "operator": "0 -> 2 (2 txs, both listed, both 2026-10-21 15:01 UTC)",
+    "houseKey": "5 at block 115290000 -> 8 now (3 txs listed; nonces 0..4 predate the RPC history window and are not listed)"
+  },
+  "ownerSetup": [
+    {
+      "step": "1. Create the Token Bound Account (registry.createAccount + initialize, batched via Multicall3)",
+      "actor": "owner",
+      "hash": "0x28de3abe02e1c3f464481035d104a6abd9157e5705c3cae509a75b2b783de466",
+      "blockNumber": 115447994,
+      "timestamp": 1792622485,
+      "timestampISO": "2026-10-21T22:41:25.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0xca11bde05977b3631167028862be2a173976ca11",
+      "contractAddress": null,
+      "nonce": 7,
+      "status": "success",
+      "gasUsed": "257123",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "aggregate3",
+        "args": [
+          [
+            {
+              "target": "0x000000006551c19487814612e58FE06813775758",
+              "allowFailure": false,
+              "callData": "0x8a54c52f00000000000000000000000055266d75d1a14e4572138116af39863ed6596e7f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008f000000000000000000000000c96d31f8626c6d03fae5dcd3d61e3fb9f4a737630000000000000000000000000000000000000000000000000000000000000577"
+            },
+            {
+              "target": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+              "allowFailure": false,
+              "callData": "0xc4d66de800000000000000000000000041c8f39463a868d3a88af00cd0fe7102f30e44ec"
+            }
+          ]
+        ],
+        "inner": [
+          {
+            "target": "0x000000006551c19487814612e58FE06813775758",
+            "fn": "createAccount",
+            "args": [
+              "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+              "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "143",
+              "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+              "1399"
+            ]
+          },
+          {
+            "target": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "fn": "initialize",
+            "args": [
+              "0x41C8f39463A868d3A88af00cd0fe7102F30E44eC"
+            ]
+          }
+        ]
+      },
+      "keyFigures": {
+        "accountCreated": {
+          "account": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+          "implementation": "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+          "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "chainId": "143",
+          "tokenContract": "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+          "tokenId": "1399"
+        },
+        "tbaInitializedWithImplementation": "0x41C8f39463A868d3A88af00cd0fe7102F30E44eC"
+      },
+      "events": [
+        {
+          "address": "0x000000006551c19487814612e58fe06813775758",
+          "logIndex": 51,
+          "event": "ERC6551AccountCreated",
+          "args": {
+            "implementation": "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+            "tokenContract": "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+            "tokenId": "1399",
+            "account": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "chainId": "143"
+          }
+        },
+        {
+          "address": "0xa46ae2364eda19c7d8fce7f5878c93e50ab2ad71",
+          "logIndex": 52,
+          "event": "Upgraded",
+          "args": {
+            "implementation": "0x41C8f39463A868d3A88af00cd0fe7102F30E44eC"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x28de3abe02e1c3f464481035d104a6abd9157e5705c3cae509a75b2b783de466"
+    },
+    {
+      "step": "2. Authorize AnimrTradeGuard on the TBA (Tokenbound setPermissions)",
+      "actor": "owner",
+      "hash": "0xfb080b34bab37cf96892357e7a1edc6af8b74d9fdf539916054ebfd2ce0ceed7",
+      "blockNumber": 115448521,
+      "timestamp": 1792622644,
+      "timestampISO": "2026-10-21T22:44:04.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0xa46ae2364eda19c7d8fce7f5878c93e50ab2ad71",
+      "contractAddress": null,
+      "nonce": 8,
+      "status": "success",
+      "gasUsed": "202256",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "setPermissions",
+        "args": [
+          [
+            "0x92D3d4Af4B3b0F29Ec020e407803e135af61987b"
+          ],
+          [
+            true
+          ]
+        ]
+      },
+      "keyFigures": {
+        "permission": {
+          "owner": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+          "caller": "0x92D3d4Af4B3b0F29Ec020e407803e135af61987b",
+          "hasPermission": true
+        }
+      },
+      "events": [
+        {
+          "address": "0xa46ae2364eda19c7d8fce7f5878c93e50ab2ad71",
+          "logIndex": 51,
+          "event": "PermissionUpdated",
+          "args": {
+            "owner": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "caller": "0x92D3d4Af4B3b0F29Ec020e407803e135af61987b",
+            "hasPermission": true
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0xfb080b34bab37cf96892357e7a1edc6af8b74d9fdf539916054ebfd2ce0ceed7"
+    },
+    {
+      "step": "3. Set trading limits on AnimrTradeGuard for this TBA (configure)",
+      "actor": "owner",
+      "hash": "0xf0f56e4240abfb30650d426534fbe47b8342c8b4db59835d626b8bba9af7ac44",
+      "blockNumber": 115449441,
+      "timestamp": 1792622921,
+      "timestampISO": "2026-10-21T22:48:41.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0x92d3d4af4b3b0f29ec020e407803e135af61987b",
+      "contractAddress": null,
+      "nonce": 9,
+      "status": "success",
+      "gasUsed": "197549",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "configure",
+        "args": [
+          "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+          {
+            "enabled": true,
+            "maxTradeBps": 1000,
+            "maxDailyBps": 3000,
+            "minInterval": 600,
+            "maxSlippageBps": 200
+          }
+        ]
+      },
+      "keyFigures": {
+        "limits": {
+          "enabled": true,
+          "maxTradeBps": 1000,
+          "maxDailyBps": 3000,
+          "minInterval": 600,
+          "maxSlippageBps": 200,
+          "maxTradePct": "10%",
+          "maxDailyPct": "30%",
+          "minIntervalSeconds": 600,
+          "maxSlippagePct": "2%",
+          "tba": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+          "owner": "0xc742AdA2872a042dD36D2E706907b4036968960C"
+        }
+      },
+      "events": [
+        {
+          "address": "0x92d3d4af4b3b0f29ec020e407803e135af61987b",
+          "logIndex": 94,
+          "event": "Configured",
+          "args": {
+            "tba": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "owner": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "limits": {
+              "enabled": true,
+              "maxTradeBps": 1000,
+              "maxDailyBps": 3000,
+              "minInterval": 600,
+              "maxSlippageBps": 200
+            }
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0xf0f56e4240abfb30650d426534fbe47b8342c8b4db59835d626b8bba9af7ac44"
+    },
+    {
+      "step": "4. Wrap MON into WMON (owner wallet, via a swap/wrap router contract)",
+      "actor": "owner",
+      "hash": "0x08efc69080f301d1d3d8f8c505a07b3ce2470960f6fbae2ed358a3a3f5f2795f",
+      "blockNumber": 115450211,
+      "timestamp": 1792623154,
+      "timestampISO": "2026-10-21T22:52:34.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+      "contractAddress": null,
+      "nonce": 10,
+      "status": "success",
+      "gasUsed": "348279",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "selector": "0xcd6e13f7"
+      },
+      "keyFigures": {
+        "wmonDeposits": [
+          {
+            "dst": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "amount": "1001.4955 WMON",
+            "raw": "1001495500000000000000"
+          }
+        ],
+        "tokenTransfers": [
+          {
+            "token": "WMON",
+            "from": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "to": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "amount": "1001.4955 WMON",
+            "raw": "1001495500000000000000"
+          },
+          {
+            "token": "WMON",
+            "from": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "to": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "amount": "1001.4955 WMON",
+            "raw": "1001495500000000000000"
+          }
+        ],
+        "nativeValueSent": "1003 MON",
+        "wrapBreakdown": {
+          "sentToRouter": "1003 MON",
+          "routerFeeToRecipient": {
+            "to": "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+            "amount": "1.5045 MON",
+            "source": "debug_traceTransaction callTracer"
+          },
+          "wrappedIntoWmon": "1001.4955 MON",
+          "wmonReceivedByOwner": "1001.4955 WMON",
+          "note": "WMON Deposit event dst is the router contract (it called WMON.deposit), which then transferred the WMON to the owner. Owner wallet balance fell by 1003.035524458 MON (value + gas) across this block."
+        }
+      },
+      "events": [
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 13,
+          "event": "unknown",
+          "topic0": "0xafbab204e8271965231d37baed9b1abca8725b7409c70314455f68bc89142b91",
+          "topics": [
+            "0xafbab204e8271965231d37baed9b1abca8725b7409c70314455f68bc89142b91"
+          ],
+          "data": "0x000000000000000000000000c742ada2872a042dd36d2e706907b4036968960c000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000365f6bd1e0d4cc000000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000021e2bbf035f46932f6cc60fe541815df015311a0c60de12b7b621eb964132629710000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 14,
+          "event": "unknown",
+          "topic0": "0xd35467972d1fda5b63c735f59d3974fa51785a41a92aa3ed1b70832836f8dba6",
+          "topics": [
+            "0xd35467972d1fda5b63c735f59d3974fa51785a41a92aa3ed1b70832836f8dba6"
+          ],
+          "data": "0x000000000000000000000000f70da97812cb96acdf810712aa562db8dfa3dbef00000000000000000000000000000000000000000000000014e10ec760934000"
+        },
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 15,
+          "event": "unknown",
+          "topic0": "0xafbab204e8271965231d37baed9b1abca8725b7409c70314455f68bc89142b91",
+          "topics": [
+            "0xafbab204e8271965231d37baed9b1abca8725b7409c70314455f68bc89142b91"
+          ],
+          "data": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f000000000000000000000000f70da97812cb96acdf810712aa562db8dfa3dbef000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014e10ec76093400000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000021e2bbf035f46932f6cc60fe541815df015311a0c60de12b7b621eb964132629710100000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 16,
+          "event": "unknown",
+          "topic0": "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324",
+          "topics": [
+            "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324"
+          ],
+          "data": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c4a6bd8c9600000000000000000000000000000000000000000000000014e10ec760934000000000000000000000000000f70da97812cb96acdf810712aa562db8dfa3dbef00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000021e2bbf035f46932f6cc60fe541815df015311a0c60de12b7b621eb96413262971010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+          "logIndex": 17,
+          "event": "Deposit",
+          "args": {
+            "dst": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "wad": "1001495500000000000000"
+          }
+        },
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 18,
+          "event": "unknown",
+          "topic0": "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324",
+          "topics": [
+            "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324"
+          ],
+          "data": "0x0000000000000000000000003bd359c1119da7da1d913d1c4d2b7c461115433a00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000364a8ac3197438c0000000000000000000000000000000000000000000000000000000000000000020d0e30db03f2e24c6531d8ae2f6c09d8e7a6ad7f7e87a81cb75dfda61c9d83286"
+        },
+        {
+          "address": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+          "logIndex": 19,
+          "event": "Transfer",
+          "args": {
+            "from": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "to": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "value": "1001495500000000000000"
+          }
+        },
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 20,
+          "event": "unknown",
+          "topic0": "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324",
+          "topics": [
+            "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324"
+          ],
+          "data": "0x0000000000000000000000003bd359c1119da7da1d913d1c4d2b7c461115433a000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044a9059cbb000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f0000000000000000000000000000000000000000000000364a8ac3197438c00000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+          "logIndex": 21,
+          "event": "Transfer",
+          "args": {
+            "from": "0xb92fe925DC43a0ECdE6c8b1a2709c170Ec4fFf4f",
+            "to": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "value": "1001495500000000000000"
+          }
+        },
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 22,
+          "event": "unknown",
+          "topic0": "0xafbab204e8271965231d37baed9b1abca8725b7409c70314455f68bc89142b91",
+          "topics": [
+            "0xafbab204e8271965231d37baed9b1abca8725b7409c70314455f68bc89142b91"
+          ],
+          "data": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f000000000000000000000000c742ada2872a042dd36d2e706907b4036968960c0000000000000000000000003bd359c1119da7da1d913d1c4d2b7c461115433a0000000000000000000000000000000000000000000000364a8ac3197438c00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000021e2bbf035f46932f6cc60fe541815df015311a0c60de12b7b621eb964132629710000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "address": "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f",
+          "logIndex": 23,
+          "event": "unknown",
+          "topic0": "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324",
+          "topics": [
+            "0x93485dcd31a905e3ffd7b012abe3438fa8fa77f98ddc9f50e879d3fa7ccdc324"
+          ],
+          "data": "0x000000000000000000000000b92fe925dc43a0ecde6c8b1a2709c170ec4fff4f0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001a49bb43718000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000010000000000000000000000003bd359c1119da7da1d913d1c4d2b7c461115433a0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000c742ada2872a042dd36d2e706907b4036968960c000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000021e2bbf035f46932f6cc60fe541815df015311a0c60de12b7b621eb96413262971000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x08efc69080f301d1d3d8f8c505a07b3ce2470960f6fbae2ed358a3a3f5f2795f"
+    },
+    {
+      "step": "5a. Deposit 15,000 CHOG into the TBA",
+      "actor": "owner",
+      "hash": "0x7a4b7b42dac6a967b57190717c30882a3a38e650bc75ae33e0dd08d39069ab52",
+      "blockNumber": 115450715,
+      "timestamp": 1792623306,
+      "timestampISO": "2026-10-21T22:55:06.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0x350035555e10d9afaf1566aaebfced5ba6c27777",
+      "contractAddress": null,
+      "nonce": 11,
+      "status": "success",
+      "gasUsed": "123837",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "transfer",
+        "args": [
+          "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+          "15000000000000000000000"
+        ]
+      },
+      "keyFigures": {
+        "tokenTransfers": [
+          {
+            "token": "CHOG",
+            "from": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "to": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "amount": "15000 CHOG",
+            "raw": "15000000000000000000000"
+          }
+        ]
+      },
+      "events": [
+        {
+          "address": "0x350035555e10d9afaf1566aaebfced5ba6c27777",
+          "logIndex": 45,
+          "event": "Transfer",
+          "args": {
+            "from": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "to": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "value": "15000000000000000000000"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x7a4b7b42dac6a967b57190717c30882a3a38e650bc75ae33e0dd08d39069ab52"
+    },
+    {
+      "step": "5b. Deposit 1,001 WMON into the TBA",
+      "actor": "owner",
+      "hash": "0x9f6f594e8541e621b815b916fba164fe026eda0f0df6a5b28264c69861be9200",
+      "blockNumber": 115452590,
+      "timestamp": 1792623872,
+      "timestampISO": "2026-10-21T23:04:32.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+      "contractAddress": null,
+      "nonce": 12,
+      "status": "success",
+      "gasUsed": "96423",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "transfer",
+        "args": [
+          "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+          "1001000000000000000000"
+        ]
+      },
+      "keyFigures": {
+        "tokenTransfers": [
+          {
+            "token": "WMON",
+            "from": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "to": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "amount": "1001 WMON",
+            "raw": "1001000000000000000000"
+          }
+        ]
+      },
+      "events": [
+        {
+          "address": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+          "logIndex": 89,
+          "event": "Transfer",
+          "args": {
+            "from": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "to": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "value": "1001000000000000000000"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x9f6f594e8541e621b815b916fba164fe026eda0f0df6a5b28264c69861be9200"
+    },
+    {
+      "step": "7. Accept ownership of AnimrTrophies (Ownable2Step acceptOwnership)",
+      "actor": "owner",
+      "hash": "0x72b5741509f8d10ad1fb5d25aa1ffec71588de6d45612966ab4866f5f829656b",
+      "blockNumber": 115461166,
+      "timestamp": 1792626461,
+      "timestampISO": "2026-10-21T23:47:41.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+      "contractAddress": null,
+      "nonce": 13,
+      "status": "success",
+      "gasUsed": "55535",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "selector": "0x79ba5097"
+      },
+      "keyFigures": {
+        "ownershipTransferred": {
+          "previousOwner": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+          "newOwner": "0xc742AdA2872a042dD36D2E706907b4036968960C"
+        }
+      },
+      "events": [
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 80,
+          "event": "OwnershipTransferred",
+          "args": {
+            "previousOwner": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+            "newOwner": "0xc742AdA2872a042dD36D2E706907b4036968960C"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x72b5741509f8d10ad1fb5d25aa1ffec71588de6d45612966ab4866f5f829656b"
+    },
+    {
+      "step": "8. Send 9,500 CHOG from owner to the House key",
+      "actor": "owner",
+      "hash": "0xef5f24b079b6aa42ed8e2ceed6404bfef896fec0c6358b2dd3a09b0a8c28deaa",
+      "blockNumber": 115461576,
+      "timestamp": 1792626585,
+      "timestampISO": "2026-10-21T23:49:45.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0x350035555e10d9afaf1566aaebfced5ba6c27777",
+      "contractAddress": null,
+      "nonce": 14,
+      "status": "success",
+      "gasUsed": "123837",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "transfer",
+        "args": [
+          "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+          "9500000000000000000000"
+        ]
+      },
+      "keyFigures": {
+        "tokenTransfers": [
+          {
+            "token": "CHOG",
+            "from": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "to": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+            "amount": "9500 CHOG",
+            "raw": "9500000000000000000000"
+          }
+        ]
+      },
+      "events": [
+        {
+          "address": "0x350035555e10d9afaf1566aaebfced5ba6c27777",
+          "logIndex": 37,
+          "event": "Transfer",
+          "args": {
+            "from": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "to": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+            "value": "9500000000000000000000"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0xef5f24b079b6aa42ed8e2ceed6404bfef896fec0c6358b2dd3a09b0a8c28deaa"
+    },
+    {
+      "step": "6. Withdraw 1 WMON from the TBA back to the owner (TBA execute)",
+      "actor": "owner",
+      "hash": "0xd8bd003c1fc25419dcdd1b1f17a6d01882617cd30d2998e0494bfec771fbec62",
+      "blockNumber": 115467908,
+      "timestamp": 1792628496,
+      "timestampISO": "2026-10-22T00:21:36.000Z",
+      "from": "0xc742ada2872a042dd36d2e706907b4036968960c",
+      "to": "0xa46ae2364eda19c7d8fce7f5878c93e50ab2ad71",
+      "contractAddress": null,
+      "nonce": 15,
+      "status": "success",
+      "gasUsed": "185255",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "execute",
+        "args": [
+          "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+          "0",
+          "0xa9059cbb000000000000000000000000c742ada2872a042dd36d2e706907b4036968960c0000000000000000000000000000000000000000000000000de0b6b3a7640000",
+          0
+        ],
+        "inner": {
+          "target": "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+          "fn": "transfer",
+          "args": [
+            "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "1000000000000000000"
+          ]
+        }
+      },
+      "keyFigures": {
+        "tokenTransfers": [
+          {
+            "token": "WMON",
+            "from": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "to": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "amount": "1 WMON",
+            "raw": "1000000000000000000"
+          }
+        ]
+      },
+      "events": [
+        {
+          "address": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+          "logIndex": 82,
+          "event": "Transfer",
+          "args": {
+            "from": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+            "to": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+            "value": "1000000000000000000"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0xd8bd003c1fc25419dcdd1b1f17a6d01882617cd30d2998e0494bfec771fbec62"
+    }
+  ],
+  "otherTxs": [
+    {
+      "step": "AnimrTrophies deploy (by House key)",
+      "actor": "house",
+      "hash": "0xc34b5630711c403bebb3eee215ac15185d0e1ec61f5dd874f5cfd88f0e93eed0",
+      "blockNumber": 115298021,
+      "timestamp": 1792577198,
+      "timestampISO": "2026-10-21T10:06:38.000Z",
+      "from": "0xbcfd3a3846e39a687901eb77ed05f4e3cdc1e259",
+      "to": null,
+      "contractAddress": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+      "nonce": 5,
+      "status": "success",
+      "gasUsed": "1588176",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "(contract creation)"
+      },
+      "keyFigures": {
+        "ownershipTransferred": {
+          "previousOwner": "0x0000000000000000000000000000000000000000",
+          "newOwner": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259"
+        }
+      },
+      "events": [
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 30,
+          "event": "OwnershipTransferred",
+          "args": {
+            "previousOwner": "0x0000000000000000000000000000000000000000",
+            "newOwner": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259"
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 31,
+          "event": "MinterChanged",
+          "args": {
+            "previousMinter": "0x0000000000000000000000000000000000000000",
+            "newMinter": "0x2523bBdD941783C4E565180D2a1b18DE86319cC2"
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 32,
+          "event": "KindSet",
+          "args": {
+            "kind": "1",
+            "enabled": true
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 33,
+          "event": "KindSet",
+          "args": {
+            "kind": "2",
+            "enabled": true
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 34,
+          "event": "KindSet",
+          "args": {
+            "kind": "3",
+            "enabled": true
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 35,
+          "event": "KindSet",
+          "args": {
+            "kind": "4",
+            "enabled": true
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0xc34b5630711c403bebb3eee215ac15185d0e1ec61f5dd874f5cfd88f0e93eed0"
+    },
+    {
+      "step": "Operator: award trophy (AnimrTrophies.award), not this Chog",
+      "actor": "operator",
+      "hash": "0x6728d265c3bc323a8d1e9c796f8a14d3b9d83151092dee4e09a9f4fe18d807e3",
+      "blockNumber": 115356564,
+      "timestamp": 1792594878,
+      "timestampISO": "2026-10-21T15:01:18.000Z",
+      "from": "0x2523bbdd941783c4e565180d2a1b18de86319cc2",
+      "to": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+      "contractAddress": null,
+      "nonce": 0,
+      "status": "success",
+      "gasUsed": "155554",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "award",
+        "args": [
+          "1583",
+          "1",
+          "20261019"
+        ]
+      },
+      "keyFigures": {
+        "trophyMinted": {
+          "to": "0xA849eCFca04A3e7B108E94c49F20eEcD7786203e",
+          "id": "1",
+          "value": "1"
+        },
+        "trophyAwarded": {
+          "chogId": "1583",
+          "kind": "1",
+          "account": "0xA849eCFca04A3e7B108E94c49F20eEcD7786203e",
+          "context": "20261019",
+          "key": "0xa9463acaed7dd3aac004abccf5129911bcbfa8b28bd6a6c039f9ed58385415ba"
+        }
+      },
+      "events": [
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 200,
+          "event": "TransferSingle",
+          "args": {
+            "operator": "0x2523bBdD941783C4E565180D2a1b18DE86319cC2",
+            "from": "0x0000000000000000000000000000000000000000",
+            "to": "0xA849eCFca04A3e7B108E94c49F20eEcD7786203e",
+            "id": "1",
+            "value": "1"
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 201,
+          "event": "TrophyAwarded",
+          "args": {
+            "chogId": "1583",
+            "kind": "1",
+            "account": "0xA849eCFca04A3e7B108E94c49F20eEcD7786203e",
+            "context": "20261019",
+            "key": "0xa9463acaed7dd3aac004abccf5129911bcbfa8b28bd6a6c039f9ed58385415ba"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x6728d265c3bc323a8d1e9c796f8a14d3b9d83151092dee4e09a9f4fe18d807e3"
+    },
+    {
+      "step": "Operator: award trophy (AnimrTrophies.award), not this Chog",
+      "actor": "operator",
+      "hash": "0x4a6f41c769b2a5089d67df6633d4da2aae41c74d818a829e50a870fef49a0422",
+      "blockNumber": 115356567,
+      "timestamp": 1792594879,
+      "timestampISO": "2026-10-21T15:01:19.000Z",
+      "from": "0x2523bbdd941783c4e565180d2a1b18de86319cc2",
+      "to": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+      "contractAddress": null,
+      "nonce": 1,
+      "status": "success",
+      "gasUsed": "155554",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "award",
+        "args": [
+          "1881",
+          "2",
+          "20261019"
+        ]
+      },
+      "keyFigures": {
+        "trophyMinted": {
+          "to": "0xf8Dc572a0A5d64307D29064321cb70133cd5FA9E",
+          "id": "2",
+          "value": "1"
+        },
+        "trophyAwarded": {
+          "chogId": "1881",
+          "kind": "2",
+          "account": "0xf8Dc572a0A5d64307D29064321cb70133cd5FA9E",
+          "context": "20261019",
+          "key": "0xce6f18d1741c84070a811149f62db7ba4ee0b7c781f265c349f34b456a840663"
+        }
+      },
+      "events": [
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 105,
+          "event": "TransferSingle",
+          "args": {
+            "operator": "0x2523bBdD941783C4E565180D2a1b18DE86319cC2",
+            "from": "0x0000000000000000000000000000000000000000",
+            "to": "0xf8Dc572a0A5d64307D29064321cb70133cd5FA9E",
+            "id": "2",
+            "value": "1"
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 106,
+          "event": "TrophyAwarded",
+          "args": {
+            "chogId": "1881",
+            "kind": "2",
+            "account": "0xf8Dc572a0A5d64307D29064321cb70133cd5FA9E",
+            "context": "20261019",
+            "key": "0xce6f18d1741c84070a811149f62db7ba4ee0b7c781f265c349f34b456a840663"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x4a6f41c769b2a5089d67df6633d4da2aae41c74d818a829e50a870fef49a0422"
+    },
+    {
+      "step": "AnimrTrophies setURI (by House key)",
+      "actor": "house",
+      "hash": "0x3ee89e38d0fa41c2dfe09a0063abd3964cb478a184b282fa13c78c6105c3eec6",
+      "blockNumber": 115459882,
+      "timestamp": 1792626073,
+      "timestampISO": "2026-10-21T23:41:13.000Z",
+      "from": "0xbcfd3a3846e39a687901eb77ed05f4e3cdc1e259",
+      "to": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+      "contractAddress": null,
+      "nonce": 6,
+      "status": "success",
+      "gasUsed": "99730",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "setURI",
+        "args": [
+          "https://useanimr.vercel.app/api/trophies/meta/{id}"
+        ]
+      },
+      "keyFigures": {
+        "uriSet": [
+          {
+            "id": "1",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          },
+          {
+            "id": "2",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          },
+          {
+            "id": "3",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          },
+          {
+            "id": "4",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          }
+        ]
+      },
+      "events": [
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 58,
+          "event": "URI",
+          "args": {
+            "id": "1",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 59,
+          "event": "URI",
+          "args": {
+            "id": "2",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 60,
+          "event": "URI",
+          "args": {
+            "id": "3",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          }
+        },
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 61,
+          "event": "URI",
+          "args": {
+            "id": "4",
+            "value": "https://useanimr.vercel.app/api/trophies/meta/{id}"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0x3ee89e38d0fa41c2dfe09a0063abd3964cb478a184b282fa13c78c6105c3eec6"
+    },
+    {
+      "step": "AnimrTrophies transferOwnership to owner (by House key; step 1 of Ownable2Step)",
+      "actor": "house",
+      "hash": "0xfed72a4235d9979df026cd87561c8687d934eed114436c18acb41b7dc0bc89f3",
+      "blockNumber": 115459887,
+      "timestamp": 1792626075,
+      "timestampISO": "2026-10-21T23:41:15.000Z",
+      "from": "0xbcfd3a3846e39a687901eb77ed05f4e3cdc1e259",
+      "to": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+      "contractAddress": null,
+      "nonce": 7,
+      "status": "success",
+      "gasUsed": "57241",
+      "effectiveGasPriceWei": "102000000000",
+      "call": {
+        "fn": "transferOwnership",
+        "args": [
+          "0xc742AdA2872a042dD36D2E706907b4036968960C"
+        ]
+      },
+      "keyFigures": {
+        "ownershipTransferStarted": {
+          "owner": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+          "pendingOwner": "0xc742AdA2872a042dD36D2E706907b4036968960C"
+        }
+      },
+      "events": [
+        {
+          "address": "0x7720ed65f3ddfc4ad812d8a5acd25762712b513d",
+          "logIndex": 90,
+          "event": "OwnershipTransferStarted",
+          "args": {
+            "owner": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+            "pendingOwner": "0xc742AdA2872a042dD36D2E706907b4036968960C"
+          }
+        }
+      ],
+      "explorer": "https://monadscan.com/tx/0xfed72a4235d9979df026cd87561c8687d934eed114436c18acb41b7dc0bc89f3"
+    }
+  ],
+  "guardTradesForTba": [],
+  "guardTradesNote": "No Traded events for the TBA (log scan, topic1 = TBA, blocks 115447900..latest) and the operator has sent no transaction since 2026-10-21 15:01 UTC (nonce 2), so no guard trades have happened yet.",
+  "currentState": {
+    "balances": {
+      "tba": {
+        "address": "0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71",
+        "CHOG": "15000 CHOG",
+        "WMON": "1000 WMON",
+        "MON": "0 MON",
+        "raw": {
+          "CHOG": "15000000000000000000000",
+          "WMON": "1000000000000000000000",
+          "MON": "0"
+        }
+      },
+      "owner": {
+        "address": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+        "CHOG": "47.711829182895000933 CHOG",
+        "WMON": "1.4955 WMON",
+        "MON": "658.00472338666783806 MON",
+        "raw": {
+          "CHOG": "47711829182895000933",
+          "WMON": "1495500000000000000",
+          "MON": "658004723386667838060"
+        }
+      },
+      "houseKey": {
+        "address": "0xbcfD3a3846e39a687901EB77ed05F4E3CdC1e259",
+        "CHOG": "9500 CHOG",
+        "WMON": "0 WMON",
+        "MON": "3.940002302 MON",
+        "raw": {
+          "CHOG": "9500000000000000000000",
+          "WMON": "0",
+          "MON": "3940002302000000000"
+        }
+      }
+    },
+    "guardLimitsOfTba": {
+      "enabled": true,
+      "maxTradeBps": 1000,
+      "maxDailyBps": 3000,
+      "minIntervalSeconds": 600,
+      "maxSlippageBps": 200,
+      "readable": "10% per trade / 30% per 24h / 600 s between trades / 2% max slippage"
+    },
+    "guardBuyOnlyForTba": false,
+    "guardOperator": "0x2523bBdD941783C4E565180D2a1b18DE86319cC2",
+    "tbaPermissionOwnerToGuard": true,
+    "trophiesOwner": "0xc742AdA2872a042dD36D2E706907b4036968960C",
+    "chogGenesis1399Owner": "0xc742AdA2872a042dD36D2E706907b4036968960C"
+  },
+  "notFound": [
+    {
+      "item": "A separate Tokenbound initialize tx",
+      "detail": "Not separate: tx 0x28de3abe… is a Multicall3.aggregate3 batching registry.createAccount and TBA.initialize; the TBA emitted Upgraded(implementation = 0x41C8…44eC) in the same tx."
+    },
+    {
+      "item": "A WMON Deposit event with dst = owner",
+      "detail": "The owner did not call WMON.deposit directly. Tx 0x08efc690… sent 1003 MON to router contract 0xb92f…ff4f, which paid a 1.5045 MON fee to 0xf70d…dbef, called WMON.deposit with 1001.4955 MON (Deposit dst = the router) and transferred 1001.4955 WMON to the owner. The router contract is unverified by us; its name/brand is not identified here."
+    },
+    {
+      "item": "Owner txs before block 115290000 (nonces 0..6) and House key nonces 0..4",
+      "detail": "Outside the RPC state-history window used for nonce bisection; outside the setup window anyway."
+    }
+  ]
+}

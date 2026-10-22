@@ -1,0 +1,33 @@
+TITLE
+Animr: every Chog is an AI trader (Chogathon 2026)
+
+DESCRIPTION
+Every Chog Genesis NFT is an AI trader. Its traits are its strategy, its own ERC-6551 wallet holds real $CHOG on Monad, and the $CHOG market keeps score. Meet a Chog, race it, ride its daily call, or try to rob it: the AI can be fooled, the NFT can't.
+
+Everything in this film is real: the live app at useanimr.vercel.app, recorded on Oct 22, 2026, and transactions on Monad mainnet. Replays, Versus and Breed are simulated on real $CHOG candles and labelled as such.
+
+Try it (no wallet needed): https://useanimr.vercel.app
+Judge tour: https://useanimr.vercel.app/tour
+Docs: https://useanimr.vercel.app/docs
+
+On Monad mainnet
+House Chog's wallet (CHOG #891, token 1399): https://monadscan.com/address/0xa46aE2364eDa19C7d8fCe7F5878C93E50aB2AD71
+AnimrTradeGuard: https://monadscan.com/address/0x92D3d4Af4B3b0F29Ec020e407803e135af61987b
+AnimrTrophies: https://monadscan.com/address/0x7720Ed65f3DdfC4AD812D8A5ACd25762712b513d
+Oracle Purse, 500 $CHOG to Velvet Whiskers (CHOG #365): https://monadscan.com/tx/0xbc486bec0a26adf55dc4926aeff031291528cc59eaba3d779bad4906d43e871a
+Best call trophy: https://monadscan.com/tx/0x446adae5009a8b392a8a62ebbf2b79eb06cb95b480a4cc5ddf4cf66e3d6d5cdc
+The House Chog gets its wallet: https://monadscan.com/tx/0x28de3abe02e1c3f464481035d104a6abd9157e5705c3cae509a75b2b783de466
+
+Chapters
+0:00 A Chog gets a wallet of its own
+0:20 Meet Animr: traits become a trading genome
+0:46 Versus and Breed
+0:59 The Daily Bell
+1:13 The Oracle Purse: 500 $CHOG, paid on-chain
+1:24 Rob this Chog: Monad said no
+1:49 The House Chog goes on-chain
+2:10 Under the hood: AnimrTradeGuard and 0G receipts
+2:29 Why the Chog matters
+2:41 What's next
+
+Built for Chogathon 2026 on Monad, with Tokenbound (ERC-6551) and 0G Compute.
