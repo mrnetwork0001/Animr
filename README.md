@@ -4,7 +4,7 @@
 
 Animr turns all 1,969 Chog Genesis NFTs into traders, each with its own ERC-6551 wallet on Monad mainnet. Every result is measured in one number: **$CHOG stacked vs just holding**.
 
-Built for Chogathon 2026 · **Not affiliated with Chog** · App: [useanimr.vercel.app](https://useanimr.vercel.app) · Demo: `<VIDEO_URL>` · Code: private repository (access for judges on request, via the submission form)
+Built for Chogathon 2026 · **Not affiliated with Chog** · App: [useanimr.vercel.app](https://useanimr.vercel.app) · Demo: [youtu.be/15xbPJcaLVI](https://youtu.be/15xbPJcaLVI) · Code: private repository (access for judges on request, via the submission form)
 
 **Judges, start here:** [useanimr.vercel.app/tour](https://useanimr.vercel.app/tour), a 2-minute guided tour with no wallet. The full docs (20 pages, including a Holder guide and Contracts and API) are at [/docs](https://useanimr.vercel.app/docs).
 

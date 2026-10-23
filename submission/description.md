@@ -57,7 +57,7 @@ Live counters: https://useanimr.vercel.app/stats
 LINKS
 
 - App: https://useanimr.vercel.app (judge tour: /tour, docs: /docs)
-- Demo video: <VIDEO_URL>
+- Demo video: https://youtu.be/15xbPJcaLVI
 - Code: private repository, access for judges on request via the submission form
 
 Built for Chogathon 2026. Not affiliated with Chog.

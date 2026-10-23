@@ -2,6 +2,8 @@
 
 A 2:53 film made with [Remotion](https://www.remotion.dev) for the Chogathon 2026 judges: a Chog gets a wallet of its own, what Animr does with all 1,969 of them, the four games, the heist that Monad refuses, and the House Chog's holder putting its AI on-chain, replayed from the real transactions.
 
+Watch it on YouTube: https://youtu.be/15xbPJcaLVI
+
 Deliverables: `out/animr-demo-4k.mp4`, `out/animr-demo-1080p.mp4`, `out/animr-thumbnail.png` (and `.jpg`). YouTube title, description and chapters: `youtube.txt`.
 
 ## What is real

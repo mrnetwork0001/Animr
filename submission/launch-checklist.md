@@ -183,7 +183,7 @@ These are code items.
 | --- | --- |
 | Project name | Animr |
 | Description | `submission/description.md` |
-| Demo video | `<VIDEO_URL>` |
+| Demo video | https://youtu.be/15xbPJcaLVI |
 | App link | `https://useanimr.vercel.app` (judges: `/tour`) |
 | GitHub repo | Private repository: access for judges on request (invite the reviewer account if the form names one) |
 | Judge access instructions | `submission/judge-instructions.md` |
