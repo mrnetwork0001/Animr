@@ -49,19 +49,239 @@ Without the NFT there is no trader, no wallet and no authority.
 - **No NFT, no authority.** Several actions need a signature from the current `ownerOf`: waking the AI, switching it to on-chain trading, granting the guard, setting limits and the optional buy-only mode. Guard settings are keyed to *(wallet, current owner)*, so they go dormant the moment the NFT changes hands.
 - **One transfer moves everything.** A sale hands over the trader, its wallet and every token in it, its League and Bell record, and its AI's history. The buyer signs once to take over the AI and re-enables trading under their own limits.
 
-## Architecture at a glance
+## Architecture
 
-```
-Chog NFT (ERC-721) ──owns──▶ ERC-6551 wallet (Tokenbound V3)
-      │ 13 traits                     ▲ swap output always lands back here
-      ▼                               │
-Trading genome ──▶ Replay engine (League, Time Machine, Versus) on real hourly candles
-      │
-      ├─▶ Daily Bell: every Chog calls $CHOG; the market settles it
-      └─▶ Claimed Chogs: LLM on 0G Compute ─▶ guardrails ─▶ paper fill, or AnimrTradeGuard.trade()
+Animr has four layers:
+- **The chain:** Monad mainnet holds the NFTs, their wallets and our two contracts.
+- **The app:** one Next.js app on Vercel serves every page and API.
+- **The services:** Upstash Redis keeps state, and 0G Compute runs the AI.
+- **The scheduler:** a small scheduler rings the Bell, wakes the agents and pays the Oracle Purse.
+
+The diagrams below render on GitHub. The full design, with file-by-file detail, security model and costs, is in **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
+### System overview
+
+```mermaid
+flowchart LR
+  subgraph People["People"]
+    direction TB
+    FAN["Fans and judges<br/>no wallet, cookie only"]
+    HOLDER["Chog holders<br/>Privy: wallet, email, Google, X, Discord"]
+  end
+
+  subgraph Sched["Scheduler, a small VPS"]
+    direction TB
+    PULSE["Pulse, hourly<br/>:01 and :11 Bell · :30 agent tick"]
+    PURSE["Purse job<br/>15:20 UTC, retries 15:40 and 16:20"]
+  end
+
+  subgraph Vercel["Next.js 16 app on Vercel"]
+    direction TB
+    PAGES["Pages and API routes"]
+    DNA["Genome + replay engine<br/>lib/dna"]
+    BELLX["Daily Bell<br/>lib/bell"]
+    AGENT["Agent engine<br/>lib/agent"]
+    HEISTX["Heist defender + proof<br/>lib/heist"]
+    PAGES --> DNA & BELLX & AGENT & HEISTX
+  end
+
+  subgraph Services["Services"]
+    direction TB
+    KV[("Upstash Redis<br/>Bells, rides, agents,<br/>receipts, purses")]
+    ZG["0G Compute Router<br/>glm-5.3 · 0gm-1.0-35b-a3b<br/>a receipt per call"]
+    MKT["Market data<br/>GeckoTerminal · DexScreener · OpenSea"]
+  end
+
+  subgraph Monad["Monad mainnet, chain 143"]
+    direction TB
+    NFT["Chog Genesis<br/>ERC-721 · 1,969 tokens"]
+    TBA["Chog wallet<br/>ERC-6551, Tokenbound V3"]
+    GUARD["AnimrTradeGuard<br/>trade() only"]
+    TROPHY["AnimrTrophies<br/>soulbound ERC-1155"]
+    POOL["CHOG/WMON pool<br/>Capricorn CL, 1% fee"]
+    NFT -- "owns, via the ERC-6551 registry" --> TBA
+    GUARD -- "approve · swap · approve 0" --> TBA
+    TROPHY -- "mints into" --> TBA
+    TBA <--> POOL
+  end
+
+  FAN --> PAGES
+  HOLDER --> PAGES
+  HOLDER -- "owner txs from their own wallet" --> TBA
+  PULSE -- "Bearer CRON_SECRET" --> PAGES
+  DNA --> MKT
+  AGENT --> MKT
+  BELLX & AGENT & HEISTX --> KV
+  BELLX & AGENT & HEISTX <--> ZG
+  AGENT -- "operator key" --> GUARD
+  BELLX -- "operator key" --> TROPHY
+  HEISTX -. "eth_call only" .-> TBA
+  PURSE -- "reads the settled Bell" --> KV
+  PURSE -- "House key: 500 $CHOG" --> TBA
 ```
 
-Full design, data flow, security model and costs: **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+**One codebase, three route groups.** `app/(site)` is the landing page. `app/(app)` holds the product pages. `app/(docs)` is the documentation, with its own minimal header that loads no wallet code. Every page that shows numbers reads them from the same libraries the APIs use, so a page and its share card never disagree.
+
+**State.** Upstash Redis holds everything that changes:
+- Bells, rides and fan cards;
+- agents and their decisions with 0G receipts;
+- heist attempts and Oracle Purse records;
+- opt-outs.
+
+Each environment writes to its own namespace, so a preview or a laptop never touches production data. Locally, a file store stands in for Redis. Committed data files hold what doesn't change: the 1,969 trait snapshots, a seed of hourly candles and the brand-safety map.
+
+**Scheduling.** Vercel's own crons fire only once a day on the Hobby plan. So an external pulse calls the two cron routes with the same Bearer secret Vercel uses:
+- The Bell route runs at minutes 1 and 11 of every hour. It rings at 15:01 UTC and settles at 15:11.
+- The agent tick runs at minute 30.
+
+Both routes are idempotent and catch up anything missed. The purse job is separate, because it is the only thing that spends from the House key.
+
+### Who holds which key
+
+```mermaid
+flowchart LR
+  OWNER["NFT owner<br/>their own wallet"] -- "full control:<br/>execute(), withdraw, permissions" --> TBA["Chog wallet"]
+  OWNER -- "grants and limits" --> GUARD["AnimrTradeGuard"]
+  OP["Operator key<br/>the AI's key, server-side"] -- "trade() only,<br/>output lands back in the same wallet" --> GUARD
+  GUARD -- "Tokenbound permission<br/>granted by the owner" --> TBA
+  OP -- "mint only, into real Chog wallets" --> TROPHY["AnimrTrophies"]
+  HOUSE["House key<br/>scheduler only"] -- "sends the Oracle Purse" --> TBA
+  ADMIN["Admin<br/>team wallet"] -- "pause only, never moves funds" --> GUARD
+```
+
+| Key | Lives in | Can | Can never |
+| --- | --- | --- | --- |
+| NFT owner | The holder's own wallet | Everything on its Chog's wallet: withdraw, grant or revoke the guard, set limits, wake or stop the AI by signature | Act on a Chog it doesn't hold. Settings go dormant on transfer. |
+| Operator (the AI's key) | Production server only | Call `trade()` within the owner's limits, mint trophies | Withdraw, choose a recipient, token or calldata, or exceed the contract's ceilings |
+| House key | The scheduler only | Send one Oracle Purse per settled Bell | Touch any Chog wallet's contents |
+| Admin | Team wallet | Pause the guard | Move funds, or become the operator |
+
+Guarded trades and trophy mints are sent only when the runtime is production (`lib/runtime-env.ts`), so a laptop or a preview holding the operator key refuses to broadcast.
+
+### Meet and Rewind: traits to trades
+
+```mermaid
+flowchart LR
+  META["Chog Genesis tokenURI<br/>13 on-chain traits"] --> SNAP["data/chogs.json<br/>snapshot of 1,969"]
+  SNAP --> GEN["Genome compiler<br/>8 genes, version g1-7de62b<br/>pure function of the traits"]
+  CAND["Hourly CHOG/WMON candles<br/>GeckoTerminal + committed seed"] --> ENG
+  GEN --> ENG["Replay engine<br/>1% fee + price impact"]
+  ENG --> LEAGUE["League + Trait Alpha<br/>edge vs just holding"]
+  ENG --> TM["Time Machine<br/>trade by trade, in its own voice"]
+  ENG --> VS["Versus<br/>hidden 48h of real history"]
+  ENG --> BR["Breed<br/>child inherits each trait from a parent"]
+  GEN --> CALL["Bell calls<br/>for unclaimed Chogs"]
+```
+
+The genome is deterministic: the same traits always compile to the same trader, and the version string changes if the rules ever do. Every replay result is labelled "simulated on real $CHOG candles (1% fee + impact)".
+
+### Ride: one Daily Bell, end to end
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant P as Pulse (scheduler)
+  participant A as Animr API
+  participant R as Redis
+  participant Z as 0G Compute
+  participant F as Fans
+  participant T as AnimrTrophies
+  participant J as Purse job
+  participant W as Oracle's Chog wallet
+
+  P->>A: 15:01 UTC, /api/bell/cron
+  A->>R: ring: one 24h $CHOG call per Chog
+  Note over A,R: claimed Chogs call with their LLM, the rest by genome
+  F->>A: ride a Chog, points only, cookie fan card
+  A->>R: record rides, open for 12 hours
+  P->>A: next day 15:11 UTC, /api/bell/cron
+  A->>A: settle against the real CHOG/WMON price
+  A->>R: Oracle of the Day, Most Rekt, points, streaks
+  A->>Z: write the recap
+  A->>T: mint Best call and Most rekt into the winners' wallets
+  J->>R: 15:20 UTC, read the settled Bell
+  J->>W: transfer 500 $CHOG from the House key
+  J->>R: record the transaction, the Bell page shows it as sent
+```
+
+The first live Bell rang on Oct 21 and settled on Oct 22. Velvet Whiskers, token 873, called -1.7% against a real move of -1.69%. It received both its Best call trophy and the 500 $CHOG purse, with no one touching anything ([transaction](https://monadscan.com/tx/0xbc486bec0a26adf55dc4926aeff031291528cc59eaba3d779bad4906d43e871a)).
+
+### A claimed Chog's decision and a guarded trade
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant P as Pulse or Bell
+  participant E as Agent engine
+  participant M as Market data
+  participant Z as 0G Compute
+  participant G as AnimrTradeGuard
+  participant W as Chog wallet
+  participant L as CHOG/WMON pool
+
+  P->>E: hourly tick at :30, or the Bell
+  E->>M: live price, last hour and 24h change
+  E->>W: read the wallet's real balances
+  E->>Z: genome + persona + market + limits
+  Z-->>E: buy, sell or hold, a thesis, a receipt
+  Note over E: no answer means the genome decides<br/>guardrails clamp size to the owner's limits<br/>House rule turns a sell into a hold while $CHOG is down
+  alt paper mode
+    E->>E: simulated fill at the live price
+  else on-chain mode, production only
+    E->>G: trade(wallet, sellChog, amountIn, minAmountOut, deadline)
+    G->>G: check limits, daily budget, interval, TWAP floor, deadline
+    G->>W: execute: approve, swap, approve 0
+    W->>L: swap, recipient is the same wallet
+    L-->>W: tokens out
+    G->>G: settlement checked against balances, or revert
+  end
+  E->>E: store the decision with its 0G receipt
+```
+
+### Rob: the heist proof
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as Visitor
+  participant H as Heist API
+  participant Z as 0G Compute
+  participant N as Monad RPC
+
+  U->>H: a pitch, up to 3 messages
+  H->>Z: the House Chog's defender persona
+  Z-->>H: refuses, or caves
+  U->>H: Run the check, any time
+  H->>N: eth_call wallet.execute(transfer all $CHOG) from the AI key, pinned block
+  N-->>H: reverts NotAuthorized()
+  H->>N: same call from the real owner, the control
+  N-->>H: succeeds
+  H->>N: eth_call guard.trade(sell the whole vault) from the AI key
+  N-->>H: reverts TradeRejected("exceeds per-trade cap")
+  H-->>U: verdict with the block number, nothing broadcast
+```
+
+### Holder onboarding
+
+```mermaid
+flowchart TB
+  subgraph S1["Setup, holder transactions"]
+    direction LR
+    A["Log in<br/>Privy"] --> B["Create the Chog's wallet<br/>registry + initialize"]
+    B --> C["Let the guard trade<br/>setPermissions"]
+    C --> D["Set limits"]
+    D --> E["Fund the vault<br/>$CHOG and/or WMON"]
+  end
+  subgraph S2["The AI, free signatures"]
+    direction LR
+    F["Wake the AI<br/>paper mode"] --> G["Switch to on-chain"]
+    G --> H["Trades inside the wallet<br/>hourly and at the Bell"]
+    H -. "any time" .-> X["Withdraw via execute()<br/>Disable or revoke the guard"]
+  end
+  S1 -- "then" --> S2
+```
+
+The stepper on each Chog's page reads the chain to know which step is next. Every owner action is checked against the current `ownerOf`. If the NFT is sold, the wallet, its tokens, trophies and record go with it, and the new owner starts with blank limits.
 
 ## Safety
 
