@@ -79,7 +79,7 @@ TROUBLESHOOTING
 
 FOR THE CODE
 
-The repository is private; access for judges is on request via the submission form. Without it, everything is checkable from the app:
+The code is public at https://github.com/mrnetwork0001/Animr. Everything is also checkable from the app:
 - https://useanimr.vercel.app/docs: Contracts and API (every address and the public HTTP API), AnimrTradeGuard (limits, ceilings, tests) and Trophy cabinet.
 - Both contracts' verified source on the explorer (links above; Sourcify exact matches). Fork tests on live Monad mainnet: AnimrTradeGuard 37 fork tests (36 pass, 1 skipped by design), AnimrTrophies 12/12.
 

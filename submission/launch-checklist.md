@@ -185,7 +185,7 @@ These are code items.
 | Description | `submission/description.md` |
 | Demo video | https://youtu.be/15xbPJcaLVI |
 | App link | `https://useanimr.vercel.app` (judges: `/tour`) |
-| GitHub repo | Private repository: access for judges on request (invite the reviewer account if the form names one) |
+| GitHub repo | https://github.com/mrnetwork0001/Animr (public since Oct 23) |
 | Judge access instructions | `submission/judge-instructions.md` |
 | Tech stack | `submission/tech-stack.txt` |
 | Go-to-market plan | `submission/go-to-market.md` |

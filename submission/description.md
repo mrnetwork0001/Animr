@@ -58,6 +58,6 @@ LINKS
 
 - App: https://useanimr.vercel.app (judge tour: /tour, docs: /docs)
 - Demo video: https://youtu.be/15xbPJcaLVI
-- Code: private repository, access for judges on request via the submission form
+- Code: https://github.com/mrnetwork0001/Animr
 
 Built for Chogathon 2026. Not affiliated with Chog.
